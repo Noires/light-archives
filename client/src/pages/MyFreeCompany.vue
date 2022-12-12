@@ -9,7 +9,7 @@
           <p class="page-my-free-company__fc-name">
             <router-link :to="fcLink">{{ freeCompany.name }}</router-link>
             <template v-if="freeCompany.isLeader">
-              — Leader <router-link :to="editFCLink">(Bearbeiten)</router-link>
+              — Anführer <router-link :to="editFCLink">(Bearbeiten)</router-link>
             </template>
           </p>
           <p v-if="freeCompany.goal"><strong>Ziel:</strong> {{ freeCompany.goal }}</p>
@@ -94,11 +94,11 @@ export default class PageMyFreeCompany extends Vue {
         characterInfo.Character.FreeCompanyName === this.freeCompany.name
       ) {
         title = 'Bestätige Aktualisierung';
-        message = `Deine Freie Gesellschaft "${fcName}" via Lodestone aktualisieren? Dieser Vorgang kann nicht rückgängig gemacht werden.`;
+        message = `Deine Freie Gesellschaft <strong>"${fcName}"</strong> via Lodestone aktualisieren? Dieser Vorgang kann nicht rückgängig gemacht werden.`;
         okTitle = 'Aktualisieren';
       } else {
         title = 'Bestätige Hinzufügung';
-        message = `Lodestone meldet, dass du ein Mitglied von ${fcName} bist. Diese Freie Gesellschaft hinzufügen?`;
+        message = `Lodestone meldet, dass du ein Mitglied von <strong>"${fcName}"</strong> bist. Diese Freie Gesellschaft hinzufügen?`;
         okTitle = 'Hinzufügen';
       }
     } else {
