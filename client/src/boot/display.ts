@@ -27,8 +27,8 @@ class Display {
 	readonly storyTypes: { [k: string]: string } = {
 		[StoryType.PUBLISHED_WORK]: 'Veröffentlichte Arbeit',
 		[StoryType.DIARY]: 'Tagebuch',
-		[StoryType.POETRY]: 'Poesi',
-		[StoryType.IC_HAPPENING]: 'IC-Geschehen',
+		[StoryType.POETRY]: 'Poesie',
+		[StoryType.IC_HAPPENING]: 'IC-Geschehnis',
 		[StoryType.CONCEPTUAL]: 'konzeptionell',
 	};
 
