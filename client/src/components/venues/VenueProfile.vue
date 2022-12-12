@@ -10,11 +10,11 @@
       <div class="layout__filler"></div>
     </header>
     <character-details-box class="venue-profile__infobox">
-      <character-detail label="World" :value="venue.server" v-if="venue.server" />
-      <character-detail label="Owner" :value="venue.owner" :router-link="ownerLink" />
-      <character-detail label="Founded" :value="$display.formatDate(venue.foundedAt)" v-if="venue.foundedAt" />
-      <character-detail label="Website" :value="venue.website" :link="venue.website" v-if="venue.website" />
-      <character-detail label="Purpose" :value="venue.purpose" v-if="venue.purpose" />
+      <character-detail label="Welt" :value="venue.server" v-if="venue.server" />
+      <character-detail label="Besitzer" :value="venue.owner" :router-link="ownerLink" />
+      <character-detail label="Gründung" :value="$display.formatDate(venue.foundedAt)" v-if="venue.foundedAt" />
+      <character-detail label="Webseite" :value="venue.website" :link="venue.website" v-if="venue.website" />
+      <character-detail label="Zweck" :value="venue.purpose" v-if="venue.purpose" />
       <character-detail label="Status" :value="venue.status" v-if="venue.status" />
     </character-details-box>
     <template v-if="venue.description">
@@ -30,11 +30,11 @@
     >
     </iframe>
     <template v-if="!venue.description && !venue.carrdProfile">
-      No description.
+      Keine Beschreibung.
     </template>
     <template v-if="venue.tags.length > 0">
       <hr />
-      <strong>Tags:</strong> {{ venue.tags.join(', ') }}
+      <strong>Schlagworte:</strong> {{ venue.tags.join(', ') }}
     </template>
   </div>
 </template>
@@ -79,11 +79,11 @@ export default class VenueProfile extends Vue.with(Props) {
 		if (this.venue.location === VenueLocation.OPEN_WORLD) {
 			address = this.venue.address;
 		} else {
-			const plot = this.venue.location === VenueLocation.HOUSE ? `Plot ${this.venue.plot!}` : `Apartment ${this.venue.room!}`;
-			address = `${this.$display.housingAreas[this.venue.housingArea!]}, Ward ${this.venue.ward!}, ${plot}`;
+			const plot = this.venue.location === VenueLocation.HOUSE ? `Grundstück ${this.venue.plot!}` : `Wohnung ${this.venue.room!}`;
+			address = `${this.$display.housingAreas[this.venue.housingArea!]}, Bezirk ${this.venue.ward!}, ${plot}`;
 
 			if (this.venue.subdivision) {
-				address += ' (subdivision)';
+				address += ' (Erweiterung)';
 			}
 		}
 
