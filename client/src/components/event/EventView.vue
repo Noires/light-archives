@@ -28,7 +28,7 @@
 				</template>
 				<template v-if="location.tags">
 					<br />
-					<strong>Tags:</strong> {{location.tags}}
+					<strong>Schlagworte:</strong> {{location.tags}}
 				</template>
 			</p>
 			<html-viewer v-if="event.details" :content="event.details" />
