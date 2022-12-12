@@ -3,7 +3,7 @@
 		<h6>Banner</h6>
 		<p class="text-caption">
 			Banner sollten ein Seitenverhältnis von 4:1 Breite:Höhe haben. Beispielsweise ist 500&times;100 und 400&times;100 in Ordnung, aber
-	    300&times;100 aber nicht.
+	    300&times;100 nicht.
 		</p>
 		<q-responsive v-if="!modelValue" class="banner-edit-section__placeholder" :ratio="4 / 1">
 			<div>Kein Banner</div>
