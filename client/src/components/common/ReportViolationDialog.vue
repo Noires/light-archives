@@ -5,7 +5,9 @@
 				<h5>Diese Seite melden</h5>
 				<p>
 					Du bist im Inbegriff die folgende Seite zu melden:
-          <br><strong>{{pageTitle}}</strong>
+        </p>
+        <p>
+          <strong>{{pageTitle}}</strong>
 				</p>
         <p>
 					Bitte erläutere kurz, wieso diese Seite gegen unsere Regeln verstößt.
