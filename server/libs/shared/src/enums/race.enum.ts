@@ -10,7 +10,7 @@ export enum Race {
 }
 
 export const races: { [k: string]: string } = {
-  [Race.HYUR]: 'Hyur',
+  [Race.HYUR]: 'Hyuran',
   [Race.ELEZEN]: 'Elezen',
   [Race.LALAFELL]: 'Lalafell',
   [Race.MIQOTE]: "Miqo'te",
