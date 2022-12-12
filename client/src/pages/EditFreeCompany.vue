@@ -17,7 +17,7 @@
             <q-input v-model="fc.status" label="Status" />
             <q-input v-model="fc.areaOfOperations" label="Tätigkeitsbereich" />
             <q-input v-model="fc.recruitingOfficers" label="Rekrutierer" />
-            <div class="text-caption">Du kannst [[wikilinks]], z.B. [[Charaktername]], in allen Feldern außer Webseite nutzen.</div>
+            <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername]], in allen Feldern außer Webseite nutzen.</div>
           </section>
           <h6>Description</h6>
           <html-editor v-model="fc.description" />
