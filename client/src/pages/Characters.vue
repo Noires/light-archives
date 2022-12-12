@@ -1,6 +1,6 @@
 <template>
   <q-page class="page-characters">
-    <h2>People of the Realm</h2>
+    <h2>Die Bevölkerung Hydaelyns</h2>
     <q-table
       class="page-characters__table striped-list paged-link-table"
       :columns="columns"
@@ -15,12 +15,12 @@
           <q-input
             class="page-characters__filter-search"
             v-model="searchQuery"
-            label="Search"
+            label="Suche"
 						debounce="200"
             @update:model-value="refresh"
           />
           <label class="page-characters__filter-race">
-            <span class="page-characters__race-label">Race:</span>
+            <span class="page-characters__race-label">Volk:</span>
             <q-select
               class="page-characters__race-select"
               v-model="race"
@@ -132,7 +132,7 @@ export default class PageCharacters extends Vue {
         name: 'race',
         field: 'race',
         format: (val: Race) => this.$display.races[val],
-        label: 'Race',
+        label: 'Volk',
         align: 'left',
         sortable: false,
       },
@@ -141,7 +141,7 @@ export default class PageCharacters extends Vue {
 
   get raceOptions() {
     return [
-      { label: '(All)', value: null },
+      { label: '(Alle)', value: null },
       ...Object.values(Race).map((race) => ({ value: race, label: this.$display.races[race] })),
     ];
   }
