@@ -1,6 +1,6 @@
 <template>
   <q-page class="page-my-free-company">
-    <h2>Meine Freie Gesellschaft</h2>
+    <h2>Die Freie Gesellschaft</h2>
     <section>
       <div class="page-my-free-company__subtitle">von {{ $store.getters.character?.name }}</div>
       <section class="page-my-free-company__fc" v-if="freeCompany">
