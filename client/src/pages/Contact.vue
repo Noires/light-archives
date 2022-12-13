@@ -1,6 +1,6 @@
 <template>
   <q-page>
-		<h2>Contact</h2>
+		<h2>Kontakt</h2>
 		<p>
 			The primary developer and administrator of Chaos Archives is <router-link to="/Omega/Vielle_Janlenoux">Vielle Janlenoux</router-link>, also known as Lintian Wintermist. I can be contacted on Discord as <strong>Lintian#3278</strong> or by <a href="mailto:admin@chaosarchives.org">email <q-icon name="mail_outline" /></a>.
 		</p>
