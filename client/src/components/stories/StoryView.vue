@@ -3,7 +3,7 @@
     <h2 class="story-view__title regular-header-font">{{ story.title }}</h2>
     <section class="text-caption story-view__subtitle row">
       <div class="story-view__posted-by">
-      Posted by <router-link :to="authorLink">{{ story.author }}</router-link> on {{ date }}
+      Verfasst von <router-link :to="authorLink">{{ story.author }}</router-link> am {{ date }}
       <template v-if="story.tags.length > 0">
         in
         <template v-for="(tag, index) in story.tags" :key="tag.name">
