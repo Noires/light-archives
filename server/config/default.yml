@@ -21,12 +21,12 @@ redis:
   port: 6379
 
 mail:
-  host: 'smtp.example.com'
-  port: 25
+  host: '_SMTPHOST_'
+  port: _SMTPPORT_
   secure: true
-  username: 'user'
-  password: 'password'
-  from: 'Light Archives <lightarchives@localhost>'
+  username: _SMTPUSER_
+  password: _SMPTPASSWORD_
+  from: '_SMTPFROM_'
 
 auth:
   jwtSecret: 'secret'
