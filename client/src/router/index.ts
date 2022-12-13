@@ -50,7 +50,7 @@ export default route<StateInterface>(function (/* { store, ssrContext } */) {
 
       // nextTick is necessary here to properly record browser history
       void nextTick(() => {
-        document.title = (titleString ? `${titleString} — ` : '') + 'Chaos Archives';
+        document.title = (titleString ? `${titleString} — ` : '') + 'Elpisgarten';
       });
     }
   });
