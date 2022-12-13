@@ -6,7 +6,7 @@
 						<div class="my-image__thumb-column"><a class="thumb-link" :href="image.url" target="_blank"><img :src="image.thumbUrl" /></a></div>
 						<div class="my-image__description-column">
 							<div>
-								<h5 v-if="image.category === ImageCategory.UNLISTED">Unlisted image</h5>
+								<h5 v-if="image.category === ImageCategory.UNLISTED">Ungelistetes Bild</h5>
 								<h5 v-else><a :href="`/image/${image.id}`" target="_blank">{{image.title}}</a></h5>
 								<html-viewer :content="image.description" />
 							</div>
