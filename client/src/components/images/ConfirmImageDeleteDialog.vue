@@ -1,14 +1,14 @@
 <template>
   <q-dialog ref="dialog" no-backdrop-dismiss @hide="onDialogHide">
     <q-card class="confirm-image-delete-dialog">
-			<h5>Confirm Image Deletion</h5>
+			<h5>Löschbestätigung</h5>
 			<q-img :src="image.url" fit="contain" />
 			<p>Möchtest du dieses Bild wirklich löschen? <strong>Dieser Vorgang kann nicht rückgängig gemacht werden.</strong></p>
       <p v-if="forceConfirming">
         <strong>{{forceConfirmMessage}}.</strong> Möchtest du dieses Bild trotzdem löschen und von jeder Seite entfernen?
         </p>
 			<q-card-actions align="right">
-				<q-btn flat color="primary" label="Cancel" @click="onCancelClick" />
+				<q-btn flat color="primary" label="Abbrechen" @click="onCancelClick" />
 				<q-btn flat color="negative" :label="!forceConfirming ? 'Löschen' : 'Trotzdem löschen'" @click="onDeleteClick" />
 			</q-card-actions>
 			<q-inner-loading :showing="deleting" />
