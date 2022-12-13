@@ -46,7 +46,7 @@
           <q-carousel-control position="bottom-right" :offset="[18, 18]">
             <q-btn
               :to="`/image/${images[index].id}`"
-              title="Go to image page"
+              title="Gehe zur Bildseite"
               push
               round
               dense
