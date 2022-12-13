@@ -33,8 +33,8 @@
       </template>
       <template v-slot:body-cell-actions="props">
         <q-td :props="props" class="community-applicant-editor__cell-actions">
-          <q-btn flat color="primary" label="Approve" @click="onApproveClick(props.row)" />
-          <q-btn flat color="negative" label="Reject" @click="onRejectClick(props.row)" />
+          <q-btn flat color="primary" label="Annehmen" @click="onApproveClick(props.row)" />
+          <q-btn flat color="negative" label="Ablehnen" @click="onRejectClick(props.row)" />
         </q-td>
       </template>
     </q-table>
