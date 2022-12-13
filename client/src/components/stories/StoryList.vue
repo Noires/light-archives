@@ -18,7 +18,7 @@
       </q-item>
     </q-list>
     <p v-else>
-      Es gibt noch keine Geschichten auf PROJEKTNAME.
+      Es gibt noch keine Geschichten auf <strong>Elpisgarten</strong>.
     </p>
   </div>
 </template>
