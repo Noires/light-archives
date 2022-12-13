@@ -10,6 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Replace configuration values in config
+        uses: datamonsters/replace-action@v2
+        with:
+          files: 'server/config/default.yml'
+          replacements: '_SMTPHOST_=${{ secrets.SMPT_SERVER }},_SMTPPORT_=${{ secrets.SMTP_PORT }},_SMTPUSER_=${{ secrets.SMTP_USER }},_SMPTPASSWORD_=${{ secrets.SMTP_PASSWORD }},_SMTPFROM_=${{ secrets.SMPT_FROM }}'
       - name: SSH-Compose
         # You may pin to the exact commit or the version.
         # uses: matiasnu/github-action-ssh-docker-compose@d2e13949c92cb86a69ea36e83ebaa01d6d01de9c
