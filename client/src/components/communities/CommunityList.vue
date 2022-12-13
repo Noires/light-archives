@@ -15,7 +15,7 @@
       </q-item>
     </q-list>
     <p v-else>
-      There are no communities on Chaos Archives. Yet!
+      Es gibt noch keine Communities auf <strong>Elpisgarten</strong>.
     </p>
   </div>
 </template>
