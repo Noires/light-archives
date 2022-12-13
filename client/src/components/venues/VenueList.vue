@@ -15,7 +15,7 @@
       </q-item>
     </q-list>
     <p v-else>
-      There are no venues on Chaos Archives. Yet!
+      Es gibt noch keine Treffpunkte auf <strong>Elpisgarten</strong>.
     </p>
   </div>
 </template>
