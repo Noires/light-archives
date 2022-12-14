@@ -38,7 +38,7 @@
         </template>
         <template v-else>
           <p>
-            Your email address
+            Deine E-Mail-Adresse
             <strong>{{ verificationStatus.email }}</strong> muss noch bestätigt werden. Überprüfe deinen Posteingang für den
             Bestätigungslink.
           </p>
