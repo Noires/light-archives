@@ -36,8 +36,9 @@ export default class EventList extends Vue {
     this.$store.commit('setEvents', result.events);
 
     if (!result.eventsUpToDate) {
+      // Currently disabled since this call only queries english websites which do not exist currently for the german part.
       // Update events later without blocking page load
-      void this.loadEvents(true);
+      // void this.loadEvents(true);
     }
   }
 }
