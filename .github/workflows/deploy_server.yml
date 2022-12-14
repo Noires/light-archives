@@ -14,7 +14,7 @@ jobs:
         uses: datamonsters/replace-action@v2
         with:
           files: 'server/config/default.yml'
-          replacements: '_SMTPHOST_=${{ secrets.SMPT_SERVER }},_SMTPPORT_=${{ secrets.SMTP_PORT }},_SMTPUSER_=${{ secrets.SMTP_USER }},_SMPTPASSWORD_=${{ secrets.SMTP_PASSWORD }},_SMTPFROM_=${{ secrets.SMPT_FROM }}'
+          replacements: '_FRONTENDROOT_=${{ secrets.FRONTEND_ROOT }},_SMTPHOST_=${{ secrets.SMPT_SERVER }},_SMTPPORT_=${{ secrets.SMTP_PORT }},_SMTPUSER_=${{ secrets.SMTP_USER }},_SMPTPASSWORD_=${{ secrets.SMTP_PASSWORD }},_SMTPFROM_=${{ secrets.SMPT_FROM }}'
       - name: Replace configuration values in docker-compose
         uses: datamonsters/replace-action@v2
         with:
