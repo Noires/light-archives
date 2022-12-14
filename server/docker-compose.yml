@@ -5,7 +5,7 @@ services:
     image: redis:6-alpine
     restart: always
     volumes:
-      - ./volumes/redis:/data:rw,z
+      - /home/_USER_/volumes/redis:/data:rw,z
     ports:
       - '16379:6379'
     expose:
@@ -15,7 +15,7 @@ services:
     image: mariadb:10.6
     restart: always
     volumes:
-      - ./volumes/mariadb:/var/lib/mysql:rw,z
+      - /home/_USER_/volumes/mariadb:/var/lib/mysql:rw,z
     expose:
       - 3306
     ports:
