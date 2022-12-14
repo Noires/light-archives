@@ -1,6 +1,6 @@
 server:
   port: 8111
-  frontendRoot: 'http://localhost:8080'
+  frontendRoot: '_FRONTENDROOT_'
   newsRoot: 'http://localhost:8081'
   maxUploadSpacePerUserMiB: 200
   stewardWebhookPort: 8112
