@@ -5,6 +5,8 @@
 				<h5>Diese Seite melden</h5>
 				<p>
 					Du bist im Inbegriff die folgende Seite zu melden:
+        </p>
+        <p>
           <strong>{{pageTitle}}</strong>
 				</p>
         <p>
