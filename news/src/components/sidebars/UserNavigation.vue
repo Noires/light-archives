@@ -2,7 +2,7 @@
 	<nav class="user-navigation" v-show="issues.length">
 		<div class="user-navigation__label">
 			<template v-if="!$store.getters.characterId">
-				<q-icon name="account_circle" size="36px" title="Not logged in" />
+				<q-icon name="account_circle" size="36px" title="Nicht eingeloggt" />
 			</template>
 			<template v-else>
 				<q-avatar v-if="$store.getters.character" round size="36px" :title="$store.getters.character.name">
@@ -13,26 +13,26 @@
 		<q-list bordered separator flat>
 			<template v-if="!$store.getters.characterId">
 				<q-item clickable v-ripple to="/login">
-					<q-icon name="login" size="36px" title="Log in" />
+					<q-icon name="login" size="36px" title="Einloggen" />
 				</q-item>
 			</template>
 			<template v-else>
 				<q-item clickable v-ripple @click="switchCharacter">
-					<q-icon name="switch_account" size="36px" title="Switch character" />
+					<q-icon name="switch_account" size="36px" title="Charakter wechseln" />
 				</q-item>
 				<template v-if="$store.getters.character?.verified">
 					<q-item clickable v-ripple to="/create-article">
-						<q-icon name="add" size="36px" title="Submit new article" />
+						<q-icon name="add" size="36px" title="Neuen Artikel einreichen" />
 					</q-item>
 					<q-item clickable v-ripple to="/my-articles">
-						<q-icon name="list_alt" size="36px" title="My articles" />
+						<q-icon name="list_alt" size="36px" title="Meine Artikel" />
 					</q-item>
 					<q-item v-if="$store.getters.character?.newsRole === NewsRole.EDITOR" clickable v-ripple to="/submitted">
-						<q-icon name="checklist" size="36px" title="Submitted articles" />
+						<q-icon name="checklist" size="36px" title="Eingereichte Arikel" />
 					</q-item>
 				</template>
 				<q-item clickable v-ripple @click="logOut">
-					<q-icon name="logout" size="36px" title="Log out" />
+					<q-icon name="logout" size="36px" title="Ausloggen" />
 				</q-item>
 			</template>
 		</q-list>
