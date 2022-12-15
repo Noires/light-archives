@@ -6,7 +6,7 @@
       </div>
 
       <div class="text-h2" style="opacity:.4">
-        Huch... wo sind die ganzen Blumen hin?
+        Huch? Hier gibt es wohl nichts...
       </div>
 
       <q-btn
