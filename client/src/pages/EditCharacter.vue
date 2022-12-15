@@ -55,10 +55,7 @@
             <h6>Biografie</h6>
             <q-input v-model="character.occupation" label="Profession" />
             <q-input v-model="character.age" class="page-edit-character__age" label="Alter" />
-<<<<<<< HEAD
-=======
             <q-input v-model="character.pronouns" class="page-edit-character__pronouns" label="Pronouns" :maxlength="SharedConstants.MAX_PRONOUNS_LENGTH" />
->>>>>>> main
             <q-input v-model="character.birthplace" label="Geburtsort" />
             <q-input v-model="character.residence" label="Wohnort" />
             <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername]], in allen obigen Feldern nutzen.</div>

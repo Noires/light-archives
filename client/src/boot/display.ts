@@ -81,7 +81,7 @@ class Display {
 	relativeTime(timestamp: number) {
 		const result = DateTime.fromMillis(timestamp).toRelative({
 			locale: 'de',
-			unit: [ 'Jahre', 'Monate', 'Tage', 'Stunden', 'Minuten' ]
+			unit: [ 'years', 'months', 'days', 'hours', 'minutes' ]
 		}) || '';
 
 		return result === 'vor 0 Minuten' ? 'Gerade' : result;

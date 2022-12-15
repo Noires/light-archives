@@ -68,14 +68,14 @@
 					</tr>
 				</tbody>
 			</q-markup-table>
-      <h4>Au Ra Xaela-Stämme</h4>
+      <h4>Charaktere nach Welt</h4>
 			<q-markup-table class="striped-list">
 				<thead>
-					<th class="text-left">Stamm</th>
+					<th class="text-left">Welt</th>
 					<th class="text-right">Anzahl</th>
 				</thead>
 				<tbody>
-					<tr v-for="row in statistics.seekerTribes" :key="row.name">
+					<tr v-for="row in statistics.servers" :key="row.name">
 						<td>{{ row.name }}</td>
 						<td class="text-right">{{ row.count }}</td>
 					</tr>
