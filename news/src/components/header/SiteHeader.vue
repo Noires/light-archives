@@ -1,11 +1,11 @@
 <template>
 	<header class="header">
-		<h1><router-link to="/">The Harborwatch</router-link></h1>
+		<h1><router-link to="/">Newspaper Name sobald man sich auf einen einigt</router-link></h1>
 		<hr />
 		<section class="header__info">
-			<div class="header__location">Limsa Lominsa</div>
+			<div class="header__location">Gebiet sobald man sich auf eines einigt</div>
 			<div id="header-date" class="header__date"></div>
-			<div class="header__price">15 gil</div>
+			<div class="header__price">Preis in Gil</div>
 		</section>
 		<hr />
 	</header>
