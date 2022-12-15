@@ -3,10 +3,10 @@
     <h2 class="wiki-page-view__title regular-header-font">{{ wikiPage.title }}</h2>
     <section class="text-caption wiki-page-view__subtitle row">
       <div class="wiki-page-view__posted-by">
-      Posted by <router-link :to="authorLink">{{ wikiPage.author }}</router-link> on {{ date }}
+      Verfasst von <router-link :to="authorLink">{{ wikiPage.author }}</router-link> am {{ date }}
       </div>
       <div class="wiki-page-view__type">
-        Available under the <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank">CC-BY-SA 4.0 license <q-icon class="external-link-icon" name="launch" /></a>
+        Verfügbar unter der <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank">CC-BY-SA 4.0 Lizenz <q-icon class="external-link-icon" name="launch" /></a>
       </div>
     </section>
     <hr />

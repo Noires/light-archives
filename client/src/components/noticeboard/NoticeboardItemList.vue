@@ -10,7 +10,7 @@
       >
         <q-item-section>
             <q-item-label>{{noticeboardItem.title}}</q-item-label>
-            <q-item-label caption>{{$display.noticeboardLocations[noticeboardItem.location]}} — by {{noticeboardItem.author}}</q-item-label>
+            <q-item-label caption>{{$display.noticeboardLocations[noticeboardItem.location]}} — von {{noticeboardItem.author}}</q-item-label>
         </q-item-section>
         <q-item-section side>
             <q-item-label>{{$display.relativeTime(noticeboardItem.createdAt)}}</q-item-label>
@@ -18,7 +18,7 @@
       </q-item>
     </q-list>
     <p v-else>
-      There are no noticeboard items on Chaos Archives. Yet!
+      Es gibt noch keine Aushänge auf <strong>Elpisgarten</strong>.
     </p>
   </div>
 </template>

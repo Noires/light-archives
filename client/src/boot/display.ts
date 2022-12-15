@@ -19,7 +19,7 @@ declare module '@vue/runtime-core' {
 }
 
 const DATE_FORMAT = 'd MMMM yyyy';
-const DATE_TIME_FORMAT = "d MMMM yyyy 'at' HH:mm";
+const DATE_TIME_FORMAT = "d MMMM yyyy 'um' HH:mm";
 
 class Display {
 	readonly races = races;
@@ -58,10 +58,10 @@ class Display {
 		[PageType.PROFILE]: 'Profil',
 		[PageType.FREE_COMPANY]: 'Freie Gesellschaft',
 		[PageType.COMMUNITY]: 'Community',
-		[PageType.VENUE]: 'Venue',
+		[PageType.VENUE]: 'Treffpunkt',
 		[PageType.EVENT]: 'Event',
 		[PageType.STORY]: 'Geschichte',
-		[PageType.NOTICEBOARD_ITEM]: 'Noticeboard item',
+		[PageType.NOTICEBOARD_ITEM]: 'Aushang',
 		[PageType.WIKI_PAGE]: 'Wikibeitrag',
 		[PageType.IMAGE]: 'Bild',
 	};
@@ -70,10 +70,10 @@ class Display {
 		[PageType.PROFILE]: 'Profile',
 		[PageType.FREE_COMPANY]: 'Freie Gesellschaften',
 		[PageType.COMMUNITY]: 'Communities',
-		[PageType.VENUE]: 'Venues',
+		[PageType.VENUE]: 'Treffpunkte',
 		[PageType.EVENT]: 'Events',
 		[PageType.STORY]: 'Geschichten',
-		[PageType.NOTICEBOARD_ITEM]: 'Noticeboard items',
+		[PageType.NOTICEBOARD_ITEM]: 'Aushänge',
 		[PageType.WIKI_PAGE]: 'Wikibeiträge',
 		[PageType.IMAGE]: 'Bilder',
 	};
@@ -89,17 +89,17 @@ class Display {
 
 	formatDate(date: number|string) {
 		const dateTime = typeof date === 'string' ?  DateTime.fromISO(date) : DateTime.fromMillis(date);
-		return dateTime.toFormat(DATE_FORMAT, { locale: 'en-GB' });
+		return dateTime.toFormat(DATE_FORMAT, { locale: 'de-DE' });
 	}
 
 	formatDateTimeServer(timestamp: number) {
 		return DateTime.fromMillis(timestamp).setZone(SharedConstants.FFXIV_SERVER_TIMEZONE).toFormat(DATE_TIME_FORMAT,
-			{ locale: 'en-GB' },
+			{ locale: 'de-DE' },
 		) + ' ST';
 	}
 
 	formatDateTimeLocal(timestamp: number) {
-		return DateTime.fromMillis(timestamp).toFormat(DATE_TIME_FORMAT, { locale: 'en-GB' }) + ' LT';
+		return DateTime.fromMillis(timestamp).toFormat(DATE_TIME_FORMAT, { locale: 'de-DE' }) + ' LT';
 	}
 
 	formatFileSize(fileSize: number) {

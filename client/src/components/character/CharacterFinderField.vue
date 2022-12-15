@@ -22,7 +22,7 @@
 						<q-icon name="face" />
 					</template>
 					<template v-slot:append>
-						<q-btn v-if="modelValue.server" flat dense icon="delete" title="Clear" @click="clearCharacter" />
+						<q-btn v-if="modelValue.server" flat dense icon="delete" title="Entfernen" @click="clearCharacter" />
 					</template>
 				</q-select>
 				<q-input :model-value="modelValue.server" label="Server" readonly>
@@ -44,7 +44,7 @@
 			</q-banner>
 			<q-banner v-else-if="registrationStatus === CharacterRegistrationStatus.RENAMED" class="bg-dark text-white">
 				<p>
-					Du hast für diesen Charakter eine Charakterumbenennung benutzt und auf PROJEKTNAME ein Charakterprofil unter dem alten Namen. Du <strong>kannst</strong> ein gesondertes Profil unter dem neuen Namen erstellen; allerdings wirst du nicht mehr dazu in der Lage sein den alten Charakter auf PROJEKTNAME dem neuen Namen anzupassen.
+					Du hast für diesen Charakter eine Charakterumbenennung benutzt und auf <strong>Elpisgarten</strong> ein Charakterprofil unter dem alten Namen. Du <strong>kannst</strong> ein gesondertes Profil unter dem neuen Namen erstellen; allerdings wirst du nicht mehr dazu in der Lage sein den alten Charakter auf <strong>Elpisgarten</strong> mit dem neuen Namen anzupassen.
 				</p>
 				<p>
 					Wenn du lieber ein existierendes Charakterprofil mit dem neuen Namen aktualisieren möchtest, öffne das Profil des betroffenen Charakters und klicke auf "Aktualisiere via Lodestone".

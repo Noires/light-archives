@@ -27,7 +27,7 @@
     </template>
     <template v-if="community.tags.length > 0">
       <hr />
-      <strong>Tags:</strong> {{ community.tags.join(', ') }}
+      <strong>Schlagworte:</strong> {{ community.tags.join(', ') }}
     </template>
   </div>
 </template>

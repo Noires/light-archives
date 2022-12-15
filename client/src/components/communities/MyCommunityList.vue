@@ -17,12 +17,12 @@
           <q-btn v-if="community.canDelete" flat dense icon="delete" @click.stop.prevent="onDeleteClick(community)" />
         </q-item-section>
         <q-item-section side v-else-if="community.membershipStatus === MembershipStatus.APPLIED">
-          Applied
+          Beworben
         </q-item-section>
       </q-item>
     </q-list>
     <p v-else>
-      You are not a member of any community on Chaos Archives. Yet!
+      Du bist noch keiner Community auf <strong>Elpisgarten</strong> beigetreten.
     </p>
   </div>
 </template>
@@ -52,18 +52,18 @@ export default class MyCommunityList extends Vue.with(Props) {
 
 	onDeleteClick(community: MyCommunitySummaryDto) {
 		this.$q.dialog({
-        title: 'Confirm Delete',
-        message: `Do you want to delete the community “${community.name}”?`,
+        title: 'Löschbestätigung',
+        message: `Möchtest du “${community.name}” wirklich löschen?`,
 				ok: {
-					label: 'Delete',
+					label: 'Löschen',
 					color: 'negative',
 					flat: true
 				},
-        cancel: 'Cancel',
+        cancel: 'Abbrechen',
       }).onOk(async () => {
         try {
 					await this.$api.communities.deleteCommunity(community.id);
-          notifySuccess('Community deleted.');
+          notifySuccess('Community gelöscht.');
           this.$emit('deleted', community);
 				} catch (e) {
 					notifyError(e);

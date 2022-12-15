@@ -8,7 +8,7 @@ export enum NoticeboardLocation {
 }
 
 export const noticeboardLocations: { [k: string]: string } = {
-	[NoticeboardLocation.MULTIPLE_LOCATIONS]: 'Weiverbreitet',
+	[NoticeboardLocation.MULTIPLE_LOCATIONS]: 'Weitverbreitet',
 	[NoticeboardLocation.LIMSA_LOMINSA]: 'Limsa Lominsa',
 	[NoticeboardLocation.GRIDANIA]: 'Gridania',
 	[NoticeboardLocation.ULDAH]: "Ul'dah",

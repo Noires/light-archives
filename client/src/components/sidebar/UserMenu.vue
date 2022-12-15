@@ -77,7 +77,7 @@
           to="/create-community"
         >
           <q-item-section>
-            <q-item-label>Create community</q-item-label>
+            <q-item-label>Community erstellen</q-item-label>
           </q-item-section>
         </q-item>
         <q-item
@@ -86,7 +86,7 @@
           to="/my-communities"
         >
           <q-item-section>
-            <q-item-label>My communities</q-item-label>
+            <q-item-label>Meine Communities</q-item-label>
           </q-item-section>
         </q-item>
         <q-separator dark />
@@ -96,7 +96,7 @@
           to="/create-venue"
         >
           <q-item-section>
-            <q-item-label>Create venue</q-item-label>
+            <q-item-label>Treffpunkt erstellen</q-item-label>
           </q-item-section>
         </q-item>
         <q-item
@@ -105,7 +105,7 @@
           to="/my-venues"
         >
           <q-item-section>
-            <q-item-label>My venues</q-item-label>
+            <q-item-label>Meine Treffpunkte</q-item-label>
           </q-item-section>
         </q-item>
         <q-separator dark />
@@ -133,7 +133,7 @@
           to="/create-noticeboard-item"
         >
           <q-item-section>
-            <q-item-label>New noticeboard item</q-item-label>
+            <q-item-label>Neuer Aushang</q-item-label>
           </q-item-section>
         </q-item>
         <q-item

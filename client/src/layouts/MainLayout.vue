@@ -8,8 +8,8 @@
             flat
             dense
             no-caps
-            tooltip="User"
-            aria-label="User"
+            tooltip="Nutzer"
+            aria-label="Nutzer"
             @click="toggleLeftDrawer"
           >
             <q-avatar v-if="$store.getters.character" round size="28px">
@@ -23,8 +23,8 @@
             dense
             no-caps
             dropdown-icon="menu"
-            tooltip="Menu"
-            aria-label="Menu"
+            tooltip="Menü"
+            aria-label="Menü"
           >
             <q-list>
               <q-item v-for="link in siteLinks" clickable v-close-popup :key="link.label" :to="link.to">
@@ -43,7 +43,7 @@
             </template>
             <template v-else>
               <q-icon size="28px" name="account_circle" />
-              <span>Ein Fremder</span>
+              <span>Eine fremde Gestalt</span>
             </template>
           </div>
         </div>
@@ -135,7 +135,7 @@
     <q-footer elevated>
       <q-toolbar>
         <div class="layout__footer text-body justify-center text-center">
-          Final Fantasy XIV © 2010&ndash;2023 Square Enix Co., Ltd. Alle Rechte vorbehalten. PROJEKTNAME ist eine Fanseite
+          Final Fantasy XIV © 2010&ndash;2023 Square Enix Co., Ltd. Alle Rechte vorbehalten. Elpisgarten ist eine Fanseite
           und steht nicht mit Square Enix in Verbindung.<br />
           Alle Rechte der Texte und Bilder © 2022–2023 liegen bei ihren jeweiligen Eigentümern.
           <router-link to="/privacy-statement">(Datenschutzerklärung)</router-link>
@@ -176,7 +176,7 @@ export default class MainLayout extends Vue {
 
   readonly siteLinks = [
     { label: 'Charaktere', to: '/profiles' },
-    { label: 'Venues', to: '/venues' },
+    { label: 'Treffpunkte', to: '/venues' },
     { label: 'Anschlagbrett', to: '/noticeboard' },
     { label: 'Communities', to: '/communities' },
     { label: 'Freie Gesellschaften', to: '/free-companies' },
