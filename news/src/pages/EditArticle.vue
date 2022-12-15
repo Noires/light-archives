@@ -29,7 +29,7 @@
             type="textarea"
             outlined
             v-model="article.summary"
-            :rules="[$rules.required('This field is required.')]"
+            :rules="[$rules.required('Dieses Feld ist erforderlich.')]"
           />
           <h6>Content *</h6>
           <html-editor v-model="article.content" />
@@ -63,7 +63,7 @@
     <q-dialog v-model="confirmRevert" persistent>
       <q-card>
         <q-card-section class="row items-center">
-          <span class="q-ml-sm">Do you want to revert your unsaved changes to the last saved version?</span>
+          <span class="q-ml-sm">Möchtest du die ungespeicherten Änderungen auf die letzte gespeicherte Version zurücksetzen?</span>
         </q-card-section>
 
         <q-card-actions align="right">
