@@ -190,7 +190,11 @@ async function load(params: RouteParams): Promise<{event: EventEditDto, eventId:
 
 	try {
 		const event = await $api.events.getEventForEdit(id);
+<<<<<<< HEAD
 		document.title = `${event.title} — Elpisgarten`;
+=======
+		document.title = `${event.title} — PROJEKTNAME`;
+>>>>>>> main
 		return { event, eventId: id };
 	} catch (e) {
 		if (errors.getStatusCode(e) === 404) {

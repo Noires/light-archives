@@ -37,8 +37,8 @@
       </q-card>
     </template>
     <section v-else>
-      Nothing found for <strong>{{ query }}</strong
-      >.
+      Kein Ergebnis zu <strong>{{ query }}</strong
+      > gefunden.
     </section>
   </q-page>
 </template>
