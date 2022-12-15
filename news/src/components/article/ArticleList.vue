@@ -6,12 +6,12 @@
         <q-item-label caption>
           {{ $display.articleStatuses[article.status] }}
           <template v-if="article.status === NewsStatus.PUBLISHED">
-            on {{ $display.formatDateEorzean(article.publishedAt) }}
+            am {{ $display.formatDateEorzean(article.publishedAt) }}
           </template>
         </q-item-label>
       </q-item-section>
       <q-item-section side>
-        <q-btn v-if="article.canEdit" flat color="primary" label="Edit" :to="`/edit-article/${article.id}`" />
+        <q-btn v-if="article.canEdit" flat color="primary" label="Bearbeiten" :to="`/edit-article/${article.id}`" />
       </q-item-section>
     </q-item>
   </q-list>
