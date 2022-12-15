@@ -1,3 +1,5 @@
+<!--
+
 <template>
   <q-timeline>
     <q-timeline-entry heading tag="div">
@@ -44,6 +46,8 @@
     </q-timeline-entry>
   </q-timeline>
 </template>
+
+-->
 
 <script lang="ts">
 import { prop, Options, Vue } from 'vue-class-component';
