@@ -18,33 +18,33 @@ const DATE_FORMAT = 'd MMMM yyyy';
 
 const EORZEAN_MONTH_NAMES: string[] = [];
 
-for (const ordinal of [ 'First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth' ]) {
-	EORZEAN_MONTH_NAMES.push(`${ordinal} Astral Moon`);
-	EORZEAN_MONTH_NAMES.push(`${ordinal} Umbral Moon`);
+for (const ordinal of [ 'Ersten', 'Zweiten', 'Dritten', 'Vierten', 'Fünften', 'Sechsten' ]) {
+	EORZEAN_MONTH_NAMES.push(`${ordinal} Lichtmondes`);
+	EORZEAN_MONTH_NAMES.push(`${ordinal} Schattenmondes`);
 }
 
 class Display {
 	readonly newsRoles = {
-		[NewsRole.NONE]: 'Guest',
-		[NewsRole.AUTHOR]: 'Author',
+		[NewsRole.NONE]: 'Gast',
+		[NewsRole.AUTHOR]: 'Autor',
 		[NewsRole.EDITOR]: 'Editor',
 	};
 
 	readonly articleStatuses = {
-		[NewsStatus.DRAFT]: 'Draft',
-		[NewsStatus.SUBMITTED]: 'Submitted for publication',
-		[NewsStatus.PUBLISHED]: 'Published',
+		[NewsStatus.DRAFT]: 'Entwurf',
+		[NewsStatus.SUBMITTED]: 'Zur Veröffentlichung eingereicht',
+		[NewsStatus.PUBLISHED]: 'Veröffentlicht',
 	}
 
 	readonly imageCategories: { [k: string]: string } = {
-		[ImageCategory.UNLISTED]: 'Unlisted',
-		[ImageCategory.ARTWORK]: 'Artwork',
+		[ImageCategory.UNLISTED]: 'Ungelistet',
+		[ImageCategory.ARTWORK]: 'Kunstwerk',
 		[ImageCategory.SCREENSHOT]: 'Screenshot',
 	};
 
 	formatDate(date: number|string) {
 		const dateTime = typeof date === 'string' ?  DateTime.fromISO(date) : DateTime.fromMillis(date);
-		return dateTime.toFormat(DATE_FORMAT, { locale: 'en-GB' });
+		return dateTime.toFormat(DATE_FORMAT, { locale: 'de-DE' });
 	}
 
 	formatDateEorzean(date: number|string) {
@@ -61,7 +61,7 @@ class Display {
 			: 'th';
 		const month = EORZEAN_MONTH_NAMES[dateTime.month - 1]; // January is 1
 
-		return `${day}${suffix} Sun of the ${month}`;
+		return `${day}${suffix} Sonne des ${month}`;
 	}
 
 	formatFileSize(fileSize: number) {
