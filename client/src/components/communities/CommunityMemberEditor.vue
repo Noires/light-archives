@@ -9,15 +9,15 @@
       row-key="id"
       wrap-cells
     >
-      <template v-slot:no-data>No community members.</template>
+      <template v-slot:no-data>Keine Community-Mitglieder.</template>
       <template v-slot:header-cell-avatar="props">
         <q-th :props="props" auto-width />
       </template>
       <template v-slot:header-cell-permissions="props">
-        <q-th :props="props" auto-width>Permissions</q-th>
+        <q-th :props="props" auto-width>Berechtigungen</q-th>
       </template>
       <template v-slot:header-cell-actions="props">
-        <q-th :props="props" auto-width>Actions</q-th>
+        <q-th :props="props" auto-width>Aktionen</q-th>
       </template>
       <template v-slot:body-cell-avatar="props">
         <q-td :props="props">
@@ -39,14 +39,14 @@
         <q-td :props="props" class="community-member-editor__cell-permissions">
           <q-checkbox
             dense
-            label="Can edit"
+            label="Kann bearbeiten"
             :model-value="props.row.canEdit"
             :disable="!community.canEdit || !canEditMember(props.row)"
             @update:model-value="(val) => setCanEdit(props.row, val)"
           /><br />
           <q-checkbox
             dense
-            label="Can manage members"
+            label="Kann Mitglieder verwalten"
             :model-value="props.row.canManageMembers"
             :disable="!canEditMember(props.row)"
             @update:model-value="(val) => setCanManageMembers(props.row, val)"
@@ -59,7 +59,7 @@
             v-if="canEditMember(props.row)"
             flat
             color="negative"
-            label="Remove"
+            label="Entfernen"
             @click="onRemoveClick(props.row)"
           />
         </q-td>
@@ -113,14 +113,14 @@ export default class CommunityMemberEditor extends Vue.with(Props) {
       },
       {
         name: 'permissions',
-        label: 'Permissions',
+        label: 'Berechtigungen',
         align: 'left',
         sortable: false,
       },
       {
         name: 'actions',
         field: 'status',
-        label: 'Actions',
+        label: 'Aktionen',
         align: 'center',
         sortable: false,
       },
@@ -144,19 +144,19 @@ export default class CommunityMemberEditor extends Vue.with(Props) {
   onRemoveClick(member: CommunityMemberDto) {
     this.$q
       .dialog({
-        title: 'Confirm Remove',
-        message: `Do you want to remove ${member.name} from your community?`,
+        title: 'Mitglied entfernen',
+        message: `Möchtest du ${member.name} wirklich aus deiner Community entfernen?`,
         ok: {
-          label: 'Remove',
+          label: 'Entfernen',
           color: 'negative',
           flat: true,
         },
-        cancel: 'Cancel',
+        cancel: 'Abbrechen',
       })
       .onOk(async () => {
         try {
           await this.$api.communities.rejectMember(this.community.id, member.characterId);
-          notifySuccess(`Membership for ${member.name} revoked.`);
+          notifySuccess(`Mitgliedschaft von ${member.name} zurückgezogen.`);
           this.$emit('updated', member);
         } catch (e) {
           notifyError(e);

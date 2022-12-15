@@ -44,7 +44,7 @@
 					label="Weiter >"
 					@click="goNext"
 				/>
-				<q-btn v-else :disable="!canUpload" color="primary" label="Upload" @click="onUploadClick" />
+				<q-btn v-else :disable="!canUpload" color="primary" label="Hochladen" @click="onUploadClick" />
 			</q-card-actions>
       <div
         class="upload-dialog__drag-overlay"

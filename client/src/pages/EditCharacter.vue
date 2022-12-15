@@ -21,7 +21,7 @@
           </div>
           <section class="page-edit-character__form-controls">
             <p></p>
-            <p>All fields are optional.</p>
+            <p>Alle Felder sind optional.</p>
             <h6>Profilanzeige</h6>
             <q-field class="page-edit-character__checkbox" borderless>
               <template v-slot:control>
@@ -31,11 +31,11 @@
             <div class="text-caption">Zeigt den Avatar des Charakters links vom Namen an.</div>
             <q-field class="page-edit-character__checkbox" borderless>
               <template v-slot:control>
-                <q-checkbox v-model="character.showInfoboxes" label="Zeige Infobox" />
+                <q-checkbox v-model="character.showInfoboxes" label="Zeige Infoboxen" />
               </template>
             </q-field>
             <div class="text-caption">
-              Zeigt die Charakterinformationen in einer Infobox an. Wenn nicht ausgewählt, werden alle Infoboxen von der öffentlichen Profilseite
+              Zeigt die Charakterinformationen in Infoboxen an. Wenn nicht ausgewählt, werden alle Infoboxen von der öffentlichen Profilseite
               verborgen.
             </div>
             <q-field class="page-edit-character__checkbox" borderless>
@@ -87,8 +87,8 @@
         <div class="page-edit-character__button-bar">
           <q-btn-toggle v-model="preview" :options="previewOptions" toggle-color="secondary" />
           <div class="page-edit-character__revert-submit">
-            <q-btn label="Revert" color="secondary" @click="onRevertClick" />&nbsp;
-            <q-btn label="Save changes" type="submit" color="primary" />
+            <q-btn label="Zurücksetzen" color="secondary" @click="onRevertClick" />&nbsp;
+            <q-btn label="Änderungen speichern" type="submit" color="primary" />
           </div>
         </div>
         <q-inner-loading :showing="saving" />
@@ -157,8 +157,8 @@ export default class PageEditCharacter extends Vue {
   readonly SharedConstants = SharedConstants;
 
   readonly previewOptions = [
-    { label: 'Edit', value: false },
-    { label: 'Preview', value: true },
+    { label: 'Bearbeitung', value: false },
+    { label: 'Vorschau', value: true },
   ];
 
   character = new CharacterProfileDto();

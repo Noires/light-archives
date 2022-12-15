@@ -17,7 +17,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/About.vue') }],
     meta: {
-      title: 'About'
+      title: 'Über uns'
     },
   },
 
@@ -26,7 +26,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/Rules.vue') }],
     meta: {
-      title: 'Rules'
+      title: 'Regeln'
     },
   },
 
@@ -35,7 +35,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/Contact.vue') }],
     meta: {
-      title: 'Contact'
+      title: 'Kontakt'
     },
   },
 
@@ -44,7 +44,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/PrivacyStatement.vue') }],
     meta: {
-      title: 'Privacy Statement'
+      title: 'Datenschutzerklärung'
     },
   },
 
@@ -55,7 +55,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/SignUp.vue') }],
     meta: {
-      title: 'Sign Up'
+      title: 'Anmelden'
     },
   },
 
@@ -65,7 +65,7 @@ const routes: RouteRecordRaw[] = [
     path: '/confirm-email/:verificationToken',
     component: () => import('pages/ConfirmEmail.vue'),
     meta: {
-      title: 'Confirm Email'
+      title: 'E-Mail-Adresse bestätigen'
     },
   },
 
@@ -75,7 +75,7 @@ const routes: RouteRecordRaw[] = [
     path: '/confirm-new-email/:verificationToken',
     component: () => import('pages/ConfirmNewEmail.vue'),
     meta: {
-      title: 'Confirm New Email'
+      title: 'Neue E-Mail-Adresse bestätigen'
     },
   },
 
@@ -84,7 +84,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/LogIn.vue') }],
     meta: {
-      title: 'Log In'
+      title: 'Einloggen'
     },
   },
 
@@ -93,7 +93,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/Verify.vue') }],
     meta: {
-      title: 'Verify Account'
+      title: 'Account verifizieren'
     },
   },
 
@@ -102,7 +102,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/ForgotPassword.vue') }],
     meta: {
-      title: 'Forgot Password'
+      title: 'Passwort vergessen'
     },
   },
 
@@ -111,7 +111,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/ForgotPassword.vue') }],
     meta: {
-      title: 'Forgot Password'
+      title: 'Passwort vergessen'
     },
   },
 
@@ -120,7 +120,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/ResetPassword.vue') }],
     meta: {
-      title: 'Reset Password'
+      title: 'Passwort zurücksetzen'
     },
   },
 
@@ -130,7 +130,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditCharacter.vue') }],
     meta: {
-      title: 'Edit Profile'
+      title: 'Profil bearbeiten'
     },
   },
 
@@ -139,7 +139,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/MyAccount.vue') }],
     meta: {
-      title: 'My Account'
+      title: 'Mein Account'
     },
   },
 
@@ -149,7 +149,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/Stories.vue') }],
     meta: {
-      title: 'Stories'
+      title: 'Geschichten'
     },
   },
 
@@ -164,7 +164,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditStory.vue') }],
     meta: {
-      title: 'Create Story'
+      title: 'Geschichte erstellen'
     },
   },
 
@@ -173,7 +173,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditStory.vue') }],
     meta: {
-      title: 'Edit Story'
+      title: 'Geschichte bearbeiten'
     },
   },
 
@@ -183,7 +183,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/Noticeboard.vue') }],
     meta: {
-      title: 'Noticeboard'
+      title: 'Anschlagbrett'
     },
   },
 
@@ -198,7 +198,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditNoticeboardItem.vue') }],
     meta: {
-      title: 'Create Noticeboard Item'
+      title: 'Aushang erstellen'
     },
   },
 
@@ -207,7 +207,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditNoticeboardItem.vue') }],
     meta: {
-      title: 'Edit Noticeboard Item'
+      title: 'Aushang bearbeiten'
     },
   },
 
@@ -224,7 +224,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditEvent.vue') }],
     meta: {
-      title: 'Create Event'
+      title: 'Event erstellen'
     },
   },
 
@@ -233,7 +233,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditEvent.vue') }],
     meta: {
-      title: 'Edit Event'
+      title: 'Event bearbeiten'
     },
   },
 
@@ -248,7 +248,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EventCalendar.vue') }],
     meta: {
-      title: 'Event Calendar'
+      title: 'Eventkalender'
     },
   },
 
@@ -271,7 +271,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/MyContent.vue') }],
     meta: {
-      title: 'My Content'
+      title: 'Meine Inhalte'
     },
   },
 
@@ -280,7 +280,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditImage.vue') }],
     meta: {
-      title: 'Edit Image'
+      title: 'Bild bearbeiten'
     },
   },
 
@@ -291,7 +291,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/Venues.vue') }],
     meta: {
-      title: 'Venues'
+      title: 'Treffpunkte'
     },
   },
 
@@ -300,7 +300,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/MyVenues.vue') }],
     meta: {
-      title: 'My Venues'
+      title: 'Meine Treffpunkte'
     },
   },
 
@@ -321,7 +321,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditVenue.vue') }],
     meta: {
-      title: 'Create Venue'
+      title: 'Treffpunkt erstellen'
     },
   },
 
@@ -330,7 +330,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditVenue.vue') }],
     meta: {
-      title: 'Edit Venue'
+      title: 'Treffpunkt bearbeiten'
     },
   },
 
@@ -350,7 +350,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/MyCommunities.vue') }],
     meta: {
-      title: 'My Communities'
+      title: 'Meine Communities'
     },
   },
 
@@ -365,7 +365,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditCommunity.vue') }],
     meta: {
-      title: 'Create Community'
+      title: 'Community erstellen'
     },
   },
 
@@ -374,7 +374,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditCommunity.vue') }],
     meta: {
-      title: 'Edit Community'
+      title: 'Community bearbeiten'
     },
   },
 
@@ -385,7 +385,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/MyFreeCompany.vue') }],
     meta: {
-      title: 'My Free Company'
+      title: 'Meine Freie Gesellschaft'
     },
   },
 
@@ -394,7 +394,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/FreeCompanies.vue') }],
     meta: {
-      title: 'Free Companies'
+      title: 'Freie Gesellschaften'
     },
   },
 
@@ -414,7 +414,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditFreeCompany.vue') }],
     meta: {
-      title: 'Edit Free Company'
+      title: 'Freie Gesellschaft bearbeiten'
     },
   },
 
@@ -431,7 +431,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditWikiPage.vue') }],
     meta: {
-      title: 'Create Wiki Page'
+      title: 'Wikibeitrag erstellen'
     },
   },
 
@@ -440,7 +440,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditWikiPage.vue') }],
     meta: {
-      title: 'Edit Wiki Page'
+      title: 'Wikibeitrag bearbeiten'
     },
   },
 
@@ -461,7 +461,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/Search.vue') }],
     meta: {
-      title: 'Search'
+      title: 'Suche'
     },
   },
 
@@ -471,7 +471,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/Characters.vue') }],
     meta: {
-      title: 'Profiles'
+      title: 'Profile'
     },
   },
 

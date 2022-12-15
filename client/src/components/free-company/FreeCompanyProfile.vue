@@ -24,7 +24,7 @@
       <character-detail label="Rekrutierer" :value="freeCompany.recruitingOfficers" v-if="freeCompany.recruitingOfficers" />
     </character-details-box>
     <template v-if="!freeCompany.claimed">
-      Der Anführer hat diese Freie Gesellschaft noch nicht auf PROJEKTNAME beansprucht.
+      Der Anführer hat diese Freie Gesellschaft noch nicht auf <strong>Elpisgarten</strong> beansprucht.
     </template>
     <template v-if="freeCompany.description">
       <html-viewer class="free-company-profile__appearance-background" :content="freeCompany.description" />

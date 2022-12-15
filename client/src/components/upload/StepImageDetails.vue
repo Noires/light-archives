@@ -17,7 +17,7 @@
           :rules="[$rules.required('Dieses Feld ist erforderlich.')]"
           @update:model-value="onModelUpdated"
         />
-        <div class="step-image-details__description-label">Description:</div>
+        <div class="step-image-details__description-label">Beschreibung:</div>
         <html-editor
           v-model="modelValue.description"
           :allow-images="false"
@@ -34,8 +34,8 @@
           use-input
           clearable
           input-debounce="200"
-          label="Event link"
-          hint="Start typing, and we will attempt to find the event."
+          label="Eventlink"
+          hint="Fang an zu schreiben, wir werden versuchen das Event zu finden."
           @filter="onEventFilter"
           @update:model-value="onModelUpdated"
         >

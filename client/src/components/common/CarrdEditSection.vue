@@ -1,6 +1,6 @@
 <template>
   <section class="carrd-edit-section">
-    <h6>Carrd integration</h6>
+    <h6>Carrd Integration</h6>
     <p class="text-caption">
       <a href="https://carrd.co/" target="_blank">Carrd <q-icon class="external-link-icon" name="launch" /></a> ist ein 
       Anbieter für die Erstellung von einseitigen Webseiten. Wenn dein Charakter über eine Carrd-Webseite verfügt, kannst du 
@@ -9,7 +9,7 @@
     <q-checkbox
       v-if="$store.getters.isTrusted"
       v-model="customDomain"
-      label="Custom domain"
+      label="Eigene Domäne"
       @update:modelValue="onCustomDomainChanged"
     />
     <q-input

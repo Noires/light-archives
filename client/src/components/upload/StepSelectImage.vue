@@ -28,14 +28,14 @@
       v-if="modelValue.file && !modelValue.image"
       class="step-select-image__not-image bg-negative text-white"
     >
-      Not an image file.
+      Keine Bilddatei.
     </q-banner>
     <q-banner
       v-if="modelValue.image && !isValidAspectRatio"
       class="step-select-image__not-image bg-negative text-white"
     >
-      Banners can be no taller than 4:1 width:height. For example, 500&times;100 and 400&times;100 are fine, but
-              not 300&times;100.
+      Banner müssen ein Seitenverhältnis von 4:1 Breite:Höhe haben. Beispielsweise ist 500&times;100 und 400&times;100 in Ordnung, aber
+	    300&times;100 aber nicht.
     </q-banner>
     <template v-if="modelValue.file && modelValue.image">
       <section
@@ -70,8 +70,8 @@
         </div>
       </section>
       <section v-if="canChooseFormat" class="text-caption">
-        PNG Dateien sind größer, erhalten aber die ursprünglichen Pixel. JPEG
-        Dateien sind kleiner und schneller herunterzuladen, können aber leichte, oftmals
+        PNG-Dateien sind größer, erhalten aber die ursprünglichen Pixel. JPEG-Dateien
+        sind kleiner und schneller herunterzuladen, können aber leichte, oftmals
         unauffällige Abweichungen zum Original aufweisen.
       </section>
     </template>

@@ -13,8 +13,8 @@
 						<q-item-label caption>{{$display.relativeTime(item.createdAt)}}</q-item-label>
 				</q-item-section>
 				<q-item-section side class="my-content-list__buttons">
-					<q-btn color="secondary" flat icon="Bearbeiten" title="Edit" :to="getEditLink(item)" @click.prevent="onEditClick(item)" />
-					<q-btn color="danger" flat icon="Löschen" title="Delete" @click.prevent="onDeleteClick(item)" />
+					<q-btn color="secondary" flat icon="edit" title="Bearbeiten" :to="getEditLink(item)" @click.prevent="onEditClick(item)" />
+					<q-btn color="danger" flat icon="delete" title="Löschen" @click.prevent="onDeleteClick(item)" />
 				</q-item-section>
 			</q-item>
 		</q-list>
@@ -70,7 +70,7 @@ export default class MyContentList extends Vue.with(Props) {
 
 		this.$q.dialog({
         title: 'Confirm Delete',
-        message: `Willst du das/die ${description.toLowerCase()} “${item.title}” löschen?`,
+        message: `Möchtest du “${item.title}” wirklich löschen?`,
 				ok: {
 					label: 'Löschen',
 					color: 'negative',

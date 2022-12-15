@@ -1,41 +1,41 @@
-We at Chaos Archives value your privacy as a roleplayer and content creator. To preserve it, we have taken several steps. We ask only for the bare minimum personal information needed, and do not use any third-party services that could track you.
+Wir auf <strong>Elpisgarten</strong> schätzen deines Privatsphäre als Rollenspieler und Ersteller von Inhalten. Zu deinem Schutz haben wir mehrere Schritte unternommen; wir fragen nur nach dem absoluten Minimum an notwendigen persönlichen Informationen und nutzen keine Dienste von Dritten, die dich verfolgen könnten.
 
 
-### Personal data
+### Persönliche Daten
 
-During sign-up, we only ask for your email address and password.
+Während der Anmeldung wirst du nur nach deiner E-Mail-Adresse und deinem Passwort gefragt.
 
-Your password is not stored on our server directly; as is standard practice, for the purposes of checking your password at login, we store a partially randomized value (salted hash) derived from it. Even the server administrator cannot recover your original password. As is the norm for modern websites, all data sent by your browser is transmitted over an encrypted connection (HTTPS) and cannot be read by anyone except the Chaos Archives server itself.
+Dein Passwort nicht direkt auf unserem Server gespeichert; standardmäßig speichern wir — zur Uberprüfung deines Passworts beim Einloggen — einen davon abgeleiteten, teilweise zufälligen Wert ('Salted Hash'). Selbst der Serveradministrator ist nicht dazu in der Lage, dein ursprüngliches Passwort wiederherzustellen. Wie es bei modernen Webseiten üblich ist, werden alle von deinem Browser übermittelten Daten über eine verschlüsselte Verbindung (HTTPS) übertragen und können von niemandem außer dem <strong>Elpisgarten</strong>-Server selbst ausgelesen werden.
 
-We will never ask for your password by email or on Discord. If you ever receive an email or chat message that requests your password, please <router-link to="/contact">let us know</router-link>, so we can investigate the source of the message.
+Wir werden dich niemals über E-Mail oder auf Discord nach deinem Passwort fragen. Solltest du jemals eine E-Mail oder Direktnachricht erhalten, in der man dich um die Herausgabe deines Passworts bittet, solltest du dich umgehend <router-link to="/contact">bei uns melden</router-link>, damit wir der Sache auf den Grund gehen können.
 
-Your email address is only stored for the purposes of sending essential email messages from the Chaos Archives server, such as password reset confirmations.
+Deine E-Mail-Adresse wird nur gespeichert um dir wichtige Nachrichten des <strong>Elpisgarten</strong>-Servers zukommen zu lassen, wie etwa zur Wiederherstellung deines Passworts.
 
-None of your personal data is algorithmically analyzed or shared with any third parties.
-
-
-### Anonymity
-
-Other users cannot see your email address, only your character name. Furthermore, if you have multiple FFXIV characters registered on the same Chaos Archives user account, other users have no means of knowing that; they can only see characters and their associated content, not these characters' relation to user accounts.
+Keine deiner persönlichen Daten werden algorithmisch analysiert oder an Dritte weitergegeben.
 
 
-### Cookies and tracking
+### Anonymität
 
-The only personal data that the Chaos Archives website stores in your browser is an essential, anonymous session identifier for the purposes of keeping you logged in between browser restarts. These are stored entirely on the client side; the server does not maintain a list of active user logins, nor does it store a history of previous user logins.
-
-Session identifiers expire in 30 days, at which point you need to log in again.
-
-Chaos Archives does not contain any advertisements and does not install any third-party cookies, be it for tracking purposes or for analytics purposes.
+Andere Nutzer können deine E-Mail-Adresse <strong>nicht</strong> sehen, nur deinen Charakternamen. Darüber hinaus sind andere Nutzer nicht dazu in der Lage, deine Charaktere miteinander in Verbindung zu bringen sofern du mehrere Charaktere auf demselben <strong>Elpisgarten</strong>-Account registriert hast; es ist nur möglich Charaktere und die damit verbundenen Inhalte zu sehen.
 
 
-### Server logs
+### Cookies
 
-Like most websites, for the purposes of quickly resolving potential technical issues, we maintain web server access logs, which can only be seen by the server administrator. Each log entry records the following information:
+Die einzigen personenbezogenen Daten, welche die <strong>Elpisgarten</strong>-Webseite in deinem Browser speichert, sind eine wesentliche, anonyme Sitzungserkennung damit du zwischen den Aktualisierungen des Browsers eingeloggt bleibst. Diese werden ausschließlich auf der Client-Seite gespeichert; der Server führt weder eine Liste aktiver Nutzeranmeldungen noch speichert er einen Verlauf früherer Nutzeranmeldungen.
 
-* Your IP address.
-* Your web browser name, version, and operating system type.
-* The address of the page requested.
-* Time of access.
-* The server response code (success or error).
+Sitzungskennungen laufen nach dreißig (30) Tagen ab; danach musst du dich erneut anmelden.
 
-These log entries are automatically deleted after 14 days. No user activity information is stored permanently or analyzed algorithmically.
+<strong>Elpisgarten</strong> enthält keine Werbung und installiert keine Cookies von Dritten, weder zu Tracking- noch zu Analysezwecken.
+
+
+### Serverprotokolle
+
+Wie die meisten Webseiten führen wir zur schnellen Behebung möglicher technischer Probleme Zugriffsprotokolle des Webservers, die nur vom Serveradministrator eingesehen werden können. Jeder Protokolleintrag enthält die folgenden Informationen:
+
+* Deine IP-Adresse
+* Name und Version deines Webbrowsers, sowie Typ deines Betriebssystems
+* Die Adresse der angeforderten Seite
+* Zeitpunkt des Zugriffs
+* Der Antwortcode des Servers (Erfolg oder Fehler)
+
+Diese Protokolleinträge werden nach vierzehn (14) Tagen automatisch gelöscht. Keine Information zu Useraktivitäten wird permanent gespeichert oder algorithmisch ausgewertet.

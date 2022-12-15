@@ -10,7 +10,7 @@
 		<div class="step-thumbnail__col">
 			<section class="step-thumbnail__description">
 				<h6>Thumbnail</h6>
-				<div class="step-thumbnail__label">Das wird in deinen Inhalten und den Galerien angezeigt.</div>
+				<div class="step-thumbnail__label">Das Thumbnail wird in deinen Inhalten und den Galerien angezeigt.</div>
 			</section>
 			<section style="display: inline-block"><img ref="cropper" :src="image.src" /></section>
 		</div>
