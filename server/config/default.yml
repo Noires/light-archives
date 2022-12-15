@@ -29,9 +29,9 @@ mail:
   from: '_SMTPFROM_'
 
 auth:
-  jwtSecret: 'secret'
-  jwtExpiry: '30d'
-  scopedJwtExpiry: '365d'
+  jwtSecret: '_JWTSECRET_'
+  jwtExpiry: '_JWTEXPIRY_'
+  scopedJwtExpiry: '_JWTSCOPEDEXPIRY_'
 
 s3:
   endpoint: 'https://servername.tld'
