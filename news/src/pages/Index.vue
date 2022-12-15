@@ -5,7 +5,7 @@
       <article-view v-for="article in issue.articles" :article="article" :key="article.id" />
     </template>
     <template v-else>
-      Es gibt noch keine neuen Ausgaben.
+      Es gibt noch keine Ausgaben.
     </template>
   </section>
 </template>
