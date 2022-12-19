@@ -1,7 +1,7 @@
 <template>
   <q-dialog ref="dialog" no-backdrop-dismiss @hide="onDialogHide">
     <q-card class="switch-character-dialog">
-      <h5>Switch Character</h5>
+      <h5>Charakter wechseln</h5>
       <character-name-list
         class="switch-character-dialog__character-list"
         :profiles="characters"
@@ -11,7 +11,7 @@
         @select="onCharacterSelect"
       />
       <q-card-actions class="switch-character-dialog__buttons">
-        <q-btn flat color="primary" label="Close" @click="onCloseClick" />
+        <q-btn flat color="primary" label="Schließen" @click="onCloseClick" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -69,7 +69,7 @@ export default class SwitchCharacterDialog extends Vue {
     this.hide();
 
     if (character.id !== oldCharacterId) {
-      notifySuccess(`${character.name} is now your active character.`);
+      notifySuccess(`${character.name} ist jetzt dein aktiver Charakter.`);
     }
   }
 

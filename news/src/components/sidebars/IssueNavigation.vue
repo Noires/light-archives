@@ -1,6 +1,6 @@
 <template>
 	<nav class="issue-navigation" v-show="issues.length">
-		<div class="issue-navigation__label">Issues</div>
+		<div class="issue-navigation__label">Ausgaben</div>
 		<q-list bordered separator>
 			<template v-for="issue in issues" :key="issue">
 				<q-item clickable v-ripple :to="`/issue/${issue}`">

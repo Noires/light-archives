@@ -6,8 +6,12 @@
 		</p>
     <h3>Team</h3>
       <dt>Queen</dt>
-			<dd>Moderator</dd>
+			<dd>Administrator</dd>
       <dt>Veemi</dt>
+			<dd>Moderator</dd>
+      <dt>Iki</dt>
+			<dd>Moderator</dd>
+      <dt>Nihko</dt>
 			<dd>Moderator</dd>
 		<h3>Credits</h3>
 		<dl>
@@ -20,12 +24,8 @@
 		<section v-html="faq"></section>
 		<h3>Nützliche Links</h3>
 		<dl>
-			<dt><a href="https://discord.gg/rCHdUdSVsr" target="_blank">FFXIV Chaos Roleplaying Community <q-icon name="discord" /></a></dt>
-			<dd>Our Discord server.</dd>
-			<dt><a href="https://ffxiv-roleplayers.com/topic/1674-the-role-play-handbook/" target="_blank">The Role-Play Handbook <q-icon class="external-link-icon" name="launch" /></a></dt>
-			<dd>Introduction to RP in MMO games, and in FFXIV in particular.</dd>
-			<dt><router-link to="/wiki/Getting_Started_with_FFXIV_RP_for_WoW_RPers">Getting Started with FFXIV RP for WoW RPers</router-link></dt>
-			<dd>Read this if you're already familiar with RP in World of Warcraft.</dd>
+			<dt><a href="https://discord.gg/wFT8DGkr3J" target="_blank">Projekt 'Elpis' <q-icon name="discord" /></a></dt>
+			<dd>Unser offizieller Discordserver.</dd>
 		</dl>
 		<template v-if="statistics">
 			<h3>Statistiken</h3>

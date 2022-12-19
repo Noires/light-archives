@@ -1,10 +1,10 @@
 <template>
   <section class="page-my-articles">
-    <h2 class="with-subtitle">My Articles</h2>
+    <h2 class="with-subtitle">Meine Artikel</h2>
     <div class="subtitle">for {{ $store.getters.character?.newsPseudonym || $store.getters.character?.name }}</div>
     <section class="page-my-articles__content">
       <p class="text-right">
-        <q-btn color="secondary" label="Submit new article" icon="add" to="/create-article" />
+        <q-btn color="secondary" label="Neuen Artikel einreichen" icon="add" to="/create-article" />
       </p>
       <article-list :articles="articles" />
     </section>

@@ -1,6 +1,6 @@
 <template>
   <section class="page-submitted">
-    <h2>Submitted Articles</h2>
+    <h2>Eingereichte Artikel</h2>
     <section class="page-submitted__content">
       <article-list :articles="articles" />
     </section>

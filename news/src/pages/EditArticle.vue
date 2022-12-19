@@ -1,35 +1,35 @@
 <template>
   <section class="page-edit-article">
     <template v-if="loaded">
-      <h2>{{ article.id ? 'Edit Article' : 'Submit New Article' }}</h2>
+      <h2>{{ article.id ? 'Artikel bearbeiten' : 'Neuen Artikel erstellen' }}</h2>
       <q-form ref="form" @submit="onSubmit">
         <section v-if="!preview" class="page-edit-article__form-controls">
           <label>
             <template v-if="article.status === NewsStatus.SUBMITTED">Submitted for publication</template>
             <template v-else-if="article.status === NewsStatus.PUBLISHED"
-              >Published on {{ $display.formatDateEorzean(article.publishedAt) }}</template
+              >Veröffentlicht am {{ $display.formatDateEorzean(article.publishedAt) }}</template
             >
-            <template v-else>DRAFT</template>
+            <template v-else>ENTWURF</template>
           </label>
-          <q-input v-model="article.title" label="Title *" :rules="[$rules.required('This field is required.')]" />
-          <q-input v-model="article.subtitle" label="Subtitle" />
+          <q-input v-model="article.title" label="Titel *" :rules="[$rules.required('Dieses Feld ist erforderlich.')]" />
+          <q-input v-model="article.subtitle" label="Untertitel" />
           <template v-if="article.id && $store.getters.character?.newsRole === NewsRole.EDITOR">
-            <div class="page-edit-article__thumb-choice">Chaos Archives thumbnail: <q-btn label="Choose..." @click="onSelectThumbnail" /></div>
+            <div class="page-edit-article__thumb-choice">Elpisgarten Thumbnail: <q-btn label="Wähle..." @click="onSelectThumbnail" /></div>
             <section v-if="image">
               <q-img class="page-edit-article__image" :src="image.url" :initial-ratio="750 / 422" loading="eager" />
             </section>
           </template>
           <h6>Summary *</h6>
           <div class="text-caption">
-            A short summary of what the article is about. It will not be displayed on the Harborwatch website, but will
-            be displayed on the Chaos Archives front page.
+            Eine kurze Zusammenfassung, worum sich der Aritkel dreht. Sie wird nicht auf der NEWSPAPER Seite angezeigt, dafür jedoch auf der
+            Hauptseite von Elpisgarten.
           </div>
           <q-input
             class="page-edit-article__summary"
             type="textarea"
             outlined
             v-model="article.summary"
-            :rules="[$rules.required('This field is required.')]"
+            :rules="[$rules.required('Dieses Feld ist erforderlich.')]"
           />
           <h6>Content *</h6>
           <html-editor v-model="article.content" />
@@ -40,17 +40,17 @@
         <div class="page-edit-article__button-bar page-edit-article__form-controls">
           <q-btn-toggle v-model="preview" :options="previewOptions" toggle-color="secondary" />
           <div class="page-edit-article__revert-submit">
-            <q-btn label="Revert" color="secondary" @click="revert" />&nbsp;
+            <q-btn label="Zurücksetzen" color="secondary" @click="revert" />&nbsp;
             <template v-if="article.status === NewsStatus.DRAFT">
-              <q-btn label="Save draft" color="primary" @click="saveDraft" />&nbsp;
-              <q-btn label="Submit for publication" color="negative" @click="submitForPublication" />
+              <q-btn label="Entwurf speichern" color="primary" @click="saveDraft" />&nbsp;
+              <q-btn label="Für Veröffentlichung einreichen" color="negative" @click="submitForPublication" />
             </template>
             <template v-else>
-              <q-btn label="Save changes" type="submit" color="primary" />
+              <q-btn label="Änderungen speichern" type="submit" color="primary" />
               <template
                 v-if="article.status === NewsStatus.SUBMITTED && $store.getters.character?.newsRole === NewsRole.EDITOR"
                 >&nbsp;
-                <q-btn label="Publish" color="negative" @click="publish" />
+                <q-btn label="Veröffentlichen" color="negative" @click="publish" />
               </template>
             </template>
           </div>
@@ -63,12 +63,12 @@
     <q-dialog v-model="confirmRevert" persistent>
       <q-card>
         <q-card-section class="row items-center">
-          <span class="q-ml-sm">Do you want to revert your unsaved changes to the last saved version?</span>
+          <span class="q-ml-sm">Möchtest du die ungespeicherten Änderungen auf die letzte gespeicherte Version zurücksetzen?</span>
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat label="Keep editing" color="secondary" v-close-popup />
-          <q-btn flat label="Revert" color="negative" v-close-popup @click="onConfirmRevert" />
+          <q-btn flat label="Bearbeitung fortsetzen" color="secondary" v-close-popup />
+          <q-btn flat label="Zurücksetzen" color="negative" v-close-popup @click="onConfirmRevert" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -105,8 +105,8 @@ export default class PageEditArticle extends Vue {
   readonly NewsRole = NewsRole;
 
   readonly previewOptions = [
-    { label: 'Edit', value: false },
-    { label: 'Preview', value: true },
+    { label: 'Bearbeitung', value: false },
+    { label: 'Vorschau', value: true },
   ];
 
   article = new NewsArticleDto();
@@ -187,16 +187,16 @@ export default class PageEditArticle extends Vue {
 
     this.$q
       .dialog({
-        title: 'Confirm Submitting for Publication',
+        title: 'Zur Veröffentlichung einreichen',
         message:
-          "You're almost done! If you believe your article is ready, you can submit it for publication, so the Harborwatch editor can review it and include it in a future issue of the paper.",
+          "Du bist fast fertig! Wenn du glaubst das dein Artikel bereit ist, kannst du diesen für die Veröffentlichung einreichen. Ein NEWSPAPER Editor wird alles überprüfen und den Artikel im Anschluss in die nächsten Ausgabe aufnehmen.",
         ok: {
-          label: 'Submit',
+          label: 'Einreichen',
           color: 'primary',
           flat: true,
         },
         cancel: {
-          label: 'Cancel',
+          label: 'Abbrechen',
           color: 'secondary',
           flat: true,
         },
@@ -216,15 +216,15 @@ export default class PageEditArticle extends Vue {
 
     this.$q
       .dialog({
-        title: 'Confirm Publication',
-        message: 'Are you sure you want to publish this article?',
+        title: 'Veröffentlichung',
+        message: 'Bist du dir sicher das dieser Artikel veröffentlicht werden soll?',
         ok: {
-          label: 'Publish',
+          label: 'Veröffentlichen',
           color: 'primary',
           flat: true,
         },
         cancel: {
-          label: 'Cancel',
+          label: 'Abbrechen',
           color: 'secondary',
           flat: true,
         },
@@ -257,8 +257,8 @@ export default class PageEditArticle extends Vue {
       this.articleBackup = new NewsArticleDto(this.article);
 
       notifySuccess(
-        'Article saved.' /*, {
-        label: 'View',
+        'Artikel gespeichert.' /*, {
+        label: 'Anschauen',
         color: 'white',
         //handler: () => this.viewArticle(),
       } */
@@ -274,7 +274,7 @@ export default class PageEditArticle extends Vue {
     const thumbnails = await this.$api.news.getArticleImages(this.article.id!);
 
     if (!thumbnails.length) {
-      notifyError('No images found in article');
+      notifyError('Keine Bilder im Artikel gefunden.');
       return;
     }
 
