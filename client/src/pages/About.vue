@@ -68,10 +68,10 @@
 					</tr>
 				</tbody>
 			</q-markup-table>
-      <h4>Charaktere nach Welt</h4>
+      <h4>Au Ra Xaela-Stämme</h4>
 			<q-markup-table class="striped-list">
 				<thead>
-					<th class="text-left">Welt</th>
+					<th class="text-left">Stamm</th>
 					<th class="text-right">Anzahl</th>
 				</thead>
 				<tbody>
