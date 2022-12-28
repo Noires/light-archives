@@ -7,6 +7,7 @@ import EventsAPI from './events-api';
 import FreeCompaniesAPI from './free-companies-api';
 import ImagesAPI from './images-api';
 import LinksAPI from './links-api';
+import LocationsAPI from './locations-api';
 import NewsAPI from './news-api';
 import NoticeboardAPI from './noticeboard-api';
 import SearchAPI from './search-api';
@@ -16,6 +17,7 @@ import StoriesAPI from './stories-api';
 import UserAPI from './user-api';
 import VenuesAPI from './venues-api';
 import ViolationsAPI from './violations-api';
+import WeatherAPI from './weather-api';
 import WikiAPI from './wiki-api';
 
 export default class API {
@@ -32,6 +34,7 @@ export default class API {
   readonly freeCompanies = new FreeCompaniesAPI(this.transport);
   readonly images = new ImagesAPI(this.transport);
   readonly links = new LinksAPI(this.transport);
+  readonly locations = new LocationsAPI(this.transport);
   readonly news = new NewsAPI(this.transport);
   readonly noticeboard = new NoticeboardAPI(this.transport);
   readonly search = new SearchAPI(this.transport);
@@ -40,6 +43,7 @@ export default class API {
   readonly stories = new StoriesAPI(this.transport);
   readonly venues = new VenuesAPI(this.transport);
   readonly violations = new ViolationsAPI(this.transport);
+  readonly weather = new WeatherAPI(this.transport);
   readonly wiki = new WikiAPI(this.transport);
 
   // Access token management

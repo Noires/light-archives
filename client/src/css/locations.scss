@@ -1,0 +1,33 @@
+.location-weather-configuration {
+    .location-weather-item-container {
+        margin: 1rem 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-column-gap: 25px;
+        grid-row-gap: 25px;
+    }
+    .location-weather-item {
+        background-color: #ddd;
+        box-shadow: 5px 5px 10px rgba(0,0,0,0.5);
+        border-radius: 5px;
+        max-width: 228px;
+        select {
+            width: 100%;
+        }
+        .item-header {
+            background-color: $primary;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            padding: 1rem;
+        }
+        .item-info-container {
+            padding: 1rem;
+            .q-btn {
+                width: 100%;
+            }
+        }
+        .item-info {
+            margin: 0.5rem 0;
+        }
+    }
+}
