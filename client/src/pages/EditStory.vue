@@ -22,6 +22,7 @@
             @update:model-value="onTagsChanged"
             label="Schlagworte (mit Komma getrennt)"
           />
+          <q-select v-model="story.contentNotes" :options="contentNoteOptions" multiple label="Inhaltswarnungen" />
           <h6>Inhalt *</h6>
           <html-editor v-model="story.content" />
         </template>
@@ -102,6 +103,7 @@ export default class PageEditStory extends Vue {
 
   story = new StoryDto();
   storyBackup = new StoryDto();
+  contentNoteOptions: string[];
   preview = false;
   loaded = false;
   saving = false;
@@ -109,6 +111,9 @@ export default class PageEditStory extends Vue {
   confirmRevert = false;
 
   private async load(params: RouteParams) {
+    const contentNotes = await this.$api.contentNotes.getContentNotes();
+    this.contentNoteOptions = contentNotes.map((contentNote) => (contentNote.name));
+
     const id = parseInt(params.id as string, 10);
     const character = this.$store.getters.character;
 
@@ -131,6 +136,7 @@ export default class PageEditStory extends Vue {
         title: '',
         content: '',
         tags: [],
+        contentNotes: []
       });
       this.loaded = true;
     }

@@ -1,5 +1,5 @@
 import { UserInfo } from '@app/auth/model/user-info';
-import { Character, Story, StoryTag } from '@app/entity';
+import { Character, ContentNote, Story, StoryTag } from '@app/entity';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { StoryFilterDto } from '@app/shared/dto/stories/story-filter.dto';
@@ -16,8 +16,9 @@ export class StoriesService {
   constructor(
     private connection: Connection,
     @InjectRepository(Character) private characterRepo: Repository<Character>,
+    @InjectRepository(ContentNote) private contentNoteRepo: Repository<ContentNote>,
     @InjectRepository(Story) private storyRepo: Repository<Story>,
-    @InjectRepository(StoryTag) private storyTagRepo: Repository<StoryTag>,
+    @InjectRepository(StoryTag) private storyTagRepo: Repository<StoryTag>
   ) {}
 
   async getStory(id: number, user?: UserInfo): Promise<StoryDto> {
@@ -41,6 +42,13 @@ export class StoriesService {
       .select('tag')
       .getMany();
 
+    story.contentNotes = await this.contentNoteRepo
+      .createQueryBuilder('content_note')
+      .innerJoinAndSelect('content_note', 'story')
+      .where('story.id = :id', { id })
+      .select('content_note')
+      .getMany();
+
     return new StoryDto({
       id: story.id,
       mine: user ? story.owner.user.id === user.id : false,
@@ -51,6 +59,7 @@ export class StoriesService {
       createdAt: story.createdAt!.getTime(),
       type: story.type,
       tags: story.tags.map((tag) => tag.name),
+      contentNotes: story.contentNotes.map((tag) => tag.name)
     });
   }
 
@@ -193,7 +202,7 @@ export class StoriesService {
           searchQuery: `%${escapeForLike(filter.searchQuery)}%`
         });
       }
-  
+
       if (filter.characterId) {
       query.andWhere('character.id = :characterId', {
         characterId: filter.characterId,

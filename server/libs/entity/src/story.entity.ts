@@ -1,7 +1,8 @@
 import { StoryType } from '@app/shared/enums/story-type.enum';
-import { Column, Entity, Index, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BasicEntity } from './basic.entity';
 import { Character } from './character.entity';
+import { ContentNote } from './content-note.entity';
 import { SearchFields } from './search-fields';
 import { StoryTag } from './story-tag.entity';
 
@@ -39,4 +40,8 @@ export class Story extends BasicEntity {
     cascade: true,
   })
 	tags: StoryTag[]
+
+  @ManyToMany(() => ContentNote)
+  @JoinTable()
+  contentNotes: ContentNote[];
 }
