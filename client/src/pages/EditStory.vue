@@ -22,6 +22,7 @@
             @update:model-value="onTagsChanged"
             label="Schlagworte (mit Komma getrennt)"
           />
+          <q-select v-model="story.contentNotes" :options="contentNoteOptions" emit-value map-options multiple label="Inhaltswarnungen" />
           <h6>Inhalt *</h6>
           <html-editor v-model="story.content" />
         </template>
@@ -70,6 +71,7 @@
 <script lang="ts">
 import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import { StoryType } from '@app/shared/enums/story-type.enum';
+import { ContentNoteTexts } from '@common/common/api/content-notes-api';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
 import StoryView from 'components/stories/StoryView.vue';
 import { displayOptions } from 'src/boot/display';
@@ -102,6 +104,7 @@ export default class PageEditStory extends Vue {
 
   story = new StoryDto();
   storyBackup = new StoryDto();
+  contentNoteOptions: {label: string, value: string}[];
   preview = false;
   loaded = false;
   saving = false;
@@ -109,6 +112,12 @@ export default class PageEditStory extends Vue {
   confirmRevert = false;
 
   private async load(params: RouteParams) {
+    const contentNotes = await this.$api.contentNotes.getContentNotes();
+    this.contentNoteOptions = contentNotes.map((contentNote) => ({
+      label: (ContentNoteTexts as {[key:string]: string})[contentNote.name],
+      value: contentNote.name
+    }));
+
     const id = parseInt(params.id as string, 10);
     const character = this.$store.getters.character;
 
@@ -131,6 +140,7 @@ export default class PageEditStory extends Vue {
         title: '',
         content: '',
         tags: [],
+        contentNotes: []
       });
       this.loaded = true;
     }
@@ -148,7 +158,6 @@ export default class PageEditStory extends Vue {
 
   async onSubmit() {
     this.saving = true;
-
     try {
       if (!this.story.id) {
         const { id } = await this.$api.stories.createStory(this.story);

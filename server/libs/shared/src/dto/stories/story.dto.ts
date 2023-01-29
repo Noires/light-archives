@@ -1,5 +1,6 @@
 import { StoryType } from "@app/shared/enums/story-type.enum";
 import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
+import { ContentNoteDto } from "../content-notes/content-note.dto";
 
 export class StoryDto {
 	@IsNumber()
@@ -31,6 +32,9 @@ export class StoryDto {
 
 	@IsString({each: true})
 	tags: string[];
+
+	@IsString({each: true})
+  contentNotes: string[];
 
 	constructor(properties?: Readonly<StoryDto>) {
     if (properties) {

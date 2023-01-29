@@ -16,6 +16,31 @@
         <router-link :to="{ path: '/stories', query: { type: story.type } }">{{ $display.storyTypes[story.type] }}</router-link>
       </div>
     </section>
+    <div>
+        <q-btn color="red" glossy label="Inhaltswarnungen" @click="alert = true"/>
+        <q-dialog v-model="alert">
+        <q-card>
+          <q-card-section>
+            <div class="text-h6">Inhaltswarnungen</div>
+          </q-card-section>
+
+          <q-card-section class="q-pt-none">
+            Diese Seite enthält Inhalte, die sensibler Natur sind.
+            Wir empfehlen, nicht fortzufahren, wenn dir folgende Themen Unwohlsein bereiten:
+            <ul>
+              <li v-for="item in contentNotes" :key="item">
+                {{ item }}
+              </li>
+            </ul>
+          </q-card-section>
+
+          <q-card-actions align="right">
+            <q-btn flat label="OK" color="primary" v-close-popup />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+
+    </div>
     <hr />
     <html-viewer
       class="story-view__content"
@@ -26,6 +51,8 @@
 
 <script lang="ts">
 import { StoryDto } from '@app/shared/dto/stories/story.dto';
+import { ContentNoteTexts } from '@common/common/api/content-notes-api';
+import { ref } from 'vue';
 import { Options, prop, Vue } from 'vue-class-component';
 import HtmlViewer from '../common/HtmlViewer.vue';
 
@@ -46,6 +73,12 @@ class Props {
   }
 })
 export default class StoryView extends Vue.with(Props) {
+  alert = ref(false);
+
+  get contentNotes(): string[] {
+    return this.story.contentNotes.map((contentNote) => (ContentNoteTexts as {[key:string]: string})[contentNote])
+  }
+
   get date(): string {
     return this.$display.formatDate(this.story.createdAt);
   }
