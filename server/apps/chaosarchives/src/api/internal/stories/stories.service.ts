@@ -27,8 +27,9 @@ export class StoriesService {
       .innerJoinAndSelect('story.owner', 'character')
       .innerJoinAndSelect('character.user', 'user')
       .innerJoinAndSelect('character.server', 'server')
+      .leftJoinAndSelect('story.contentNotes','notes')
       .where('story.id = :id', { id })
-      .select(['story', 'character.id', 'character.name', 'user.id', 'server.name'])
+      .select(['story', 'character.id', 'character.name', 'user.id', 'server.name', 'notes.name'])
       .getOne();
 
     if (!story) {
@@ -42,13 +43,6 @@ export class StoriesService {
       .select('tag')
       .getMany();
 
-    story.contentNotes = await this.contentNoteRepo
-      .createQueryBuilder('content_note')
-      .innerJoinAndSelect('content_note', 'story')
-      .where('story.id = :id', { id })
-      .select('content_note')
-      .getMany();
-
     return new StoryDto({
       id: story.id,
       mine: user ? story.owner.user.id === user.id : false,
@@ -59,7 +53,7 @@ export class StoriesService {
       createdAt: story.createdAt!.getTime(),
       type: story.type,
       tags: story.tags.map((tag) => tag.name),
-      contentNotes: story.contentNotes.map((tag) => tag.name)
+      contentNotes: story.contentNotes.map((note) => note.name)
     });
   }
 
@@ -103,6 +97,13 @@ export class StoriesService {
           }),
       );
 
+      story.contentNotes = storyDto.contentNotes.filter(note => note !=='').map(
+        (note) =>
+          new ContentNote({
+            name: note
+          })
+      )
+
       return storyRepo.save(story);
     });
 
@@ -130,7 +131,7 @@ export class StoriesService {
       Object.assign(story, {
         title: storyDto.title,
         content: html.sanitize(storyDto.content),
-        type: storyDto.type,
+        type: storyDto.type
       });
 
       if (storyDto.tags.length > 0) {
@@ -141,6 +142,13 @@ export class StoriesService {
           name: Not(In(storyDto.tags)),
         });
       }
+
+      story.contentNotes = storyDto.contentNotes.filter(note => note !=='').map(
+        (note) =>
+          new ContentNote({
+            name: note
+          })
+      );
 
       story.tags = await em
         .getRepository(StoryTag)

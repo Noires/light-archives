@@ -1,16 +1,17 @@
-import { Column, Entity, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { BasicEntity } from './basic.entity';
-import { Story } from './story.entity';
+import { Entity, PrimaryColumn } from 'typeorm';
 
 @Entity()
-export class ContentNote extends BasicEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column({
+export class ContentNote {
+  @PrimaryColumn({
     nullable: false,
     type: 'varchar',
     width: 60,
   })
   name: string;
+
+  constructor(properties?: Partial<ContentNote>) {
+    if (properties) {
+      Object.assign(this, properties);
+    }
+  }
 }
