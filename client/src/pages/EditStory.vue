@@ -22,7 +22,7 @@
             @update:model-value="onTagsChanged"
             label="Schlagworte (mit Komma getrennt)"
           />
-          <q-select v-model="story.contentNotes" :options="contentNoteOptions" emit-value map-options multiple label="Inhaltswarnungen" />
+          <Multiselect v-model="story.contentNotes" :options="contentNoteOptions" mode="tags" :searchable="true" :closeOnSelect="false" valueProp="value" track-by="label" label="label"></Multiselect>
           <h6>Inhalt *</h6>
           <html-editor v-model="story.content" />
         </template>
@@ -69,6 +69,8 @@
 </template>
 
 <script lang="ts">
+
+import Multiselect from '@vueform/multiselect'
 import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import { StoryType } from '@app/shared/enums/story-type.enum';
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
@@ -83,6 +85,7 @@ import { RouteParams } from 'vue-router';
   components: {
     HtmlEditor,
     StoryView,
+    Multiselect
   },
   beforeRouteEnter(to, _, next) {
     next((vm) => (vm as PageEditStory).load(to.params));
@@ -196,6 +199,8 @@ export default class PageEditStory extends Vue {
   }
 }
 </script>
+
+<style src="@vueform/multiselect/themes/default.css"></style>
 
 <style lang="scss">
 .page-edit-story__form-controls {
