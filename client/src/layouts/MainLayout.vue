@@ -69,22 +69,7 @@
 
     <q-page-container>
       <q-toolbar-title class="layout__toolbar-title">
-          <router-link to="/" class="gt-xs">
-            <picture>
-              <source
-                srcset="
-                  ~/assets/logo_1x.webp,
-                  ~/assets/logo_2x.webp 2x,
-                  ~/assets/logo_3x.webp 3x,
-                  ~/assets/logo_4x.webp 4x
-                "
-                type="image/webp"
-              />
-              <source srcset="~/assets/logo_2x.png 2x, ~/assets/logo_3x.png 3x, ~/assets/logo_4x.png 4x" />
-              <img class="layout__logo" src="~/assets/logo_1x.png" />
-            </picture>
-          </router-link>
-          <router-link to="/" class="lt-sm">
+          <router-link to="/">
             <picture>
               <source
                 srcset="
