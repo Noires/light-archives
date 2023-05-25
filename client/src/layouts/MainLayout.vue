@@ -73,17 +73,17 @@
             <picture>
               <source
                 srcset="
-                  ~/assets/logo_text_1x.webp,
-                  ~/assets/logo_text_2x.webp 2x,
-                  ~/assets/logo_text_3x.webp 3x,
-                  ~/assets/logo_text_4x.webp 4x
+                  ~/assets/logo_1x.webp,
+                  ~/assets/logo_2x.webp 2x,
+                  ~/assets/logo_3x.webp 3x,
+                  ~/assets/logo_4x.webp 4x
                 "
                 type="image/webp"
               />
               <source
-                srcset="~/assets/logo_text_2x.png 2x, ~/assets/logo_text_3x.png 3x, ~/assets/logo_text_4x.png 4x"
+                srcset="~/assets/logo_2x.png 2x, ~/assets/logo_3x.png 3x, ~/assets/logo_4x.png 4x"
               />
-              <img class="layout__logo" src="~/assets/logo_text_1x.png" />
+              <img class="layout__logo" src="~/assets/logo_1x.png" />
             </picture>
           </router-link>
         </q-toolbar-title>
