@@ -9,7 +9,7 @@
 // app global css in SCSS form
 body {
 	font-family: $body-font;
-	background-color: #006ead;
+	background-color: #DDB476;
 	background-image: url(assets/bg.jpg);
 	background-size: cover;
 	background-attachment: fixed;
@@ -21,12 +21,12 @@ html.webp body {
 }
 
 *::-webkit-scrollbar {
-	background: #005383;
+	background: #DDB476;
 	width: 12px;
 }
 
 *::-webkit-scrollbar-thumb {
-	background: #5799be;
+	background: #EDD297;
 	border: 1px solid #888;
 	border-radius: 5px;
 }
@@ -108,8 +108,12 @@ a {
 	color: $link-visited-color;
 }
 
+.q-item {
+	color: black;
+}
+
 .q-page a.q-item:visited {
-	color: inherit;
+	color: black;
 }
 
 .q-page a:hover {
@@ -118,7 +122,7 @@ a {
 }
 
 .q-page a.q-item:hover {
-	color: inherit;
+	color: black;
 }
 
 ol li {
