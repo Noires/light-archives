@@ -1,5 +1,6 @@
 export { BasicEntity } from './basic.entity';
 export { Character } from './character.entity';
+export { ContentNote } from './content-note.entity';
 export { Community } from './community.entity';
 export { CommunityMembership } from './community-membership.entity';
 export { CommunityTag } from './community-tag.entity';

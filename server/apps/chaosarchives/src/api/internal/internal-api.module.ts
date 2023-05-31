@@ -3,6 +3,7 @@ import { RouterModule } from "@nestjs/core";
 import { CarrdModule } from './carrd/carrd.module';
 import { CharactersModule } from './characters/characters.module';
 import { CommunitiesModule } from './communities/communities.module';
+import { ContentNotesModule } from "./content-notes/content-notes.modules";
 import { EventsModule } from './events/events.module';
 import { FreeCompaniesModule } from './free-companies/free-companies.module';
 import { ImagesModule } from './images/images.module';
@@ -27,6 +28,7 @@ const controllerModules = [
 	UserModule,
 	CharactersModule,
 	CarrdModule,
+  ContentNotesModule,
 	StoriesModule,
 	ImagesModule,
 	NewsModule,

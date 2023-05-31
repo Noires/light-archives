@@ -1,3 +1,4 @@
+
 import { Character, Event, EventAnnouncement, EventLocation, FreeCompany, Image, Location, LocationWeather, News, NewsCategory, NewsIssue, NoticeboardItem, Server, Story, StoryTag, User, Venue, Violation, WikiPage, Weather } from '@app/entity';
 import { CommunityMembership } from '@app/entity/community-membership.entity';
 import { CommunityTag } from '@app/entity/community-tag.entity';
@@ -21,6 +22,7 @@ export const dbConfiguration: TypeOrmModuleOptions = {
     Community,
     CommunityMembership,
     CommunityTag,
+    ContentNote,
     Event,
     EventAnnouncement,
     EventLocation,

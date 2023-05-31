@@ -1,5 +1,5 @@
 import { UserInfo } from '@app/auth/model/user-info';
-import { Character, Story, StoryTag } from '@app/entity';
+import { Character, ContentNote, Story, StoryTag } from '@app/entity';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { StoryFilterDto } from '@app/shared/dto/stories/story-filter.dto';
@@ -16,8 +16,9 @@ export class StoriesService {
   constructor(
     private connection: Connection,
     @InjectRepository(Character) private characterRepo: Repository<Character>,
+    @InjectRepository(ContentNote) private contentNoteRepo: Repository<ContentNote>,
     @InjectRepository(Story) private storyRepo: Repository<Story>,
-    @InjectRepository(StoryTag) private storyTagRepo: Repository<StoryTag>,
+    @InjectRepository(StoryTag) private storyTagRepo: Repository<StoryTag>
   ) {}
 
   async getStory(id: number, user?: UserInfo): Promise<StoryDto> {
@@ -26,8 +27,9 @@ export class StoriesService {
       .innerJoinAndSelect('story.owner', 'character')
       .innerJoinAndSelect('character.user', 'user')
       .innerJoinAndSelect('character.server', 'server')
+      .leftJoinAndSelect('story.contentNotes','notes')
       .where('story.id = :id', { id })
-      .select(['story', 'character.id', 'character.name', 'user.id', 'server.name'])
+      .select(['story', 'character.id', 'character.name', 'user.id', 'server.name', 'notes.name'])
       .getOne();
 
     if (!story) {
@@ -51,6 +53,7 @@ export class StoriesService {
       createdAt: story.createdAt!.getTime(),
       type: story.type,
       tags: story.tags.map((tag) => tag.name),
+      contentNotes: story.contentNotes.map((note) => note.name)
     });
   }
 
@@ -94,6 +97,13 @@ export class StoriesService {
           }),
       );
 
+      story.contentNotes = storyDto.contentNotes.filter(note => note !=='').map(
+        (note) =>
+          new ContentNote({
+            name: note
+          })
+      )
+
       return storyRepo.save(story);
     });
 
@@ -121,7 +131,7 @@ export class StoriesService {
       Object.assign(story, {
         title: storyDto.title,
         content: html.sanitize(storyDto.content),
-        type: storyDto.type,
+        type: storyDto.type
       });
 
       if (storyDto.tags.length > 0) {
@@ -132,6 +142,13 @@ export class StoriesService {
           name: Not(In(storyDto.tags)),
         });
       }
+
+      story.contentNotes = storyDto.contentNotes.filter(note => note !=='').map(
+        (note) =>
+          new ContentNote({
+            name: note
+          })
+      );
 
       story.tags = await em
         .getRepository(StoryTag)
@@ -193,7 +210,7 @@ export class StoriesService {
           searchQuery: `%${escapeForLike(filter.searchQuery)}%`
         });
       }
-  
+
       if (filter.characterId) {
       query.andWhere('character.id = :characterId', {
         characterId: filter.characterId,

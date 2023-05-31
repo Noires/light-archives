@@ -22,15 +22,9 @@
       <q-item-label header>
         {{ $store.getters.character?.name }}
       </q-item-label>
-      <q-item
-        clickable
-        v-ripple
-        @click="switchCharacter"
-      >
         <q-item-section>
           <q-item-label>Charakter wechseln</q-item-label>
         </q-item-section>
-      </q-item>
       <q-separator dark />
       <q-item
         v-if="$store.getters.role === Role.UNVERIFIED"
@@ -184,11 +178,10 @@
 import { Options, Vue } from 'vue-class-component';
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 import { Role } from '@app/shared/enums/role.enum';
-import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
 import { notifySuccess } from 'src/common/notify';
 
 @Options({
-  
+
 })
 export default class UserMenu extends Vue {
   readonly Role = Role;
@@ -198,20 +191,6 @@ export default class UserMenu extends Vue {
 		const character = this.$store.getters.character?.name.replace(/ /g, '_') || '';
 		return `/${server}/${character}`;
 	}
-
-  async switchCharacter() {
-    const SwitchCharacterDialog = (await import('components/character/SwitchCharacterDialog.vue')).default;
-
-    this.$q.dialog({
-      component: SwitchCharacterDialog
-    }).onOk((character: SessionCharacterDto) => {
-      if (character.verified) {
-        void this.$router.push('/');
-      } else {
-        void this.$router.push('/verify');
-      }
-    });
-  }
 
   async uploadImage() {
     const UploadDialog = (await import('components/upload/UploadDialog.vue')).default;

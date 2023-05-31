@@ -22,6 +22,7 @@
             @update:model-value="onTagsChanged"
             label="Schlagworte (mit Komma getrennt)"
           />
+          <Multiselect v-model="story.contentNotes" :options="contentNoteOptions" mode="tags" :searchable="true" :closeOnSelect="false" valueProp="value" track-by="label" label="label"></Multiselect>
           <h6>Inhalt *</h6>
           <html-editor v-model="story.content" />
         </template>
@@ -68,8 +69,11 @@
 </template>
 
 <script lang="ts">
+
+import Multiselect from '@vueform/multiselect'
 import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import { StoryType } from '@app/shared/enums/story-type.enum';
+import { ContentNoteTexts } from '@common/common/api/content-notes-api';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
 import StoryView from 'components/stories/StoryView.vue';
 import { displayOptions } from 'src/boot/display';
@@ -81,6 +85,7 @@ import { RouteParams } from 'vue-router';
   components: {
     HtmlEditor,
     StoryView,
+    Multiselect
   },
   beforeRouteEnter(to, _, next) {
     next((vm) => (vm as PageEditStory).load(to.params));
@@ -102,6 +107,7 @@ export default class PageEditStory extends Vue {
 
   story = new StoryDto();
   storyBackup = new StoryDto();
+  contentNoteOptions: {label: string, value: string}[];
   preview = false;
   loaded = false;
   saving = false;
@@ -109,6 +115,12 @@ export default class PageEditStory extends Vue {
   confirmRevert = false;
 
   private async load(params: RouteParams) {
+    const contentNotes = await this.$api.contentNotes.getContentNotes();
+    this.contentNoteOptions = contentNotes.map((contentNote) => ({
+      label: (ContentNoteTexts as {[key:string]: string})[contentNote.name],
+      value: contentNote.name
+    }));
+
     const id = parseInt(params.id as string, 10);
     const character = this.$store.getters.character;
 
@@ -131,6 +143,7 @@ export default class PageEditStory extends Vue {
         title: '',
         content: '',
         tags: [],
+        contentNotes: []
       });
       this.loaded = true;
     }
@@ -148,7 +161,6 @@ export default class PageEditStory extends Vue {
 
   async onSubmit() {
     this.saving = true;
-
     try {
       if (!this.story.id) {
         const { id } = await this.$api.stories.createStory(this.story);
@@ -187,6 +199,8 @@ export default class PageEditStory extends Vue {
   }
 }
 </script>
+
+<style src="@vueform/multiselect/themes/default.css"></style>
 
 <style lang="scss">
 .page-edit-story__form-controls {
