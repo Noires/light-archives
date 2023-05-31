@@ -40,6 +40,33 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
+    path: '/create-location',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/EditLocation.vue') }],
+    meta: {
+      title: 'Ort erstellen'
+    },
+  },
+
+  {
+    path: '/create-weather',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/EditWeather.vue') }],
+    meta: {
+      title: 'Wetter erstellen'
+    },
+  },
+
+  {
+    path: '/weather',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('src/pages/Weather.vue') }],
+    meta: {
+      title: 'Wetter'
+    },
+  },
+
+  {
     path: '/privacy-statement',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/PrivacyStatement.vue') }],

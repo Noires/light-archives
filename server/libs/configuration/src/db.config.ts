@@ -1,4 +1,5 @@
-import { Character, ContentNote, Event, EventAnnouncement, EventLocation, FreeCompany, Image, News, NewsCategory, NewsIssue, NoticeboardItem, Server, Story, StoryTag, User, Venue, Violation, WikiPage } from '@app/entity';
+
+import { Character, Event, EventAnnouncement, EventLocation, FreeCompany, Image, Location, LocationWeather, News, NewsCategory, NewsIssue, NoticeboardItem, Server, Story, StoryTag, User, Venue, Violation, WikiPage, Weather } from '@app/entity';
 import { CommunityMembership } from '@app/entity/community-membership.entity';
 import { CommunityTag } from '@app/entity/community-tag.entity';
 import { Community } from '@app/entity/community.entity';
@@ -27,6 +28,8 @@ export const dbConfiguration: TypeOrmModuleOptions = {
     EventLocation,
     FreeCompany,
     Image,
+    Location,
+    LocationWeather,
     News,
     NewsCategory,
     NewsIssue,
@@ -39,6 +42,7 @@ export const dbConfiguration: TypeOrmModuleOptions = {
     VenueTag,
     Violation,
     WikiPage,
+    Weather,
   ],
   synchronize: dbConfig.synchronize,
   logging: dbConfig.logging,
