@@ -1,9 +1,9 @@
 {
-  "name": "chaosarchives",
+  "name": "elpisgarten",
   "version": "0.0.1",
-  "description": "FFXIV roleplay portal to Chaos EU",
-  "productName": "Chaos Archives",
-  "author": "Maia Everett <maia@everett.one>",
+  "description": "FFXIV Rollenspielportal für Light EU",
+  "productName": "Elpisgarten",
+  "author": "Noires <contact@noires.de>",
   "private": true,
   "scripts": {
     "start": "quasar dev",
