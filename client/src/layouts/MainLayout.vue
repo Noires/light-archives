@@ -3,12 +3,12 @@
     <q-header>
       <q-toolbar class="layout__toolbar__header">
         <div class="layout__filler">
-          <div class="gt-sm layout__char-name">
+          <div class="layout__char-name cursor-pointer" @click="toggleLeftDrawer" clickable> 
             <template v-if="$store.getters.character">
               <q-avatar round>
                 <img :src="$store.getters.character.avatar" />
               </q-avatar>
-              <span>{{ $store.getters.characterShortName }}</span>
+              <span>{{ $store.getters.character?.name }}</span>
             </template>
             <template v-else>
               <q-icon size="28px" name="account_circle" />
@@ -61,11 +61,21 @@
         </div>
       </q-toolbar>
 
-
-
     </q-header>
 
-
+    <template v-if="$store.getters.character">
+    <q-drawer v-model="leftDrawerOpen" show-if-above side="left" :class="DRAWER_BG" :width="DRAWER_WIDTH">
+      <q-list dense dark>
+        <q-item>
+          <q-item-section>
+            <site-search-field />
+          </q-item-section>
+        </q-item>
+      </q-list>
+      <q-separator dark />
+      <user-menu />
+    </q-drawer>
+    </template>
 
     <q-page-container>
       <q-toolbar-title class="layout__toolbar-title">
@@ -151,6 +161,10 @@ export default class MainLayout extends Vue {
 
   leftDrawerOpen = false;
   rightDrawerOpen = false;
+
+  toggleLeftDrawer() {
+    this.leftDrawerOpen = !this.leftDrawerOpen;
+  }
 
   async switchCharacter() {
     const SwitchCharacterDialog = (await import('components/character/SwitchCharacterDialog.vue')).default;
@@ -268,6 +282,22 @@ $max-layout-width: auto;
   border-radius: 0px;
 }
 
+.q-drawer .q-item__label--header {
+  font-family: Michroma, sans-serif;
+  font-weight: bold;
+}
+.q-drawer .q-item.q-router-link--active,
+.q-drawer .q-item--active {
+  color: black;
+  font-weight: bold;
+}
+.q-drawer .q-list a {
+  border-bottom: none;
+}
+.q-drawer--left {
+  background: #D9D9D9;
+}
+
 .layout__toolbar__header {
   background-image: -webkit-linear-gradient(-25deg, black 75%, #D9D9D9 25.3%);
   font-family: Montserrat, sans-serif;
@@ -363,6 +393,10 @@ $max-layout-width: auto;
   .q-header {
     max-width: $max-layout-width;
     margin: auto;
+  }
+
+  .q-drawer--left {
+    left: calc((100% - #{$max-layout-width}) / 2);
   }
 }
 </style>
