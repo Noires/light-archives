@@ -1,31 +1,5 @@
 <template>
   <q-list class="user-menu" dense dark>
-    <template v-if="!$store.getters.role">
-      <q-item-label header> Nutzer </q-item-label>
-      <q-item class="user-menu__button-bar">
-        <q-item-section>
-          <q-item-label>
-            <q-btn class="user-menu__sign-up-button" label="Anmelden" to="/signup" />&nbsp;
-            <q-btn class="user-menu__log-in-button" label="Einloggen" to="/login" />
-          </q-item-label>
-        </q-item-section>
-      </q-item>
-      <q-item clickable v-ripple to="/forgot-password">
-        <q-item-section>
-          <q-item-label>
-            Passwort vergessen?
-          </q-item-label>
-        </q-item-section>
-      </q-item>
-    </template>
-    <template v-else>
-      <q-item-label header>
-        {{ $store.getters.character?.name }}
-      </q-item-label>
-        <q-item-section>
-          <q-item-label>Charakter wechseln</q-item-label>
-        </q-item-section>
-      <q-separator dark />
       <q-item
         v-if="$store.getters.role === Role.UNVERIFIED"
         clickable
@@ -170,7 +144,6 @@
           <q-item-label>Ausloggen</q-item-label>
         </q-item-section>
       </q-item>
-    </template>
   </q-list>
 </template>
 
@@ -219,15 +192,9 @@ export default class UserMenu extends Vue {
 </script>
 
 <style lang="scss">
+
 .user-menu__button-bar {
   margin-bottom: 8px;
 }
 
-.user-menu__sign-up-button {
-  background-color: #ae9459;
-}
-
-.user-menu__log-in-button {
-  background-color: #2e95b6;
-}
 </style>
