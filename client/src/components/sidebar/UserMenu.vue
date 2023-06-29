@@ -1,5 +1,39 @@
 <template>
   <q-list class="user-menu" dense dark>
+    <template v-if="!$store.getters.role">
+      <q-item clickable v-ripple to="/signup">
+        <q-item-section>
+          <q-item-label>
+            Registrieren
+          </q-item-label>
+        </q-item-section>
+      </q-item>
+      <q-item clickable v-ripple to="/login">
+        <q-item-section>
+          <q-item-label>
+            Einloggen
+          </q-item-label>
+        </q-item-section>
+      </q-item>
+      <q-item clickable v-ripple to="/forgot-password">
+        <q-item-section>
+          <q-item-label>
+            Passwort vergessen?
+          </q-item-label>
+        </q-item-section>
+      </q-item>
+    </template>
+    <template v-else>
+      <q-item
+        clickable
+        v-ripple
+        @click="switchCharacter"
+      >
+        <q-item-section>
+          <q-item-label>Charakter wechseln</q-item-label>
+        </q-item-section>
+      </q-item>
+      <q-separator dark />
       <q-item
         v-if="$store.getters.role === Role.UNVERIFIED"
         clickable
@@ -144,6 +178,7 @@
           <q-item-label>Ausloggen</q-item-label>
         </q-item-section>
       </q-item>
+    </template>
   </q-list>
 </template>
 
@@ -151,10 +186,11 @@
 import { Options, Vue } from 'vue-class-component';
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 import { Role } from '@app/shared/enums/role.enum';
+import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
 import { notifySuccess } from 'src/common/notify';
 
 @Options({
-
+  
 })
 export default class UserMenu extends Vue {
   readonly Role = Role;
@@ -164,6 +200,20 @@ export default class UserMenu extends Vue {
 		const character = this.$store.getters.character?.name.replace(/ /g, '_') || '';
 		return `/${server}/${character}`;
 	}
+
+  async switchCharacter() {
+    const SwitchCharacterDialog = (await import('components/character/SwitchCharacterDialog.vue')).default;
+
+    this.$q.dialog({
+      component: SwitchCharacterDialog
+    }).onOk((character: SessionCharacterDto) => {
+      if (character.verified) {
+        void this.$router.push('/');
+      } else {
+        void this.$router.push('/verify');
+      }
+    });
+  }
 
   async uploadImage() {
     const UploadDialog = (await import('components/upload/UploadDialog.vue')).default;
@@ -192,7 +242,6 @@ export default class UserMenu extends Vue {
 </script>
 
 <style lang="scss">
-
 .user-menu__button-bar {
   margin-bottom: 8px;
 }

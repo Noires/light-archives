@@ -1,5 +1,5 @@
 <template>
-	<q-input v-model="value" color="white" label="Suche" clearable @keydown="onSearchKeyDown" />
+	<q-input v-model="value" color="white" label="Suche" dark clearable @keydown="onSearchKeyDown" />
 </template>
 
 <script lang="ts">
