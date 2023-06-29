@@ -3,12 +3,14 @@
     <q-header>
       <q-toolbar class="layout__toolbar__header">
         <div class="layout__filler">
-          <div class="layout__char-name cursor-pointer" @click="toggleLeftDrawer" clickable> 
+          <div class="layout__char-name cursor-pointer" @click="toggleLeftDrawer"> 
             <template v-if="$store.getters.character">
+            <div>
               <q-avatar round>
                 <img :src="$store.getters.character.avatar" />
               </q-avatar>
-              <span>{{ $store.getters.character?.name }}</span>
+              <span header>{{ $store.getters.character?.name }}</span>
+            </div>
             </template>
             <template v-else>
               <q-icon size="28px" name="account_circle" />
@@ -16,55 +18,11 @@
             </template>
           </div>
         </div>
-        <div class="layout__filler__end center justify-end">
-          <q-btn-group flat class="gt-sm">
-          <template v-if="$store.getters.character">
-            <q-btn square padding="10px" flat class="layout__toolbar__button" label="Charakter wechseln" @click="switchCharacter" />&nbsp;
-            <q-btn square padding="10px" flat class="layout__toolbar__button" label="Abmelden" @click="logOut" />
-          </template>
-          <template v-else>
-            <q-btn square padding="10px" flat class="layout__toolbar__button" label="Registrieren" to="/signup" />&nbsp;
-            <q-btn square padding="10px" flat class="layout__toolbar__button" label="Einloggen" to="/login" />
-          </template>
-        </q-btn-group>
-        <q-btn-dropdown flat class="layout__toolbar-button-more lt-md" dropdown-icon="more_horiz">
-          <template v-if="$store.getters.character">
-            <q-list>
-              <q-item to="/switchCharacter">
-                <q-item-section>
-                  <q-item-label>Charakter wechseln</q-item-label>
-                </q-item-section>
-              </q-item>
-              <q-item to="/logOut">
-                <q-item-section>
-                  <q-item-label>Abmelden</q-item-label>
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </template>
-          <template v-else>
-            <q-list>
-              <q-item to="/signup">
-                <q-item-section>
-                  <q-item-label>Registrieren</q-item-label>
-                </q-item-section>
-              </q-item>
-              <q-item to="/login">
-                <q-item-section>
-                  <q-item-label>Einloggen</q-item-label>
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </template>
-
-          </q-btn-dropdown>
-        </div>
       </q-toolbar>
 
     </q-header>
 
-    <template v-if="$store.getters.character">
-    <q-drawer v-model="leftDrawerOpen" show-if-above side="left" :class="DRAWER_BG" :width="DRAWER_WIDTH">
+    <q-drawer overlay v-model="leftDrawerOpen" show-if-above side="left" :class="DRAWER_BG" :width="DRAWER_WIDTH">
       <q-list dense dark>
         <q-item>
           <q-item-section>
@@ -75,7 +33,6 @@
       <q-separator dark />
       <user-menu />
     </q-drawer>
-    </template>
 
     <q-page-container>
       <q-toolbar-title class="layout__toolbar-title">
@@ -208,7 +165,7 @@ $max-layout-width: auto;
 }
 
 .layout__filler__end {
-  color:black;
+  color:white;
   flex-basis: 0;
   flex-grow: 1;
   display: flex;
@@ -219,6 +176,18 @@ $max-layout-width: auto;
   font-size: 1rem;
   display: flex;
   align-items: center;
+  font-family: Michroma, sans-serif;
+  font-weight: bold;
+  letter-spacing: 0.01786em;
+  color: #ddb476;
+}
+
+.layout__char-name :hover {
+  font-weight: bold;
+}
+
+.q-avatar:hover {
+  font-weight: bold;
 }
 
 .layout__char-name span {
@@ -288,18 +257,21 @@ $max-layout-width: auto;
 }
 .q-drawer .q-item.q-router-link--active,
 .q-drawer .q-item--active {
-  color: black;
+  color: white;
   font-weight: bold;
 }
 .q-drawer .q-list a {
   border-bottom: none;
 }
 .q-drawer--left {
-  background: #D9D9D9;
+  background: rgba(27, 27, 27, 1);
+}
+.q-drawer .q-item {
+  color:#ddb476;
 }
 
 .layout__toolbar__header {
-  background-image: -webkit-linear-gradient(-25deg, black 75%, #D9D9D9 25.3%);
+  background-color: rgba(27, 27, 27, 1);
   font-family: Montserrat, sans-serif;
   color: white;
 }
