@@ -28,7 +28,6 @@
                                 <select class="select" v-model.number="locationWeatherItem.tier">
                                     <option value="1" key="1">1</option>
                                     <option value="2" key="2">2</option>
-                                    <option value="3" key="3">3</option>
                                 </select>
                             </div>
                             <div class="item-info">

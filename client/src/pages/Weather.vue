@@ -88,40 +88,73 @@
   }
 
   function weatherIsDirectFollowUp(weather: WeatherDto, nextWeather: WeatherDto) {
-    let isLowTier = (weather.tier == 1 || weather.tier == 2) && (nextWeather.tier == 1 || nextWeather.tier == 2);
+    let isLowTier = (weather.tier == 1) && (nextWeather.tier == 1);
 
     return weather.followUps.some(followUp => followUp.id == nextWeather.id) || weather.id == nextWeather.id || isLowTier;
   }
 
-  function buildWeatherSequence(regionWeather: WeatherDto[], currentWeather: WeatherDto, nextWeather: WeatherDto) {
+  function buildWeatherSequence(regionWeather: WeatherDto[], currentWeather: WeatherDto, nextWeather: WeatherDto, random:() => number) {
+    const getRandomIndex = (arrayLength: number) => {
+      let selectedPercentage = parseInt((random() * 100).toFixed(0));
+      selectedPercentage = selectedPercentage < 1 ? 1 : selectedPercentage;
+
+      return Math.ceil(selectedPercentage * arrayLength / 100) -1;
+    }
     let result: number[] = [];
     let currentFollowUps = currentWeather.followUps.map(followUp => followUp);
     let nextFollowUps = nextWeather.followUps.map(followUp => followUp);
-    let tierTwoRegionWeather = regionWeather.filter(weather => weather.tier == 2);
+    let tierOneRegionWeather = regionWeather.filter(weather => weather.tier == 1);
 
-    // If weather is tier 2, add all tier 2 weather from entire region to followUps
-    if (currentWeather.tier == 2) {
-      currentFollowUps = currentFollowUps.concat(tierTwoRegionWeather);
+    // If currentWeather is tier 1, nextWeather has to be tier 2, requiring an intermediate weather
+    // from nextWeather.followUps that also exists in tier 1 list
+    if (currentWeather.tier == 1) {
+      let availableFollowUps = nextFollowUps.filter(followUp => tierOneRegionWeather.some(weather => weather.id == followUp.id));
+      if (availableFollowUps.length > 0) {
+        let weatherIndex = getRandomIndex(availableFollowUps.length);
+        result.push(availableFollowUps[weatherIndex].id);
+      }
+
+      result.push(nextWeather.id);
+
+      return result;
     }
-    else if (nextWeather.tier == 2) {
-      nextFollowUps = nextFollowUps.concat(tierTwoRegionWeather);
+
+    // If nextWeather is tier 1, currentWeather has to be tier 2, requiring an intermediate weather
+    // from currentWeather.followUps that also exists in tier 1 list
+    else if (nextWeather.tier == 1) {
+      let availableFollowUps = currentFollowUps.filter(followUp => tierOneRegionWeather.some(weather => weather.id == followUp.id));
+      if (availableFollowUps.length > 0) {
+        let weatherIndex = getRandomIndex(availableFollowUps.length);
+        result.push(availableFollowUps[weatherIndex].id);
+      }
+      
+      result.push(nextWeather.id);
+
+      return result;
     }
-    
-    let intermediateFollowUp = currentFollowUps
-      .find(curFollowUp => nextFollowUps.some(selFollowUp => selFollowUp.id == curFollowUp.id)
+
+    // Both currentWeather and nextWeather are tier 2
+    // If both weathers share a common followUp, take that one as intermediate weather
+    let intermediateFollowUps = currentFollowUps
+      .filter(curFollowUp => nextFollowUps.some(selFollowUp => selFollowUp.id == curFollowUp.id)
     );
     
-    if (intermediateFollowUp) {
-      result.push(intermediateFollowUp.id);
+    if (intermediateFollowUps.length > 0) {
+      result.push(intermediateFollowUps[0].id);
       result.push(nextWeather.id);
     }
     else {
-      // If more than one intermediate FollowUp is required, logic goes here
-      // This can currently only happen, if two tier 3 weathers are not followUps from each other, or have no intermediate tier 2
-      let currentTierTwoFollowUp = currentFollowUps.find(followUp => followUp.tier == 2) || {id:111};
-      let nextTierTwoFollowUp = nextFollowUps.find(followUp => followUp.tier == 2) || {id:111};
-      result.push(currentTierTwoFollowUp.id);
-      result.push(nextTierTwoFollowUp.id);
+      // If no common followUp is found, two intermediate weathers are required
+      let currentTierOneFollowUps = currentFollowUps.filter(followUp => followUp.tier == 1);
+      let nextTierOneFollowUps = nextFollowUps.filter(followUp => followUp.tier == 1);
+
+      if (currentTierOneFollowUps.length > 0 && nextTierOneFollowUps.length > 0) { console.log(345);
+        let currentWeatherIndex = getRandomIndex(currentTierOneFollowUps.length);
+        let nextWeatherIndex = getRandomIndex(nextTierOneFollowUps.length);
+        result.push(currentTierOneFollowUps[currentWeatherIndex].id);
+        result.push(nextTierOneFollowUps[nextWeatherIndex].id);
+      }
+      
       result.push(nextWeather.id);
     }
     
@@ -140,7 +173,7 @@
       }
       return weather;
     });
-    const regionFillerWeather = regionWeather.filter(weather => weather?.tier == 1 || weather?.tier == 2);
+    const regionFillerWeather = regionWeather.filter(weather => weather?.tier == 1);
     let result : number[] = [];
     let currentWeather = null;
     let nextWeather = null;
@@ -148,12 +181,11 @@
     let weatherIndex = 0;
     let weatherId = 1;
     let weatherProbabilityArray = makeWeatherArray(regionWeather as WeatherDto[]);
-    let testArray = [];
     
     for (let i = 0; i < dayAmount; i++) {
       selectedPercentage = parseInt((random() * 100).toFixed(0));
       selectedPercentage = selectedPercentage < 1 ? 1 : selectedPercentage;
-      testArray.push(selectedPercentage);
+      
       // first day
       if (i == 0) {
         weatherIndex = Math.ceil(selectedPercentage * regionFillerWeather.length / 100) -1;
@@ -174,12 +206,12 @@
         weatherId = weatherProbabilityArray[weatherIndex];
         nextWeather = regionWeather.find(weather => weather?.id == weatherId);
 
-        // If weather is the same, a followUp or both are inside tier 1 or 2
+        // If weather is the same, a followUp or both are inside tier 1
         if (currentWeather && nextWeather && weatherIsDirectFollowUp(currentWeather, nextWeather)) {
           result.push(weatherId);
         }
         else {
-          let weatherSequence = buildWeatherSequence(regionWeather as WeatherDto[], currentWeather as WeatherDto, nextWeather as WeatherDto);
+          let weatherSequence = buildWeatherSequence(regionWeather as WeatherDto[], currentWeather as WeatherDto, nextWeather as WeatherDto, random);
           weatherSequence.forEach(id => {
             result.push(id);
             i++;
