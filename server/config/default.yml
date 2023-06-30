@@ -36,11 +36,11 @@ auth:
   scopedJwtExpiry: '_JWTSCOPEDEXPIRY_'
 
 s3:
-  endpoint: 'https://servername.tld'
-  bucketName: 'mybucket'
-  publicRootUrl: 'https://publicservername.tld'
-  accessKeyId: 'MY_ACCESS_KEY'
-  secretAccessKey: 'MY_SECRET_ACCESS_KEY'
+  endpoint: '_S3ENDPOINT_'
+  bucketName: '_S3BUCKETNAME_'
+  publicRootUrl: '_S3PUBLICROOTURL_'
+  accessKeyId: '_S3ACCESSKEYID_'
+  secretAccessKey: '_S3SECRETACCESSKEY_'
 
 discord:
   botToken: '_BOTTOKEN_'
