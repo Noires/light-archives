@@ -15,7 +15,7 @@ jobs:
         with:
           files: 'server/config/default.yml'
           replacements: |
-            _FRONTENDROOT_=${{ secrets.FRONTEND_ROOT }},_SMTPHOST_=${{ secrets.SMPT_SERVER }},_SMTPPORT_=${{ secrets.SMTP_PORT }},_SMTPUSER_=${{ secrets.SMTP_USER }},_SMPTPASSWORD_=${{ secrets.SMTP_PASSWORD }},_SMTPFROM_=${{ secrets.SMPT_FROM }},_JWTSECRET_=${{ secrets.LIGHT_ARCHIVES_JWTSECRET }},_JWTEXPIRY_=${{ secrets.LIGHT_ARCHIVES_JWTEXPIRY }},_JWTSCOPEDEXPIRY_=${{ secrets.LIGHT_ARCHIVES_JWTSCOPEDEXPIRY }},_BOTTOKEN_=${{ secrets.DISCORD_BOT_TOKEN }},_SERVERID_=${{ secrets.DISCORD_SERVER_ID }},_ANNOUNCEMENTCHANNEL_=${{ secrets.DISCORD_ANNOUNCMENTCHANNEL_ID }}
+            _FRONTENDROOT_=${{ secrets.FRONTEND_ROOT }},_SMTPHOST_=${{ secrets.SMPT_SERVER }},_SMTPPORT_=${{ secrets.SMTP_PORT }},_SMTPUSER_=${{ secrets.SMTP_USER }},_SMPTPASSWORD_=${{ secrets.SMTP_PASSWORD }},_SMTPFROM_=${{ secrets.SMPT_FROM }},_JWTSECRET_=${{ secrets.LIGHT_ARCHIVES_JWTSECRET }},_JWTEXPIRY_=${{ secrets.LIGHT_ARCHIVES_JWTEXPIRY }},_JWTSCOPEDEXPIRY_=${{ secrets.LIGHT_ARCHIVES_JWTSCOPEDEXPIRY }},_BOTTOKEN_=${{ secrets.DISCORD_BOT_TOKEN }},_SERVERID_=${{ secrets.DISCORD_SERVER_ID }},_ANNOUNCEMENTCHANNEL_=${{ secrets.DISCORD_ANNOUNCMENTCHANNEL_ID }},_S3ENDPOINT_=${{ secrets.S3_ENDPOINT }},_S3BUCKETNAME_=${{ secrets.S3_BUCKETNAME }},_S3PUBLICROOTURL_=${{ secrets.S3_PUBLICROOTURL }},_S3ACCESSKEYID_=${{ secrets.S3_ACCESSKEYID }},_S3SECRETACCESSKEY_=${{ secrets.S3_SECRETACCESSKEY }}
       - name: Replace configuration values in docker-compose
         uses: datamonsters/replace-action@v2
         with:
