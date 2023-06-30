@@ -17,6 +17,9 @@
               <span>Eine fremde Gestalt</span>
             </template>
           </div>
+          <nav class="layout__nav-links gt-sm">
+            <router-link v-for="link in siteLinks" :key="link.label" :to="link.to">{{ link.label }}</router-link>
+          </nav>
         </div>
       </q-toolbar>
 
@@ -54,10 +57,6 @@
             </picture>
           </router-link>
         </q-toolbar-title>
-
-      <nav class="layout__nav-links gt-sm">
-        <router-link v-for="link in siteLinks" :key="link.label" :to="link.to">{{ link.label }}</router-link>
-      </nav>
 
       <div class="layout__page-container">
         <router-view />
@@ -151,6 +150,9 @@ export default class MainLayout extends Vue {
 
 <style lang="scss">
 $max-layout-width: auto;
+$color-primary: #ddb476;
+$color-semi-dark: #333;
+$color-dark: #1b1b1b;
 
 .q-layout {
   /* box-shadow: rgba(black, 0.2) 8px 0px 4px, rgba(black, 0.2) -8px 0 4px; */
@@ -162,6 +164,7 @@ $max-layout-width: auto;
   flex-grow: 1;
   display: flex;
   flex-wrap: nowrap;
+  min-height: 50px;
 }
 
 .layout__filler__end {
@@ -179,7 +182,25 @@ $max-layout-width: auto;
   font-family: Michroma, sans-serif;
   font-weight: bold;
   letter-spacing: 0.01786em;
-  color: #ddb476;
+  color: $color-primary;
+  padding: 0 12px;
+  min-width: 300px;
+  position: relative;
+  background-color: $color-semi-dark;
+  z-index: +1;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translateX(100%);
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 50px 25px 0 0;
+    border-color: $color-semi-dark transparent transparent transparent;
+  }
 }
 
 .layout__char-name :hover {
@@ -246,6 +267,10 @@ $max-layout-width: auto;
   padding-right: 4px;
 }
 
+.q-toolbar {
+  padding: 0;
+}
+
 .q-header {
   background-color: transparent;
   border-radius: 0px;
@@ -264,14 +289,14 @@ $max-layout-width: auto;
   border-bottom: none;
 }
 .q-drawer--left {
-  background: rgba(27, 27, 27, 1);
+  background: $color-dark;
 }
 .q-drawer .q-item {
-  color:#ddb476;
+  color: $color-primary;
 }
 
 .layout__toolbar__header {
-  background-color: rgba(27, 27, 27, 1);
+  background-color: $color-semi-dark;
   font-family: Montserrat, sans-serif;
   color: white;
 }
@@ -282,21 +307,39 @@ $max-layout-width: auto;
 }
 
 .layout__nav-links {
-  max-width: 1300px;
-  margin: auto;
-  background: linear-gradient(to bottom, #ddb476, #ddb476);
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
   text-align: center;
   font-size: 16px;
+  display: flex;
+  flex: 1;
+  margin-right: calc((100% - 1300px) / 2);
+  position: relative;
+  background-color: $color-dark;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translateX(100%);
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 50px 25px 0 0;
+    border-color: $color-semi-dark transparent transparent transparent;
+  }
 }
 
 .layout__nav-links a {
-  display: inline-block;
+  display: flex;
+  align-items: center;
   padding: 6px 30px 6px 30px;
-  color: black;
+  color: $color-primary;
   transition: all 0.3s ease;
   font-family: Montserrat, sans-serif;
   font-size: small;
+  &:first-child {
+    padding-left: 50px;
+  }
 }
 
 .layout__nav-links a:hover {
@@ -369,6 +412,28 @@ $max-layout-width: auto;
 
   .q-drawer--left {
     left: calc((100% - #{$max-layout-width}) / 2);
+  }
+}
+
+@media screen and (max-width: 1380px) {
+  .layout__filler {
+    flex-direction: column;
+  }
+  .layout__char-name::after,
+  .layout__nav-links::after {
+    display: none;
+  }
+
+  .layout__char-name {
+    padding: 5px 12px;
+  }
+
+  .layout__nav-links {
+    margin-right: 0;
+    justify-content: center;
+    a:first-child {
+      padding-left: 30px;
+    }
   }
 }
 </style>
