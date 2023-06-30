@@ -20,6 +20,23 @@
           <nav class="layout__nav-links gt-sm">
             <router-link v-for="link in siteLinks" :key="link.label" :to="link.to">{{ link.label }}</router-link>
           </nav>
+          <q-btn-dropdown
+            class="layout__toolbar-button-more lt-md"
+            flat
+            dense
+            no-caps
+            dropdown-icon="menu"
+            tooltip="Menu"
+            aria-label="Menu"
+          >
+            <q-list>
+              <q-item v-for="link in siteLinks" clickable v-close-popup :key="link.label" :to="link.to">
+                <q-item-section>
+                  <q-item-label>{{ link.label }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-btn-dropdown>
         </div>
       </q-toolbar>
 
@@ -164,7 +181,6 @@ $color-dark: #1b1b1b;
   flex-grow: 1;
   display: flex;
   flex-wrap: nowrap;
-  min-height: 50px;
 }
 
 .layout__filler__end {
@@ -265,6 +281,7 @@ $color-dark: #1b1b1b;
 .layout__toolbar-button-more {
   padding-left: 4px;
   padding-right: 4px;
+  margin-left: auto;
 }
 
 .q-toolbar {
@@ -295,6 +312,14 @@ $color-dark: #1b1b1b;
   color: $color-primary;
 }
 
+.q-menu {
+  background: $color-dark;
+}
+
+.q-menu .q-item {
+  color: $color-primary;
+}
+
 .layout__toolbar__header {
   background-color: $color-semi-dark;
   font-family: Montserrat, sans-serif;
@@ -311,9 +336,9 @@ $color-dark: #1b1b1b;
   font-size: 16px;
   display: flex;
   flex: 1;
-  margin-right: calc((100% - 1300px) / 2);
   position: relative;
   background-color: $color-dark;
+  min-height: 50px;
 
   &::after {
     content: '';
@@ -434,6 +459,12 @@ $color-dark: #1b1b1b;
     a:first-child {
       padding-left: 30px;
     }
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .layout__filler {
+    flex-direction:row;
   }
 }
 </style>
