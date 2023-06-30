@@ -186,9 +186,9 @@ $color-dark: #1b1b1b;
   padding: 0 12px;
   min-width: 300px;
   position: relative;
-  background-color: $color-semi-dark;
   z-index: +1;
-
+  background-color: $color-semi-dark;
+  
   &::after {
     content: '';
     position: absolute;
