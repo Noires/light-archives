@@ -42,7 +42,7 @@
 
     </q-header>
 
-    <q-drawer overlay v-model="leftDrawerOpen" show-if-above side="left" :class="DRAWER_BG" :width="DRAWER_WIDTH">
+    <q-drawer overlay v-model="leftDrawerOpen" side="left" :class="DRAWER_BG" :width="DRAWER_WIDTH">
       <q-list dense dark>
         <q-item>
           <q-item-section>
