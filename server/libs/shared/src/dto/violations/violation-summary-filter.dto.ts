@@ -6,7 +6,7 @@ export class ViolationSummaryFilterDto extends PagingDto {
 	@IsOptional()
 	searchQuery?: string;
 
-    @IsBoolean()
+    @IsString()
     @IsOptional()
-    open: boolean;
+    open?: string;
 }

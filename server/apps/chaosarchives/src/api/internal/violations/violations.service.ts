@@ -38,7 +38,7 @@ export class ViolationsService {
 				{ searchQuery:  `%${escapeForLike(filter.searchQuery)}%` });
 		}
 		
-		if (filter.open) {
+		if (filter.open && filter.open === 'true' || filter.open === 'false') {
 			query.andWhere('violation.open = :open', { open: filter.open });
 		}
 
