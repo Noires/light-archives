@@ -34,14 +34,19 @@
         </template>
             <template v-slot:body-cell-pageId="props">
                 <q-td :props="props">
-                <router-link :to="getLink(props.row)">
-                    <span class="page-violations__column-open">{{props.row.open === true ? "Gesc" : "Offen"}}</span>
-                </router-link>
+                <q-btn @click="getLink(props.row)">
+                    <span class="page-violations__column-open">LINK</span>
+                </q-btn>
                 </q-td>
             </template>
             <template v-slot:body-cell-open="props">
                 <q-td :props="props">
                     <span class="page-violations__column-open">{{props.row.open === true ? "Geschlossen" : "Offen"}}</span>
+                </q-td>
+            </template>
+            <template v-slot:body-cell-createdAt="props">
+                <q-td :props="props">
+                    <span class="page-violations__column-createdAt">{{$display.formatDate(props.row.createdAt)}}</span>
                 </q-td>
             </template>
             </q-table>
@@ -53,6 +58,7 @@ import SharedConstants from '@app/shared/SharedConstants';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { ViolationSummaryFilterDto } from '@app/shared/dto/violations/violation-summary-filter.dto';
 import { ViolationSummaryDto } from '@app/shared/dto/violations/violation-summary.dto';
+import { PageType } from '@app/shared/enums/page-type.enum';
 import { useApi } from 'src/boot/axios';
 import { Options, Vue } from 'vue-class-component';
 
@@ -149,8 +155,46 @@ export default class PageViolations extends Vue {
     this.pagination.rowsNumber = violations.total;
   }
 
-  getLink(violation: ViolationSummaryDto) {
-    return violation.pageId.toString();
+  async getLink(violation: ViolationSummaryDto) {
+    const characterId = this.$store.getters.characterId!;
+
+    if (violation.pageType === PageType.STORY)
+    {
+      await this.$router.push(`story/${violation.pageId}`);   
+    }
+    else if (violation.pageType === PageType.NOTICEBOARD_ITEM)
+    {
+      await this.$router.push(`noticeboard/${violation.pageId}`);   
+    }
+    else if (violation.pageType === PageType.IMAGE)
+    {
+      await this.$router.push(`image/${violation.pageId}`);   
+    }
+    else if (violation.pageType === PageType.COMMUNITY)
+    {
+      const community = await this.$api.communities.getCommunity(violation.pageId,characterId);
+      await this.$router.push(`community/${community.name}`);
+    }
+    else if (violation.pageType === PageType.EVENT)
+    {
+      await this.$router.push('');   
+    }
+    else if (violation.pageType === PageType.FREE_COMPANY)
+    {
+      await this.$router.push('');   
+    }
+    else if (violation.pageType === PageType.PROFILE)
+    {
+      await this.$router.push('');   
+    }
+    else if (violation.pageType === PageType.VENUE)
+    {
+      await this.$router.push('');   
+    }
+    else if (violation.pageType === PageType.WIKI_PAGE)
+    {
+      await this.$router.push('');   
+    }
   }
 
 	refresh() {
