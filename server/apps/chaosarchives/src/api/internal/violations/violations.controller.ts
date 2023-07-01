@@ -5,6 +5,7 @@ import { ViolationReportDto } from '@app/shared/dto/violations/violation-report.
 import { Role } from '@app/shared/enums/role.enum';
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { ViolationsService } from './violations.service';
+import { ViolationSummaryDto } from '@app/shared/dto/violations/violation-summary.dto';
 
 @Controller('violations')
 export class ViolationsController {
@@ -12,7 +13,7 @@ export class ViolationsController {
 
 	@Get()
 	@RoleRequired(Role.ADMIN)
-	async getViolations(): Promise<ViolationReportDto[]> {
+	async getViolations(): Promise<ViolationSummaryDto[]> {
 		return this.violationsService.getViolations();
 	}
 

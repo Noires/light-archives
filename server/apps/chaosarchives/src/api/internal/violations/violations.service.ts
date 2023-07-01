@@ -6,6 +6,7 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import { Connection, EntityManager, Repository } from 'typeorm';
 import { isQueryFailedError } from '../../../common/db';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ViolationSummaryDto } from '@app/shared/dto/violations/violation-summary.dto';
 
 @Injectable()
 export class ViolationsService {
@@ -25,12 +26,20 @@ export class ViolationsService {
 		private connection: Connection,
 		@InjectRepository(Violation) private violationRepo: Repository<Violation>) {}
 
-	async getViolations(): Promise<Violation[]> {
+	async getViolations(): Promise<ViolationSummaryDto[]> {
 		const violations = await this.violationRepo.createQueryBuilder('violation')
 			.select(['pageId', 'pageType', 'reportedBy', 'open'])
 			.getMany();
 
-		return violations;
+		return violations.map((violation) => ({
+			id: violation.id,
+			pageType: violation.pageType,
+			pageId: violation.pageId,
+			reportedBy: violation.reportedBy.email,
+			reason: violation.reason,
+			open: violation.open,
+			createdAt: violation.createdAt.getTime(),
+		  }))
 	}
 
 	async reportViolation(report: ViolationReportDto, user: UserInfo): Promise<void> {
