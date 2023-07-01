@@ -28,14 +28,13 @@ export class ViolationsService {
 
 	async getViolations(): Promise<ViolationSummaryDto[]> {
 		const violations = await this.violationRepo.createQueryBuilder('violation')
-			.select(['pageId', 'pageType', 'reportedBy', 'open'])
+			.select(['id', 'pageType', 'pageId', 'reason', 'open', 'createdAt'])
 			.getMany();
 
 		return violations.map((violation) => ({
 			id: violation.id,
 			pageType: violation.pageType,
 			pageId: violation.pageId,
-			reportedBy: violation.reportedBy.email,
 			reason: violation.reason,
 			open: violation.open,
 			createdAt: violation.createdAt.getTime(),
