@@ -39,7 +39,7 @@ export class ViolationsService {
 		}
 		
 		if (filter.open && filter.open === 'true' || filter.open === 'false') {
-			query.andWhere('violation.open = :open', { open: filter.open });
+			query.andWhere('violation.open = :open', { open: filter.open === 'true' });
 		}
 
 		const total = await query.getCount();
