@@ -361,6 +361,17 @@ const routes: RouteRecordRaw[] = [
     },
   },
 
+  // Violations
+
+  {
+    path: '/violations',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/Violations.vue') }],
+    meta: {
+      title: 'Verstöße'
+    },    
+  },
+
   // Communities
 
   { 

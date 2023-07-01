@@ -4,9 +4,11 @@ import { ViolationReportDto } from '@app/shared/dto/violations/violation-report.
 import { PageType } from '@app/shared/enums/page-type.enum';
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Connection, EntityManager, Repository } from 'typeorm';
-import { isQueryFailedError } from '../../../common/db';
+import { escapeForLike, isQueryFailedError } from '../../../common/db';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ViolationSummaryDto } from '@app/shared/dto/violations/violation-summary.dto';
+import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
+import { ViolationSummaryFilterDto } from '@app/shared/dto/violations/violation-summary-filter.dto';
 
 @Injectable()
 export class ViolationsService {
@@ -26,19 +28,41 @@ export class ViolationsService {
 		private connection: Connection,
 		@InjectRepository(Violation) private violationRepo: Repository<Violation>) {}
 
-	async getViolations(): Promise<ViolationSummaryDto[]> {
-		const violations = await this.violationRepo.createQueryBuilder('violation')
-			.select(['id', 'pageType', 'pageId', 'reason', 'open', 'createdAt'])
-			.getMany();
+		
+	async getViolationList(filter: ViolationSummaryFilterDto): Promise<PagingResultDto<ViolationSummaryDto>> {
+		const query = await this.violationRepo.createQueryBuilder('violation')
+			.select(['id', 'pageType', 'pageId', 'reason', 'open', 'createdAt']);
 
-		return violations.map((violation) => ({
+		if (filter.searchQuery) {
+			query.andWhere(`(violation.pageType LIKE :searchQuery OR violation.pageId LIKE :searchQuery OR violation.reason LIKE :searchQuery)`,
+				{ searchQuery:  `%${escapeForLike(filter.searchQuery)}%` });
+		}
+		
+		if (filter.open) {
+			query.andWhere('violation.open = :open', { open: filter.open });
+		}
+
+		const total = await query.getCount();
+
+		if (filter.offset) {
+		  query.offset(filter.offset);
+		}
+	
+		if (filter.limit) {
+		  query.limit(filter.limit);
+		}
+
+		const violations = await query.getRawMany();
+
+		return {total, 
+			data: violations.map((violation) => ({
 			id: violation.id,
 			pageType: violation.pageType,
 			pageId: violation.pageId,
 			reason: violation.reason,
 			open: violation.open,
 			createdAt: violation.createdAt.getTime(),
-		  }))
+		  }))}
 	}
 
 	async reportViolation(report: ViolationReportDto, user: UserInfo): Promise<void> {
