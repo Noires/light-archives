@@ -9,7 +9,7 @@
             :to="getLink(violation)"
         >
             <q-item-section>
-                <q-item-label>{{violation.id}}</q-item-label>
+                <q-item-label>{{violation.id}}</q-item-label><q-item>{{violation.reason}}</q-item>
             </q-item-section>
         </q-item>
         </q-list>

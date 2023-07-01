@@ -9,7 +9,7 @@
 import { ViolationSummaryDto } from '@app/shared/dto/violations/violation-summary.dto';
 import { useApi } from 'src/boot/axios';
 import { notifyError } from 'src/common/notify';
-import VenueList from 'src/components/venues/VenueList.vue';
+import ViolationsList from 'src/components/violations/ViolationsList.vue';
 import { Options, Vue } from 'vue-class-component';
 
 const $api = useApi();
@@ -17,7 +17,7 @@ const $api = useApi();
 @Options({
 	name: 'PageVenues',
 	components: {
-		VenueList
+		ViolationsList
 	},
   async beforeRouteEnter(_, __, next) {
     try {
