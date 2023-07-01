@@ -1,3 +1,4 @@
+import { useStore } from 'src/store';
 import { RouteLocationNormalized, RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
@@ -370,6 +371,14 @@ const routes: RouteRecordRaw[] = [
     meta: {
       title: 'Verstöße'
     },    
+    beforeEnter: () => {
+      const store = useStore();
+      const role = store.getters.role;
+      if (role !== 'admin')
+      {
+        return false;
+      }
+    }
   },
 
   // Communities
