@@ -111,6 +111,76 @@ export class CharactersService {
     };
   }
 
+  async getCharacterProfileById(
+    id: number,
+    @CurrentUser() user?: UserInfo,
+  ): Promise<CharacterProfileDto> {
+    const character = await this.characterRepo
+      .createQueryBuilder('character')
+      .innerJoinAndSelect('character.server', 'server')
+      .innerJoinAndSelect('character.user', 'user')
+      .leftJoinAndSelect('character.freeCompany', 'freeCompany')
+      .leftJoinAndSelect('freeCompany.server', 'fcServer')
+      .where('character.verifiedAt IS NOT NULL')
+      .andWhere('character.id = :id', { id })
+      .select(['character', 'server.name', 'user.id', 'freeCompany', 'fcServer.name' ])
+      .getOne();
+
+    if (!character) {
+      throw new NotFoundException('Character not found');
+    }
+
+		// TODO: Refactor
+    const banner = await character.banner;
+
+    if (banner) {
+      banner.owner = character; // hack, needed to determine URL - TypeORM won't load banner.owner by itself
+    }
+
+    const freeCompany = await character.freeCompany;
+
+    return {
+      id: character.id,
+      mine: !!user && character.user.id === user.id,
+      name: character.name,
+      race: character.race,
+      server: character.server.name,
+      avatar: character.avatar,
+      lodestoneId: character.lodestoneId,
+      active: character.active || false,
+      appearance: character.appearance,
+      background: character.background,
+      occupation: character.occupation,
+      age: character.age,
+      birthplace: character.birthplace,
+      residence: character.residence,
+      title: character.title,
+      nickname: character.nickname,
+      pronouns: character.pronouns,
+      motto: character.motto,
+      friends: character.friends,
+      relatives: character.relatives,
+      enemies: character.enemies,
+      loves: character.loves,
+      hates: character.hates,
+      motivation: character.motivation,
+      carrdProfile: character.carrdProfile,
+      banner: !banner ? null : new BannerDto({
+        id: banner.id,
+        url: this.imagesService.getUrl(banner),
+        width: banner.width,
+        height: banner.height
+      }),
+      showAvatar: character.showAvatar,
+      showInfoboxes: character.showInfoboxes,
+      combinedDescription: character.combinedDescription,
+      freeCompany: !freeCompany ? null : {
+        name: freeCompany.name,
+        server: freeCompany.server.name
+      },
+    };
+  }
+
   async saveCharacter(characterDto: CharacterProfileDto, user: UserInfo): Promise<void> {
     const characterEntity = await this.connection.transaction(async em => {
 			const repo = em.getRepository(Character);

@@ -26,6 +26,10 @@ export default class FreeCompaniesAPI {
 		return this.transport.get<FreeCompanySummaryDto[]>('');
 	}
 
+	async getFreeCompanyById(id: number): Promise<FreeCompanyDto> {
+		return this.transport.tokenGet<FreeCompanyDto>(`${id}`);
+	}
+
 	async getFreeCompany(name: string, server: string): Promise<FreeCompanyDto> {
 		return this.transport.tokenGet<FreeCompanyDto>(`profile/${server}/${name}`);
 	}

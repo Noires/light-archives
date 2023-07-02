@@ -43,7 +43,7 @@ export class FreeCompaniesService {
 		const fc = await character.freeCompany;
 		return !fc ? null : this.toFCSummaryDto(fc, characterIdWrapper.characterId);
 	}
-	
+
 	async setFreeCompany(characterIdWrapper: CharacterIdWrapper, user: UserInfo): Promise<MyFreeCompanySummaryDto|null> {
 		const characterInfo = user.characters.find(ch => ch.id === characterIdWrapper.characterId);
 		
@@ -199,6 +199,24 @@ export class FreeCompaniesService {
 				name,
 				server: {
 					name: server,
+				}
+			},
+			relations: [ 'server', 'leader', 'banner', 'banner.owner' ]
+		});
+
+		if (!fc) {
+			throw new NotFoundException('Free Company not found');
+		}
+
+		return this.toFreeCompanyDto(fc, user);
+	}
+
+	async getFreeCompanyById(id: number, user: UserInfo): Promise<FreeCompanyDto> {
+		const fc = await this.freeCompanyRepo.findOne({
+			where: {
+				name,
+				server: {
+					id: id,
 				}
 			},
 			relations: [ 'server', 'leader', 'banner', 'banner.owner' ]

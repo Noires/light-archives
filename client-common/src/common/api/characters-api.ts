@@ -23,6 +23,10 @@ export default class CharactersAPI {
     return this.transport.tokenGet<CharacterProfileDto>(`profile/${server}/${name}`);
   }
 
+  async getCharacterProfileById(id: number): Promise<CharacterProfileDto> {
+    return this.transport.tokenGet<CharacterProfileDto>(`${id}`);
+  }
+
   async getCharacterProfiles(filter?: CharacterProfileFilterDto): Promise<PagingResultDto<CharacterSummaryDto>> {
     return this.transport.get<PagingResultDto<CharacterSummaryDto>>('', filter as QueryParams);
   }
