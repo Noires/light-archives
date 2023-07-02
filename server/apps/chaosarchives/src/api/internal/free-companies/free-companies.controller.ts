@@ -45,7 +45,7 @@ export class FreeCompaniesController {
 		return this.freeCompaniesService.getFreeCompany(name, server, user);
 	}
 
-	@Get('id')
+	@Get(':id')
 	@UseGuards(OptionalJwtAuthGuard)
 	async getFreeCompanyById(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: UserInfo): Promise<FreeCompanyDto> {
 		return this.freeCompaniesService.getFreeCompanyById(id, user);
