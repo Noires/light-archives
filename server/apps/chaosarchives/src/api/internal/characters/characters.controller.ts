@@ -41,7 +41,7 @@ export class CharactersController {
     return this.charactersService.getCharacterProfile(name, server, user);
   }
 
-  @Get('id')
+  @Get(':id')
   @UseGuards(OptionalJwtAuthGuard)
   async getCharacterProfileById(
     @Param('id', ParseIntPipe) id: number,
