@@ -211,7 +211,7 @@ export class FreeCompaniesService {
 		return this.toFreeCompanyDto(fc, user);
 	}
 
-	async getFreeCompanyById(id: number, user: UserInfo): Promise<FreeCompanyDto> {
+	async getFreeCompanyById(id: number, user?: UserInfo): Promise<FreeCompanyDto> {
 		const fc = await this.freeCompanyRepo.findOne({
 			where: {
 				name,
