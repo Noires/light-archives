@@ -41,6 +41,15 @@ export class CharactersController {
     return this.charactersService.getCharacterProfile(name, server, user);
   }
 
+  @Get('id')
+  @UseGuards(OptionalJwtAuthGuard)
+  async getCharacterProfileById(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user?: UserInfo,
+  ): Promise<CharacterProfileDto> {
+    return this.charactersService.getCharacterProfileById(id, user);
+  }
+
   @Put('profile')
   @RoleRequired(Role.USER)
   async saveCharacter(@Body() profile: CharacterProfileDto, @CurrentUser() user: UserInfo): Promise<void> {

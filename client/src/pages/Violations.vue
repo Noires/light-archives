@@ -157,12 +157,12 @@ export default class PageViolations extends Vue {
             await this.$router.push(`event/${violation.pageId}`);
         }
         else if (violation.pageType === PageType.FREE_COMPANY) {
-            //const company = await this.$api.freeCompanies.getFreeCompany(violation.pageId);
-            await this.$router.push('');
+            const company = await this.$api.freeCompanies.getFreeCompanyById(violation.pageId);
+            await this.$router.push(`fc/${company.server}/${company.name}`);
         }
         else if (violation.pageType === PageType.PROFILE) {
-            //const profile = await this.$api.characters.getCharacterProfile(violation.pageId);
-            await this.$router.push('');
+            const profile = await this.$api.characters.getCharacterProfileById(violation.pageId);
+            await this.$router.push(`${profile.server}/${profile.name}`);
         }
         else if (violation.pageType === PageType.VENUE) {
             const venue = await this.$api.venues.getVenue(violation.pageId);
