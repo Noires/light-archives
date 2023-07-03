@@ -38,7 +38,7 @@ Denk bitte daran dass das Spiel eine <a href="[https://www.esrb.org/ratings/2947
 
 Das Admin Team behält sich das Recht vor, alle Inhalte aus beliebigen Gründen zu entfernen.
 
-Im Falle eines Regelversoßes werden — je nach Schwere der Regel(n), gegen die verstoßen wurde(n) — Verwarnungen ausgesprochen, wobei spezifische Fälle zu einem direkten Bann führen können. Die Dauer der Sperre richtet sich nach der gleichen Formel wie bei Verwarnungen.
+Im Falle eines Regelverstoßes werden — je nach Schwere der Regel(n), gegen die verstoßen wurde(n) — Verwarnungen ausgesprochen, wobei spezifische Fälle zu einem direkten Bann führen können. Die Dauer der Sperre richtet sich nach der gleichen Formel wie bei Verwarnungen.
 
 <hr />
 
