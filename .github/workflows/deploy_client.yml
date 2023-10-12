@@ -56,8 +56,6 @@ jobs:
           username: ${{ secrets.LIGHT_ARCHIVES_USERNAME }}
           # File Location or string that contains a private key for either key-based or hostbased user authentication (OpenSSH format)
           privateKey: ${{ secrets.LIGHT_ARCHIVES_PRIVATESSHKEY }}
-          # Passphrase for private key decryption
-          passphrase: ${{ secrets.LIGHT_ARCHIVES_PRIVATESSHPASSPHRASE }}
           # Upload files to temporary file first, then rename once upload completed
           atomicPut: true
 
