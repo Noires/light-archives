@@ -4,6 +4,7 @@ FROM node:18-slim
 WORKDIR /usr/src/app
 
 RUN npm install -g @nestjs/cli
+RUN apt-get install build-essential
 
 # Switch to unprivileged user
 RUN groupmod -g 1000 node && usermod -u 1000 -g 1000 node
