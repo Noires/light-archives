@@ -3,7 +3,7 @@
 FROM node:20-slim
 WORKDIR /usr/src/app
 
-RUN apt-get update && apt-get install -y  build-essential libjpeg-turbo
+RUN apt-get update && apt-get install -y  build-essential libjpeg-turbo-progs
 RUN npm install jpegtran-bin
 RUN npm install -g @nestjs/cli && rm -rf /root/npm/_cacache
 
