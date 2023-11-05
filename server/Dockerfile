@@ -1,24 +1,22 @@
 # The jpegtran-bin dependency tries to build from source (and fails) under node:lts-alpine,
 # so we use node:lts-slim instead.
-FROM node:alpine
+FROM node:20-slim
 WORKDIR /usr/src/app
 
-RUN apk add --update --no-cache \
+RUN apt-get update && apt-get install \
   make \
   g++ \
   automake \
   autoconf \
   libtool \
   nasm \
-  libjpeg-turbo-dev
+  libjpeg62-turbo-dev
 RUN npm install jpegtran-bin
 
 RUN npm install -g @nestjs/cli && rm -rf /root/npm/_cacache
 
 # Switch to unprivileged user
-RUN addgroup -g 1000 node && \
-    adduser -u 1000 -G node -D node && \
-    chown -R node:node /usr/src/app
+RUN groupmod -g 1000 node && usermod -u 1000 -g 1000 node && chown -R node.node /usr/src/app
 USER node
 
 # Build application
