@@ -53,7 +53,6 @@
     "html-to-text": "^8.2.0",
     "ioredis": "^4.27.8",
     "jpegtran": "^2.0.0",
-    "jpegtran-bin": "^7.0.0",
     "jsdom": "^17.0.0",
     "lodash": "^4.17.21",
     "luxon": "^2.0.2",
