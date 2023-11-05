@@ -31,7 +31,7 @@ jobs:
           # Remote host name.
           ssh_host: ${{ secrets.LIGHT_ARCHIVES_HOST }}
           # Remote SSH port.
-          ssh_port: 22
+          ssh_port: ${{ secrets.LIGHT_ARCHIVES_PORT }}
           # Remote user name.
           ssh_user: ${{ secrets.LIGHT_ARCHIVES_USERNAME }}
           # Prefix for docker-compose containers.
