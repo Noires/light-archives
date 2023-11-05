@@ -5,6 +5,8 @@ WORKDIR /usr/src/app
 
 RUN apt-get update && apt-get install -y libjpeg-turbo-progs
 RUN npm install --global jpegtran-bin
+RUN ls /usr/lib/node_modules
+RUN ls /usr/local/lib/node_modules
 RUN npm install -g @nestjs/cli && rm -rf /root/npm/_cacache
 
 # Switch to unprivileged user
