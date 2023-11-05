@@ -16,7 +16,9 @@ RUN npm install jpegtran-bin
 RUN npm install -g @nestjs/cli && rm -rf /root/npm/_cacache
 
 # Switch to unprivileged user
-RUN groupmod -g 1000 node && usermod -u 1000 -g 1000 node && chown -R node.node /usr/src/app
+RUN addgroup -g 1000 node && \
+    adduser -u 1000 -G node -D node && \
+    chown -R node:node /usr/src/app
 USER node
 
 # Build application
