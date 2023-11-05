@@ -17,10 +17,12 @@ jobs:
           replacements: |
             _FRONTENDROOT_=${{ secrets.FRONTEND_ROOT }},_SMTPHOST_=${{ secrets.SMPT_SERVER }},_SMTPPORT_=${{ secrets.SMTP_PORT }},_SMTPUSER_=${{ secrets.SMTP_USER }},_SMPTPASSWORD_=${{ secrets.SMTP_PASSWORD }},_SMTPFROM_=${{ secrets.SMPT_FROM }},_JWTSECRET_=${{ secrets.LIGHT_ARCHIVES_JWTSECRET }},_JWTEXPIRY_=${{ secrets.LIGHT_ARCHIVES_JWTEXPIRY }},_JWTSCOPEDEXPIRY_=${{ secrets.LIGHT_ARCHIVES_JWTSCOPEDEXPIRY }},_BOTTOKEN_=${{ secrets.DISCORD_BOT_TOKEN }},_SERVERID_=${{ secrets.DISCORD_SERVER_ID }},_ANNOUNCEMENTCHANNEL_=${{ secrets.DISCORD_ANNOUNCMENTCHANNEL_ID }},_S3ENDPOINT_=${{ secrets.S3_ENDPOINT }},_S3BUCKETNAME_=${{ secrets.S3_BUCKETNAME }},_S3PUBLICROOTURL_=${{ secrets.S3_PUBLICROOTURL }},_S3ACCESSKEYID_=${{ secrets.S3_ACCESSKEYID }},_S3SECRETACCESSKEY_=${{ secrets.S3_SECRETACCESSKEY }}
       - name: Replace configuration values in docker-compose
-        uses: datamonsters/replace-action@v2
+        uses: jacobtomlinson/gha-find-replace@v3
         with:
-          files: 'server/docker-compose.yml'
-          replacements: '_USER_=${{ secrets.LIGHT_ARCHIVES_USERNAME }}'
+          find: '_USER_'
+          replace: '${{ secrets.LIGHT_ARCHIVES_USERNAME }}'
+          include: 'server/docker-compose.yml'
+          regex: false
       - name: SSH-Compose
         # You may pin to the exact commit or the version.
         # uses: matiasnu/github-action-ssh-docker-compose@d2e13949c92cb86a69ea36e83ebaa01d6d01de9c
