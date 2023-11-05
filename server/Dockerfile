@@ -4,8 +4,8 @@ FROM node:18-slim
 WORKDIR /usr/src/app
 
 RUN apt-get update && apt-get install -y libjpeg-turbo-progs
-RUN mkdir -p /usr/local/lib/node_modules/jpegtran-bin/vendor/jpegtran
-RUN ln -sf /usr/bin/jpegtran /usr/local/lib/node_modules/jpegtran-bin/vendor/jpegtran
+RUN mkdir -p /usr/src/app/node_modules/jpegtran-bin/vendor/jpegtran
+RUN ln -sf /usr/bin/jpegtran /usr/src/app/node_modules/jpegtran-bin/vendor/jpegtran
 RUN npm install -g @nestjs/cli && rm -rf /root/npm/_cacache
 
 # Switch to unprivileged user
