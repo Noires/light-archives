@@ -11,7 +11,7 @@ USER node
 
 # Build application
 
-COPY package.json yarn.lock ./
+COPY package.json ./
 RUN yarn install && rm -rf /home/node/.cache/yarn /home/node/.npm
 
 COPY . .
