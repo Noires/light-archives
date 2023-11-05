@@ -1,6 +1,6 @@
 # The jpegtran-bin dependency tries to build from source (and fails) under node:lts-alpine,
 # so we use node:lts-slim instead.
-FROM node:20-slim
+FROM node:18-slim
 WORKDIR /usr/src/app
 
 RUN apt-get update && apt-get install -y build-essential file nasm autoconf
