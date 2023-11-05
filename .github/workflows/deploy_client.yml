@@ -52,6 +52,8 @@ jobs:
           rmRemote: true
           # Hostname or IP address of the server.
           host: ${{ secrets.LIGHT_ARCHIVES_HOST }}
+          # Port of the server.
+          port: ${{ secrets.LIGHT_ARCHIVES_PORT }}
           # Username for authentication.
           username: ${{ secrets.LIGHT_ARCHIVES_USERNAME }}
           # File Location or string that contains a private key for either key-based or hostbased user authentication (OpenSSH format)
