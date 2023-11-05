@@ -11,7 +11,6 @@ RUN apt-get update && apt-get install -y \
   nasm \
   build-essential \
   zlib1g-dev
-  libjpeg62-turbo-dev
 
 RUN npm install jpegtran-bin
 
