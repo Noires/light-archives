@@ -40,7 +40,7 @@
     "@xivapi/js": "^0.3.3",
     "aws-sdk": "^2.1004.0",
     "axios": "^0.21.4",
-    "bcrypt": "^5.0.1",
+    "bcrypt": "^5.1.0",
     "bl": "^5.0.0",
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
