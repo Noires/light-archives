@@ -4,6 +4,7 @@ FROM node:18-slim
 WORKDIR /usr/src/app
 
 RUN apt-get update && apt-get install -y libjpeg-turbo-progs
+RUN npm install --global jpegtran-bin
 RUN npm install -g @nestjs/cli && rm -rf /root/npm/_cacache
 
 # Switch to unprivileged user
