@@ -4,13 +4,15 @@ FROM node:20-slim
 WORKDIR /usr/src/app
 
 RUN apt-get update && apt-get install -y \
-  make \
-  g++ \
-  automake \
+  pkg-config \
   autoconf \
+  automake \
   libtool \
   nasm \
+  build-essential \
+  zlib1g-dev
   libjpeg62-turbo-dev
+
 RUN npm install jpegtran-bin
 
 RUN npm install -g @nestjs/cli && rm -rf /root/npm/_cacache
