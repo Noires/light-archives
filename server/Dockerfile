@@ -3,7 +3,7 @@
 FROM node:20-slim
 WORKDIR /usr/src/app
 
-RUN apt-get update && apt-get install \
+RUN apt-get update && apt-get install -y \
   make \
   g++ \
   automake \
