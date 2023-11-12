@@ -1,4 +1,5 @@
 import { Race } from '@app/shared/enums/race.enum';
+import { Tribe } from '@app/shared/enums/tribe.enum';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { BannerDto } from './banner.dto';
@@ -17,6 +18,9 @@ export class CharacterProfileDto extends BaseCharacterProfileDto {
 
   @IsEnum(Race)
   race: Race;
+
+  @IsEnum(Tribe)
+  tribe: Tribe;
 
   @IsString()
   server: string;

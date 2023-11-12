@@ -4,6 +4,7 @@ import { noticeboardLocations } from '@app/shared/enums/noticeboard-location.enu
 import { PageType } from '@app/shared/enums/page-type.enum';
 import { races } from '@app/shared/enums/race.enum';
 import { StoryType } from '@app/shared/enums/story-type.enum';
+import { tribes } from '@app/shared/enums/tribe.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import SharedConstants from '@app/shared/SharedConstants';
 import { DateTime } from 'luxon';
@@ -23,6 +24,7 @@ const DATE_TIME_FORMAT = "d MMMM yyyy 'um' HH:mm";
 
 class Display {
 	readonly races = races;
+	readonly tribes = tribes;
 
 	readonly storyTypes: { [k: string]: string } = {
 		[StoryType.PUBLISHED_WORK]: 'Veröffentlichte Arbeit',

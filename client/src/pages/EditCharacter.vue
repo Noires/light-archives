@@ -12,6 +12,7 @@
             <section class="page-edit-character__form-controls">
               <q-input :model-value="character.name" label="Name" readonly />
               <q-input :model-value="$display.races[character.race]" label="Volk" readonly />
+              <q-input :model-value="$display.tribes[character.tribe]" label="Stamm" readonly />
             </section>
             <section v-if="character.active">
               <q-btn outline color="secondary" @click="onRefreshClick" style="max-width: 140px"
