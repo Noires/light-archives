@@ -27,6 +27,7 @@ import { checkCarrdProfile } from '../../../common/api-checks';
 import { andWhereExists, escapeForLike, isQueryFailedError } from '../../../common/db';
 import { getLodestoneCharacter } from '../../../common/lodestone';
 import { ImagesService } from '../images/images.service';
+import { getTribeById } from '@app/shared/enums/tribe.enum';
 
 @Injectable()
 export class CharactersService {
@@ -74,6 +75,7 @@ export class CharactersService {
       mine: !!user && character.user.id === user.id,
       name: character.name,
       race: character.race,
+      tribe: character.tribe,
       server: character.server.name,
       avatar: character.avatar,
       lodestoneId: character.lodestoneId,
@@ -144,6 +146,7 @@ export class CharactersService {
       mine: !!user && character.user.id === user.id,
       name: character.name,
       race: character.race,
+      tribe: character.tribe,
       server: character.server.name,
       avatar: character.avatar,
       lodestoneId: character.lodestoneId,
@@ -298,6 +301,7 @@ export class CharactersService {
 				name: character.name,
         occupation: character.occupation,
 				race: character.race,
+        tribe: character.tribe,
 				avatar: character.avatar,
 				server: character.server.name,
 			}))
@@ -346,6 +350,7 @@ export class CharactersService {
 			Object.assign(character, {
         name: lodestoneInfo.Character.Name,
         race: getRaceById(lodestoneInfo.Character.Race),
+        tribe: getRaceById(lodestoneInfo.Character.Tribe),
         avatar: lodestoneInfo.Character.Avatar,
 				server,
 			});
@@ -388,6 +393,7 @@ export class CharactersService {
           avatar: character.avatar,
           lodestoneId: character.lodestoneId,
           race: character.race,
+          tribe: character.tribe,
           newsRole: character.newsRole,
           newsPseudonym: character.newsPseudonym,
           verified: false
@@ -463,6 +469,12 @@ export class CharactersService {
       throw new BadRequestException('Invalid race');
     }
 
+    const tribe = getTribeById(characterInfo.Character.Tribe);
+
+    if (!tribe) {
+      throw new BadRequestException('Invalid tribe');
+    }
+
     // Set all previously existing characters with this Lodestone ID as inactive
     await characterRepo.update({
       lodestoneId: characterInfo.Character.ID,
@@ -476,6 +488,7 @@ export class CharactersService {
       lodestoneId: characterInfo.Character.ID,
       name: characterInfo.Character.Name,
       race,
+      tribe,
       server,
       user,
       avatar: characterInfo.Character.Avatar,

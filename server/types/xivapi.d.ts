@@ -31,6 +31,7 @@ declare module '@xivapi/js' {
       ID: number;
       Name: string;
       Race: number;
+      Tribe: number;
       Server: string;
       FreeCompanyId: string|null;
       FreeCompanyName: string|null;

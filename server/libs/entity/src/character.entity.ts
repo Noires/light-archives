@@ -1,5 +1,6 @@
 import { NewsRole } from '@app/shared/enums/news-role.enum';
 import { Race } from '@app/shared/enums/race.enum';
+import { Tribe } from '@app/shared/enums/tribe.enum';
 import SharedConstants from '@app/shared/SharedConstants';
 import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
 import { BasicEntity } from './basic.entity';
@@ -40,6 +41,13 @@ export class Character extends BasicEntity {
     nullable: false,
   })
   race: Race;
+
+  @Column({
+    type: 'enum',
+    enum: Tribe,
+    nullable: false,
+  })
+  tribe: Tribe;
 
   @Column({
     nullable: false,
