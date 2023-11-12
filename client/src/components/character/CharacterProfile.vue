@@ -20,6 +20,7 @@
     <character-details-box v-if="character.showInfoboxes">
       <character-detail label="Welt" :value="character.server" v-if="character.server" />
       <character-detail label="Volk" :value="$display.races[character.race]" v-if="character.race" />
+      <character-detail label="Stamm" :value="$display.tribes[character.tribe]" v-if="character.tribe" />
       <character-detail label="Profession" :value="character.occupation" v-if="character.occupation" />
       <character-detail label="Alter" :value="character.age" v-if="character.age" />
       <character-detail label="Pronouns" :value="character.pronouns" v-if="character.pronouns" />
