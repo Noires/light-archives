@@ -350,7 +350,7 @@ export class CharactersService {
 			Object.assign(character, {
         name: lodestoneInfo.Character.Name,
         race: getRaceById(lodestoneInfo.Character.Race),
-        tribe: getRaceById(lodestoneInfo.Character.Tribe),
+        tribe: getTribeById(lodestoneInfo.Character.Tribe),
         avatar: lodestoneInfo.Character.Avatar,
 				server,
 			});
@@ -368,6 +368,7 @@ export class CharactersService {
     return {
       name: characterEntity.name,
       race: characterEntity.race,
+      tribe: characterEntity.tribe,
       avatar: characterEntity.avatar,
       server: characterEntity.server.name
     };
