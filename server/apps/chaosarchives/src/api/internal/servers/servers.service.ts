@@ -1,5 +1,6 @@
 import { Server } from "@app/entity";
 import { DatacenterDto } from "@app/shared/dto/servers/datacenter-dto";
+import { ServerDto } from "@app/shared/dto/servers/server-dto";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -7,6 +8,27 @@ import { Repository } from "typeorm";
 @Injectable()
 export class ServersService {
 	constructor(@InjectRepository(Server) private serverRepo: Repository<Server>) {}
+
+	async getServers(): Promise<ServerDto[]> {
+		const servers = await this.serverRepo.find({
+			order: {
+				name: 'ASC'
+			}
+		});
+
+		const result: ServerDto[] = [];
+
+		servers.forEach(server => { 
+			const currentServer = {
+				id: server.id,
+				name: server.name,
+			};
+			
+			result.push(currentServer);
+		})
+
+		return result;
+	}
 
 	async getDatacenters(): Promise<DatacenterDto[]> {
 		const servers = await this.serverRepo.find({

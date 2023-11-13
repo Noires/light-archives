@@ -269,6 +269,10 @@ export class CharactersService {
       query.andWhere('character.race = :race', { race: filter.race });
     }
 
+    if (filter.server) {
+      query.andWhere('character.server = :server', { server: filter.server });
+    }
+
     if (filter.freeCompanyId) {
       query.andWhere('character.freeCompany.id = :freeCompanyId', { freeCompanyId: filter.freeCompanyId });
     }

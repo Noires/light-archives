@@ -12,7 +12,7 @@
     >
       <template v-slot:top>
         <q-form class="page-characters__filter">
-          <q-input
+          <q-input clearable standout
             class="page-characters__filter-search"
             v-model="searchQuery"
             label="Suche"
@@ -21,13 +21,25 @@
           />
           <label class="page-characters__filter-race">
             <span class="page-characters__race-label">Volk:</span>
-            <q-select
+            <q-select standout
               class="page-characters__race-select"
               v-model="race"
               :display-value="$display.races[race]"
               emit-value
               map-options
               :options="raceOptions"
+            	@update:model-value="refresh"
+            />
+          </label>
+          <label class="page-characters__filter-server">
+            <span class="page-characters__server-label">Server:</span>
+            <q-select standout
+              class="page-characters__server-select"
+              v-model="server"
+              :display-value="servers[server]"
+              emit-value
+              map-options
+              :options="serverOptions"
             	@update:model-value="refresh"
             />
           </label>
@@ -62,6 +74,13 @@
           </router-link>
         </q-td>
       </template>
+      <template v-slot:body-cell-server="props">
+        <q-td :props="props">
+          <router-link :to="getLink(props.row)">
+            <span class="page-characters__column-server">{{props.row.server}}</span>
+          </router-link>
+        </q-td>
+      </template>
     </q-table>
   </q-page>
 </template>
@@ -70,6 +89,7 @@
 import { CharacterProfileFilterDto } from '@app/shared/dto/characters/character-profile-filter.dto';
 import { CharacterSummaryDto } from '@app/shared/dto/characters/character-summary.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
+import { ServerDto } from '@app/shared/dto/servers/server-dto';
 import { Race } from '@app/shared/enums/race.enum';
 import SharedConstants from '@app/shared/SharedConstants';
 import { useApi } from 'src/boot/axios';
@@ -83,6 +103,7 @@ const $api = useApi();
   },
   async beforeRouteEnter(to, __, next) {
     const searchQuery = to.query.searchQuery as string || '';
+    const server = parseInt(to.query.server as string || '');
     const race = to.query.race && Object.values(Race).includes(to.query.race as Race) ? to.query.race as Race : null;
     const page = parseInt(to.query.page as string, 10) || 1;
     const rowsPerPage = parseInt(to.query.rowsPerPage as string, 10) || SharedConstants.DEFAULT_ROWS_PER_PAGE;
@@ -93,13 +114,17 @@ const $api = useApi();
       searchQuery,
     };
 
+    const servers = await $api.servers.getServers();
+    if (server) {
+      filter.server = server;
+    }
     if (race) {
       filter.race = race;
     }
-
+    
     const profiles = await $api.characters.getCharacterProfiles(filter);
-    next((vm) => (vm as PageCharacters).setContent(profiles, searchQuery, race, { page, rowsPerPage }));
-  },
+    next((vm) => (vm as PageCharacters).setContent(servers, profiles, searchQuery, race, { page, rowsPerPage }));
+  }
 })
 export default class PageCharacters extends Vue {
   profiles: CharacterSummaryDto[] = [];
@@ -111,6 +136,8 @@ export default class PageCharacters extends Vue {
 
   searchQuery = '';
   race: Race | null = null;
+  server: number | null = null;
+  servers:ServerDto[] = [];
 
   get columns() {
     return [
@@ -136,6 +163,14 @@ export default class PageCharacters extends Vue {
         align: 'left',
         sortable: false,
       },
+      {
+        name: 'server',
+        field: 'server',
+        format: (val: number) => this.serverOptions[val],
+        label: 'Server',
+        align: 'left',
+        sortable: false,
+      }
     ];
   }
 
@@ -146,8 +181,16 @@ export default class PageCharacters extends Vue {
     ];
   }
 
-  setContent(profiles: PagingResultDto<CharacterSummaryDto>, searchQuery: string, race: Race | null,
+  get serverOptions() {
+    return [
+      { label: '(Alle)', value: null},
+      ...this.servers.map(server => ({ value: server.id, label: server.name}))
+    ]
+  }
+
+  setContent(servers: ServerDto[], profiles: PagingResultDto<CharacterSummaryDto>, searchQuery: string, race: Race | null,
       pagination: { page: number; rowsPerPage: number }) {
+    this.servers = servers;
     this.profiles = profiles.data;
     this.searchQuery = searchQuery;
     this.race = race;
@@ -176,6 +219,10 @@ export default class PageCharacters extends Vue {
       filter.race = this.race;
     }
 
+    if (this.server) {
+      filter.server = this.server;
+    }
+
     const profiles = await this.$api.characters.getCharacterProfiles(filter);
     this.profiles = profiles.data;
     this.pagination.rowsNumber = profiles.total;
@@ -191,9 +238,14 @@ export default class PageCharacters extends Vue {
       queryParams.searchQuery = this.searchQuery;
     }
 
+    if (this.server) {
+      queryParams.server = this.server;
+    }
+
     if (this.race) {
       queryParams.race = this.race;
     }
+
 
     void this.$router.replace({
       path: '/profiles',
@@ -211,15 +263,28 @@ export default class PageCharacters extends Vue {
 	flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 0px;
 }
 
 .page-characters__filter-search {
   width: 300px;
+  flex-grow: 1;
+  padding-right: 8px;
 }
 
 .page-characters__filter-race {
   display: flex;
   align-items: center;
+  padding-right: 8px;
+}
+
+.page-characters__filter-server {
+  display: flex;
+  align-items: center;
+}
+
+.page-characters__server-label {
+  padding-right: 8px;
 }
 
 .page-characters__race-label {
