@@ -8,6 +8,11 @@ export class CharacterProfileFilterDto extends PagingDto {
 	@IsOptional()
 	searchQuery?: string;
 
+	@Type(() => Number)
+	@IsNumber()
+	@IsOptional()
+	server?: number;
+
 	@IsEnum(Race)
 	@IsOptional()
 	race?: Race;
