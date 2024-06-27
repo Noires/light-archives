@@ -5,18 +5,18 @@
         <template v-if="!preview">
           <section class="page-edit-character__form-controls">
             <h6>Beziehungen</h6>
-            <q-input v-model="character.partners" label="Partner" />
-            <q-input v-model="character.relatives" label="Verwandte" />
-            <q-input v-model="character.friends" label="Freunde" />
-            <q-input v-model="character.acquaintances" label="Bekannte / Kollegen" />
-            <q-input v-model="character.enemies" label="Rivalen / Feinde" />
-            <q-input v-model="character.past" label="Vergangenheit" />
+            <q-input @update:model-value="onChange" v-model="character.partners" label="Partner" />
+            <q-input @update:model-value="onChange" v-model="character.relatives" label="Verwandte" />
+            <q-input @update:model-value="onChange" v-model="character.friends" label="Freunde" />
+            <q-input @update:model-value="onChange" v-model="character.acquaintances" label="Bekannte / Kollegen" />
+            <q-input @update:model-value="onChange" v-model="character.enemies" label="Rivalen / Feinde" />
+            <q-input @update:model-value="onChange" v-model="character.past" label="Vergangenheit" />
             <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername|mein bester Freund]], in allen obigen Feldern nutzen.</div>
             <h6>Verbindungen</h6>
-            <q-input v-model="character.freecompanies" label="Freie Gesellschaft" />
-            <q-input v-model="character.meetingplaces" label="Treffpunkte" />
-            <q-input v-model="character.communities" label="Communities" />
-            <q-input v-model="character.mentioned" label="Erwähnt in (Anschlagebrett, Geschichten, ...)" />
+            <q-input @update:model-value="onChange" v-model="character.freecompanies" label="Freie Gesellschaft" />
+            <q-input @update:model-value="onChange" v-model="character.meetingplaces" label="Treffpunkte" />
+            <q-input @update:model-value="onChange" v-model="character.communities" label="Communities" />
+            <q-input @update:model-value="onChange" v-model="character.mentioned" label="Erwähnt in (Anschlagebrett, Geschichten, ...)" />
             <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername|mein bester Freund]], in allen obigen Feldern nutzen.</div>
           </section>
         </template>
@@ -63,8 +63,10 @@ import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
 import HtmlEditor from '../components/common/HtmlEditor.vue';
 import { ref } from 'vue';
+import { Dialog } from 'quasar';
 
 const $api = useApi();
+const isDirty = ref(false);
 
 async function load(params: RouteParams): Promise<CharacterProfileDto> {
   const id = parseInt(params.id as string, 10);
@@ -88,8 +90,36 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
     CarrdEditSection,
   },
   async beforeRouteEnter(to, _, next) {
+    isDirty.value = false;
     const character = await load(to.params);
     next((vm) => (vm as PageEditProfile).setContent(character));
+  },
+  beforeRouteLeave(to, from, next) {
+    if (isDirty.value) {
+      Dialog.create({
+        title: 'Warnung',
+        message: 'Ungespeicherte Änderungen gehen verloren. Möchtest du fortfahren?',
+        ok: {
+          push: true,
+          label: 'Ok'
+        },
+        cancel: {
+          push: true,
+          color: 'secondary',
+          label: 'Abbrechen'
+        }
+      }).onOk(() => {
+        next();
+      }).onCancel(() => {
+        next(false);
+      }).onDismiss(() => {
+        next(false);
+      });
+    }
+    else
+    {
+      next();
+    }
   },
 })
 export default class PageEditProfile extends Vue {
@@ -130,12 +160,17 @@ export default class PageEditProfile extends Vue {
       });
   }
 
+  onChange() {
+    isDirty.value = true;
+  } 
+
   onRevertClick() {
     this.confirmRevert = true;
   }
 
   onConfirmRevert() {
     this.character = new CharacterProfileDto(this.characterBackup);
+    isDirty.value = false;
   }
 
   async onSubmit() {
@@ -154,6 +189,7 @@ export default class PageEditProfile extends Vue {
       notifyError(e);
     } finally {
       this.saving = false;
+      isDirty.value = false;
     }
   }
 

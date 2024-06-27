@@ -58,7 +58,7 @@ export default class EditCharacterGallery extends Vue {
   content: CharacterContentDto = { stories: [], images: [] };
 
   setContent(content: CharacterContentDto) {
-    Object.assign(this.content, content);
+    Object.assign(this, content);
   }
 }
 </script>

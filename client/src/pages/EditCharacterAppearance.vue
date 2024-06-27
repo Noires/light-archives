@@ -5,19 +5,19 @@
         <template v-if="!preview">
           <section class="page-edit-character__form-controls">
             <h6>Allgemeines</h6>
-            <q-input v-model="character.haircolor" label="Haarfarbe" />
-            <q-input v-model="character.eyecolor" label="Augenfarbe" />
-            <q-input v-model="character.skintone" label="Hautfarbe" />
-            <q-input v-model="character.build" label="Statur / Körperbau" />
-            <q-input v-model="character.height" label="Größe" />
-            <q-input v-model="character.weight" label="Gewicht" />
-            <q-input v-model="character.apparentage" label="Optisches Alter" />
-            <q-input v-model="character.voice" label="Stimme" />
-            <q-input v-model="character.tattoosandscars" label="Tattoos & Narben" />
-            <q-input v-model="character.specialfeatures" label="Besonderheiten" />
+            <q-input @update:model-value="onChange" v-model="character.haircolor" label="Haarfarbe" />
+            <q-input @update:model-value="onChange" v-model="character.eyecolor" label="Augenfarbe" />
+            <q-input @update:model-value="onChange" v-model="character.skintone" label="Hautfarbe" />
+            <q-input @update:model-value="onChange" v-model="character.build" label="Statur / Körperbau" />
+            <q-input @update:model-value="onChange" v-model="character.height" label="Größe" />
+            <q-input @update:model-value="onChange" v-model="character.weight" label="Gewicht" />
+            <q-input @update:model-value="onChange" v-model="character.apparentage" label="Optisches Alter" />
+            <q-input @update:model-value="onChange" v-model="character.voice" label="Stimme" />
+            <q-input @update:model-value="onChange" v-model="character.tattoosandscars" label="Tattoos & Narben" />
+            <q-input @update:model-value="onChange" v-model="character.specialfeatures" label="Besonderheiten" />
           </section>
           <h6>Erscheinungsbild</h6>
-          <html-editor v-model="character.appearance" />
+          <html-editor @update:model-value="onChange" v-model="character.appearance" />
         </template>
         <section v-else class="page-edit-character__preview">
           <character-profile :character="character" :preview="true" />
@@ -62,8 +62,10 @@ import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
 import HtmlEditor from '../components/common/HtmlEditor.vue';
 import { ref } from 'vue';
+import { Dialog } from 'quasar';
 
 const $api = useApi();
+const isDirty = ref(false);
 
 async function load(params: RouteParams): Promise<CharacterProfileDto> {
   const id = parseInt(params.id as string, 10);
@@ -87,8 +89,36 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
     CarrdEditSection,
   },
   async beforeRouteEnter(to, _, next) {
+    isDirty.value = false;
     const character = await load(to.params);
     next((vm) => (vm as PageEditProfile).setContent(character));
+  },
+  beforeRouteLeave(to, from, next) {
+    if (isDirty.value) {
+      Dialog.create({
+        title: 'Warnung',
+        message: 'Ungespeicherte Änderungen gehen verloren. Möchtest du fortfahren?',
+        ok: {
+          push: true,
+          label: 'Ok'
+        },
+        cancel: {
+          push: true,
+          color: 'secondary',
+          label: 'Abbrechen'
+        }
+      }).onOk(() => {
+        next();
+      }).onCancel(() => {
+        next(false);
+      }).onDismiss(() => {
+        next(false);
+      });
+    }
+    else
+    {
+      next();
+    }
   },
 })
 export default class PageEditProfile extends Vue {
@@ -129,12 +159,17 @@ export default class PageEditProfile extends Vue {
       });
   }
 
+  onChange() {
+    isDirty.value = true;
+  }
+
   onRevertClick() {
     this.confirmRevert = true;
   }
 
   onConfirmRevert() {
     this.character = new CharacterProfileDto(this.characterBackup);
+    isDirty.value = false;
   }
 
   async onSubmit() {
@@ -153,6 +188,7 @@ export default class PageEditProfile extends Vue {
       notifyError(e);
     } finally {
       this.saving = false;
+      isDirty.value = false;
     }
   }
 

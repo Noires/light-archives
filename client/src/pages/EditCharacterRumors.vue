@@ -9,9 +9,9 @@
     <q-form @submit="onSubmit">
       <template v-if="!preview">
         <h6>Häufige Gerüchte</h6>
-        <html-editor v-model="character.commonrumors" />
+        <html-editor @update:model-value="onChange" v-model="character.commonrumors" />
         <h6>Seltene Gerüchte</h6>
-        <html-editor v-model="character.rarerumors" />
+        <html-editor @update:model-value="onChange" v-model="character.rarerumors" />
       </template>
       <section v-else class="page-edit-character__preview">
         <character-profile :character="character" :preview="true" />
@@ -57,8 +57,10 @@ import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
 import HtmlEditor from '../components/common/HtmlEditor.vue';
 import { ref } from 'vue';
+import { Dialog } from 'quasar';
 
 const $api = useApi();
+const isDirty = ref(false);
 
 async function load(params: RouteParams): Promise<CharacterProfileDto> {
   const id = parseInt(params.id as string, 10);
@@ -82,8 +84,36 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
     CarrdEditSection,
   },
   async beforeRouteEnter(to, _, next) {
+    isDirty.value = false;
     const character = await load(to.params);
     next((vm) => (vm as PageEditProfile).setContent(character));
+  },
+  beforeRouteLeave(to, from, next) {
+    if (isDirty.value) {
+      Dialog.create({
+        title: 'Warnung',
+        message: 'Ungespeicherte Änderungen gehen verloren. Möchtest du fortfahren?',
+        ok: {
+          push: true,
+          label: 'Ok'
+        },
+        cancel: {
+          push: true,
+          color: 'secondary',
+          label: 'Abbrechen'
+        }
+      }).onOk(() => {
+        next();
+      }).onCancel(() => {
+        next(false);
+      }).onDismiss(() => {
+        next(false);
+      });
+    }
+    else
+    {
+      next();
+    }
   },
 })
 export default class PageEditProfile extends Vue {
@@ -124,12 +154,17 @@ export default class PageEditProfile extends Vue {
       });
   }
 
+  onChange() {
+    isDirty.value = true;
+  } 
+
   onRevertClick() {
     this.confirmRevert = true;
   }
 
   onConfirmRevert() {
     this.character = new CharacterProfileDto(this.characterBackup);
+    isDirty.value = false;
   }
 
   async onSubmit() {
@@ -148,6 +183,7 @@ export default class PageEditProfile extends Vue {
       notifyError(e);
     } finally {
       this.saving = false;
+      isDirty.value = false;
     }
   }
 

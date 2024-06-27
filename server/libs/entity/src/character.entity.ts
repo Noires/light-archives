@@ -189,6 +189,42 @@ export class Character extends BasicEntity {
     nullable: false,
     default: false,
   })
+  showAppearance: boolean;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  showPersonality: boolean;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  showContacts: boolean;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  showRumors: boolean;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  showDiary: boolean;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  showGallery: boolean;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
   combinedDescription: boolean;
 
   @Column({

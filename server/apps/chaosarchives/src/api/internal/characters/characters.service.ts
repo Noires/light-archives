@@ -127,6 +127,12 @@ export class CharactersService {
       }),
       showAvatar: character.showAvatar,
       showInfoboxes: character.showInfoboxes,
+      showAppearance: character.showAppearance,
+      showContacts: character.showContacts,
+      showDiary: character.showDiary,
+      showGallery: character.showGallery,
+      showPersonality: character.showPersonality,
+      showRumors: character.showRumors,
       combinedDescription: character.combinedDescription,
       freeCompany: !freeCompany ? null : {
         name: freeCompany.name,
@@ -220,6 +226,12 @@ export class CharactersService {
       }),
       showAvatar: character.showAvatar,
       showInfoboxes: character.showInfoboxes,
+      showAppearance: character.showAppearance,
+      showContacts: character.showContacts,
+      showDiary: character.showDiary,
+      showGallery: character.showGallery,
+      showPersonality: character.showPersonality,
+      showRumors: character.showRumors,
       combinedDescription: character.combinedDescription,
       freeCompany: !freeCompany ? null : {
         name: freeCompany.name,
@@ -289,6 +301,12 @@ export class CharactersService {
         carrdProfile: checkCarrdProfile(characterDto.carrdProfile, user),
         showAvatar: characterDto.showAvatar,
         showInfoboxes: characterDto.showInfoboxes,
+        showAppearance: characterDto.showAppearance,
+        showPersonality: characterDto.showPersonality,
+        showContacts: characterDto.showContacts,
+        showRumors: characterDto.showRumors,
+        showDiary: characterDto.showDiary,
+        showGallery: characterDto.showGallery,
         combinedDescription: characterDto.combinedDescription,
 			});
 
