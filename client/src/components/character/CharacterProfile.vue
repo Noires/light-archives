@@ -1,7 +1,7 @@
 <template>
   <div class="character-profile">
     <p v-if="!preview && character.mine">
-      <router-link :to="`/edit-character/${character.id}`">Profil bearbeiten</router-link>
+      <router-link :to="`/edit-character/${character.id}/profile`">Profil bearbeiten</router-link>
     </p>
     <banner-view :banner="character.banner" />
     <header class="character-profile__header">
@@ -21,7 +21,7 @@
       <character-detail label="Welt" :value="character.server" v-if="character.server" />
       <character-detail label="Volk" :value="$display.races[character.race]" v-if="character.race" />
       <character-detail label="Stamm" :value="$display.tribes[character.tribe]" v-if="character.tribe" />
-      <character-detail label="Profession" :value="character.occupation" v-if="character.occupation" />
+      <character-detail label="Profession" :value="character.profession" v-if="character.profession" />
       <character-detail label="Alter" :value="character.age" v-if="character.age" />
       <character-detail label="Pronouns" :value="character.pronouns" v-if="character.pronouns" />
       <character-detail label="Geburtsort" :value="character.birthplace" v-if="character.birthplace" />
@@ -55,7 +55,7 @@
       <character-detail label="Rivalen/Feinde" :value="character.enemies" v-if="character.enemies" />
       <character-detail label="Liebt" :value="character.loves" v-if="character.loves" />
       <character-detail label="Hasst" :value="character.hates" v-if="character.hates" />
-      <character-detail label="Motto" :value="character.motto" v-if="character.motto" />
+      <character-detail label="Motto" :value="character.slogan" v-if="character.slogan" />
       <character-detail label="Motivation" :value="character.motivation" v-if="character.motivation" />
     </character-details-box>
     <iframe
@@ -108,7 +108,7 @@ export default class CharacterProfile extends Vue.with(Props) {
   }
 
   get hasPersonalityBox(): boolean {
-    return !!(this.character.loves || this.character.hates || this.character.motto || this.character.motivation);
+    return !!(this.character.loves || this.character.hates || this.character.slogan || this.character.motivation);
   }
 
   get carrdLink(): string {

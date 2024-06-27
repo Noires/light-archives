@@ -3,7 +3,7 @@ export const SearchFields = {
     'name',
     'title',
     'nickname',
-    'occupation',
+    'profession',
     'appearance',
     'background',
     'birthplace',
@@ -13,7 +13,7 @@ export const SearchFields = {
     'friends',
     'relatives',
     'enemies',
-    'motto',
+    'slogan',
   ],
 
 	freeCompany: [

@@ -61,8 +61,8 @@
         <q-td :props="props">
           <router-link :to="getLink(props.row)">
             <span class="page-characters__column-name">{{props.row.name}}</span>
-            <template v-if="props.row.occupation">
-              <br /><span class="page-characters__column-occupation">{{props.row.occupation}}</span>
+            <template v-if="props.row.profession">
+              <br /><span class="page-characters__column-profession">{{props.row.profession}}</span>
             </template>
           </router-link>
         </q-td>
@@ -299,7 +299,7 @@ export default class PageCharacters extends Vue {
   font-size: $body-font-size;
 }
 
-.page-characters__column-race, .page-characters__column-occupation {
+.page-characters__column-race, .page-characters__column-profession {
   color: #808080;
 }
 </style>

@@ -22,7 +22,7 @@ export class RppCharacterProfileDto extends BaseCharacterProfileDto {
   })
   @IsString()
   @IsOptional()
-  occupation: string;
+  profession: string;
 
 	@ApiProperty({
     example: 'Elezen',
@@ -71,7 +71,7 @@ export class RppCharacterProfileDto extends BaseCharacterProfileDto {
   })
   @IsString()
   @IsOptional()
-  motto: string;
+  slogan: string;
 
 	@ApiProperty({
     example: 'Her paramour, Lambert',
