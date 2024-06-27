@@ -5,15 +5,15 @@
         <template v-if="!preview">
           <section class="page-edit-character__form-controls">
             <h6>Vorlieben und Abneigungen</h6>
-            <q-input v-model="character.loves" label="Liebt" />
-            <q-input v-model="character.hates" label="Hass" />
-            <q-input v-model="character.slogan" label="Motto" />
-            <q-input v-model="character.motivation" label="Motivation" />
+            <q-input @update:model-value="onChange" v-model="character.loves" label="Liebt" />
+            <q-input @update:model-value="onChange" v-model="character.hates" label="Hass" />
+            <q-input @update:model-value="onChange" v-model="character.slogan" label="Motto" />
+            <q-input @update:model-value="onChange" v-model="character.motivation" label="Motivation" />
             <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername|mein bester Freund]], in allen obigen Feldern nutzen.</div>
             <h6>Charakteristika</h6>
-            <q-input v-model="character.strengths" label="Stärken" />
-            <q-input v-model="character.weaknesses" label="Schwächen" />
-            <q-input v-model="character.ticks" label="Eigenheiten" />
+            <q-input @update:model-value="onChange" v-model="character.strengths" label="Stärken" />
+            <q-input @update:model-value="onChange" v-model="character.weaknesses" label="Schwächen" />
+            <q-input @update:model-value="onChange" v-model="character.ticks" label="Eigenheiten" />
             <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername|mein bester Freund]], in allen obigen Feldern nutzen.</div>     
           </section>
         </template>
@@ -60,8 +60,10 @@ import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
 import HtmlEditor from '../components/common/HtmlEditor.vue';
 import { ref } from 'vue';
+import { Dialog } from 'quasar';
 
 const $api = useApi();
+const isDirty = ref(false);
 
 async function load(params: RouteParams): Promise<CharacterProfileDto> {
   const id = parseInt(params.id as string, 10);
@@ -85,8 +87,36 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
     CarrdEditSection,
   },
   async beforeRouteEnter(to, _, next) {
+    isDirty.value = false;
     const character = await load(to.params);
     next((vm) => (vm as PageEditProfile).setContent(character));
+  },
+  beforeRouteLeave(to, from, next) {
+    if (isDirty.value) {
+      Dialog.create({
+        title: 'Warnung',
+        message: 'Ungespeicherte Änderungen gehen verloren. Möchtest du fortfahren?',
+        ok: {
+          push: true,
+          label: 'Ok'
+        },
+        cancel: {
+          push: true,
+          color: 'secondary',
+          label: 'Abbrechen'
+        }
+      }).onOk(() => {
+        next();
+      }).onCancel(() => {
+        next(false);
+      }).onDismiss(() => {
+        next(false);
+      });
+    }
+    else
+    {
+      next();
+    }
   },
 })
 export default class PageEditProfile extends Vue {
@@ -127,12 +157,17 @@ export default class PageEditProfile extends Vue {
       });
   }
 
+  onChange() {
+    isDirty.value = true;
+  }
+
   onRevertClick() {
     this.confirmRevert = true;
   }
 
   onConfirmRevert() {
     this.character = new CharacterProfileDto(this.characterBackup);
+    isDirty.value = false;
   }
 
   async onSubmit() {
@@ -151,6 +186,7 @@ export default class PageEditProfile extends Vue {
       notifyError(e);
     } finally {
       this.saving = false;
+      isDirty.value = false;
     }
   }
 

@@ -50,6 +50,24 @@ export class CharacterProfileDto extends BaseCharacterProfileDto {
   showInfoboxes: boolean;
 
   @IsBoolean()
+  showAppearance: boolean;
+
+  @IsBoolean()
+  showPersonality: boolean;
+
+  @IsBoolean()
+  showContacts: boolean;
+
+  @IsBoolean()
+  showRumors: boolean;
+
+  @IsBoolean()
+  showDiary: boolean;
+
+  @IsBoolean()
+  showGallery: boolean;
+
+  @IsBoolean()
   combinedDescription: boolean;
 
   freeCompany: CharacterFreeCompanyDto|null;
