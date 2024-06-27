@@ -2,24 +2,8 @@ import { IsString } from "class-validator";
 
 export class BaseCharacterProfileDto {
   // RP fields
-	
-  @IsString()
-  appearance: string;
 
-  @IsString()
-  background: string;
-
-  @IsString()
-  occupation: string;
-
-  @IsString()
-  age: string;
-
-  @IsString()
-  birthplace: string;
-
-  @IsString()
-  residence: string;
+  // Profile
 
   @IsString()
   title: string;
@@ -28,7 +12,59 @@ export class BaseCharacterProfileDto {
   nickname: string;
 
   @IsString()
-  motto: string;
+  profession: string;
+
+  @IsString()
+  age: string;
+
+  @IsString()
+  pronouns: string;
+
+  @IsString()
+  birthplace: string;
+
+  @IsString()
+  residence: string;
+
+  @IsString()
+  background: string;
+
+  // Appearance
+
+  @IsString()
+  haircolor: string;
+
+  @IsString()
+  eyecolor: string;
+
+  @IsString()
+  skintone: string;
+
+  @IsString()
+  build: string;
+
+  @IsString()
+  height: string;
+
+  @IsString()
+  weight: string;
+
+  @IsString()
+  apparentage: string;
+
+  @IsString()
+  voice: string;
+
+  @IsString()
+  tattoosandscars: string;
+
+  @IsString()
+  specialfeatures: string;
+
+  @IsString()
+  appearance: string;
+
+  // Personality
 
   @IsString()
   loves: string;
@@ -37,17 +73,59 @@ export class BaseCharacterProfileDto {
   hates: string;
 
   @IsString()
-  friends: string;
-
-  @IsString()
-  relatives: string;
-
-  @IsString()
-  enemies: string;
+  slogan: string
 
   @IsString()
   motivation: string;
 
   @IsString()
-  pronouns: string;
+  strengths: string;
+
+  @IsString()
+  weaknesses: string;
+
+  @IsString()
+  ticks: string;
+
+  // Relationships
+
+  @IsString()
+  partners: string;
+
+  @IsString()
+  relatives: string;
+
+  @IsString()
+  friends: string;
+
+  @IsString()
+  acquaintances: string;
+
+  @IsString()
+  enemies: string; 
+
+  @IsString()
+  past: string;
+
+  // Connections
+
+  @IsString()
+  freecompanies: string;
+  
+  @IsString()
+  meetingplaces: string;
+
+  @IsString()
+  communities: string;
+
+  @IsString()
+  mentioned: string;
+
+  // Rumors
+
+  @IsString()
+  commonrumors: string;
+
+  @IsString()
+  rarerumors: string;
 }

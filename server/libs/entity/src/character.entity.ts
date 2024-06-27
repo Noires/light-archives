@@ -91,85 +91,77 @@ export class Character extends BasicEntity {
 
   @Column({
     nullable: false,
-    default: '',
-  })
-  occupation: string;
-
-  @Column({
-    nullable: false,
+    type: 'tinytext',
     default: '',
   })
   age: string;
 
   @Column({
     nullable: false,
+    type: 'tinytext',
     default: '',
   })
   birthplace: string;
 
   @Column({
     nullable: false,
+    type: 'tinytext',
     default: '',
   })
   residence: string;
 
   @Column({
     nullable: false,
+    type: 'tinytext',
     default: '',
   })
   title: string;
 
   @Column({
     nullable: false,
+    type: 'tinytext',
     default: '',
   })
   nickname: string;
 
   @Column({
     nullable: false,
-    length: 1000,
-    default: '',
-  })
-  motto: string;
-
-  @Column({
-    nullable: false,
-    length: 1000,
+    type: 'mediumtext',
     default: '',
   })
   loves: string;
 
   @Column({
     nullable: false,
-    length: 1000,
+    type: 'mediumtext',
     default: '',
   })
   hates: string;
 
   @Column({
     nullable: false,
-    length: 1000,
+    type: 'mediumtext',
     default: '',
   })
   friends: string;
 
   @Column({
     nullable: false,
-    length: 1000,
+    type: 'mediumtext',
     default: '',
   })
   relatives: string;
 
   @Column({
     nullable: false,
-    length: 1000,
+    type: 'mediumtext',
     default: '',
   })
   enemies: string;
 
   @Column({
     nullable: false,
-    length: 1000,
+    type: 'mediumtext',
     default: '',
   })
   motivation: string;
@@ -243,4 +235,172 @@ export class Character extends BasicEntity {
     nullable: true,
   })
   newsPseudonym: string|null;
+
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  haircolor: string;
+
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  eyecolor: string;
+
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  skintone: string;
+  
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  build: string;
+  
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  height: string;
+  
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  weight: string;
+
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  voice: string;
+  
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  tattoosandscars: string;
+  
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  specialfeatures: string;
+  
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  strengths: string;
+  
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  weaknesses: string;
+  
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  ticks: string;
+  
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  partners: string;
+  
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  acquaintances: string;
+  
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  past: string;
+  
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  freecompanies: string;
+  
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  meetingplaces: string;
+  
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  communities: string;
+  
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  mentioned: string;
+  
+  @Column({
+    type: 'mediumtext',
+    nullable: false,
+    default: '',
+  })
+  commonrumors: string;
+  
+  @Column({
+    type: 'mediumtext',
+    nullable: false,
+    default: '',
+  })
+  rarerumors: string;
+  
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  profession: string;
+  
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  apparentage: string;
+  
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  slogan: string;
 }

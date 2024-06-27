@@ -154,9 +154,26 @@ const routes: RouteRecordRaw[] = [
 
   // User actions
   {
-    path: '/edit-character/:id',
+    path: '/edit-character/:id/',
     component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/EditCharacter.vue') }],
+    children: [
+      { path: '', component: () => import('pages/EditCharacter.vue'),
+        children: [
+          { path: 'profile', component: () => import('pages/EditCharacterProfile.vue'),
+          },
+          { path: 'appearance', component: () => import('pages/EditCharacterAppearance.vue'),
+          },
+          { path: 'personality', component: () => import('pages/EditCharacterPersonality.vue'),
+          },
+          { path: 'relationships', component: () => import('pages/EditCharacterRelationships.vue'),
+          },
+          { path: 'rumors', component: () => import('pages/EditCharacterRumors.vue'),
+          },
+          { path: 'diary', component: () => import('pages/EditCharacterDiary.vue'),
+          },
+          { path: 'gallery', component: () => import('pages/EditCharacterGallery.vue'),
+          }],
+      }],
     meta: {
       title: 'Profil bearbeiten'
     },
