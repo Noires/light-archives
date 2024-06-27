@@ -101,6 +101,8 @@ import { ref } from 'vue';
 
 const $api = useApi();
 
+// Refactoring needed for all EditCharacter files
+
 async function load(params: RouteParams): Promise<CharacterProfileDto> {
   const id = parseInt(params.id as string, 10);
 
