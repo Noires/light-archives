@@ -38,7 +38,7 @@
           </q-item>
 
           <q-item v-show="character.showContacts" clickable v-ripple
-            :to="`/edit-character/${$route.params.id}/relationships`">
+            :to="`/edit-character/${$route.params.id}/contacts`">
             <q-item-section avatar>
               <q-icon name="diversity_3" />
             </q-item-section>

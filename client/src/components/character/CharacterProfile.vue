@@ -1,7 +1,8 @@
 <template>
   <div class="character-profile">
     <p v-if="!preview && character.mine">
-      <router-link :to="`/edit-character/${character.id}/profile`">Profil bearbeiten</router-link>
+      <q-btn outline color="secondary" :to="`/edit-character/${character.id}/profile`" style="max-width: 140px"><i
+        class="material-icons q-icon">edit</i>Profil bearbeiten</q-btn>
     </p>
     <banner-view :banner="character.banner" />
     <header class="character-profile__header">
@@ -28,7 +29,7 @@
       <character-detail label="Wohnort" :value="character.residence" v-if="character.residence" />
       <character-detail label="Freie&nbsp;Gesellschaft" :value="character.freeCompany.name" :router-link="fcLink" v-if="character.freeCompany" />
     </character-details-box>
-    <template v-if="character.appearance">
+    <template v-if="character.appearance && !this.character.showAppearance">
       <h3 v-if="!character.combinedDescription">Erscheinungsbild</h3>
       <html-viewer
         class="character-profile__appearance-background"
@@ -46,18 +47,6 @@
     <template v-if="!character.appearance && (character.combinedDescription || !character.background)">
       &nbsp;
     </template>
-    <character-details-box
-      v-if="character.showInfoboxes && hasPersonalityBox"
-      class="character-profile__personality-box"
-    >
-      <character-detail label="Freunde" :value="character.friends" v-if="character.friends" />
-      <character-detail label="Verwandte" :value="character.relatives" v-if="character.relatives" />
-      <character-detail label="Rivalen/Feinde" :value="character.enemies" v-if="character.enemies" />
-      <character-detail label="Liebt" :value="character.loves" v-if="character.loves" />
-      <character-detail label="Hasst" :value="character.hates" v-if="character.hates" />
-      <character-detail label="Motto" :value="character.slogan" v-if="character.slogan" />
-      <character-detail label="Motivation" :value="character.motivation" v-if="character.motivation" />
-    </character-details-box>
     <iframe
       v-if="character.carrdProfile"
       v-iframe-resize
@@ -106,6 +95,10 @@ export default class CharacterProfile extends Vue.with(Props) {
     const fc = this.character.freeCompany;
 		return fc == null ? null : `/fc/${fc.server}/${fc.name.replace(/ /g, '_')}`;
   }
+
+  hasDrawer(): boolean {
+		return !!this.character.showAppearance || !!this.character.showPersonality || !!this.character.showContacts || !!this.character.showRumors || !!this.character.showDiary || !!this.character.showGallery;
+	}
 
   get hasPersonalityBox(): boolean {
     return !!(this.character.loves || this.character.hates || this.character.slogan || this.character.motivation);

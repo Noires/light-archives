@@ -1,15 +1,13 @@
 <template>
-  <q-page class="page-gallery">
-    <h2>Gallerie</h2>
-
-    <template v-if="content.images && content.images.length > 0">
-      <thumb-gallery :images="content.images" />
-    </template>
-    <section>
-      <q-btn outline color="secondary" style="max-width: 140px"><i class="material-icons q-icon">file_upload</i>Bild
-        hochladen</q-btn>
-    </section>
-  </q-page>
+  <h2>Gallerie</h2>
+  <template v-if="content.images && content.images.length > 0">
+    <thumb-gallery :images="content.images" />
+  </template>
+  <section>
+    <q-btn @click="uploadImage" outline color="secondary" style="max-width: 140px"><i
+        class="material-icons q-icon">file_upload</i>Bild
+      hochladen</q-btn>
+  </section>
 </template>
 
 <script lang="ts">
@@ -20,6 +18,7 @@ import ThumbGallery from 'src/components/images/ThumbGallery.vue';
 import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
 import errors from '@app/shared/errors';
+import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 
 const $api = useApi();
 
@@ -52,13 +51,31 @@ async function load(params: RouteParams): Promise<CharacterContentDto> {
   async beforeRouteUpdate(to) {
     const content = await load(to.params);
     (this as EditCharacterGallery).setContent(content);
-  }
+  },
+  emits: ['updateCharacter']
 })
 export default class EditCharacterGallery extends Vue {
   content: CharacterContentDto = { stories: [], images: [] };
 
+  async uploadImage() {
+    const UploadDialog = (await import('components/upload/UploadDialog.vue')).default;
+
+    this.$q.dialog({
+      component: UploadDialog
+    }).onOk(async (image: ImageSummaryDto) => {
+      const PostUploadDialog = (await import('components/upload/PostUploadDialog.vue')).default;
+
+      this.$q.dialog({
+        component: PostUploadDialog,
+        componentProps: {
+          image
+        }
+      });
+    });
+  }
+
   setContent(content: CharacterContentDto) {
-    Object.assign(this, content);
+    this.content = content;
   }
 }
 </script>

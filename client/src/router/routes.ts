@@ -165,7 +165,7 @@ const routes: RouteRecordRaw[] = [
           },
           { path: 'personality', component: () => import('pages/EditCharacterPersonality.vue'),
           },
-          { path: 'relationships', component: () => import('pages/EditCharacterRelationships.vue'),
+          { path: 'contacts', component: () => import('pages/EditCharacterContacts.vue'),
           },
           { path: 'rumors', component: () => import('pages/EditCharacterRumors.vue'),
           },

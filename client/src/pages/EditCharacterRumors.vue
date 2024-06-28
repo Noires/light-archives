@@ -1,20 +1,20 @@
 <template>
   <template v-if="character.id">
     <h2>Gerüchte bearbeiten</h2>
-    <p>Die hier aufgelisteten Gerüchte können im RP verwendet werden. Die Kategorien geben an, wie hoch die
-      Wahrscheinlichkeit ist, dass ein Gerücht in der Öffentlichkeit geteilt wird und man es gehört haben kann. Gerüchte
-      der Kategorie "Häufig" kann potentiell jeder gehört haben. Gerüchte der der Kategorie "Selten" sind Gerüchte, die
-      man nur unter speziellen Voraussetzungen kennen kann. Diese sollten nur in gemeinsamer Absprache genutzt werden.
-    </p>
     <q-form @submit="onSubmit">
       <template v-if="!preview">
+        <p>Die hier aufgelisteten Gerüchte können im RP verwendet werden. Die Kategorien geben an, wie hoch die
+          Wahrscheinlichkeit ist, dass ein Gerücht in der Öffentlichkeit geteilt wird und man es gehört haben kann. Gerüchte
+          der Kategorie "Häufig" kann potentiell jeder gehört haben. Gerüchte der der Kategorie "Selten" sind Gerüchte, die
+          man nur unter speziellen Voraussetzungen kennen kann. Diese sollten nur in gemeinsamer Absprache genutzt werden.
+        </p>
         <h6>Häufige Gerüchte</h6>
         <html-editor @update:model-value="onChange" v-model="character.commonrumors" />
         <h6>Seltene Gerüchte</h6>
         <html-editor @update:model-value="onChange" v-model="character.rarerumors" />
       </template>
       <section v-else class="page-edit-character__preview">
-        <character-profile :character="character" :preview="true" />
+        <character-rumors :character="character" :preview="true" />
       </section>
       <div class="page-edit-character__button-bar">
         <q-btn-toggle v-model="preview" :options="previewOptions" toggle-color="secondary" />
@@ -47,7 +47,6 @@
 import { CharacterProfileDto } from '@app/shared/dto/characters/character-profile.dto';
 import { CharacterRefreshResultDto } from '@app/shared/dto/characters/character-refresh-result.dto';
 import SharedConstants from '@app/shared/SharedConstants';
-import CharacterProfile from 'components/character/CharacterProfile.vue';
 import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
@@ -58,6 +57,7 @@ import { RouteParams } from 'vue-router';
 import HtmlEditor from '../components/common/HtmlEditor.vue';
 import { ref } from 'vue';
 import { Dialog } from 'quasar';
+import CharacterRumors from 'src/components/character/CharacterRumors.vue';
 
 const $api = useApi();
 const isDirty = ref(false);
@@ -79,7 +79,7 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
 @Options({
   components: {
     HtmlEditor,
-    CharacterProfile,
+    CharacterRumors,
     BannerEditSection,
     CarrdEditSection,
   },
@@ -115,6 +115,7 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
       next();
     }
   },
+  emits: ['updateCharacter']
 })
 export default class PageEditProfile extends Vue {
   readonly SharedConstants = SharedConstants;

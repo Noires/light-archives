@@ -21,7 +21,7 @@
           </section>
         </template>
         <section v-else class="page-edit-character__preview">
-          <character-profile :character="character" :preview="true" />
+          <character-contacts :character="character" :preview="true" />
         </section>
         <div class="page-edit-character__button-bar">
           <q-btn-toggle v-model="preview" :options="previewOptions" toggle-color="secondary" />
@@ -53,7 +53,6 @@
 import { CharacterProfileDto } from '@app/shared/dto/characters/character-profile.dto';
 import { CharacterRefreshResultDto } from '@app/shared/dto/characters/character-refresh-result.dto';
 import SharedConstants from '@app/shared/SharedConstants';
-import CharacterProfile from 'components/character/CharacterProfile.vue';
 import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
@@ -64,6 +63,7 @@ import { RouteParams } from 'vue-router';
 import HtmlEditor from '../components/common/HtmlEditor.vue';
 import { ref } from 'vue';
 import { Dialog } from 'quasar';
+import CharacterContacts from 'src/components/character/CharacterContacts.vue';
 
 const $api = useApi();
 const isDirty = ref(false);
@@ -85,7 +85,7 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
 @Options({
   components: {
     HtmlEditor,
-    CharacterProfile,
+    CharacterContacts,
     BannerEditSection,
     CarrdEditSection,
   },
@@ -121,6 +121,7 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
       next();
     }
   },
+  emits: ['updateCharacter']
 })
 export default class PageEditProfile extends Vue {
   readonly SharedConstants = SharedConstants;

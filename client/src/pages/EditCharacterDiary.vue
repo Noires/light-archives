@@ -1,71 +1,45 @@
 <template>
-<template v-if="character.id">
-      <h2>Tagebuch</h2>
-      <q-form @submit="onSubmit">
-        <template v-if="!preview">
-          <q-card class="my-card">
-          <q-card-section>
-            In construction.
-          </q-card-section>
-        </q-card>
-        </template>
-        <section v-else class="page-edit-character__preview">
-          <character-profile :character="character" :preview="true" />
-        </section>
-        <div class="page-edit-character__button-bar">
-          <q-btn-toggle v-model="preview" :options="previewOptions" toggle-color="secondary" />
-          <div class="page-edit-character__revert-submit">
-            <q-btn label="Zurücksetzen" color="secondary" @click="onRevertClick" />&nbsp;
-            <q-btn label="Änderungen speichern" type="submit" color="primary" />
-          </div>
-        </div>
-        <q-inner-loading :showing="saving" />
-      </q-form>
+  <template v-if="content">
+    <h2>Tagebuch</h2>
+    <template v-if="content.stories && content.stories.length > 0">
+      <story-list :stories="content.stories" />
     </template>
-    <q-spinner v-else />
-
-    <q-dialog v-model="confirmRevert" persistent>
-      <q-card>
-        <q-card-section class="row items-center">
-          <span class="q-ml-sm">Möchtest du die ungespeicherten Änderungen auf die letzte gespeicherte Version zurücksetzen?</span>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Bearbeitung fortsetzen" color="secondary" v-close-popup />
-          <q-btn flat label="Zurücksetzen" color="negative" v-close-popup @click="onConfirmRevert" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <br>
+    <section>
+      <q-btn to="/create-story" outline color="secondary" style="max-width: 140px"><i
+          class="material-icons q-icon">edit</i>Geschichte erstellen</q-btn>
+    </section>
+  </template>
 </template>
 
 <script lang="ts">
-import { CharacterProfileDto } from '@app/shared/dto/characters/character-profile.dto';
-import { CharacterRefreshResultDto } from '@app/shared/dto/characters/character-refresh-result.dto';
-import SharedConstants from '@app/shared/SharedConstants';
 import CharacterProfile from 'components/character/CharacterProfile.vue';
 import { useApi } from 'src/boot/axios';
-import { notifyError, notifySuccess } from 'src/common/notify';
+import { notifyError } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
 import CarrdEditSection from 'src/components/common/CarrdEditSection.vue';
-import { useStore } from 'src/store';
 import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
 import HtmlEditor from '../components/common/HtmlEditor.vue';
-import { ref } from 'vue';
+import { CharacterContentDto } from '@app/shared/dto/characters/character-content.dto';
+import StoryList from 'src/components/stories/StoryList.vue';
+import { StoryType } from '@app/shared/enums/story-type.enum';
+import errors from '@app/shared/errors';
 
 const $api = useApi();
 
-async function load(params: RouteParams): Promise<CharacterProfileDto> {
+async function load(params: RouteParams): Promise<CharacterContentDto> {
   const id = parseInt(params.id as string, 10);
 
-  const $store = useStore();
-  const character = $store.state.user!.characters.get(id)!;
-
   try {
-    return await $api.characters.getCharacterProfile(character.name, character.server);
+    return await $api.characters.getCharacterContent(id);
   } catch (e) {
-    notifyError(e);
-    throw e;
+    if (errors.getStatusCode(e) === 404) {
+      return { stories: [], images: [] };
+    } else {
+      notifyError(e);
+      throw e;
+    }
   }
 }
 
@@ -75,81 +49,20 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
     CharacterProfile,
     BannerEditSection,
     CarrdEditSection,
+    StoryList
   },
   async beforeRouteEnter(to, _, next) {
-    const character = await load(to.params);
-    next((vm) => (vm as PageEditProfile).setContent(character));
+    const content = await load(to.params);
+    next((vm) => (vm as PageEditProfile).setContent(content));
   },
+  emits: ['updateCharacter']
 })
 export default class PageEditProfile extends Vue {
-  readonly SharedConstants = SharedConstants;
+  content: CharacterContentDto = { stories: [], images: [] };
 
-  readonly previewOptions = [
-    { label: 'Bearbeitung', value: false },
-    { label: 'Vorschau', value: true },
-  ];
-
-  character = new CharacterProfileDto();
-  characterBackup = new CharacterProfileDto();
-  preview = false;
-  saving = false;
-  confirmRevert = false;
-  drawer = ref(false);
-  miniState = true;
-
-  setContent(character: CharacterProfileDto) {
-    this.characterBackup = character;
-    this.character = new CharacterProfileDto(this.characterBackup);
-  }
-
-  async onRefreshClick() {
-    const RefreshCharacterDialog = (await import('src/components/character/RefreshCharacterDialog.vue')).default;
-
-    this.$q
-      .dialog({
-        component: RefreshCharacterDialog,
-        componentProps: {
-          characterId: this.character.id,
-          characterName: this.character.name,
-        },
-      })
-      .onOk((characterData: CharacterRefreshResultDto) => {
-        const { name, race, server, avatar } = characterData;
-        Object.assign(this.character, { name, race, server, avatar });
-      });
-  }
-
-  onRevertClick() {
-    this.confirmRevert = true;
-  }
-
-  onConfirmRevert() {
-    this.character = new CharacterProfileDto(this.characterBackup);
-  }
-
-  async onSubmit() {
-    this.saving = true;
-
-    try {
-      await this.$api.characters.saveCharacter(this.character);
-      this.characterBackup = new CharacterProfileDto(this.character);
-
-      notifySuccess('Charakter gespeichert.', {
-        label: 'Anschauen',
-        color: 'white',
-        handler: () => this.viewCharacter(),
-      });
-    } catch (e) {
-      notifyError(e);
-    } finally {
-      this.saving = false;
-    }
-  }
-
-  viewCharacter() {
-    const name = this.character.name || '';
-    const server = this.character.server || '';
-    void this.$router.push(`/${server}/${name.replace(/ /g, '_')}`);
+  setContent(content: CharacterContentDto) {
+    this.content = content;
+    this.content.stories = content.stories.filter(x => x.type === StoryType.DIARY);
   }
 }
 </script>
@@ -175,7 +88,8 @@ export default class PageEditProfile extends Vue {
   margin-bottom: 24px;
 }
 
-.page-edit-character__age, .page-edit-character__pronouns {
+.page-edit-character__age,
+.page-edit-character__pronouns {
   width: 200px;
 }
 
