@@ -201,7 +201,7 @@ export class StoriesService {
       .createQueryBuilder('story')
       .innerJoinAndSelect('story.owner', 'character')
       .orderBy('story.createdAt', 'DESC')
-      .select(['story.id', 'character.name', 'story.title', 'story.createdAt'])
+      .select(['story.id', 'character.name', 'story.title', 'story.createdAt', 'story.type'])
       .offset(filter.offset)
       .limit(filter.limit);
 
