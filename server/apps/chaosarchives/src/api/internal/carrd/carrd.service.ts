@@ -85,7 +85,7 @@ export class CarrdService {
 
 		// Inject iframe resizer JavaScript
 		const head = doc.querySelector('head');
-		head.insertAdjacentHTML('beforeend', "<script src='/js/iframeResizer.contentWindow.min.js'></script>");
+		head!.insertAdjacentHTML('beforeend', "<script src='/js/iframeResizer.contentWindow.min.js'></script>");
 
 		return doc.outerHTML;
 	}
