@@ -46,7 +46,7 @@
           <q-input @update:model-value="onChange" v-model="character.profession" label="Profession" />
           <q-input @update:model-value="onChange" v-model="character.age" class="page-edit-character__age"
             label="Alter" />
-          <q-input @update:model-value="onChange" v-model="character.age" label="Namenstag" />
+          <q-input @update:model-value="onChange" v-model="character.birthday" label="Namenstag" />
           <q-input @update:model-value="onChange" v-model="character.pronouns" class="page-edit-character__pronouns"
             label="Geschlecht" :maxlength="SharedConstants.MAX_PRONOUNS_LENGTH" />
           <q-input @update:model-value="onChange" v-model="character.birthplace" label="Geburtsort" />
