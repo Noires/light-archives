@@ -78,7 +78,7 @@
             </q-item-section>
           </q-item>
 
-          <q-item v-show="character.showContacts" clickable v-ripple
+          <q-item v-show="character.showInventory" clickable v-ripple
             :to="`/edit-character/${$route.params.id}/inventory`">
             <q-item-section avatar>
               <q-icon name="diamond" />
