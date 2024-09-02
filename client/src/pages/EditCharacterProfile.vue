@@ -41,8 +41,8 @@
         <section class="page-edit-character__form-controls">
           <q-input @update:model-value="onChange" v-model="character.title" label="Titel" />
           <q-input @update:model-value="onChange" v-model="character.nickname" label="Spitzname" />
-          <q-input @update:model-value="onChange" v-model="character.profession" label="Familie" />
-          <q-input @update:model-value="onChange" v-model="character.profession" label="Schutzgottheit" />
+          <q-input @update:model-value="onChange" v-model="character.family" label="Familie" />
+          <q-input @update:model-value="onChange" v-model="character.deity" label="Schutzgottheit" />
           <q-input @update:model-value="onChange" v-model="character.profession" label="Profession" />
           <q-input @update:model-value="onChange" v-model="character.age" class="page-edit-character__age"
             label="Alter" />
