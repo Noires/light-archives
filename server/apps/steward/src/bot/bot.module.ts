@@ -1,20 +1,23 @@
 import { discordConfiguration } from "@app/configuration/discord.config";
-import { EventAnnouncement, NoticeboardItem } from "@app/entity";
+import { EventAnnouncement, EventLocation, NoticeboardItem } from "@app/entity";
+import { ModalFieldsTransformPipe, ValidationPipe } from "@discord-nestjs/common";
+import { DiscordModule } from "@discord-nestjs/core";
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { DiscordModule, TransformPipe, ValidationPipe } from "discord-nestjs";
 import { AnnouncementService } from "./announcement.service";
 import { BotGateway } from "./bot.gateway";
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([ EventAnnouncement, NoticeboardItem ]),
+		TypeOrmModule.forFeature([ EventAnnouncement, EventLocation, NoticeboardItem ]),
 		DiscordModule.forRootAsync({
 			useFactory: () => ({
 				token: discordConfiguration.botToken,
 				commandPrefix: '!',
-				usePipes: [TransformPipe, ValidationPipe],
-				intents: 'GUILD_MESSAGES',
+				usePipes: [ModalFieldsTransformPipe, ValidationPipe],
+				discordClientOptions: {
+					intents: 'GuildMessages',
+				}
 			})
 		})
 	],
