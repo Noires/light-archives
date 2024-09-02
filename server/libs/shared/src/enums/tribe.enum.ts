@@ -1,3 +1,5 @@
+import { Console } from "console";
+
 export enum Tribe {
   MIDLANDER = 'midlander',
   HIGHLANDER = 'highlander',
@@ -16,6 +18,26 @@ export enum Tribe {
   HELIONS = 'helions',
   THELOST = 'thelost',
 }
+
+export const enTribes: { [k: string]: string } = {
+  [Tribe.MIDLANDER]: 'Midlander',
+  [Tribe.HIGHLANDER]: 'Highlander',
+  [Tribe.WILDWOOD]: 'Wildwood',
+  [Tribe.DUSKWIGHT]: "Duskwight",
+  [Tribe.PLAINSFOLK]: 'Plainsfolk',
+  [Tribe.DUNESFOLK]: 'Dunesfolk',
+  [Tribe.SEEKERSOFTHESUN]: 'Seeker of the Sun',
+  [Tribe.KEEPERSOFTHEMOON]: 'Keeper of the Moon',
+  [Tribe.SEAWOLVES]: 'Sea Wolf',
+  [Tribe.HELLSGUARD]: 'Hellsguard',
+  [Tribe.RAEN]: 'Raen',
+  [Tribe.XAELA]: 'Xaela',
+  [Tribe.RAVA]: 'Rava',
+  [Tribe.VEENA]: 'Veena',
+  [Tribe.HELIONS]: 'Helions',
+  [Tribe.THELOST]: 'The Lost',
+};
+ 
 
 export const tribes: { [k: string]: string } = {
   [Tribe.MIDLANDER]: 'Wiesländer',
@@ -36,26 +58,14 @@ export const tribes: { [k: string]: string } = {
   [Tribe.THELOST]: 'Die Losgesagten',
 };
 
-// IDs returned by XIVAPI's Lodestone queries.
-const tribesById = {
-  1: Tribe.MIDLANDER,
-  2: Tribe.HIGHLANDER,
-  3: Tribe.WILDWOOD,
-  4: Tribe.DUSKWIGHT,
-  5: Tribe.PLAINSFOLK,
-  6: Tribe.DUNESFOLK,
-  7: Tribe.SEEKERSOFTHESUN,
-  8: Tribe.KEEPERSOFTHEMOON,
-  9: Tribe.SEAWOLVES,  
-  10: Tribe.HELLSGUARD,  
-  11: Tribe.RAEN,  
-  12: Tribe.XAELA,  
-  13: Tribe.RAVA,
-  14: Tribe.VEENA,  
-  15: Tribe.HELIONS,    
-  16: Tribe.THELOST,    
-}
+export function getTribeByName(tribeName: string): Tribe|null {
+  for (const tribe of Object.values(Tribe)) {
+    console.log(tribe);
+    if (enTribes[tribe] === tribeName) {
+      console.log(tribe);
+      return tribe;
+    }
+  }
 
-export function getTribeById(id: number): Tribe|null {
-  return tribesById[id as keyof typeof tribesById] || null;
+  return null;
 }

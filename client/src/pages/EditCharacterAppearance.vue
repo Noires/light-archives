@@ -13,11 +13,12 @@
             <q-input @update:model-value="onChange" v-model="character.weight" label="Gewicht" />
             <q-input @update:model-value="onChange" v-model="character.apparentage" label="Optisches Alter" />
             <q-input @update:model-value="onChange" v-model="character.voice" label="Stimme" />
-            <q-input @update:model-value="onChange" v-model="character.tattoosandscars" label="Tattoos & Narben" />
             <q-input @update:model-value="onChange" v-model="character.specialfeatures" label="Besonderheiten" />
           </section>
           <h6>Erscheinungsbild</h6>
           <html-editor @update:model-value="onChange" v-model="character.appearance" />
+          <h6>Äther</h6>
+          <html-editor @update:model-value="onChange" v-model="character.aether" />
         </template>
         <section v-else class="page-edit-character__preview">
           <character-appearance :character="character" :preview="true" />

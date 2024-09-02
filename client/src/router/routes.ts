@@ -172,6 +172,8 @@ const routes: RouteRecordRaw[] = [
           { path: 'diary', component: () => import('pages/EditCharacterDiary.vue'),
           },
           { path: 'gallery', component: () => import('pages/EditCharacterGallery.vue'),
+          },
+          { path: 'inventory', component: () => import('pages/EditCharacterInventory.vue'),
           }],
       }],
     meta: {

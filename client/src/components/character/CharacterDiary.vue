@@ -1,10 +1,15 @@
 <template>
   <div class="character-diary">
-    <section class="page-edit-character__form-controls">
+    <section>
       <h6>Tagebuch</h6>
         <template v-if="content.stories.length > 0">
           <story-list :stories="content.stories" />
         </template>
+        <section>
+      <br>
+      <q-btn v-if="character.mine" to="/create-story" outline color="secondary" style="max-width: 140px"><i
+          class="material-icons q-icon">edit</i>Geschichte erstellen</q-btn>
+      </section>
     </section>
   </div>
 </template>
@@ -19,9 +24,13 @@ import CharacterDetail from './CharacterDetail.vue';
 import CharacterDetailsBox from './CharacterDetailsBox.vue';
 import { CharacterContentDto } from '@app/shared/dto/characters/character-content.dto';
 import StoryList from '../stories/StoryList.vue';
+import { CharacterProfileDto } from '@app/shared/dto/characters/character-profile.dto';
 
 class Props {
   content = prop<CharacterContentDto>({
+    required: true,
+  });
+  character = prop<CharacterProfileDto>({
     required: true,
   });
 

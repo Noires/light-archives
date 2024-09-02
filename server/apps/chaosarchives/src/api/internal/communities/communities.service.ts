@@ -407,8 +407,8 @@ export class CommunitiesService {
       }
 
       const [community, character] = await Promise.all([
-        em.getRepository(Community).findOne(communityId),
-        em.getRepository(Character).findOne(characterId),
+        em.getRepository(Community).findOneBy({id: communityId}),
+        em.getRepository(Character).findOneBy({id: characterId}),
       ]);
 
       if (!character) {

@@ -7,6 +7,8 @@
             <h6>Vorlieben und Abneigungen</h6>
             <q-input @update:model-value="onChange" v-model="character.loves" label="Liebt" />
             <q-input @update:model-value="onChange" v-model="character.hates" label="Hass" />
+            <q-input @update:model-value="onChange" v-model="character.wishes" label="Wünsche" />
+            <q-input @update:model-value="onChange" v-model="character.fears" label="Ängste" />
             <q-input @update:model-value="onChange" v-model="character.slogan" label="Motto" />
             <q-input @update:model-value="onChange" v-model="character.motivation" label="Motivation" />
             <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername|mein bester Freund]], in allen obigen Feldern nutzen.</div>
@@ -16,6 +18,8 @@
             <q-input @update:model-value="onChange" v-model="character.ticks" label="Eigenheiten" />
             <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername|mein bester Freund]], in allen obigen Feldern nutzen.</div>     
           </section>
+          <h6>Persönlichkeit</h6>
+          <html-editor @update:model-value="onChange" v-model="character.personality" />
         </template>
         <section v-else class="page-edit-character__preview">
           <character-personality :character="character" :preview="true" />

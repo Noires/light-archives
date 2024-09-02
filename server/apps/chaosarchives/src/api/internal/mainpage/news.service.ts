@@ -1,11 +1,12 @@
 import { NewsDto } from '@app/shared/dto/news/news.dto';
 import SharedConstants from '@app/shared/SharedConstants';
-import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
 import { Injectable } from '@nestjs/common';
 import { DateTime, Duration } from 'luxon';
 import utils from '../../../common/utils';
 import { DailyMoogleService } from './daily-moogle.service';
 import { LimsaInsiderService } from './limsa-insider.service';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import { Redis } from 'ioredis';
 
 export enum NewsCacheType {
 	LONG, SHORT
@@ -49,8 +50,8 @@ export class NewsService {
 
 		// Not cached, or cache is obsolete - fetch and cache
 		const news = await this.fetchNews();
-		void this.redisService.set('news', JSON.stringify(news), 'ex', this.CACHE_DURATION_LONG_SEC);
-		void this.redisService.set('newsTimestamp', Date.now().toString(), 'ex', this.CACHE_DURATION_LONG_SEC);
+		void this.redisService.set('news', JSON.stringify(news), 'EX', this.CACHE_DURATION_LONG_SEC);
+		void this.redisService.set('newsTimestamp', Date.now().toString(), 'EX', this.CACHE_DURATION_LONG_SEC);
 		return { news, newsUpToDate: true };
 	}
 

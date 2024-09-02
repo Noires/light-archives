@@ -8,6 +8,23 @@
           anlegen. Dieser
           Charakter ist nun inaktiv. Du kannst die Informationen nicht mehr via Lodestone aktualisieren.
         </q-banner>
+        <section>
+          <h6>Profilanzeige</h6>
+          <p>Zur Erweiterung des Charakterprofils können weitere Unterpunkte hinzugeschaltet werden. Diese sind rein
+            optional.</p>
+          <section class="flexgrid">
+            <q-checkbox v-model="character.showAppearance" @update:model-value="updateCharacter"
+              label="Zeige Aussehen" />
+            <q-checkbox v-model="character.showPersonality" @update:model-value="updateCharacter"
+              label="Zeige Persönlichkeit" />
+            <q-checkbox v-model="character.showContacts" @update:model-value="updateCharacter" label="Zeige Kontakte" />
+            <q-checkbox v-model="character.showRumors" @update:model-value="updateCharacter" label="Zeige Gerüchte" />
+            <q-checkbox v-model="character.showDiary" @update:model-value="updateCharacter" label="Zeige Tagebuch" />
+            <q-checkbox v-model="character.showGallery" @update:model-value="updateCharacter" label="Zeige Galerie" />
+          </section>
+        </section>
+        <banner-edit-section v-model="character.banner" />
+        <h6>Biografie</h6>
         <div class="page-edit-character__lodestone-info">
           <section class="page-edit-character__form-controls">
             <q-input @update:model-value="onChange" :model-value="character.name" label="Name" readonly />
@@ -21,114 +38,24 @@
                 class="material-icons q-icon">refresh</i>Aktualisiere via Lodestone</q-btn>
           </section>
         </div>
-        <section>
-          <p></p>
-          <p>Alle Felder sind optional.</p>
-          <h6>Profilanzeige</h6>
-          <q-field class="page-edit-character__checkbox" borderless>
-            <template v-slot:control>
-              <q-checkbox @update:model-value="onChange" v-model="character.showAvatar" label="Zeige Avatar" />
-            </template>
-          </q-field>
-          <div class="text-caption">Zeigt den Avatar des Charakters links vom Namen an.</div>
-          <q-field class="page-edit-character__checkbox" borderless>
-            <template v-slot:control>
-              <q-checkbox @update:model-value="onChange" v-model="character.showInfoboxes" label="Zeige Infoboxen" />
-            </template>
-          </q-field>
-          <div class="text-caption">
-            Zeigt die Charakterinformationen in Infoboxen an. Wenn nicht ausgewählt, werden die Infoboxen von der
-            öffentlichen
-            Profilseite
-            verborgen.
-          </div>
-
-          <q-field class="page-edit-character__checkbox" borderless>
-            <template v-slot:control>
-              <q-checkbox v-model="character.showAppearance" @update:model-value="updateCharacter"
-                label="Zeige Aussehen" />
-            </template>
-          </q-field>
-          <div class="text-caption">Erstellt einen Tab für die Beschreibung des Aussehens. Wenn nicht ausgewählt, wird
-            das Tab
-            von der öffentlichen Profilseite
-            verborgen.</div>
-
-          <q-field class="page-edit-character__checkbox" borderless>
-            <template v-slot:control>
-              <q-checkbox v-model="character.showPersonality" @update:model-value="updateCharacter"
-                label="Zeige Persönlichkeit" />
-            </template>
-          </q-field>
-          <div class="text-caption">Erstellt einen Tab für die Beschreibung der Persönlichkeit. Wenn nicht ausgewählt,
-            wird das
-            Tab
-            von der öffentlichen Profilseite
-            verborgen.</div>
-
-          <q-field class="page-edit-character__checkbox" borderless>
-            <template v-slot:control>
-              <q-checkbox v-model="character.showContacts" @update:model-value="updateCharacter"
-                label="Zeige Kontakte" />
-            </template>
-          </q-field>
-          <div class="text-caption">Erstellt einen Tab für die Beschreibung der Kontakte. Wenn nicht ausgewählt, wird
-            das Tab von
-            der öffentlichen Profilseite
-            verborgen.</div>
-
-          <q-field class="page-edit-character__checkbox" borderless>
-            <template v-slot:control>
-              <q-checkbox v-model="character.showRumors" @update:model-value="updateCharacter" label="Zeige Gerüchte" />
-            </template>
-          </q-field>
-          <div class="text-caption">Erstellt einen Tab für die Beschreibung des Gerüchte. Wenn nicht ausgewählt, wird
-            das Tab von
-            der öffentlichen Profilseite
-            verborgen.</div>
-
-          <q-field class="page-edit-character__checkbox" borderless>
-            <template v-slot:control>
-              <q-checkbox v-model="character.showDiary" @update:model-value="updateCharacter" label="Zeige Tagebuch" />
-            </template>
-          </q-field>
-          <div class="text-caption">Erstellt einen Tab für das Tagebuch. Wenn nicht ausgewählt, wird das Tab
-            von der öffentlichen Profilseite
-            verborgen.</div>
-
-          <q-field class="page-edit-character__checkbox" borderless>
-            <template v-slot:control>
-              <q-checkbox v-model="character.showGallery" @update:model-value="updateCharacter"
-                label="Zeige Gallerie" />
-            </template>
-          </q-field>
-          <div class="text-caption">Erstellt einen Tab für die Galerie. Wenn nicht ausgewählt, wird das Tab von
-            der
-            öffentlichen Profilseite
-            verborgen.</div>
-
-        </section>
-        <banner-edit-section v-model="character.banner" />
         <section class="page-edit-character__form-controls">
-          <h6>Namen & Titel</h6>
           <q-input @update:model-value="onChange" v-model="character.title" label="Titel" />
           <q-input @update:model-value="onChange" v-model="character.nickname" label="Spitzname" />
-          <h6>Biografie</h6>
+          <q-input @update:model-value="onChange" v-model="character.profession" label="Familie" />
+          <q-input @update:model-value="onChange" v-model="character.profession" label="Schutzgottheit" />
           <q-input @update:model-value="onChange" v-model="character.profession" label="Profession" />
           <q-input @update:model-value="onChange" v-model="character.age" class="page-edit-character__age"
             label="Alter" />
+          <q-input @update:model-value="onChange" v-model="character.age" label="Namenstag" />
           <q-input @update:model-value="onChange" v-model="character.pronouns" class="page-edit-character__pronouns"
-            label="Pronouns" :maxlength="SharedConstants.MAX_PRONOUNS_LENGTH" />
+            label="Geschlecht" :maxlength="SharedConstants.MAX_PRONOUNS_LENGTH" />
           <q-input @update:model-value="onChange" v-model="character.birthplace" label="Geburtsort" />
           <q-input @update:model-value="onChange" v-model="character.residence" label="Wohnort" />
+          <q-input @update:model-value="onChange" v-model="character.residence" label="Beziehungsstatus" />
           <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername]], in allen obigen Feldern nutzen.
           </div>
         </section>
-        <template v-if="!character.showAppearance">
-          <h6>Erscheinungsbild</h6>
-          <html-editor @update:model-value="onChange" v-model="character.appearance" />
-        </template>
-        <h6>Hintergrund</h6>
+        <h6>Einleitung</h6>
         <html-editor @update:model-value="onChange" v-model="character.background" />
         <carrd-edit-section @update:model-value="onChange" class="page-edit-character__form-controls"
           entity-type="character" v-model="character.carrdProfile" />

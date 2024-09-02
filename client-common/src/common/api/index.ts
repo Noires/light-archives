@@ -20,6 +20,7 @@ import VenuesAPI from './venues-api';
 import ViolationsAPI from './violations-api';
 import WeatherAPI from './weather-api';
 import WikiAPI from './wiki-api';
+import LodestoneAPI from './lodestone-api';
 
 export default class API {
   private readonly transport = new APITransport();
@@ -37,6 +38,7 @@ export default class API {
   readonly images = new ImagesAPI(this.transport);
   readonly links = new LinksAPI(this.transport);
   readonly locations = new LocationsAPI(this.transport);
+  readonly lodestone = new LodestoneAPI(this.transport);
   readonly news = new NewsAPI(this.transport);
   readonly noticeboard = new NoticeboardAPI(this.transport);
   readonly search = new SearchAPI(this.transport);

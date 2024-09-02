@@ -1,19 +1,12 @@
 <template>
   <template v-if="character.id">
-    <h2>Gerüchte bearbeiten</h2>
+    <h2>Inventar bearbeiten</h2>
     <q-form @submit="onSubmit">
       <template v-if="!preview">
-        <p>Die hier aufgelisteten Gerüchte können im RP verwendet werden. Die Kategorien geben an, wie hoch die
-          Wahrscheinlichkeit ist, dass ein Gerücht in der Öffentlichkeit geteilt wird und man es gehört haben kann. Gerüchte
-          der Kategorie "Häufig" kann potentiell jeder gehört haben. Gerüchte der der Kategorie "Selten" sind Gerüchte, die
-          man nur unter speziellen Voraussetzungen kennen kann. Diese sollten nur in gemeinsamer Absprache genutzt werden.
-        </p>
-        <h6>Offene Informationen</h6>
-        <html-editor @update:model-value="onChange" v-model="character.openinformation" />
-        <h6>Häufige Gerüchte</h6>
+        <h6>Besitz</h6>
         <html-editor @update:model-value="onChange" v-model="character.commonrumors" />
-        <h6>Seltene Gerüchte</h6>
-        <html-editor @update:model-value="onChange" v-model="character.rarerumors" />
+        <h6>Besondere Gegenstände</h6>
+        <html-editor @update:model-value="onChange" v-model="character.specialitems" />
       </template>
       <section v-else class="page-edit-character__preview">
         <character-rumors :character="character" :preview="true" />

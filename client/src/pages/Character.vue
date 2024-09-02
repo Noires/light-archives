@@ -1,6 +1,6 @@
 <template>
 	<q-layout class="rounded-borders no-outline">
-		<q-drawer v-show="displayDrawer()" class="border-radius-inherit" v-model="drawer" show-if-above
+		<q-drawer class="border-radius-inherit" v-model="drawer" show-if-above
 			:mini="miniState" @mouseover="miniState = false" @mouseout="miniState = true" :width="200" :breakpoint="0">
 			<q-scroll-area class="fit" :horizontal-thumb-style="{ opacity: 0 }">
 				<q-list padding>
@@ -13,6 +13,7 @@
 							Profil
 						</q-item-section>
 					</q-item>
+
 					<q-item v-show="character.showAppearance" clickable v-ripple @click="onTab('appearance')">
 						<q-item-section avatar>
 							<q-icon name="curtains" />
@@ -72,6 +73,27 @@
 							Galerie
 						</q-item-section>
 					</q-item>
+					
+					<q-item v-show="character.showGallery" clickable v-ripple @click="onTab('inventory')">
+						<q-item-section avatar>
+							<q-icon name="diamond" />
+						</q-item-section>
+
+						<q-item-section>
+							Inventar
+						</q-item-section>
+					</q-item>
+			
+					<q-item v-if="character.mine" class="edit-profile" clickable v-ripple :to="`/edit-character/${character.id}/profile`">
+						<q-item-section avatar>
+							<q-icon class="edit-profile" name="edit" />
+						</q-item-section>
+
+						<q-item-section class="edit-profile">
+							Profil bearbeiten
+						</q-item-section>
+					</q-item>
+
 
 				</q-list>
 			</q-scroll-area>
@@ -88,8 +110,9 @@
 				<character-personality v-if="tab==='personality'" :character="character" />		
 				<character-contacts v-if="tab==='contacts'" :character="character" />	
 				<character-rumors v-if="tab==='rumors'" :character="character" />	
-				<character-diary v-if="tab==='diary'" :content="content" />	
+				<character-diary v-if="tab==='diary'" :content="content" :character="character" />	
 				<character-gallery v-if="tab==='gallery'" :content="content" />	
+				<character-inventory v-if="tab==='inventory'" :character="character" />	
 			</template>
 			<template v-if="content.stories.length > 0 && !displayDrawer()">
 				<h3>{{ name }}'s Geschichten</h3>
@@ -129,6 +152,7 @@ import CharacterContacts from 'src/components/character/CharacterContacts.vue';
 import CharacterRumors from 'src/components/character/CharacterRumors.vue';
 import CharacterDiary from 'src/components/character/CharacterDiary.vue';
 import CharacterGallery from 'src/components/character/CharacterGallery.vue';
+import CharacterInventory from 'src/components/character/CharacterInventory.vue';
 
 const $api = useApi();
 const $router = useRouter();
@@ -187,6 +211,7 @@ async function load(params: RouteParams): Promise<Content> {
 		CharacterRumors,
 		CharacterDiary,
 		CharacterGallery,
+		CharacterInventory,
 		StoryList,
 		ThumbGallery,
 		ReportViolationSection,
@@ -233,8 +258,10 @@ export default class PageCharacter extends Vue {
 	character: CharacterProfileDto = new CharacterProfileDto();
 	content: CharacterContentDto = { stories: [], images: [] };
 	notFound = false;
-
 	setContent(content: Content) {
+		if ((content.content.images.length > 0) && (content.character.banner?.url != undefined))  {
+			content.content.images = content.content.images.filter(x => !x.url.includes(content.character.banner!.url));
+		}
 		Object.assign(this, content);
 	}
 
@@ -252,4 +279,9 @@ export default class PageCharacter extends Vue {
 
 </script>
 
-<style lang="scss"></style>
+<style lang="scss">
+.edit-profile {
+	background-color: #9F848D;
+	color: #1b1b1b;
+}
+</style>

@@ -15,25 +15,25 @@ import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
 import { CharacterRegistrationStatus } from '@app/shared/enums/character-registration-status.enum';
 import { MembershipStatus } from '@app/shared/enums/membership-status.enum';
-import { getRaceById } from '@app/shared/enums/race.enum';
+import { getRaceByName } from '@app/shared/enums/race.enum';
 import html from '@app/shared/html';
 import SharedConstants from '@app/shared/SharedConstants';
-import { normalizeXivapiServerName } from '@app/shared/xivapi-utils';
 import { BadRequestException, ConflictException, GoneException, Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
 import { checkCarrdProfile } from '../../../common/api-checks';
 import { andWhereExists, escapeForLike, isQueryFailedError } from '../../../common/db';
-import { getLodestoneCharacter } from '../../../common/lodestone';
 import { ImagesService } from '../images/images.service';
-import { getTribeById } from '@app/shared/enums/tribe.enum';
+import { getTribeByName } from '@app/shared/enums/tribe.enum';
+import { LodestoneService } from '../lodestone/lodestone.service';
 
 @Injectable()
 export class CharactersService {
   constructor(
     private publicAuthService: AuthService,
     private imagesService: ImagesService,
+    private lodestoneService: LodestoneService,
     private connection: Connection,
     @InjectRepository(Character) private characterRepo: Repository<Character>,
     @InjectRepository(CommunityMembership) private communityMembershipRepo: Repository<CommunityMembership>,
@@ -76,11 +76,15 @@ export class CharactersService {
       name: character.name,
       race: character.race,
       tribe: character.tribe,
+      deity: character.deity,
+      family: character.family,
+      relationsshipstatus: character.relationsshipstatus,
       server: character.server.name,
       avatar: character.avatar,
       lodestoneId: character.lodestoneId,
       active: character.active || false,
       appearance: character.appearance,
+      aether: character.aether,
       background: character.background,
       haircolor: character.haircolor,
       eyecolor: character.eyecolor,
@@ -89,23 +93,31 @@ export class CharactersService {
       height: character.height,
       weight: character.weight,
       voice:  character.voice,
-      tattoosandscars: character.tattoosandscars,
       specialfeatures: character.specialfeatures,
+      personality: character.personality,
+      possession: character.possession,
+      specialitems: character.specialitems,
       strengths: character.strengths,
       weaknesses: character.weaknesses,
+      fears: character.fears,
+      wishes: character.wishes,
       ticks: character.ticks,
-      partners  : character.partners,
+      partners : character.partners,
+      parents: character.parents,
+      children: character.children,
       acquaintances: character.acquaintances,
       past: character.past,
       freecompanies: character.freecompanies,
       meetingplaces: character.meetingplaces,
       communities:  character.communities,
       mentioned: character.mentioned,
+      openinformation: character.openinformation,
       commonrumors: character.commonrumors,
       rarerumors: character.rarerumors,
       profession: character.profession,
       age: character.age,
       apparentage: character.apparentage,
+      birthday: character.birthday,
       birthplace: character.birthplace,
       residence: character.residence,
       title: character.title,
@@ -188,7 +200,19 @@ export class CharactersService {
       height: character.height,
       weight: character.weight,
       voice:  character.voice,
-      tattoosandscars: character.tattoosandscars,
+      aether: character.aether,
+      birthday: character.birthday,
+      children: character.children,
+      deity: character.deity,
+      family: character.family,
+      fears: character.fears,
+      openinformation : character.openinformation,
+      parents: character.parents,
+      personality: character.personality,
+      possession: character.possession,
+      relationsshipstatus : character.relationsshipstatus,
+      wishes: character.wishes,
+      specialitems: character.specialitems,
       specialfeatures: character.specialfeatures,
       strengths: character.strengths,
       weaknesses: character.weaknesses,
@@ -269,7 +293,19 @@ export class CharactersService {
         height: characterDto.height,
         weight: characterDto.weight,
         voice: characterDto.voice,
-        tattoosandscars: characterDto.tattoosandscars,
+        aether: characterDto.aether,
+        birthday: characterDto.birthday,
+        children: characterDto.children,
+        deity: characterDto.deity,
+        family: characterDto.family,
+        fears: characterDto.fears,
+        openinformation: characterDto.openinformation,
+        parents: characterDto.parents,
+        personality: characterDto.personality,
+        possession: characterDto.possession,
+        relationsshipstatus: characterDto.relationsshipstatus,
+        wishes: characterDto.wishes,
+        specialitems: characterDto.specialitems,
         specialfeatures: characterDto.specialfeatures,
         strengths: characterDto.strengths,
         weaknesses: characterDto.weaknesses,
@@ -402,7 +438,7 @@ export class CharactersService {
     // though unverified users cannot access this API via the website.
 		const characterEntity = await this.connection.transaction(async em => {
 			const repo = em.getRepository(Character);
-			const character = await repo.findOne({
+			const character = await repo.findOneBy({
 				id: characterId.id,
 				user: {
 					id: user.id,
@@ -417,7 +453,7 @@ export class CharactersService {
         throw new ConflictException('You cannot refresh inactive characters from Lodestone');
       }
 
-      const lodestoneInfo = await getLodestoneCharacter(character.lodestoneId);
+      const lodestoneInfo = await this.lodestoneService.getCharacter(character.lodestoneId);
 
       if (!lodestoneInfo) {
         throw new GoneException('Character not found on Lodestone');
@@ -425,21 +461,20 @@ export class CharactersService {
 
       const server = await em.getRepository(Server).findOne({
         where: {
-          name: normalizeXivapiServerName(lodestoneInfo.Character.Server),
+          name: lodestoneInfo.World,
         },
         select: [ 'id', 'name' ]
       });
 
       if (!server) {
-        throw new NotFoundException(`Unknown server: ${lodestoneInfo.Character.Server}`);
+        throw new NotFoundException(`Unknown server: ${lodestoneInfo.World}`);
       }
-
       // Info parsed from Lodestone - update it in database
 			Object.assign(character, {
-        name: lodestoneInfo.Character.Name,
-        race: getRaceById(lodestoneInfo.Character.Race),
-        tribe: getTribeById(lodestoneInfo.Character.Tribe),
-        avatar: lodestoneInfo.Character.Avatar,
+        name: lodestoneInfo.Name,
+        race: getRaceByName(lodestoneInfo.Race),
+        tribe: getTribeByName(lodestoneInfo.Tribe),
+        avatar: lodestoneInfo.Avatar,
 				server,
 			});
 
@@ -465,7 +500,10 @@ export class CharactersService {
   async addAccountCharacter(request: AddCharacterRequestDto, user: UserInfo): Promise<SessionCharacterDto> {
     try {
       const result = await this.connection.transaction(async em => {
-        const userEntity = await em.getRepository(User).findOne(user.id, {
+        const userEntity = await em.getRepository(User).findOne({
+          where: {
+            id: user.id,
+          },
           select: [ 'id' ]
         });
 
@@ -522,19 +560,19 @@ export class CharactersService {
         throw new ConflictException('This character is already claimed by another user');
     }
 
-    const characterInfo = await getLodestoneCharacter(lodestoneId);
+    const characterInfo = await this.lodestoneService.getCharacter(lodestoneId);
 
     if (!characterInfo) {
       throw new BadRequestException('Invalid character');
     }
 
     // Try two possible ways XIVAPI can return the data
-    if (!SharedConstants.DATACENTERS.includes(characterInfo.Character.DC)
-        && !SharedConstants.DATACENTERS.includes(characterInfo.Character.Server.replace(/^[^ ]+ \[(.+)\]$/, '$1'))) {
+    if (!SharedConstants.DATACENTERS.includes(characterInfo.DC))
+    {
       throw new BadRequestException('This character is from the wrong datacenter');
     }
 
-    if (otherCharacter && otherCharacter.name === characterInfo.Character.Name) {
+    if (otherCharacter && otherCharacter.name === characterInfo.Name) {
       throw new BadRequestException(
         'You have already registered this character. To update their Lodestone info, ' +
         'use the "Refresh from Lodestone" button in the character profile editor instead.');
@@ -544,21 +582,21 @@ export class CharactersService {
     // or it is, but the character has a different name (indicating a name change).
     // We allow this: the user can make a new character profile for the new name.
 
-    const server = await em.getRepository(Server).findOne({
-      name: normalizeXivapiServerName(characterInfo.Character.Server),
+    const server = await em.getRepository(Server).findOneBy({
+      name: characterInfo.World,
     });
 
     if (!server) {
       throw new BadRequestException('Invalid server');
     }
 
-    const race = getRaceById(characterInfo.Character.Race);
+    const race = getRaceByName(characterInfo.Race);
 
     if (!race) {
       throw new BadRequestException('Invalid race');
     }
 
-    const tribe = getTribeById(characterInfo.Character.Tribe);
+    const tribe = getTribeByName(characterInfo.Tribe);
 
     if (!tribe) {
       throw new BadRequestException('Invalid tribe');
@@ -566,7 +604,7 @@ export class CharactersService {
 
     // Set all previously existing characters with this Lodestone ID as inactive
     await characterRepo.update({
-      lodestoneId: characterInfo.Character.ID,
+      lodestoneId: lodestoneId,
       user,
       active: true,
     }, {
@@ -574,13 +612,13 @@ export class CharactersService {
     });
 
     return characterRepo.save({
-      lodestoneId: characterInfo.Character.ID,
-      name: characterInfo.Character.Name,
+      lodestoneId,
+      name: characterInfo.Name,
       race,
       tribe,
       server,
       user,
-      avatar: characterInfo.Character.Avatar,
+      avatar: characterInfo.Avatar,
       verificationCode: generateVerificationCode(),
       active: true
     });

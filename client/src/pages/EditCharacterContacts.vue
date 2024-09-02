@@ -4,8 +4,10 @@
       <q-form @submit="onSubmit">
         <template v-if="!preview">
           <section class="page-edit-character__form-controls">
-            <h6>Beziehungen</h6>
+            <h6>Kontakte</h6>
             <q-input @update:model-value="onChange" v-model="character.partners" label="Partner" />
+            <q-input @update:model-value="onChange" v-model="character.parents" label="Eltern" />
+            <q-input @update:model-value="onChange" v-model="character.children" label="Kinder" />
             <q-input @update:model-value="onChange" v-model="character.relatives" label="Verwandte" />
             <q-input @update:model-value="onChange" v-model="character.friends" label="Freunde" />
             <q-input @update:model-value="onChange" v-model="character.acquaintances" label="Bekannte / Kollegen" />
@@ -16,7 +18,6 @@
             <q-input @update:model-value="onChange" v-model="character.freecompanies" label="Freie Gesellschaft" />
             <q-input @update:model-value="onChange" v-model="character.meetingplaces" label="Treffpunkte" />
             <q-input @update:model-value="onChange" v-model="character.communities" label="Communities" />
-            <q-input @update:model-value="onChange" v-model="character.mentioned" label="Erwähnt in (Anschlagebrett, Geschichten, ...)" />
             <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername|mein bester Freund]], in allen obigen Feldern nutzen.</div>
           </section>
         </template>

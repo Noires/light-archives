@@ -4,6 +4,8 @@
       <h6>Vorlieben und Abneigungen</h6>
             <q-input readonly v-model="character.loves" label="Liebt" />
             <q-input readonly v-model="character.hates" label="Hass" />
+            <q-input readonly v-model="character.wishes" label="Wünsche" />
+            <q-input readonly v-model="character.fears" label="Ängste" />
             <q-input readonly v-model="character.slogan" label="Motto" />
             <q-input readonly v-model="character.motivation" label="Motivation" />
             <h6>Charakteristika</h6>
@@ -11,6 +13,8 @@
             <q-input readonly v-model="character.weaknesses" label="Schwächen" />
             <q-input readonly v-model="character.ticks" label="Eigenheiten" />
     </section>
+    <h6>Persönlichkeit</h6>
+    <html-viewer v-model="character.personality" />
   </div>
 </template>
 
