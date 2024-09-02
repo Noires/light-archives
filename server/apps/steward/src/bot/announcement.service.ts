@@ -25,7 +25,10 @@ export class AnnouncementService {
   }
 
 	async postNoticeboardItem(noticeboardItemId: number): Promise<void> {
-		const noticeboardItem = await this.noticeboardItemRepo.findOne(noticeboardItemId, {
+		const noticeboardItem = await this.noticeboardItemRepo.findOne({
+			where: {
+				id: noticeboardItemId,
+			},
 			relations: [ 'owner' ],
 		});
 
@@ -90,7 +93,7 @@ export class AnnouncementService {
 			const announcementEventId = announcement.event.id;
 			const eventUrl = `${serverConfiguration.frontendRoot}/event/${announcementEventId}`;
 			const content = `${announcement.content}\n\n${eventUrl}`;
-			
+
 			const timerId = schedule.scheduleJob(announcement.postAt, async () => {
 				this.unregisterTimer(announcementEventId, timerId);
 				await this.postAnnouncement(content);
