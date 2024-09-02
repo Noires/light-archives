@@ -18,7 +18,7 @@ jobs:
         uses: DerYeger/yarn-setup-action@v1.0.1
         with:
           # The version of Node.js that will be used
-          node-version: 18.12.1
+          node-version: 18.13.0
       - name: Yarn Client
         run: |
           yarn --cwd ./client 
