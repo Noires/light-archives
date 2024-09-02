@@ -51,7 +51,7 @@
             label="Geschlecht" :maxlength="SharedConstants.MAX_PRONOUNS_LENGTH" />
           <q-input @update:model-value="onChange" v-model="character.birthplace" label="Geburtsort" />
           <q-input @update:model-value="onChange" v-model="character.residence" label="Wohnort" />
-          <q-input @update:model-value="onChange" v-model="character.residence" label="Beziehungsstatus" />
+          <q-input @update:model-value="onChange" v-model="character.relationsshipstatus" label="Beziehungsstatus" />
           <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername]], in allen obigen Feldern nutzen.
           </div>
         </section>
