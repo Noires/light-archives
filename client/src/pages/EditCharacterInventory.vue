@@ -4,7 +4,7 @@
     <q-form @submit="onSubmit">
       <template v-if="!preview">
         <h6>Besitz</h6>
-        <html-editor @update:model-value="onChange" v-model="character.commonrumors" />
+        <html-editor @update:model-value="onChange" v-model="character.possession" />
         <h6>Besondere Gegenstände</h6>
         <html-editor @update:model-value="onChange" v-model="character.specialitems" />
       </template>
