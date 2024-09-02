@@ -309,6 +309,12 @@ export class Character extends BasicEntity {
     nullable: false,
     default: false,
   })
+  showInventory: boolean;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
   combinedDescription: boolean;
 
   @Column({

@@ -74,7 +74,7 @@
 						</q-item-section>
 					</q-item>
 					
-					<q-item v-show="character.showGallery" clickable v-ripple @click="onTab('inventory')">
+					<q-item v-show="character.showInventory" clickable v-ripple @click="onTab('inventory')">
 						<q-item-section avatar>
 							<q-icon name="diamond" />
 						</q-item-section>

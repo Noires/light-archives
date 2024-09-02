@@ -145,6 +145,7 @@ export class CharactersService {
       showGallery: character.showGallery,
       showPersonality: character.showPersonality,
       showRumors: character.showRumors,
+      showInventory: character.showInventory,
       combinedDescription: character.combinedDescription,
       freeCompany: !freeCompany ? null : {
         name: freeCompany.name,
@@ -256,6 +257,7 @@ export class CharactersService {
       showGallery: character.showGallery,
       showPersonality: character.showPersonality,
       showRumors: character.showRumors,
+      showInventory: character.showInventory,
       combinedDescription: character.combinedDescription,
       freeCompany: !freeCompany ? null : {
         name: freeCompany.name,
@@ -343,6 +345,7 @@ export class CharactersService {
         showRumors: characterDto.showRumors,
         showDiary: characterDto.showDiary,
         showGallery: characterDto.showGallery,
+        showInventory: character.showInventory,
         combinedDescription: characterDto.combinedDescription,
 			});
 

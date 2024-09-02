@@ -68,6 +68,9 @@ export class CharacterProfileDto extends BaseCharacterProfileDto {
   showGallery: boolean;
 
   @IsBoolean()
+  showInventory: boolean;
+
+  @IsBoolean()
   combinedDescription: boolean;
 
   freeCompany: CharacterFreeCompanyDto|null;
