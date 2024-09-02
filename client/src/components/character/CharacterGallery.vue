@@ -1,6 +1,6 @@
 <template>
   <div class="character-gallery">
-    <section class="page-edit-character__form-controls">
+    <section>
       <h6>Galerie</h6>
         <template v-if="content.images && content.images.length > 0">
           <thumb-gallery :images="content.images" />

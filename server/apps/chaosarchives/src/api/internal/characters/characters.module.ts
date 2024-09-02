@@ -7,12 +7,14 @@ import { StoriesModule } from '../stories/stories.module';
 import { CharactersController } from './characters.controller';
 import { CharactersService } from './characters.service';
 import { MyContentService } from './my-content.service';
+import { LodestoneModule } from '../lodestone/lodestone.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Character, CommunityMembership, Event, NoticeboardItem, Story, WikiPage]),
     StoriesModule,
     ImagesModule,
+    LodestoneModule,
     AuthModule,
   ],
   controllers: [CharactersController],

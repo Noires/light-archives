@@ -24,6 +24,18 @@ export class BaseCharacterProfileDto {
   birthplace: string;
 
   @IsString()
+  birthday: string;
+
+  @IsString()
+  deity: string;
+
+  @IsString()
+  family: string;
+
+  @IsString()
+  relationsshipstatus: string;
+
+  @IsString()
   residence: string;
 
   @IsString()
@@ -56,21 +68,30 @@ export class BaseCharacterProfileDto {
   voice: string;
 
   @IsString()
-  tattoosandscars: string;
-
-  @IsString()
   specialfeatures: string;
 
   @IsString()
   appearance: string;
 
+  @IsString()
+  aether: string;
+
   // Personality
+
+  @IsString()
+  personality: string;
 
   @IsString()
   loves: string;
 
   @IsString()
   hates: string;
+
+  @IsString()
+  wishes: string;
+
+  @IsString()
+  fears: string;
 
   @IsString()
   slogan: string
@@ -87,10 +108,23 @@ export class BaseCharacterProfileDto {
   @IsString()
   ticks: string;
 
+  // Inventory
+  @IsString()
+  possession: string;
+
+  @IsString()
+  specialitems: string;
+
   // Relationships
 
   @IsString()
   partners: string;
+
+  @IsString()
+  parents: string;
+
+  @IsString()
+  children: string;
 
   @IsString()
   relatives: string;
@@ -122,6 +156,9 @@ export class BaseCharacterProfileDto {
   mentioned: string;
 
   // Rumors
+
+  @IsString()
+  openinformation: string;
 
   @IsString()
   commonrumors: string;

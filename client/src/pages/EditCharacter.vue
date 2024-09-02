@@ -2,7 +2,7 @@
 
 
   <q-layout class="rounded-borders no-outline">
-    <q-drawer v-show="displayDrawer()" class="border-radius-inherit" v-model="drawer" show-if-above :mini="miniState"
+    <q-drawer v-show="displayDrawer()" class="border-radius-inherit edit-drawer" v-model="drawer" show-if-above :mini="miniState"
       @mouseover="miniState = false" @mouseout="miniState = true" :width="200" :breakpoint="0">
       <q-scroll-area class="fit" :horizontal-thumb-style="{ opacity: 0 }">
         <q-list padding>
@@ -75,6 +75,17 @@
 
             <q-item-section>
               Galerie
+            </q-item-section>
+          </q-item>
+
+          <q-item v-show="character.showContacts" clickable v-ripple
+            :to="`/edit-character/${$route.params.id}/inventory`">
+            <q-item-section avatar>
+              <q-icon name="diamond" />
+            </q-item-section>
+
+            <q-item-section>
+              Inventar
             </q-item-section>
           </q-item>
 
@@ -183,4 +194,13 @@ export default class PageEditCharacter extends Vue {
 .page-edit-character__preview h6 {
   font-family: $header-font;
 }
+
+.edit-drawer {
+	background-color: #9F848D;
+}
+
+.edit-drawer .q-item {
+  color: #1b1b1b;
+}
+
 </style>

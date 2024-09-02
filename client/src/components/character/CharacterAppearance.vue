@@ -10,11 +10,12 @@
       <q-input readonly v-model="character.weight" label="Gewicht" />
       <q-input readonly v-model="character.apparentage" label="Optisches Alter" />
       <q-input readonly v-model="character.voice" label="Stimme" />
-      <q-input readonly v-model="character.tattoosandscars" label="Tattoos & Narben" />
       <q-input readonly v-model="character.specialfeatures" label="Besonderheiten" />
     </section>
     <h6>Erscheinungsbild</h6>
     <html-viewer v-model="character.appearance" />
+    <h6>Äther</h6>
+    <html-viewer v-model="character.aether" />
   </div>
 </template>
 

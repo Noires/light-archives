@@ -87,7 +87,49 @@ export class Character extends BasicEntity {
     nullable: false,
     default: '',
   })
+  aether: string;
+
+  @Column({
+    type: 'mediumtext',
+    nullable: false,
+    default: '',
+  })
   background: string;
+
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  family: string;
+
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  relationsshipstatus: string;
+
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  personality: string;
+
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  possession: string;
+
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  specialitems: string;
 
   @Column({
     nullable: false,
@@ -101,7 +143,21 @@ export class Character extends BasicEntity {
     type: 'tinytext',
     default: '',
   })
+  deity: string;
+
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
   birthplace: string;
+
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  birthday: string;
 
   @Column({
     nullable: false,
@@ -136,6 +192,20 @@ export class Character extends BasicEntity {
     type: 'mediumtext',
     default: '',
   })
+  fears: string;
+
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  wishes: string;
+
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
   hates: string;
 
   @Column({
@@ -151,6 +221,20 @@ export class Character extends BasicEntity {
     default: '',
   })
   relatives: string;
+
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  parents: string;
+
+  @Column({
+    nullable: false,
+    type: 'mediumtext',
+    default: '',
+  })
+  children: string;
 
   @Column({
     nullable: false,
@@ -405,6 +489,13 @@ export class Character extends BasicEntity {
   })
   mentioned: string;
   
+  @Column({
+    type: 'mediumtext',
+    nullable: false,
+    default: '',
+  })
+  openinformation: string;
+
   @Column({
     type: 'mediumtext',
     nullable: false,

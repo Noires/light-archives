@@ -1,10 +1,18 @@
 <template>
   <div class="character-rumors">
-    <section class="page-edit-character__form-controls">
+    <section>
+      <h6>Gerüchte</h6>
+      <p>Die hier aufgelisteten Gerüchte können im RP verwendet werden. Die Kategorien geben an, wie hoch die
+          Wahrscheinlichkeit ist, dass ein Gerücht in der Öffentlichkeit geteilt wird und man es gehört haben kann. Gerüchte
+          der Kategorie "Häufig" kann potentiell jeder gehört haben. Gerüchte der der Kategorie "Selten" sind Gerüchte, die
+          man nur unter speziellen Voraussetzungen kennen kann. Diese sollten nur in gemeinsamer Absprache genutzt werden.
+        </p>
+      <h6>Offene Informationen</h6>
+      <html-viewer :content="character.openinformation" />
       <h6>Häufige Gerüchte</h6>
-        <html-viewer v-model="character.commonrumors" />
+        <html-viewer :content="character.commonrumors" />
         <h6>Seltene Gerüchte</h6>
-        <html-viewer v-model="character.rarerumors" />
+        <html-viewer :content="character.rarerumors" />
     </section>
   </div>
 </template>

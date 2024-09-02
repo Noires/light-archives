@@ -1,20 +1,10 @@
 <template>
-  <div class="character-contacts">
-    <section >
-      <h6>Kontakte</h6>
-            <q-input autogrow readonly v-model="character.partners" label="Partner" />
-            <q-input autogrow readonly v-model="character.parents" label="Eltern" />
-            <q-input autogrow readonly v-model="character.children" label="Kinder" />
-            <q-input autogrow readonly v-model="character.relatives" label="Verwandte" />
-            <q-input autogrow readonly v-model="character.friends" label="Freunde" />
-            <q-input autogrow readonly v-model="character.acquaintances" label="Bekannte / Kollegen" />
-            <q-input autogrow readonly v-model="character.enemies" label="Rivalen / Feinde" />
-            <q-input autogrow readonly v-model="character.past" label="Vergangenheit" />
-            <h6>Verbindungen</h6>
-            <q-input autogrow readonly v-model="character.freecompanies" label="Freie Gesellschaft" />
-            <q-input autogrow readonly v-model="character.meetingplaces" label="Treffpunkte" />
-            <q-input autogrow readonly v-model="character.communities" label="Communities" />
-            <q-input autogrow readonly v-model="character.mentioned" label="Erwähnt in (Anschlagebrett, Geschichten, ...)" />
+  <div class="character-rumors">
+    <section>
+      <h6>Besitz</h6>
+      <html-viewer :content="character.possession" />
+      <h6>Besondere Gegenstände</h6>
+      <html-viewer :content="character.specialitems" />
     </section>
   </div>
 </template>
@@ -48,7 +38,7 @@ class Props {
     ReportViolationSection,
   },
 })
-export default class CharacterContacts extends Vue.with(Props) {
+export default class CharacterRumors extends Vue.with(Props) {
   PageType = PageType;
 
 

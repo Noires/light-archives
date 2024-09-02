@@ -1,13 +1,9 @@
 <template>
   <div class="character-profile">
-    <p v-if="!preview && character.mine">
-      <q-btn outline color="secondary" :to="`/edit-character/${character.id}/profile`" style="max-width: 140px"><i
-        class="material-icons q-icon">edit</i>Profil bearbeiten</q-btn>
-    </p>
     <banner-view :banner="character.banner" />
     <header class="character-profile__header">
       <div class="layout__filler">
-        <q-avatar v-if="character.showAvatar" round>
+        <q-avatar round>
           <img :src="character.avatar" />
         </q-avatar>
       </div>
@@ -18,32 +14,25 @@
       </div>
       <div class="layout__filler"></div>
     </header>
-    <character-details-box v-if="character.showInfoboxes">
+    <character-details-box>
       <character-detail label="Welt" :value="character.server" v-if="character.server" />
       <character-detail label="Volk" :value="$display.races[character.race]" v-if="character.race" />
-      <character-detail label="Stamm" :value="$display.tribes[character.tribe]" v-if="character.tribe" />
-      <character-detail label="Profession" :value="character.profession" v-if="character.profession" />
+      <character-detail label="Untervolk" :value="$display.tribes[character.tribe]" v-if="character.tribe" />
+      <character-detail label="Familie" :value="character.family" v-if="character.family" /> 
+      <character-detail label="Schutzgottheit" :value="character.deity" v-if="character.deity" /> 
+      <character-detail label="Profession" :value="character.profession" v-if="character.profession" />   
       <character-detail label="Alter" :value="character.age" v-if="character.age" />
-      <character-detail label="Pronouns" :value="character.pronouns" v-if="character.pronouns" />
+      <character-detail label="Namenstag" :value="character.birthday" v-if="character.birthday" /> 
+      <character-detail label="Geschlecht" :value="character.pronouns" v-if="character.pronouns" />
       <character-detail label="Geburtsort" :value="character.birthplace" v-if="character.birthplace" />
       <character-detail label="Wohnort" :value="character.residence" v-if="character.residence" />
+      <character-detail label="Beziehungsstatus" :value="character.relationsshipstatus" v-if="character.relationsshipstatus" />
       <character-detail label="Freie&nbsp;Gesellschaft" :value="character.freeCompany.name" :router-link="fcLink" v-if="character.freeCompany" />
     </character-details-box>
-    <template v-if="character.appearance && !this.character.showAppearance">
-      <h3 v-if="!character.combinedDescription">Erscheinungsbild</h3>
-      <html-viewer
-        class="character-profile__appearance-background"
-        :class="{ 'character-profile__appearance-background_no-header': character.combinedDescription }"
-        :content="character.appearance"
-      />
-    </template>
-    <template v-if="!character.combinedDescription">
-      <template v-if="character.background"><hr /></template>
+      <br>
       <template v-if="character.background">
-        <h3>Hintergrund</h3>
         <html-viewer class="character-profile__appearance-background" :content="character.background" />
       </template>
-    </template>
     <template v-if="!character.appearance && (character.combinedDescription || !character.background)">
       &nbsp;
     </template>

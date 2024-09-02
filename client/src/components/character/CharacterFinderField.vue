@@ -56,9 +56,7 @@
 
 <script lang="ts">
 import { CharacterRegistrationStatus } from '@app/shared/enums/character-registration-status.enum';
-import { normalizeXivapiServerName} from '@app/shared/xivapi-utils';
 import SharedConstants from '@app/shared/SharedConstants';
-import minXIVAPI from 'src/common/xivapi-min';
 import { Options, prop, Vue } from 'vue-class-component';
 import { CharacterSearchModel } from './character-search-model';
 import { notifyError } from 'src/common/notify';
@@ -75,10 +73,6 @@ class Props {
 
 const allAllowedServers: string[] = [];
 let allowedServersLoaded = false;
-
-function isAllowedServer(characterInfo: string): boolean {
-	return allAllowedServers.indexOf(normalizeXivapiServerName(characterInfo)) !== -1;
-}
 
 @Options({
 	emits: [ 'update:model-value' ]
@@ -117,17 +111,17 @@ export default class CharacterFinderField extends Vue.with(Props) {
 
 			// Search in all DCs
 			const resultsArray = await Promise.all(SharedConstants.DATACENTERS.map(dc => `_dc_${dc}`)
-				.map(dcParam => minXIVAPI.character.search(value, { server: dcParam })));
-			const results = flat(resultsArray.map(searchEntry => searchEntry.Results));
+				.map(dcParam => this.$api.lodestone.searchCharacters(value, dcParam)));
+			const results = flat(resultsArray.map(searchEntry => searchEntry.List));
 
       if (this.characterOptionsSearchString !== value) {
         // Too late
         return;
       }
 
-      this.characterOptions = results.filter(result => isAllowedServer(result.Server)).map(result => ({
+      this.characterOptions = results.map((result) => ({
         name: result.Name,
-        server: result.Server.split(/\s/)[0], // remove datacenter suffix
+        server: result.World.split(/\s/)[0], // remove datacenter suffix
         avatar: result.Avatar,
         lodestoneId: result.ID,
       }));

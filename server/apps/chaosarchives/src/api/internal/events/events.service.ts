@@ -16,7 +16,6 @@ import { EventSource } from '@app/shared/enums/event-source.enum';
 import html from '@app/shared/html';
 import SharedConstants from '@app/shared/SharedConstants';
 import { isValidUrl } from '@app/shared/validation/validators';
-import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -29,6 +28,8 @@ import { ImagesService } from '../images/images.service';
 import { ChocoboChronicleService } from './chocobo-chronicle.service';
 import { CrescentMoonPublishingService } from './crescent-moon-publishing.service';
 import { ExternalEvent } from './model/external-event';
+import { Redis } from 'ioredis';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
 
 @Injectable()
 export class EventsService {

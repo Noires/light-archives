@@ -1,6 +1,5 @@
 import { AuthModule } from '@app/auth/auth.module';
 import { dbConfiguration, redisConfiguration } from '@app/configuration';
-import { RedisModule } from '@nestjs-modules/ioredis';
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
@@ -12,6 +11,7 @@ import { AppService } from './app.service';
 import { GlobalExceptionsFilter } from './global-exceptions.filter';
 import { MailModule } from './mail/mail.module';
 import { UpdatesModule } from './websocket/updates/updates.module';
+import { RedisModule } from '@liaoliaots/nestjs-redis';
 
 @Module({
   imports: [

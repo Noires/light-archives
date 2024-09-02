@@ -1,12 +1,13 @@
 import { Character, User } from '@app/entity';
 import { checkPassword } from '@app/security';
 import { Role } from '@app/shared/enums/role.enum';
-import { InjectRedis, Redis } from '@nestjs-modules/ioredis';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserCharacterInfo } from '../model/user-character-info';
 import { UserInfo } from '../model/user-info';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import { Redis } from 'ioredis';
 
 @Injectable()
 export class AuthImplService {
@@ -21,7 +22,7 @@ export class AuthImplService {
   ) {}
 
   async validateUser(username: string, password: string): Promise<UserInfo> {
-    const user = await this.userRepo.findOne({ email: username });
+    const user = await this.userRepo.findOneBy({ email: username });
 
     if (!user || !(await checkPassword(password, user.passwordHash))) {
       throw new UnauthorizedException('Invalid email or password');
@@ -37,7 +38,7 @@ export class AuthImplService {
       return JSON.parse(cachedInfo);
     }
 
-    const user = await this.userRepo.findOne(userId);
+    const user = await this.userRepo.findOneBy({ id: userId });
 
     if (!user) {
       throw new UnauthorizedException();
@@ -48,9 +49,14 @@ export class AuthImplService {
 
   private async getAndCacheUserInfo(user: User): Promise<UserInfo> {
     const characters = await this.characterRepo.find({
-      where: { user },
+      where: {
+        user: {
+          id: user.id,
+        },
+      },
       relations: [ 'server' ],
     });
+
 
     if (characters.length === 0) {
       // Shouldn't happen
@@ -76,7 +82,7 @@ export class AuthImplService {
     void this.redisService.set(
       `user_${user.id}`,
       JSON.stringify(result),
-      'ex',
+      'EX',
       this.USER_INFO_CACHE_SEC,
     );
     return result;
