@@ -169,11 +169,6 @@
         </q-item>
       </template>
       <q-separator dark />
-      <q-item clickable v-ripple to="/my-account">
-        <q-item-section>
-          <q-item-label>Mein Account</q-item-label>
-        </q-item-section>
-      </q-item>
       <q-item clickable v-ripple @click="logOut">
         <q-item-section>
           <q-item-label>Ausloggen</q-item-label>

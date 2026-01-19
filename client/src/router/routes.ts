@@ -98,16 +98,6 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
-    // Note that we do not use MainLayout here. Confirm email is a minimal page
-    // that redirects you to the verify page once the email is confirmed.
-    path: '/confirm-new-email/:verificationToken',
-    component: () => import('pages/ConfirmNewEmail.vue'),
-    meta: {
-      title: 'Neue E-Mail-Adresse bestätigen'
-    },
-  },
-
-  {
     path: '/login',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/LogIn.vue') }],
@@ -178,15 +168,6 @@ const routes: RouteRecordRaw[] = [
       }],
     meta: {
       title: 'Profil bearbeiten'
-    },
-  },
-
-  {
-    path: '/my-account',
-    component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/MyAccount.vue') }],
-    meta: {
-      title: 'Mein Account'
     },
   },
 
