@@ -57,5 +57,10 @@ services:
       - steward
     environment:
       - NODE_ENV=${NODE_ENV:-production}
+      - JWT_SECRET=${JWT_SECRET:-_JWTSECRET_}
+      - AUTH_DISCORD_CLIENT_ID=${AUTH_DISCORD_CLIENT_ID:-_DISCORDCLIENTID_}
+      - AUTH_DISCORD_CLIENT_SECRET=${AUTH_DISCORD_CLIENT_SECRET:-_DISCORDCLIENTSECRET_}
+      - AUTH_DISCORD_CALLBACK_URL=${AUTH_DISCORD_CALLBACK_URL:-https://elpisgarten.de/api/internal/user/login/discord/callback}
+      - AUTH_DISCORD_RPP_CALLBACK_URL=${AUTH_DISCORD_RPP_CALLBACK_URL:-https://elpisgarten.de/api/rpp/login/discord/callback}
     ports:
       - '${CHAOSARCHIVES_EXTERNAL_PORT:-8111}:8111'

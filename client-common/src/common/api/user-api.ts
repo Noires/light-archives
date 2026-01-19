@@ -84,4 +84,8 @@ export default class UserAPI {
       confirmData
     );
   }
+
+  getDiscordLoginUrl(): string {
+    return `${this.transport.prefix}login/discord`;
+  }
 }

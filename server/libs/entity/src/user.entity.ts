@@ -8,15 +8,21 @@ export class User extends BasicEntity {
   id: number;
 
   @Column({
-    nullable: false,
+    nullable: true,
     unique: true,
   })
-  email: string;
+  email: string | null;
 
   @Column({
-    nullable: false,
+    nullable: true,
   })
-  passwordHash: string;
+  passwordHash: string | null;
+
+  @Column({
+    nullable: true,
+    unique: true,
+  })
+  discordId: string | null;
 
   @Column({
     type: 'enum',

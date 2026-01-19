@@ -1,44 +1,16 @@
 <template>
   <section class="page-login">
     <h2>Log In</h2>
-    <q-form class="page-login__form" @submit="onSubmit">
+    <q-form class="page-login__form" @submit.prevent="onDiscordLogin">
       <p>
-        Please fill in the form below to log in to the Harborwatch with your Chaos Archives account.
-      </p>
-      <section>
-        <q-input
-          v-model="email"
-          label="Email"
-          :rules="[
-            $rules.required('This field is required.'),
-            $rules.email('Invalid email address.')
-          ]"
-        >
-          <template v-slot:prepend>
-            <q-icon name="mail" />
-          </template>
-        </q-input>
-        <q-input
-          v-model="password"
-          label="Password"
-          type="password"
-          :rules="[
-            $rules.required('This field is required.'),
-          ]"
-        >
-          <template v-slot:prepend>
-            <q-icon name="password" />
-          </template>
-        </q-input>
-      </section>
-      <p>
-        <a target="_blank" :href="forgotPasswordLink">Forgot your password?</a>
+        Click the button below to log in with Discord.
       </p>
       <div class="page-login__button-bar">
         <q-btn
-          label="Log in"
-          type="submit"
+          label="Log in with Discord"
+          type="button"
           color="primary"
+          @click="onDiscordLogin"
         />
       </div>
       <q-inner-loading :showing="loading" />
@@ -49,36 +21,35 @@
 <script lang="ts">
 import { Vue } from 'vue-class-component';
 import { notifyError, notifySuccess } from 'src/common/notify';
-import { CHAOS_ARCHIVES_ROOT } from 'src/common/interop';
 
 export default class PageLogIn extends Vue {
-  email = '';
-  password = '';
-
   loading = false;
 
-	get forgotPasswordLink() {
-		return `${CHAOS_ARCHIVES_ROOT}/forgot-password/${this.email}`;
-	}
+  async mounted() {
+    const token = this.$route.query.token;
 
-  async onSubmit() {
+    if (typeof token !== 'string' || token.length === 0) {
+      return;
+    }
+
     this.loading = true;
 
     try {
-      const result = await this.$api.user.logIn({
-        email: this.email,
-        password: this.password,
-      });
-
+      this.$api.setAccessToken(token);
+      const session = await this.$api.user.getSession();
+      this.$store.commit('setUser', session);
       notifySuccess('You have successfully logged in.');
-      this.$api.setAccessToken(result.accessToken);
-      this.$store.commit('setUser', result.session);
       void this.$router.replace('/');
     } catch (e) {
+      this.$api.setAccessToken(null);
       notifyError(e);
     } finally {
       this.loading = false;
     }
+  }
+
+  onDiscordLogin() {
+    window.location.href = this.$api.user.getDiscordLoginUrl();
   }
 }
 </script>

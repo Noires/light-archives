@@ -34,6 +34,10 @@ auth:
   jwtSecret: '_JWTSECRET_'
   jwtExpiry: '_JWTEXPIRY_'
   scopedJwtExpiry: '_JWTSCOPEDEXPIRY_'
+  discordClientId: '_DISCORDCLIENTID_'
+  discordClientSecret: '_DISCORDCLIENTSECRET_'
+  discordCallbackUrl: '_DISCORDCALLBACKURL_'
+  discordRppCallbackUrl: '_DISCORDRPPCALLBACKURL_'
 
 s3:
   endpoint: '_S3ENDPOINT_'

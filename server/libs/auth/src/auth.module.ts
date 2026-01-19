@@ -7,9 +7,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthImplService } from './impl/auth-impl.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { LocalStrategy } from './strategies/local.strategy';
 import { AuthService } from './auth.service';
 import { RolesGuard } from './guards/role.guard';
+import { DiscordRppStrategy, DiscordStrategy } from './strategies/discord.strategy';
 
 @Module({
   imports: [
@@ -26,7 +26,8 @@ import { RolesGuard } from './guards/role.guard';
   providers: [
     AuthImplService,
     AuthService,
-    LocalStrategy,
+    DiscordStrategy,
+    DiscordRppStrategy,
     JwtStrategy,
     JwtAuthGuard,
     {
