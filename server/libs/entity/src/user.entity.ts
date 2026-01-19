@@ -58,4 +58,10 @@ export class User extends BasicEntity {
     nullable: true
   })
   newEmailVerificationCode: string|null;
+
+  @Column({
+    type: 'datetime',
+    nullable: true
+  })
+  termsAcceptedAt: Date | null;
 }

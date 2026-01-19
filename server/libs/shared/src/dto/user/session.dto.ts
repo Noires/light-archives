@@ -5,4 +5,5 @@ export interface SessionDto {
   id: number;
   role: Role;
   characters: SessionCharacterDto[];
+  termsAcceptedAt: string | null;
 }

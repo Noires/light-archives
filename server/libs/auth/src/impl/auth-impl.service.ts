@@ -53,6 +53,7 @@ export class AuthImplService {
         role: Role.UNVERIFIED,
         verifiedAt: null,
         verificationCode: null,
+        termsAcceptedAt: null,
       });
     } else if (user.discordId && user.discordId !== discordId) {
       throw new UnauthorizedException('Discord account already linked');
@@ -108,6 +109,7 @@ export class AuthImplService {
     const result = new UserInfo({
       id: user.id,
       role: user.role as Role,
+      termsAcceptedAt: user.termsAcceptedAt ? user.termsAcceptedAt.toISOString() : null,
       characters: characters.map(character => new UserCharacterInfo({
         id: character.id,
         lodestoneId: character.lodestoneId,

@@ -85,6 +85,10 @@ export default class UserAPI {
     );
   }
 
+  async acceptTerms(): Promise<void> {
+    await this.transport.authPost<void>('accept-terms', {});
+  }
+
   getDiscordLoginUrl(): string {
     return `${this.transport.prefix}login/discord`;
   }

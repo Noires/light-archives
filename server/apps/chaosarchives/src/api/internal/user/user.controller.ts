@@ -85,6 +85,13 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('accept-terms')
+  async acceptTerms(@CurrentUser() user: UserInfo): Promise<void> {
+    await this.userService.acceptTerms(user);
+    await this.publicAuthService.notifyUserChanged(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('verification-status')
   async getVerificationStatus(
     @CurrentUser() user: UserInfo,

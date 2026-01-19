@@ -1,9 +1,9 @@
 <template>
   <q-page>
-    <h2>Anmeldung</h2>
-    <q-form class="page-signup__form" @submit.prevent="onDiscordSignup">
+    <h2>Nutzungsbedingungen</h2>
+    <q-form class="page-signup__form" @submit.prevent="onAcceptTerms">
       <p>
-        Willkommen bei <strong>Elpisgarten</strong>. Erstelle deinen Account per Discord-Login.
+        Willkommen bei <strong>Elpisgarten</strong>. Um einen Charakter hinzuzufuegen, musst du zuerst die Nutzungsbedingungen akzeptieren.
       </p>
       <h6>Nutzungsbedingungen</h6>
       <div
@@ -13,7 +13,7 @@
       <q-toggle v-model="accept" label="Ich akzeptiere die Nutzungsbedingungen" />
       <div class="page-signup__button-bar">
         <q-btn
-          label="Mit Discord registrieren"
+          label="Akzeptieren und fortfahren"
           type="submit"
           color="primary"
           :disable="!accept"
@@ -26,6 +26,7 @@
 
 <script lang="ts">
 import rules from 'src/markdown/rules.md';
+import { notifyError } from 'src/common/notify';
 import { Vue } from 'vue-class-component';
 
 export default class PageSignUp extends Vue {
@@ -34,9 +35,43 @@ export default class PageSignUp extends Vue {
   accept = false;
   loading = false;
 
-  onDiscordSignup() {
+  async created() {
+    if (!this.$store.state.user && this.$api.hasAccessToken()) {
+      try {
+        const session = await this.$api.user.getSession();
+        this.$store.commit('setUser', session);
+      } catch (e) {
+        this.$api.setAccessToken(null);
+      }
+    }
+
+    const userId = this.$store.state.user?.id;
+    if (!userId) {
+      void this.$router.replace('/login');
+      return;
+    }
+
+    this.accept = !!this.$store.state.user?.termsAcceptedAt;
+  }
+
+  async onAcceptTerms() {
+    const userId = this.$store.state.user?.id;
+    if (!userId) {
+      void this.$router.replace('/login');
+      return;
+    }
+
     this.loading = true;
-    window.location.href = this.$api.user.getDiscordLoginUrl();
+    try {
+      await this.$api.user.acceptTerms();
+      const session = await this.$api.user.getSession();
+      this.$store.commit('setUser', session);
+      void this.$router.replace('/verify');
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      this.loading = false;
+    }
   }
 }
 </script>

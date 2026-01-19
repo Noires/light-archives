@@ -39,6 +39,11 @@ export default class PageLogIn extends Vue {
       const session = await this.$api.user.getSession();
       this.$store.commit('setUser', session);
       notifySuccess('Du wurdest erfolgreich eingeloggt.');
+      const needsTerms = session.characters.length === 0 && !session.termsAcceptedAt;
+      if (needsTerms) {
+        void this.$router.replace('/signup');
+        return;
+      }
       void this.$router.replace('/verify');
     } catch (e) {
       this.$api.setAccessToken(null);

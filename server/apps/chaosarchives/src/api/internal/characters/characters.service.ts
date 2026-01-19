@@ -18,7 +18,7 @@ import { MembershipStatus } from '@app/shared/enums/membership-status.enum';
 import { getRaceByName } from '@app/shared/enums/race.enum';
 import html from '@app/shared/html';
 import SharedConstants from '@app/shared/SharedConstants';
-import { BadRequestException, ConflictException, GoneException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, GoneException, Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
@@ -509,11 +509,15 @@ export class CharactersService {
           where: {
             id: user.id,
           },
-          select: [ 'id' ]
+          select: [ 'id', 'termsAcceptedAt' ]
         });
 
         if (!userEntity) {
           throw new ConflictException();
+        }
+
+        if (!userEntity.termsAcceptedAt) {
+          throw new ForbiddenException('Terms must be accepted before adding a character');
         }
 
         const character = await this.saveCharacterForUser(em, userEntity, request.lodestoneId);

@@ -98,6 +98,9 @@ export default class SwitchCharacterDialog extends Vue {
   }
 
   onAddCharacterClick() {
+    if (!this.ensureTermsAccepted()) {
+      return;
+    }
     this.adding = true;
   }
 
@@ -106,6 +109,9 @@ export default class SwitchCharacterDialog extends Vue {
   }
 
   async onAddCharacterSubmit() {
+    if (!this.ensureTermsAccepted()) {
+      return;
+    }
     this.submitting = true;
 
     try {
@@ -123,6 +129,17 @@ export default class SwitchCharacterDialog extends Vue {
 
   onCloseClick() {
     this.hide();
+  }
+
+  private ensureTermsAccepted(): boolean {
+    if (this.$store.getters.hasAcceptedTerms) {
+      return true;
+    }
+
+    notifyError('Bitte akzeptiere zuerst die Nutzungsbedingungen, bevor du einen Charakter hinzufuegst.');
+    void this.$router.push('/signup');
+    this.hide();
+    return false;
   }
 }
 </script>

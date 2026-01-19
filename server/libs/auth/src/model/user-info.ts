@@ -8,6 +8,8 @@ export class UserInfo {
 
   readonly characters: UserCharacterInfo[];
 
+  readonly termsAcceptedAt: string | null;
+
   constructor(properties: Readonly<UserInfo>) {
     if (properties) {
       Object.assign(this, properties);

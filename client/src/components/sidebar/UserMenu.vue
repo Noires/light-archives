@@ -1,17 +1,10 @@
 <template>
   <q-list class="user-menu" dense dark>
     <template v-if="!$store.getters.role">
-      <q-item clickable v-ripple to="/signup">
-        <q-item-section>
-          <q-item-label>
-            Registrieren
-          </q-item-label>
-        </q-item-section>
-      </q-item>
       <q-item clickable v-ripple to="/login">
         <q-item-section>
           <q-item-label>
-            Einloggen
+            Anmelden via Discord
           </q-item-label>
         </q-item-section>
       </q-item>

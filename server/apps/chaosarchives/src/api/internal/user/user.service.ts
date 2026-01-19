@@ -420,4 +420,24 @@ export class UserService {
       return user.id;
     });
   }
+
+  async acceptTerms(user: UserInfo): Promise<void> {
+    const userEntity = await this.userRepo.findOne({
+      where: {
+        id: user.id,
+      },
+      select: [ 'id', 'termsAcceptedAt' ]
+    });
+
+    if (!userEntity) {
+      throw new GoneException();
+    }
+
+    if (userEntity.termsAcceptedAt) {
+      return;
+    }
+
+    userEntity.termsAcceptedAt = new Date();
+    await this.userRepo.save(userEntity);
+  }
 }

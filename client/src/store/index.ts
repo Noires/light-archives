@@ -26,6 +26,7 @@ export interface StoreUser {
   role: Role;
   currentCharacterId: number | null;
   characters: Map<number, SessionCharacterDto>;
+  termsAcceptedAt: string | null;
 }
 
 export interface StateInterface {
@@ -40,6 +41,7 @@ export interface GettersInterface {
   role: Role|null;
   realRole: Role|null;
   isTrusted: boolean;
+  hasAcceptedTerms: boolean;
 }
 
 type CAStore = Omit<VuexStore<StateInterface>, 'getters'> & { getters: GettersInterface };
@@ -88,7 +90,8 @@ export default store(function (/* { ssrContext } */) {
           id: user.id,
           role: user.role,
           characters,
-          currentCharacterId
+          currentCharacterId,
+          termsAcceptedAt: user.termsAcceptedAt ?? null
         };
       },
 
@@ -199,6 +202,14 @@ export default store(function (/* { ssrContext } */) {
         }
 
         return roleImplies(state.user.role, Role.TRUSTED);
+      },
+
+      hasAcceptedTerms(state): boolean {
+        if (!state.user) {
+          return false;
+        }
+
+        return !!state.user.termsAcceptedAt;
       },
     },
 
