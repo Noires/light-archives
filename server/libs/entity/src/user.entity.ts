@@ -8,17 +8,20 @@ export class User extends BasicEntity {
   id: number;
 
   @Column({
+    type: 'varchar',
     nullable: true,
     unique: true,
   })
   email: string | null;
 
   @Column({
+    type: 'varchar',
     nullable: true,
   })
   passwordHash: string | null;
 
   @Column({
+    type: 'varchar',
     nullable: true,
     unique: true,
   })
