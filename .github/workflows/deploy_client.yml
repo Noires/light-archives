@@ -44,8 +44,6 @@ jobs:
           username: ${{ secrets.LIGHT_ARCHIVES_USERNAME }}
           port: ${{ secrets.LIGHT_ARCHIVES_PORT }}
           key: ${{ secrets.LIGHT_ARCHIVES_PRIVATESSHKEY }}
-          source: "./client/dist/*.*"
-          target: "/var/www/archive"
+          source: ./client/dist/*
+          target: /var/www/archive
           rm: true
-          strip_components: 1
-
