@@ -40,7 +40,7 @@ jobs:
       - name: Copy via ssh
         # You may pin to the exact commit or the version.
         # uses: garygrossgarten/github-action-scp@8a27854bb4f124a497a67316e83783efda770119
-        uses: garygrossgarten/github-action-scp@v0.8.0
+        uses: garygrossgarten/github-action-scp@v0.9.0
         with:
           # Path to the local folder you want to copy.
           local: ./client/dist
