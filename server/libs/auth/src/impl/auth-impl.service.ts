@@ -50,7 +50,7 @@ export class AuthImplService {
         discordId,
         email,
         passwordHash: null,
-        role: Role.UNVERIFIED,
+        role: Role.USER,
         verifiedAt: new Date(),
         verificationCode: null,
       });
@@ -58,6 +58,16 @@ export class AuthImplService {
       throw new UnauthorizedException('Discord account already linked');
     } else if (!user.discordId) {
       user.discordId = discordId;
+      if (user.role === Role.UNVERIFIED) {
+        user.role = Role.USER;
+      }
+      if (!user.verifiedAt) {
+        user.verifiedAt = new Date();
+      }
+      await this.userRepo.save(user);
+    } else if (user.role === Role.UNVERIFIED || !user.verifiedAt) {
+      user.role = Role.USER;
+      user.verifiedAt = new Date();
       await this.userRepo.save(user);
     }
 
