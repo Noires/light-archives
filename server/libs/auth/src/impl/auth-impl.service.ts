@@ -71,6 +71,10 @@ export class AuthImplService {
       await this.userRepo.save(user);
     }
 
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
     return this.getAndCacheUserInfo(user);
   }
 
