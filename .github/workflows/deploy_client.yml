@@ -46,4 +46,4 @@ jobs:
           key: ${{ secrets.LIGHT_ARCHIVES_PRIVATESSHKEY }}
           source: "./client/dist/*"
           target: "/var/www/archive"
-          strip_components: 1
+          strip_components: 2
