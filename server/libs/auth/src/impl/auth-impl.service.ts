@@ -4,7 +4,7 @@ import { Role } from '@app/shared/enums/role.enum';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Profile as DiscordProfile } from 'passport-discord';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { UserCharacterInfo } from '../model/user-character-info';
 import { UserInfo } from '../model/user-info';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
@@ -35,7 +35,7 @@ export class AuthImplService {
   async findOrCreateDiscordUser(profile: DiscordProfile): Promise<UserInfo> {
     const discordId = profile.id;
     const email = profile.email ?? null;
-    const whereConditions = [ { discordId } ];
+    const whereConditions: Array<FindOptionsWhere<User>> = [ { discordId } ];
 
     if (email) {
       whereConditions.push({ email });
