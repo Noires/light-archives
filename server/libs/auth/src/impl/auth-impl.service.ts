@@ -50,8 +50,8 @@ export class AuthImplService {
         discordId,
         email,
         passwordHash: null,
-        role: Role.USER,
-        verifiedAt: new Date(),
+        role: Role.UNVERIFIED,
+        verifiedAt: null,
         verificationCode: null,
       });
     } else if (user.discordId && user.discordId !== discordId) {
