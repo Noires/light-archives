@@ -38,7 +38,7 @@ export class User extends BasicEntity {
   @Column({
     nullable: true
   })
-  verifiedAt: Date;
+  verifiedAt: Date | null;
 
   @Column({
     type: 'varchar',
