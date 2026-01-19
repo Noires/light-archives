@@ -30,7 +30,7 @@
         @click="switchCharacter"
       >
         <q-item-section>
-          <q-item-label>Charakter wechseln</q-item-label>
+          <q-item-label>{{ characterActionLabel }}</q-item-label>
         </q-item-section>
       </q-item>
       <q-separator dark />
@@ -194,6 +194,10 @@ import { notifySuccess } from 'src/common/notify';
 })
 export default class UserMenu extends Vue {
   readonly Role = Role;
+
+  get characterActionLabel() {
+    return this.$store.getters.role === Role.UNVERIFIED ? 'Charakter hinzufuegen' : 'Charakter wechseln';
+  }
 
   get myProfileLink() {
 		const server = this.$store.getters.character?.server || '';

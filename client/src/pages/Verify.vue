@@ -1,57 +1,18 @@
 <template>
   <q-page>
-    <template v-if="!verificationStatus.emailVerified || !verificationStatus.characterVerified">
-      <template v-if="verifyingAccount">
-        <h2>Accountverifizierung</h2>
-        <p>
-          Bevor du deine eigenen Inhalte auf <strong>Elpisgarten</strong> verfassen kannst, musst du deine E-Mail-Adresse und
-          die Eigentümerschaft deines Charakters bestätigen.
-        </p>
-      </template>
-      <template v-else>
-        <h2>Charakterverifizierung</h2>
-        <p>
-          Bevor du Inhalte auf <strong>Elpisgarten</strong> unter diesem Charakter verfassen kannst, musst du deine Eigentümerschaft bestätigen.
-        </p>
-      </template>
-    </template>
-    <template v-else>
+    <template v-if="verificationStatus.characterVerified">
       <h2>Verifizierung abgeschlossen</h2>
       <p>
-        Glückwunsch! Deine E-Mail-Adresse und dein Charakter wurden erfolgreich bestätigt. Du kannst nun dein
-        Charakterprofil ausfüllen und Inhalte auf <strong>Elpisgarten</strong> veröffentlichen.
+        Glueckwunsch! Dein Charakter wurde erfolgreich bestaetigt. Du kannst nun dein
+        Charakterprofil ausfuellen und Inhalte auf <strong>Elpisgarten</strong> veroeffentlichen.
       </p>
     </template>
-    <q-card class="page-verify__card" v-if="verifyingAccount">
-      <q-card-section
-        :class="{
-          'bg-positive': verificationStatus.emailVerified,
-          'text-white': verificationStatus.emailVerified,
-        }"
-      >
-        <h5>E-Mail-Verifizierung</h5>
-        <template v-if="verificationStatus.emailVerified">
-          <p>
-            Deine E-Mail-Adresse
-            <strong>{{ verificationStatus.email }}</strong> wurde verifiziert.
-          </p>
-        </template>
-        <template v-else>
-          <p>
-            Deine E-Mail-Adresse
-            <strong>{{ verificationStatus.email }}</strong> muss noch bestätigt werden. Überprüfe deinen Posteingang für den
-            Bestätigungslink.
-          </p>
-          <p>Solltest du keine E-Mail zur Bestätigung erhalten haben, klicke auf die untenstehendene Schaltfläche:</p>
-          <q-btn
-            color="secondary"
-            label="Bestätigung erneut senden"
-            :loading="resendingEmail"
-            @click="resendConfirmationEmail"
-          />
-        </template>
-      </q-card-section>
-    </q-card>
+    <template v-else>
+      <h2>Charakterverifizierung</h2>
+      <p>
+        Bevor du Inhalte auf <strong>Elpisgarten</strong> unter diesem Charakter verfassen kannst, musst du deine Eigentuemerschaft bestaetigen.
+      </p>
+    </template>
     <q-card class="page-verify__card">
       <q-card-section
         :class="{
@@ -59,22 +20,28 @@
           'text-white': verificationStatus.characterVerified,
         }"
       >
-        <h5>Character verification</h5>
+        <h5>Charakterverifizierung</h5>
         <template v-if="verificationStatus.characterVerified">
           <p>
             Dein Charakter
             <strong>{{ $store.getters.character?.name }}</strong> wurde verifiziert.
           </p>
         </template>
+        <template v-else-if="!$store.getters.characterId">
+          <p>
+            Du hast noch keinen Charakter hinzugefuegt. Fuege zuerst einen Charakter hinzu, um die Verifizierung zu starten.
+          </p>
+          <q-btn color="primary" label="Charakter hinzufuegen" @click="openCharacterDialog" />
+        </template>
         <template v-else>
           <p>
-            Du musst bestätigen das
+            Du musst bestaetigen, dass
             <strong>{{ $store.getters.character?.name }}</strong> dein Charakter ist, indem du das Profil im Lodestone
-            bearbeitest. Um die Eigentümerschaft dieses Charakters zu bestätigen, sind die folgenden Schritte erforderlich:
+            bearbeitest. Um die Eigentuemerschaft dieses Charakters zu bestaetigen, sind die folgenden Schritte erforderlich:
           </p>
           <ol>
             <li>
-              Öffne
+              Oeffne
               <a :href="lodestoneCharacterLink" target="_blank"
                 >{{ $store.getters.character?.name }}'s Profilseite im Lodestone
                 <q-icon class="external-link-icon" name="launch" /></a
@@ -89,8 +56,8 @@
                 </template>
               </q-input>
             </li>
-            <li>Klicke auf Bestätigen um eine Vorschau deiner Änderungen zu sehen.</li>
-            <li><strong>Klicke erneut auf Bestätigen</strong> um deine Änderungen zu speichern.</li>
+            <li>Klicke auf Bestaetigen um eine Vorschau deiner Aenderungen zu sehen.</li>
+            <li><strong>Klicke erneut auf Bestaetigen</strong> um deine Aenderungen zu speichern.</li>
           </ol>
           <p>Diese Seite wird sich automatisch aktualisieren sobald sie den Code in deiner Vorstellung erkennt.</p>
         </template>
@@ -104,14 +71,11 @@ import { VerificationStatusDto } from '@app/shared/dto/user/verification-status.
 import { copyToClipboard } from 'quasar';
 import errors from '@app/shared/errors';
 import { Vue } from 'vue-class-component';
-import { Role } from '@app/shared/enums/role.enum';
 import { notifyError, notifySuccess } from 'src/common/notify';
 
 const REFRESH_INTERVAL = 5000;
 
 export default class PageVerify extends Vue {
-  readonly Role = Role;
-
   verificationStatus: VerificationStatusDto = {
     emailVerified: false,
     characterVerified: false,
@@ -119,15 +83,12 @@ export default class PageVerify extends Vue {
     characterVerificationCode: null,
   };
 
-  verifyingAccount = false;
-
-  resendingEmail = false;
-
   private refreshTimerId: NodeJS.Timeout|null = null;
 
   async created() {
-    if (this.$store.getters.realRole === Role.UNVERIFIED) {
-      this.verifyingAccount = true;
+    if (!this.$store.getters.characterId) {
+      await this.openCharacterDialog();
+      return;
     }
 
     await this.refresh();
@@ -143,7 +104,12 @@ export default class PageVerify extends Vue {
 
   private async refresh() {
     try {
-      this.verificationStatus = await this.$api.user.getVerificationStatus(this.$store.getters.characterId!);
+      const characterId = this.$store.getters.characterId;
+      if (!characterId) {
+        return;
+      }
+
+      this.verificationStatus = await this.$api.user.getVerificationStatus(characterId);
 
       if (!this.verificationStatus.characterVerified) {
         await this.refreshLodestoneStatus();
@@ -152,7 +118,7 @@ export default class PageVerify extends Vue {
       console.log(e);
     }
 
-    if (!this.verificationStatus.emailVerified || !this.verificationStatus.characterVerified) {
+    if (!this.verificationStatus.characterVerified) {
       this.refreshTimerId = setTimeout(() => void this.refresh(), REFRESH_INTERVAL);
     } else {
       // Update user role
@@ -172,7 +138,7 @@ export default class PageVerify extends Vue {
 
       await this.$api.user.verifyCharacter({ id: characterId });
       // If we get here, this means character verification succeeded.
-      this.verificationStatus = await this.$api.user.getVerificationStatus(this.$store.getters.characterId!);
+      this.verificationStatus = await this.$api.user.getVerificationStatus(characterId);
     } catch (e) {
       if (errors.getStatusCode(e) !== 404) {
         console.log(e);
@@ -198,17 +164,12 @@ export default class PageVerify extends Vue {
     }
   }
 
-  async resendConfirmationEmail() {
-    this.resendingEmail = true;
+  async openCharacterDialog() {
+    const SwitchCharacterDialog = (await import('components/character/SwitchCharacterDialog.vue')).default;
 
-    try {
-      await this.$api.user.resendConfirmationEmail();
-      notifySuccess('E-Mail versendet. Überprüfe deinen Posteingang.');
-    } catch (e) {
-      notifyError(e);
-    } finally {
-      this.resendingEmail = false;
-    }
+    this.$q.dialog({
+      component: SwitchCharacterDialog
+    });
   }
 }
 </script>
