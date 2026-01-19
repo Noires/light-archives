@@ -118,6 +118,9 @@ export class UserService {
 
   private async sendVerificationMail(user: User, name: string): Promise<void> {
     const link = `${serverConfiguration.frontendRoot}/confirm-email/${user.verificationCode}`;
+    if (!user.email) {
+      throw new BadRequestException('User email is not set');
+    }
     await this.mailService.sendUserVerificationMail(user.email, name, link);
   }
 
@@ -146,6 +149,10 @@ export class UserService {
 
     if (!characterData) {
       throw new BadRequestException(`Character ${characterId} not found`);
+    }
+
+    if (!userData.email) {
+      throw new BadRequestException('User email is not set');
     }
 
     return {
@@ -263,6 +270,10 @@ export class UserService {
         return null;
       }
 
+      if (!user.email) {
+        return null;
+      }
+
       // TODO: Assumes one character per user
       const character = await em.getRepository(Character).findOne({
         where: {
@@ -327,7 +338,7 @@ export class UserService {
       const userRepo = em.getRepository(User);
       const user = (await userRepo.findOneBy({id: userInfo.id}))!;
 
-      if (!(await checkPassword(request.currentPassword, user.passwordHash))) {
+      if (!user.passwordHash || !(await checkPassword(request.currentPassword, user.passwordHash))) {
         throw new BadRequestException('Invalid current password');
       }
 
@@ -344,6 +355,10 @@ export class UserService {
       select: [ 'email' ],
     }))!;
 
+    if (!userData.email) {
+      throw new BadRequestException('User email is not set');
+    }
+
     return {
       email: userData.email
     };
@@ -354,7 +369,7 @@ export class UserService {
       const userRepo = em.getRepository(User);
       const user = (await userRepo.findOneBy({id: userInfo.id}))!;
 
-      if (!(await checkPassword(request.currentPassword, user.passwordHash))) {
+      if (!user.passwordHash || !(await checkPassword(request.currentPassword, user.passwordHash))) {
         throw new BadRequestException('Invalid current password');
       }
 
