@@ -37,14 +37,11 @@ jobs:
         working-directory: ./client
         run: |
           quasar build
-      - name: Copy files via SSH
-        uses: appleboy/scp-action@v1
+      - name: scp ssh pipelines
+        uses: cross-the-world/ssh-scp-ssh-pipelines@latest
         with:
           host: ${{ secrets.LIGHT_ARCHIVES_HOST }}
-          username: ${{ secrets.LIGHT_ARCHIVES_SSHUSER }}
-          port: ${{ secrets.LIGHT_ARCHIVES_PORT }}
-          password: ${{ secrets.LIGHT_ARCHIVES_SSHPASSWORD }}
-          source: ./client/dist/*
-          target: /var/www/archive
-          rm: true
-          debug: true
+          user: ${{ secrets.LIGHT_ARCHIVES_USERNAME }}
+          pass: ${{ secrets.LIGHT_ARCHIVES_PASSWORD }}
+          scp: |
+            ./client/dist/* => /var/www/archive/
