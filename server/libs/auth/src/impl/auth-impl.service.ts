@@ -3,7 +3,7 @@ import { checkPassword } from '@app/security';
 import { Role } from '@app/shared/enums/role.enum';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Profile as DiscordProfile } from 'passport-discord';
+import { Profile as DiscordProfile } from 'passport-discord-auth';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { UserCharacterInfo } from '../model/user-character-info';
 import { UserInfo } from '../model/user-info';
