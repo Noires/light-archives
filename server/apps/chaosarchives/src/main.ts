@@ -17,7 +17,7 @@ async function bootstrap() {
       .setVersion('1.0')
       .addBearerAuth({
         type: 'apiKey',
-        description: 'Access token obtained by /login'
+        description: 'Access token obtained by /rpp/login/discord/callback'
       })
       .build();
 

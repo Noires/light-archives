@@ -94,9 +94,10 @@ module.exports = configure(function (ctx) {
       open: true, // opens browser window automatically
 
       proxy: {
-        '/api': {
-          target: 'http://localhost:8111'
-        }
+      '/api': {
+        target: 'https://www.elpisgarten.de',
+        changeOrigin: true,
+      }
       }
     },
 

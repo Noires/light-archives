@@ -1,44 +1,16 @@
 <template>
   <q-page>
     <h2>Einloggen</h2>
-    <q-form class="page-login__form" @submit="onSubmit">
+    <q-form class="page-login__form" @submit.prevent="onDiscordLogin">
       <p>
-        Bitte fülle die nachfolgenden Felder aus um dich auf <strong>Elpisgarten</strong> einzuloggen.
-      </p>
-      <section>
-        <q-input
-          v-model="email"
-          label="E-Mail-Adresse"
-          :rules="[
-            $rules.required('Dieses Feld ist erforderlich.'),
-            $rules.email('Ungültige E-Mail-Adresse.')
-          ]"
-        >
-          <template v-slot:prepend>
-            <q-icon name="mail" />
-          </template>
-        </q-input>
-        <q-input
-          v-model="password"
-          label="Passwort"
-          type="password"
-          :rules="[
-            $rules.required('Dieses Feld ist erforderlich.'),
-          ]"
-        >
-          <template v-slot:prepend>
-            <q-icon name="password" />
-          </template>
-        </q-input>
-      </section>
-      <p>
-        <router-link :to="`/forgot-password/${email}`">Passwort vergessen?</router-link>
+        Bitte klicke auf den Button, um dich mit Discord einzuloggen.
       </p>
       <div class="page-login__button-bar">
         <q-btn
-          label="Einloggen"
-          type="submit"
+          label="Mit Discord einloggen"
+          type="button"
           color="primary"
+          @click="onDiscordLogin"
         />
       </div>
       <q-inner-loading :showing="loading" />
@@ -51,29 +23,33 @@ import { Vue } from 'vue-class-component';
 import { notifyError, notifySuccess } from 'src/common/notify';
 
 export default class PageLogIn extends Vue {
-  private email = '';
-  private password = '';
-
   private loading = false;
 
-  async onSubmit() {
+  async mounted() {
+    const token = this.$route.query.token;
+
+    if (typeof token !== 'string' || token.length === 0) {
+      return;
+    }
+
     this.loading = true;
 
     try {
-      const result = await this.$api.user.logIn({
-        email: this.email,
-        password: this.password,
-      });
-
+      this.$api.setAccessToken(token);
+      const session = await this.$api.user.getSession();
+      this.$store.commit('setUser', session);
       notifySuccess('Du wurdest erfolgreich eingeloggt.');
-      this.$api.setAccessToken(result.accessToken);
-      this.$store.commit('setUser', result.session);
       void this.$router.replace('/');
     } catch (e) {
+      this.$api.setAccessToken(null);
       notifyError(e);
     } finally {
       this.loading = false;
     }
+  }
+
+  onDiscordLogin() {
+    window.location.href = this.$api.user.getDiscordLoginUrl();
   }
 }
 </script>

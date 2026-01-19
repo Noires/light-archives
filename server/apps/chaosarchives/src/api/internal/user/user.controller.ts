@@ -2,6 +2,7 @@ import { AuthService } from '@app/auth/auth.service';
 import { CurrentUser } from '@app/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@app/auth/guards/jwt-auth.guard';
 import { UserInfo } from '@app/auth/model/user-info';
+import { serverConfiguration } from '@app/configuration';
 import { ChangeEmailRequestDto } from '@app/shared/dto/user/change-email-request.dto';
 import { ChangePasswordRequestDto } from '@app/shared/dto/user/change-password-request.dto';
 import { ForgotPasswordRequestDto } from '@app/shared/dto/user/forgot-password-request.dto';
@@ -18,11 +19,14 @@ import {
   Body,
   Controller,
   Get, ParseIntPipe,
+  GoneException,
   Post,
   Query,
+  Res,
   UseGuards
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Response } from 'express';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -34,27 +38,16 @@ export class UserController {
 
   @Post('signup')
   async signUp(
-    @Body() signupData: UserSignUpDto,
+    @Body() _signupData: UserSignUpDto,
   ): Promise<UserSignUpResponseDto> {
-    const { userId, characterVerificationCode } = await this.userService.signUp(
-      signupData,
-    );
-    const accessToken = this.publicAuthService.createAccessToken(userId);
-    const userInfo = await this.publicAuthService.getUserInfo(userId);
-
-    return {
-      characterVerificationCode,
-      accessToken,
-      session: this.userService.toSession(userInfo),
-    };
+    throw new GoneException('Password-based signup has been replaced by Discord login.');
   }
 
   @Post('confirm-email')
   async confirmEmail(
-    @Body() confirmEmailData: UserConfirmEmailDto,
+    @Body() _confirmEmailData: UserConfirmEmailDto,
   ): Promise<void> {
-    const userId = await this.userService.confirmEmail(confirmEmailData.code);
-    await this.publicAuthService.notifyUserChanged(userId);
+    throw new GoneException('Email confirmation has been replaced by Discord login.');
   }
 
   @UseGuards(JwtAuthGuard)
@@ -63,13 +56,26 @@ export class UserController {
     await this.userService.resendConfirmationEmail(user);
   }
 
-  @UseGuards(AuthGuard('local'))
   @Post('login')
-  async login(@CurrentUser() user: UserInfo): Promise<LoginResponseDto> {
-    return {
-      accessToken: this.publicAuthService.createAccessToken(user.id),
-      session: this.userService.toSession(user),
-    };
+  async login(@CurrentUser() _user: UserInfo): Promise<LoginResponseDto> {
+    throw new GoneException('Password-based login has been replaced by Discord login.');
+  }
+
+  @Get('login/discord')
+  @UseGuards(AuthGuard('discord'))
+  async loginWithDiscord(): Promise<void> {
+    return;
+  }
+
+  @Get('login/discord/callback')
+  @UseGuards(AuthGuard('discord'))
+  async discordCallback(
+    @CurrentUser() user: UserInfo,
+    @Res() response: Response,
+  ): Promise<void> {
+    const accessToken = this.publicAuthService.createAccessToken(user.id);
+    const redirectUrl = `${serverConfiguration.frontendRoot}/login?token=${encodeURIComponent(accessToken)}`;
+    response.redirect(redirectUrl);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -99,20 +105,20 @@ export class UserController {
 
   @Post('forgot-password')
   async forgotPassword(
-    @Body() request: ForgotPasswordRequestDto,
+    @Body() _request: ForgotPasswordRequestDto,
   ): Promise<void> {
-    await this.userService.forgotPassword(request);
+    throw new GoneException('Password reset has been replaced by Discord login.');
   }
 
   @Post('reset-password')
-  async resetPassword(@Body() request: ResetPasswordRequestDto): Promise<void> {
-    await this.userService.resetPassword(request);
+  async resetPassword(@Body() _request: ResetPasswordRequestDto): Promise<void> {
+    throw new GoneException('Password reset has been replaced by Discord login.');
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('change-password')
-  async changePassword(@Body() request: ChangePasswordRequestDto, @CurrentUser() user: UserInfo): Promise<void> {
-    await this.userService.changePassword(request, user);
+  async changePassword(@Body() _request: ChangePasswordRequestDto, @CurrentUser() _user: UserInfo): Promise<void> {
+    throw new GoneException('Password changes have been replaced by Discord login.');
   }
 
   @UseGuards(JwtAuthGuard)
@@ -123,13 +129,12 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @Post('change-email')
-  async changeEmail(@Body() request: ChangeEmailRequestDto, @CurrentUser() user: UserInfo): Promise<void> {
-    await this.userService.changeEmail(request, user);
+  async changeEmail(@Body() _request: ChangeEmailRequestDto, @CurrentUser() _user: UserInfo): Promise<void> {
+    throw new GoneException('Email changes have been replaced by Discord login.');
   }
 
   @Post('confirm-new-email')
-  async confirmNewEmail(@Body() confirmEmailData: UserConfirmEmailDto): Promise<void> {
-    const userId = await this.userService.confirmNewEmail(confirmEmailData.code);
-    await this.publicAuthService.notifyUserChanged(userId);
+  async confirmNewEmail(@Body() _confirmEmailData: UserConfirmEmailDto): Promise<void> {
+    throw new GoneException('Email changes have been replaced by Discord login.');
   }
 }

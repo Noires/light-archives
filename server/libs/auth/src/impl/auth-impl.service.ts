@@ -3,6 +3,7 @@ import { checkPassword } from '@app/security';
 import { Role } from '@app/shared/enums/role.enum';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Profile as DiscordProfile } from 'passport-discord';
 import { Repository } from 'typeorm';
 import { UserCharacterInfo } from '../model/user-character-info';
 import { UserInfo } from '../model/user-info';
@@ -24,8 +25,40 @@ export class AuthImplService {
   async validateUser(username: string, password: string): Promise<UserInfo> {
     const user = await this.userRepo.findOneBy({ email: username });
 
-    if (!user || !(await checkPassword(password, user.passwordHash))) {
+    if (!user || !user.passwordHash || !(await checkPassword(password, user.passwordHash))) {
       throw new UnauthorizedException('Invalid email or password');
+    }
+
+    return this.getAndCacheUserInfo(user);
+  }
+
+  async findOrCreateDiscordUser(profile: DiscordProfile): Promise<UserInfo> {
+    const discordId = profile.id;
+    const email = profile.email ?? null;
+    const whereConditions = [ { discordId } ];
+
+    if (email) {
+      whereConditions.push({ email });
+    }
+
+    let user = await this.userRepo.findOne({
+      where: whereConditions,
+    });
+
+    if (!user) {
+      user = await this.userRepo.save({
+        discordId,
+        email,
+        passwordHash: null,
+        role: Role.UNVERIFIED,
+        verifiedAt: new Date(),
+        verificationCode: null,
+      });
+    } else if (user.discordId && user.discordId !== discordId) {
+      throw new UnauthorizedException('Discord account already linked');
+    } else if (!user.discordId) {
+      user.discordId = discordId;
+      await this.userRepo.save(user);
     }
 
     return this.getAndCacheUserInfo(user);
@@ -57,11 +90,6 @@ export class AuthImplService {
       relations: [ 'server' ],
     });
 
-
-    if (characters.length === 0) {
-      // Shouldn't happen
-      throw new UnauthorizedException();
-    }
 
     const result = new UserInfo({
       id: user.id,
