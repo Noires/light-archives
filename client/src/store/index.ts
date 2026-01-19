@@ -24,7 +24,7 @@ import {
 export interface StoreUser {
   id: number;
   role: Role;
-  currentCharacterId: number;
+  currentCharacterId: number | null;
   characters: Map<number, SessionCharacterDto>;
 }
 
@@ -77,7 +77,9 @@ export default store(function (/* { ssrContext } */) {
         const characters = toMap(user.characters);
         let currentCharacterId = getCurrentCharacterId();
 
-        if (!currentCharacterId || !characters.get(currentCharacterId)) {
+        if (user.characters.length === 0) {
+          currentCharacterId = null;
+        } else if (!currentCharacterId || !characters.get(currentCharacterId)) {
           currentCharacterId = user.characters[0].id;
           setCurrentCharacterId(currentCharacterId);
         }
@@ -135,20 +137,23 @@ export default store(function (/* { ssrContext } */) {
       },
 
       characterShortName(state): string|null {
-        if (!state.user) {
+        if (!state.user || state.user.currentCharacterId === null) {
           return null;
         }
 
-        const character = state.user.characters.get(state.user.currentCharacterId)!;
+        const character = state.user.characters.get(state.user.currentCharacterId);
+        if (!character) {
+          return null;
+        }
         return character.name.split(' ')[0];
       },
 
       character(state): SessionCharacterDto|null {
-        if (!state.user) {
+        if (!state.user || state.user.currentCharacterId === null) {
           return null;
         }
 
-        return state.user.characters.get(state.user.currentCharacterId)!;
+        return state.user.characters.get(state.user.currentCharacterId) || null;
       },
 
       role(state): Role|null {
@@ -156,7 +161,14 @@ export default store(function (/* { ssrContext } */) {
           return null;
         }
 
-        const character = state.user.characters.get(state.user.currentCharacterId)!;
+        if (state.user.currentCharacterId === null) {
+          return Role.UNVERIFIED;
+        }
+
+        const character = state.user.characters.get(state.user.currentCharacterId);
+        if (!character) {
+          return Role.UNVERIFIED;
+        }
 
         if (!character.verified) {
           return Role.UNVERIFIED;
