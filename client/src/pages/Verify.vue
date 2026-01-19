@@ -3,14 +3,14 @@
     <template v-if="verificationStatus.characterVerified">
       <h2>Verifizierung abgeschlossen</h2>
       <p>
-        Glueckwunsch! Dein Charakter wurde erfolgreich bestaetigt. Du kannst nun dein
-        Charakterprofil ausfuellen und Inhalte auf <strong>Elpisgarten</strong> veroeffentlichen.
+        Glückwunsch! Dein Charakter wurde erfolgreich bestätigt. Du kannst nun dein
+        Charakterprofil ausfüllen und Inhalte auf <strong>Elpisgarten</strong> veröffentlichen.
       </p>
     </template>
     <template v-else>
       <h2>Charakterverifizierung</h2>
       <p>
-        Bevor du Inhalte auf <strong>Elpisgarten</strong> unter diesem Charakter verfassen kannst, musst du deine Eigentuemerschaft bestaetigen.
+        Bevor du Inhalte auf <strong>Elpisgarten</strong> unter diesem Charakter verfassen kannst, musst du deine Eigentümerschaft bestätigen.
       </p>
     </template>
     <q-card class="page-verify__card">
@@ -29,15 +29,15 @@
         </template>
         <template v-else-if="!$store.getters.characterId">
           <p>
-            Du hast noch keinen Charakter hinzugefuegt. Fuege zuerst einen Charakter hinzu, um die Verifizierung zu starten.
+            Du hast noch keinen Charakter hinzugefügt. Füge zuerst einen Charakter hinzu, um die Verifizierung zu starten.
           </p>
-          <q-btn color="primary" label="Charakter hinzufuegen" @click="openCharacterDialog" />
+          <q-btn color="primary" label="Charakter hinzufügen" @click="openCharacterDialog" />
         </template>
         <template v-else>
           <p>
-            Du musst bestaetigen, dass
+            Du musst bestätigen, dass
             <strong>{{ $store.getters.character?.name }}</strong> dein Charakter ist, indem du das Profil im Lodestone
-            bearbeitest. Um die Eigentuemerschaft dieses Charakters zu bestaetigen, sind die folgenden Schritte erforderlich:
+            bearbeitest. Um die Eigentümerschaft dieses Charakters zu bestätigen, sind die folgenden Schritte erforderlich:
           </p>
           <ol>
             <li>
@@ -56,8 +56,8 @@
                 </template>
               </q-input>
             </li>
-            <li>Klicke auf Bestaetigen um eine Vorschau deiner Aenderungen zu sehen.</li>
-            <li><strong>Klicke erneut auf Bestaetigen</strong> um deine Aenderungen zu speichern.</li>
+            <li>Klicke auf Bestätigen um eine Vorschau deiner Aenderungen zu sehen.</li>
+            <li><strong>Klicke erneut auf Bestätigen</strong> um deine Aenderungen zu speichern.</li>
           </ol>
           <p>Diese Seite wird sich automatisch aktualisieren sobald sie den Code in deiner Vorstellung erkennt.</p>
         </template>
@@ -86,11 +86,6 @@ export default class PageVerify extends Vue {
   private refreshTimerId: NodeJS.Timeout|null = null;
 
   async created() {
-    if (!this.$store.getters.characterId) {
-      await this.openCharacterDialog();
-      return;
-    }
-
     await this.refresh();
   }
 
