@@ -1,7 +1,7 @@
 import { authConfiguration } from '@app/configuration';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Profile as DiscordProfile, Strategy as DiscordOAuthStrategy } from 'passport-discord';
+import { Profile as DiscordProfile, Strategy as DiscordOAuthStrategy } from 'passport-discord-auth';
 import { AuthImplService } from '../impl/auth-impl.service';
 import { AuthInfo } from '../model/auth-info';
 
@@ -9,9 +9,9 @@ import { AuthInfo } from '../model/auth-info';
 export class DiscordStrategy extends PassportStrategy(DiscordOAuthStrategy, 'discord') {
   constructor(private authService: AuthImplService) {
     super({
-      clientID: authConfiguration.discordClientId,
+      clientId: authConfiguration.discordClientId,
       clientSecret: authConfiguration.discordClientSecret,
-      callbackURL: authConfiguration.discordCallbackUrl,
+      callbackUrl: authConfiguration.discordCallbackUrl,
       scope: ['identify', 'email'],
     });
   }
@@ -32,9 +32,9 @@ export class DiscordStrategy extends PassportStrategy(DiscordOAuthStrategy, 'dis
 export class DiscordRppStrategy extends PassportStrategy(DiscordOAuthStrategy, 'discord-rpp') {
   constructor(private authService: AuthImplService) {
     super({
-      clientID: authConfiguration.discordClientId,
+      clientId: authConfiguration.discordClientId,
       clientSecret: authConfiguration.discordClientSecret,
-      callbackURL: authConfiguration.discordRppCallbackUrl,
+      callbackUrl: authConfiguration.discordRppCallbackUrl,
       scope: ['identify', 'email'],
     });
   }
