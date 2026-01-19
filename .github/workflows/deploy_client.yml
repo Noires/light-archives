@@ -37,6 +37,15 @@ jobs:
         working-directory: ./client
         run: |
           quasar build
+      - name: Clean deploy directory via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.LIGHT_ARCHIVES_HOST }}
+          username: ${{ secrets.LIGHT_ARCHIVES_USERNAME }}
+          port: ${{ secrets.LIGHT_ARCHIVES_PORT }}
+          key: ${{ secrets.LIGHT_ARCHIVES_PRIVATESSHKEY }}
+          script: |
+            rm -rf /var/www/archive/*
       - name: Copy files via SSH
         uses: appleboy/scp-action@v1
         with:
@@ -47,4 +56,3 @@ jobs:
           source: "./client/dist/*"
           target: "/var/www/archive"
           strip_components: 2
-          rm: true
