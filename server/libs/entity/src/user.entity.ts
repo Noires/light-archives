@@ -36,6 +36,7 @@ export class User extends BasicEntity {
   role: Role | null;
 
   @Column({
+    type: 'datetime',
     nullable: true
   })
   verifiedAt: Date | null;

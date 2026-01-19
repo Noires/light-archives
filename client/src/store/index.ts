@@ -114,8 +114,16 @@ export default store(function (/* { ssrContext } */) {
           return;
         }
 
+        if (state.user.currentCharacterId === null) {
+          return;
+        }
+
         const { name, server, avatar } = characterData;
-        Object.assign(state.user.characters.get(state.user.currentCharacterId), { name, server, avatar });
+        const character = state.user.characters.get(state.user.currentCharacterId);
+        if (!character) {
+          return;
+        }
+        Object.assign(character, { name, server, avatar });
       },
 
       setEvents(state, events: EventDto[]) {
