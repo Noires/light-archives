@@ -47,3 +47,4 @@ jobs:
           source: ./client/dist/*
           target: /var/www/archive
           rm: true
+          debug: true
