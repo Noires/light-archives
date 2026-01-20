@@ -1,7 +1,7 @@
 <template>
   <q-list class="event-list" dark>
     <section>
-      <q-item clickable v-ripple to="/event-calendar">
+      <q-item clickable v-ripple to="/calendar">
         <q-item-section>
           <q-item-label header><q-icon class="text-h6" name="event" /> Eventkalender</q-item-label>
         </q-item-section>

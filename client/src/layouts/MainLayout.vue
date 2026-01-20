@@ -78,6 +78,10 @@
       <div class="layout__page-container">
         <router-view />
       </div>
+      <calendar-sidebar-widget
+        v-if="showCalendarWidget"
+        class="layout__calendar-outer"
+      />
     </q-page-container>
 
     <q-footer elevated>
@@ -95,7 +99,7 @@
 
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
-import EventList from '../components/eventbar/EventList.vue';
+import CalendarSidebarWidget from '../components/eventbar/CalendarSidebarWidget.vue';
 import UserMenu from '../components/sidebar/UserMenu.vue';
 import InlineSvg from 'vue-inline-svg';
 import SiteSearchField from 'src/components/search/SiteSearchField.vue';
@@ -104,7 +108,7 @@ import { notifySuccess } from 'src/common/notify';
 
 @Options({
   components: {
-    EventList,
+    CalendarSidebarWidget,
     UserMenu,
     InlineSvg,
     SiteSearchField,
@@ -160,6 +164,11 @@ export default class MainLayout extends Vue {
     this.$api.setAccessToken(null);
     notifySuccess('Du hast dich ausgeloggt.');
     void this.$router.push('/');
+  }
+
+  get showCalendarWidget() {
+    const path = this.$route.path;
+    return !path.startsWith('/calendar');
   }
 
 }
@@ -394,6 +403,14 @@ $color-dark: #1b1b1b;
   border-radius: 30px 30px 0px 0px;
 }
 
+.layout__calendar-outer {
+  position: fixed;
+  right: 24px;
+  top: 180px;
+  width: 320px;
+  z-index: 5;
+}
+
 .q-page {
   padding: 24px 24px 48px 24px;
   margin-top: 30px;
@@ -465,6 +482,14 @@ $color-dark: #1b1b1b;
 @media screen and (max-width: 1024px) {
   .layout__filler {
     flex-direction:row;
+  }
+}
+
+@media screen and (max-width: 1200px) {
+  .layout__calendar-outer {
+    position: static;
+    width: auto;
+    margin: 0 24px 24px;
   }
 }
 </style>

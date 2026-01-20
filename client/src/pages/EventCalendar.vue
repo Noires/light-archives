@@ -1,42 +1,169 @@
 <template>
   <q-page class="page-event-calendar">
-    <h2>Eventkalender</h2>
-		<div class="page-event-calendar__subtitle">{{ yearMonth }}</div>
-		<section class="page-event-calendar__navbar">
-			<div>
-				<q-btn color="secondary" label="< Vorherige" :to="prevLink" />&nbsp;
-				<q-btn color="secondary" label="Heute" to="/event-calendar" />&nbsp;
-				<q-btn color="secondary" label="Nächste >" :to="nextLink" />
-			</div>
-			<div>
-				<q-btn v-if="$store.getters.role && $store.getters.role !== Role.UNVERIFIED" color="primary" label="Neues Event" icon="add" to="/create-event" />
-			</div>
-		</section>
-    <q-calendar-month
-			no-active-date
-			:model-value="dateStr"
-			:day-min-height="100"
-			:weekdays="[1, 2, 3, 4, 5, 6, 0]"
-		>
-			<template v-slot:day="{ scope: { timestamp } }">
-				<template
-					v-for="event in eventMap[timestamp.date]"
-					:key="event.id"
-				>
-					<div
-						class="page-event-calendar__event text-caption rounded-border"
-						:class=" { 'page-event-calendar__event_internal' : !event.link, 'page-event-calendar__event_recurring': event.recurring }"
-					>
-						<router-link v-if="!event.link" :to="`/event/${event.id}`">
-							{{ event.startTime }}<template v-if="event.endTime"> – {{ event.endTime }}</template><br/>{{ event.title }}
-						</router-link>
-						<a v-else :href="event.link" target="_blank">
-							{{ event.startTime }}<template v-if="event.endTime"> – {{ event.endTime }}</template><br/>{{ event.title }}
-						</a>
-					</div>
-				</template>
-			</template>
-		</q-calendar-month>
+    <header class="page-event-calendar__header">
+      <div>
+        <h2>Eventkalender (Prototyp)</h2>
+        <div class="page-event-calendar__subtitle">{{ yearMonth }}</div>
+      </div>
+      <div class="page-event-calendar__view-toggle">
+        <q-btn-toggle
+          v-model="viewMode"
+          :options="viewOptions"
+          toggle-color="primary"
+          unelevated
+        />
+      </div>
+    </header>
+
+    <section class="page-event-calendar__navbar">
+      <div>
+        <q-btn color="secondary" label="< Vorheriger Monat" :to="prevLink" />&nbsp;
+        <q-btn color="secondary" label="Heute" to="/calendar" />&nbsp;
+        <q-btn color="secondary" label="Nächster Monat >" :to="nextLink" />
+      </div>
+      <div>
+        <q-btn
+          v-if="$store.getters.role && $store.getters.role !== Role.UNVERIFIED"
+          color="primary"
+          label="Neues Event"
+          icon="add"
+          to="/create-event"
+        />
+      </div>
+    </section>
+
+    <section v-if="viewMode === 'calendar'" class="page-event-calendar__layout">
+      <div class="page-event-calendar__calendar">
+        <q-calendar-month
+          no-active-date
+          :model-value="dateStr"
+          :day-min-height="140"
+          :weekdays="[1, 2, 3, 4, 5, 6, 0]"
+        >
+          <template v-slot:day="{ scope: { timestamp } }">
+            <div
+              class="page-event-calendar__day"
+              :class="{ 'page-event-calendar__day_selected': isSelected(timestamp.date) }"
+              @click="selectDate(timestamp.date)"
+            >
+              <div class="page-event-calendar__day-number">
+                {{ timestamp.day }}
+              </div>
+              <div class="page-event-calendar__dots">
+                <span
+                  v-for="n in dayDotCount(timestamp.date)"
+                  :key="n"
+                  class="page-event-calendar__dot"
+                ></span>
+              </div>
+            </div>
+          </template>
+        </q-calendar-month>
+      </div>
+
+      <aside class="page-event-calendar__sidebar">
+        <div class="page-event-calendar__sidebar-header">
+          <span>{{ sidebarTitle }}</span>
+          <q-btn
+            v-if="selectedDate"
+            flat
+            dense
+            size="sm"
+            label="Zuruecksetzen"
+            @click="clearSelection"
+          />
+        </div>
+
+        <div v-if="sidebarEvents.length === 0" class="page-event-calendar__empty">
+          Keine Events gefunden.
+        </div>
+
+        <div v-else class="page-event-calendar__sidebar-list">
+          <div
+            v-for="event in sidebarEvents"
+            :key="event.id"
+            class="page-event-calendar__event-card"
+          >
+            <component
+              :is="event.link ? 'a' : 'router-link'"
+              class="page-event-calendar__event-link"
+              v-bind="eventLinkProps(event)"
+            >
+              <div class="page-event-calendar__event-title">
+                {{ event.title }}
+              </div>
+              <div class="page-event-calendar__event-meta">
+                <div class="page-event-calendar__event-row">
+                  <q-icon name="schedule" />
+                  <span>{{ formatTimeRange(event) }}</span>
+                </div>
+                <div
+                  v-if="primaryLocation(event)"
+                  class="page-event-calendar__event-row"
+                >
+                  <q-icon name="place" />
+                  <span>{{ primaryLocation(event) }}</span>
+                </div>
+                <div class="page-event-calendar__event-row">
+                  <q-icon name="event" />
+                  <span>{{ formatDate(event.startDateTime) }}</span>
+                </div>
+              </div>
+            </component>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section v-else class="page-event-calendar__list">
+      <div v-if="groupedEvents.length === 0" class="page-event-calendar__empty">
+        Keine Events gefunden.
+      </div>
+      <div
+        v-for="group in groupedEvents"
+        :key="group.dateKey"
+        class="page-event-calendar__list-group"
+      >
+        <div class="page-event-calendar__date-box">
+          <div class="page-event-calendar__date-day">{{ group.day }}</div>
+          <div class="page-event-calendar__date-month">{{ group.month }}</div>
+        </div>
+        <div class="page-event-calendar__list-cards">
+          <div
+            v-for="event in group.events"
+            :key="event.id"
+            class="page-event-calendar__event-card page-event-calendar__event-card--list"
+          >
+            <component
+              :is="event.link ? 'a' : 'router-link'"
+              class="page-event-calendar__event-link"
+              v-bind="eventLinkProps(event)"
+            >
+              <div class="page-event-calendar__event-title">
+                {{ event.title }}
+              </div>
+              <div class="page-event-calendar__event-meta">
+                <div class="page-event-calendar__event-row">
+                  <q-icon name="schedule" />
+                  <span>{{ formatTimeRange(event) }}</span>
+                </div>
+                <div
+                  v-if="primaryLocation(event)"
+                  class="page-event-calendar__event-row"
+                >
+                  <q-icon name="place" />
+                  <span>{{ primaryLocation(event) }}</span>
+                </div>
+                <div class="page-event-calendar__event-row">
+                  <q-icon name="event" />
+                  <span>{{ formatDate(event.startDateTime) }}</span>
+                </div>
+              </div>
+            </component>
+          </div>
+        </div>
+      </div>
+    </section>
   </q-page>
 </template>
 
@@ -56,127 +183,252 @@ import { createMetaMixin } from 'quasar';
 const $api = useApi();
 const $router = useRouter();
 
-async function load(params: RouteParams): Promise<{date: DateTime, events: EventSummaryDto[]}> {
-	let year = parseInt(params.year as string, 10);
-	let month = parseInt(params.month as string, 10);
-	let date: DateTime;
+async function load(params: RouteParams): Promise<{ date: DateTime; events: EventSummaryDto[] }> {
+  let year = parseInt(params.year as string, 10);
+  let month = parseInt(params.month as string, 10);
+  let date: DateTime;
 
-	if (!year || !month) {
-		date = DateTime.now().setZone(SharedConstants.FFXIV_SERVER_TIMEZONE).set({
-			day: 1
-		});
-	} else {
-		date = DateTime.fromObject({
-			year,
-			month,
-			day: 1
-		}, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE });
-	}
+  if (!year || !month) {
+    date = DateTime.now()
+      .setZone(SharedConstants.FFXIV_SERVER_TIMEZONE)
+      .set({
+        day: 1
+      });
+  } else {
+    date = DateTime.fromObject(
+      {
+        year,
+        month,
+        day: 1
+      },
+      { zone: SharedConstants.FFXIV_SERVER_TIMEZONE }
+    );
+  }
 
-	try {
-		const events = await $api.events.getEventsForMonth(date.year, date.month);
-		return { date, events };
-	} catch (e) {
-		notifyError(e);
-		void $router.replace('/');
-
-		throw e;
-	}
+  try {
+    const events = await $api.events.getEventsForMonth(date.year, date.month);
+    return { date, events };
+  } catch (e) {
+    notifyError(e);
+    void $router.replace('/');
+    throw e;
+  }
 }
 
-interface EventItem {
-	id: number;
-	title: string;
-	startTime: string;
-	endTime: string|null;
-	link: string;
-	recurring: boolean;
+interface EventGroup {
+  dateKey: string;
+  day: string;
+  month: string;
+  events: EventSummaryDto[];
 }
 
 @Options({
-	name: 'PageEventCalendar',
-	components: {
-		QCalendarMonth,
-	},
-	async beforeRouteEnter(to, _, next) {
-		const { date, events } = await load(to.params);
-		next(vm => (vm as PageEventCalendar).setContent(date, events));
-	},
-	async beforeRouteUpdate(to) {
-		const { date, events } = await load(to.params);
-		(this as PageEventCalendar).setContent(date, events);
-	},
-	mixins: [
-		createMetaMixin(function(this: PageEventCalendar) {
-			return {
-				title: `${this.yearMonth} events — Chaos Archives`
-			}
-		}),
-	],
+  name: 'PageEventCalendar',
+  components: {
+    QCalendarMonth
+  },
+  async beforeRouteEnter(to, _, next) {
+    const { date, events } = await load(to.params);
+    next((vm) => (vm as PageEventCalendar).setContent(date, events));
+  },
+  async beforeRouteUpdate(to) {
+    const { date, events } = await load(to.params);
+    (this as PageEventCalendar).setContent(date, events);
+  },
+  mixins: [
+    createMetaMixin(function (this: PageEventCalendar) {
+      return {
+        title: `${this.yearMonth} events - Chaos Archives`
+      };
+    })
+  ]
 })
 export default class PageEventCalendar extends Vue {
-	Role = Role;
+  Role = Role;
+  viewMode: 'calendar' | 'list' = 'calendar';
+  selectedDate = '';
+  private date: DateTime = this.getThisMonth();
+  monthEvents: EventSummaryDto[] = [];
+  eventMap: { [k: string]: EventSummaryDto[] } = {};
 
-	private date: DateTime = this.getThisMonth();
-	eventMap: { [ k: string ] : EventItem[] } = {};
+  viewOptions = [
+    { label: 'Calendar', value: 'calendar' },
+    { label: 'List', value: 'list' }
+  ];
 
-	setContent(date: DateTime, events: EventSummaryDto[]) {
-		this.date = date;
-		this.eventMap = {};
+  setContent(date: DateTime, events: EventSummaryDto[]) {
+    this.date = date;
+    this.monthEvents = events;
+    this.eventMap = {};
 
-		for (const event of events) {
-			const startDate = DateTime.fromMillis(event.startDateTime).setZone(SharedConstants.FFXIV_SERVER_TIMEZONE);
-			const endDate = event.endDateTime == null ? null :
-				DateTime.fromMillis(event.endDateTime).setZone(SharedConstants.FFXIV_SERVER_TIMEZONE);
-			let eventsForDay = this.eventMap[startDate.toISODate()];
+    for (const event of events) {
+      const dateKey = this.eventDateKey(event);
+      const eventsForDay = this.eventMap[dateKey] || [];
+      eventsForDay.push(event);
+      this.eventMap[dateKey] = eventsForDay;
+    }
 
-			if (!eventsForDay) {
-				eventsForDay = [];
-				this.eventMap[startDate.toISODate()] = eventsForDay;
-			}
+    if (this.selectedDate) {
+      const monthKey = this.date.toFormat('yyyy-LL');
+      if (!this.selectedDate.startsWith(monthKey)) {
+        this.selectedDate = '';
+      }
+    }
+  }
 
-			eventsForDay.push({
-				id: event.id,
-				title: event.title,
-				link: event.link,
-				recurring: event.recurring,
-				startTime: startDate.toFormat('HH:mm'),
-				endTime: endDate && endDate.toMillis() !== startDate.toMillis() ? endDate.toFormat('HH:mm') : null,
-			})
-		}
-	}
+  private getThisMonth(): DateTime {
+    return DateTime.now().setZone(SharedConstants.FFXIV_SERVER_TIMEZONE).set({
+      day: 1
+    });
+  }
 
-	private getThisMonth(): DateTime {
-		return DateTime.now().setZone(SharedConstants.FFXIV_SERVER_TIMEZONE).set({
-			day: 1
-		});
-	}
+  selectDate(dateStr: string) {
+    if (this.selectedDate === dateStr) {
+      this.selectedDate = '';
+      return;
+    }
+    this.selectedDate = dateStr;
+  }
 
-	get year() {
-		return this.date.year;
-	}
+  clearSelection() {
+    this.selectedDate = '';
+  }
 
-	get month() {
-		return this.date.month;
-	}
+  isSelected(dateStr: string) {
+    return this.selectedDate === dateStr;
+  }
 
-	get yearMonth() {
-		return this.date.toFormat('LLLL yyyy', { locale: 'en' });
-	}
+  dayDotCount(dateStr: string) {
+    const count = this.eventMap[dateStr]?.length || 0;
+    return Math.min(count, 3);
+  }
 
-	get dateStr() {
-		return this.date.toISODate();
-	}
+  get sidebarEvents() {
+    if (this.selectedDate) {
+      return (this.eventMap[this.selectedDate] || [])
+        .slice()
+        .sort((a, b) => a.startDateTime - b.startDateTime);
+    }
+    return this.sortedMonthEvents;
+  }
 
-	get prevLink() {
-		const prevDate = this.date.minus({ months: 1 });
-		return `/event-calendar/${prevDate.year}/${prevDate.month}`;
-	}
+  get sidebarTitle() {
+    if (this.selectedDate) {
+      return `Events am ${this.formatDateString(this.selectedDate)}`;
+    }
+    return `Events im ${this.yearMonth}`;
+  }
 
-	get nextLink() {
-		const nextDate = this.date.plus({ months: 1 });
-		return `/event-calendar/${nextDate.year}/${nextDate.month}`;
-	}
+  get sortedMonthEvents() {
+    return this.monthEvents.slice().sort((a, b) => a.startDateTime - b.startDateTime);
+  }
+
+  get groupedEvents(): EventGroup[] {
+    const groups: EventGroup[] = [];
+    const sorted = this.sortedMonthEvents;
+
+    for (const event of sorted) {
+      const dateKey = this.eventDateKey(event);
+      const existing = groups.find((group) => group.dateKey === dateKey);
+
+      if (existing) {
+        existing.events.push(event);
+        continue;
+      }
+
+      const date = DateTime.fromISO(dateKey, {
+        zone: SharedConstants.FFXIV_SERVER_TIMEZONE
+      });
+      groups.push({
+        dateKey,
+        day: date.toFormat('dd'),
+        month: date.toFormat('LLL'),
+        events: [event]
+      });
+    }
+
+    return groups;
+  }
+
+  eventLinkProps(event: EventSummaryDto) {
+    if (event.link) {
+      return {
+        href: event.link,
+        target: '_blank',
+        rel: 'noopener'
+      };
+    }
+    return {
+      to: `/event/${event.id}`
+    };
+  }
+
+  private eventDateKey(event: EventSummaryDto): string {
+    return DateTime.fromMillis(event.startDateTime)
+      .setZone(SharedConstants.FFXIV_SERVER_TIMEZONE)
+      .toISODate();
+  }
+
+  private formatDateString(dateStr: string) {
+    return DateTime.fromISO(dateStr, {
+      zone: SharedConstants.FFXIV_SERVER_TIMEZONE
+    }).toFormat('dd.LL.yyyy');
+  }
+
+  formatDate(dateMillis: number) {
+    return DateTime.fromMillis(dateMillis, {
+      zone: SharedConstants.FFXIV_SERVER_TIMEZONE
+    }).toFormat('dd.LL.yyyy');
+  }
+
+  formatTimeRange(event: EventSummaryDto) {
+    const start = DateTime.fromMillis(event.startDateTime, {
+      zone: SharedConstants.FFXIV_SERVER_TIMEZONE
+    });
+    const end = event.endDateTime
+      ? DateTime.fromMillis(event.endDateTime, {
+          zone: SharedConstants.FFXIV_SERVER_TIMEZONE
+        })
+      : null;
+    if (end && end.toMillis() !== start.toMillis()) {
+      return `${start.toFormat('HH:mm')} - ${end.toFormat('HH:mm')}`;
+    }
+    return start.toFormat('HH:mm');
+  }
+
+  primaryLocation(event: EventSummaryDto) {
+    if (!event.locations || event.locations.length === 0) {
+      return '';
+    }
+    const location = event.locations[0];
+    return location.name || location.address || location.server || '';
+  }
+
+  get year() {
+    return this.date.year;
+  }
+
+  get month() {
+    return this.date.month;
+  }
+
+  get yearMonth() {
+    return this.date.toFormat('LLLL yyyy', { locale: 'de' });
+  }
+
+  get dateStr() {
+    return this.date.toISODate();
+  }
+
+  get prevLink() {
+    const prevDate = this.date.minus({ months: 1 });
+    return `/calendar/${prevDate.year}/${prevDate.month}`;
+  }
+
+  get nextLink() {
+    const nextDate = this.date.plus({ months: 1 });
+    return `/calendar/${nextDate.year}/${nextDate.month}`;
+  }
 }
 </script>
 
@@ -187,48 +439,201 @@ export default class PageEventCalendar extends Vue {
   margin-bottom: 0;
 }
 
+.page-event-calendar__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
 .page-event-calendar__subtitle {
-  text-align: center;
   font-family: $header-font;
-  font-size: 1.6em;
-  margin-bottom: 24px;
+  font-size: 1.4em;
+}
+
+.page-event-calendar__view-toggle .q-btn {
+  text-transform: none;
 }
 
 .page-event-calendar__navbar {
-	display: flex;
-	justify-content: space-between;
-	margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.page-event-calendar__event {
-	margin-bottom: 4px;
-	background: $cyan-8;
-	color: white;
+.page-event-calendar__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 24px;
 }
 
-.page-event-calendar__event_internal {
-	font-weight: bold;
+.page-event-calendar__calendar {
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
 }
 
-.page-event-calendar__event a, .page-event-calendar__event a:visited {
-	display: block;
-	color: white;
+.page-event-calendar__day {
+  height: 100%;
+  padding: 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-.page-event-calendar__event a:hover {
-	color: $yellow-3;
+.page-event-calendar__day:hover {
+  background: rgba(0, 0, 0, 0.06);
 }
 
-.page-event-calendar__event_recurring {
-	background: #e0e0e5;
+.page-event-calendar__day_selected {
+  background: rgba(22, 98, 149, 0.2);
 }
 
-.page-event-calendar__event_recurring a, .page-event-calendar__event_recurring a:visited {
-	display: block;
-	color: #222;
+.page-event-calendar__day-number {
+  font-weight: 600;
 }
 
-.page-event-calendar__event_recurring a:hover {
-	color: $link-hover-color;
+.page-event-calendar__dots {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.page-event-calendar__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: $primary;
+}
+
+.page-event-calendar__sidebar {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  align-self: start;
+}
+
+.page-event-calendar__sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.page-event-calendar__sidebar-list {
+  display: grid;
+  gap: 16px;
+}
+
+.page-event-calendar__event-card {
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.page-event-calendar__event-card--list {
+  background: #fdfdfd;
+}
+
+.page-event-calendar__event-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+.page-event-calendar__event-link {
+  display: block;
+  padding: 16px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.page-event-calendar__event-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.page-event-calendar__event-meta {
+  display: grid;
+  gap: 6px;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.page-event-calendar__event-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.page-event-calendar__list {
+  display: grid;
+  gap: 24px;
+}
+
+.page-event-calendar__list-group {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.page-event-calendar__date-box {
+  width: 90px;
+  border-radius: 16px;
+  background: $primary;
+  color: #fff;
+  padding: 12px;
+  text-align: center;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+}
+
+.page-event-calendar__date-day {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.page-event-calendar__date-month {
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+}
+
+.page-event-calendar__list-cards {
+  display: grid;
+  gap: 16px;
+}
+
+.page-event-calendar__empty {
+  color: #666;
+  padding: 12px 0;
+}
+
+@media screen and (max-width: 1100px) {
+  .page-event-calendar__layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (max-width: $breakpoint-sm) {
+  .page-event-calendar__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .page-event-calendar__list-group {
+    grid-template-columns: 1fr;
+  }
+
+  .page-event-calendar__date-box {
+    width: 100%;
+    text-align: left;
+  }
 }
 </style>

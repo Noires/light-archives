@@ -220,17 +220,34 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
-    path: '/event-calendar',
-    component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/EventCalendar.vue') }],
-  },
-
-  {
-    path: '/event-calendar/:year/:month',
+    path: '/calendar',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EventCalendar.vue') }],
     meta: {
       title: 'Eventkalender'
+    },
+  },
+
+  {
+    path: '/calendar/:year/:month',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/EventCalendar.vue') }],
+    meta: {
+      title: 'Eventkalender'
+    },
+  },
+
+  {
+    path: '/event-calendar',
+    redirect: '/calendar',
+  },
+
+  {
+    path: '/event-calendar/:year/:month',
+    redirect: (to) => {
+      const yearParam = Array.isArray(to.params.year) ? to.params.year[0] : to.params.year;
+      const monthParam = Array.isArray(to.params.month) ? to.params.month[0] : to.params.month;
+      return `/calendar/${yearParam}/${monthParam}`;
     },
   },
 
