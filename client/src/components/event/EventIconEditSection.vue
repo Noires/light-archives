@@ -6,8 +6,8 @@
     </p>
     <q-responsive v-if="!modelValue" class="event-icon-edit-section__placeholder" :ratio="1">
       <div class="event-icon-edit-section__placeholder-content">
-        <q-icon name="event" size="32px" />
-        <div>Kein Icon</div>
+        <q-icon name="event" size="16px" />
+        <div class="event-icon-edit-section__placeholder-text">Kein Icon</div>
       </div>
     </q-responsive>
     <q-img
@@ -115,9 +115,15 @@ export default class EventIconEditSection extends Vue.with(Props) {
 .event-icon-edit-section__placeholder-content {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
   align-items: center;
   justify-content: center;
   height: 100%;
+}
+
+.event-icon-edit-section__placeholder-text {
+  font-size: 0.55rem;
+  line-height: 1;
+  text-align: center;
 }
 </style>
