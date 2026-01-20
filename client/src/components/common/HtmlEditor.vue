@@ -2,16 +2,17 @@
   <div class="html-editor">
     <div :id="toolbarId" class="html-editor__toolbar"></div>
     <editor
-    class="html-editor__editor"
-    :style="{ height: height }"
-    :init="options"
-    v-model="editorValue"
-    :inline="true"
-    output-format="html"
-    model-events="change keyup undo redo"
-    cdn-version="1"
-    @click.capture="onClickCapture"
-  />
+      v-if="bundleReady"
+      class="html-editor__editor"
+      :style="{ height: height }"
+      :init="options"
+      v-model="editorValue"
+      :inline="true"
+      output-format="html"
+      model-events="change keyup undo redo"
+      @click.capture="onClickCapture"
+    />
+    <div v-else class="html-editor__loading">Editor wird geladen...</div>
     <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername]] oder [[Charaktername|Mein Lehrer]], nutzen.</div>
   </div>
 </template>
@@ -102,6 +103,8 @@ const RTE_OPTIONS = {
     ]}
   ],
   fontsize_formats: '8pt 10.5pt 12pt 14pt 18pt 24pt 36pt',
+  skin_url: 'default',
+  content_css: 'default',
 };
 
 let uid = 0;
@@ -154,6 +157,16 @@ class Props {
 })
 export default class HtmlEditor extends Vue.with(Props) {
   toolbarId = `html-editor__toolbar${uid++}`;
+  bundleReady = false;
+
+  async created() {
+    try {
+      await import('src/common/hugerte-bundle');
+      this.bundleReady = true;
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
   get editorValue() {
     return this.modelValue;
@@ -298,5 +311,12 @@ export default class HtmlEditor extends Vue.with(Props) {
 
 .html-editor__toolbar {
   width: calc(100% + 4px);
+}
+
+.html-editor__loading {
+  padding: 12px;
+  border: 1px solid #aaa;
+  background: white;
+  color: #666;
 }
 </style>
