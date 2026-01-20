@@ -30,6 +30,7 @@ import 'hugerte/plugins/charmap';
 import 'hugerte/plugins/code';
 import 'hugerte/plugins/help';
 import 'hugerte/plugins/image';
+import 'hugerte/plugins/importcss';
 import 'hugerte/plugins/link';
 import 'hugerte/plugins/lists';
 import 'hugerte/plugins/nonbreaking';

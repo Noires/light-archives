@@ -7,7 +7,6 @@
       :style="{ height: height }"
       :init="options"
       v-model="editorValue"
-      :inline="true"
       output-format="html"
       model-events="change keyup undo redo"
       @click.capture="onClickCapture"
@@ -44,7 +43,7 @@ const FONTS = [
 
 const FONT_OPTION = FONTS.map(font => `${font}=${font},sans-serif`).join(';');
 
-const RTE_PLUGINS = 'advlist autolink charmap code help hr image link lists nonbreaking paste searchreplace table visualblocks wordcount';
+const RTE_PLUGINS = 'importcss advlist autolink charmap code help image link lists nonbreaking searchreplace table visualblocks wordcount';
 
 const RTE_OPTIONS = {
   toolbar:
