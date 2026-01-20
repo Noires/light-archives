@@ -45,16 +45,15 @@ const FONTS = [
 const FONT_OPTION = FONTS.map(font => `${font}=${font},sans-serif`).join(';');
 
 const RTE_PLUGINS = [
-  'code advlist autolink lists link image charmap hr nonbreaking',
-  'searchreplace visualblocks',
-  'table paste help wordcount'
+  'advlist autolink charmap code help hr image link lists nonbreaking paste searchreplace table visualblocks wordcount'
 ];
 
 const RTE_OPTIONS = {
   toolbar:
     'undo redo | formatselect | bold italic | \
     alignleft aligncenter alignright | \
-    image gallery upload link hr | bullist numlist | removeformat',
+    image gallery upload link hr charmap nonbreaking | \
+    bullist numlist | searchreplace code | removeformat',
   toolbar_mode: 'wrap',
   toolbar_persist: true,
   menu: {
