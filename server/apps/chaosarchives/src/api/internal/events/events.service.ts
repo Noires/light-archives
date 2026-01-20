@@ -164,9 +164,13 @@ export class EventsService {
       const icon = await em.getRepository(Image).findOne({
         where: {
           id: eventDto.icon.id,
-          owner: event.owner,
+          owner: {
+            user: {
+              id: event.owner.user.id,
+            },
+          },
         },
-        relations: ['owner'],
+        relations: ['owner', 'owner.user'],
       });
 
       if (!icon) {
