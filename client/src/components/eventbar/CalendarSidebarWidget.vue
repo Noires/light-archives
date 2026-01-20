@@ -68,92 +68,95 @@
           </div>
           <div v-else class="calendar-widget__list">
             <div
-              v-for="event in displayedEvents"
-              :key="event.id"
-              class="calendar-widget__event-card"
+              v-for="group in groupedDisplayedEvents"
+              :key="group.dateKey"
+              class="calendar-widget__list-group"
             >
-              <router-link
-                v-if="!event.link"
-                class="calendar-widget__event-link"
-                :to="`/event/${event.id}`"
-              >
-                <div class="calendar-widget__event-header">
-                  <div class="calendar-widget__event-icon">
-                    <q-img
-                      v-if="event.icon"
-                      :src="eventIconUrl(event)"
-                      :ratio="1"
-                      fit="cover"
-                      class="calendar-widget__event-icon-img"
-                    />
-                    <q-icon v-else name="event" />
-                  </div>
-                  <div class="calendar-widget__event-content">
-                    <div class="calendar-widget__event-title">
-                      {{ event.title }}
+              <div class="calendar-widget__date-header">
+                <span class="calendar-widget__date-label">{{ group.dateLabel }}</span>
+                <span class="calendar-widget__date-divider">|</span>
+                <span class="calendar-widget__date-weekday">{{ group.weekday }}</span>
+              </div>
+              <div class="calendar-widget__list-cards">
+                <div
+                  v-for="event in group.events"
+                  :key="event.id"
+                  class="calendar-widget__event-card"
+                >
+                  <div class="calendar-widget__event-collapsible">
+                    <div
+                      class="calendar-widget__event-summary"
+                      role="button"
+                      tabindex="0"
+                      @click="toggleExpanded(event.id)"
+                      @keyup.enter="toggleExpanded(event.id)"
+                    >
+                      <div class="calendar-widget__event-icon">
+                        <q-img
+                          v-if="event.icon"
+                          :src="eventIconUrl(event)"
+                          :ratio="1"
+                          fit="cover"
+                          class="calendar-widget__event-icon-img"
+                        />
+                        <q-icon v-else name="event" />
+                      </div>
+                      <div class="calendar-widget__event-summary-text">
+                        <div class="calendar-widget__event-time">
+                          {{ formatTimeRange(event) }}
+                        </div>
+                        <div class="calendar-widget__event-title">
+                          {{ event.title }}
+                        </div>
+                      </div>
+                      <q-btn
+                        flat
+                        round
+                        dense
+                        :icon="isExpanded(event.id) ? 'expand_less' : 'expand_more'"
+                        @click.stop="toggleExpanded(event.id)"
+                      />
                     </div>
-                    <div class="calendar-widget__event-meta">
-                      <div class="calendar-widget__event-row">
-                        <q-icon name="schedule" />
-                        <span>{{ formatTimeRange(event) }}</span>
+                    <q-slide-transition>
+                      <div v-show="isExpanded(event.id)" class="calendar-widget__event-details">
+                        <div class="calendar-widget__event-meta">
+                          <div
+                            v-if="primaryLocation(event)"
+                            class="calendar-widget__event-row"
+                          >
+                            <q-icon name="place" />
+                            <span>{{ primaryLocation(event) }}</span>
+                          </div>
+                          <div class="calendar-widget__event-row">
+                            <q-icon name="event" />
+                            <span>{{ formatDate(event.startDateTime) }}</span>
+                          </div>
+                        </div>
+                        <div class="calendar-widget__event-actions">
+                          <q-btn
+                            v-if="event.link"
+                            flat
+                            color="secondary"
+                            icon="launch"
+                            label="Link oeffnen"
+                            type="a"
+                            target="_blank"
+                            :href="event.link"
+                          />
+                          <q-btn
+                            v-else
+                            flat
+                            color="secondary"
+                            icon="event"
+                            label="Event anzeigen"
+                            :to="`/event/${event.id}`"
+                          />
+                        </div>
                       </div>
-                      <div
-                        v-if="primaryLocation(event)"
-                        class="calendar-widget__event-row"
-                      >
-                        <q-icon name="place" />
-                        <span>{{ primaryLocation(event) }}</span>
-                      </div>
-                      <div class="calendar-widget__event-row">
-                        <q-icon name="event" />
-                        <span>{{ formatDate(event.startDateTime) }}</span>
-                      </div>
-                    </div>
+                    </q-slide-transition>
                   </div>
                 </div>
-              </router-link>
-              <a
-                v-else
-                class="calendar-widget__event-link"
-                :href="event.link"
-                target="_blank"
-                rel="noopener"
-              >
-                <div class="calendar-widget__event-header">
-                  <div class="calendar-widget__event-icon">
-                    <q-img
-                      v-if="event.icon"
-                      :src="eventIconUrl(event)"
-                      :ratio="1"
-                      fit="cover"
-                      class="calendar-widget__event-icon-img"
-                    />
-                    <q-icon v-else name="event" />
-                  </div>
-                  <div class="calendar-widget__event-content">
-                    <div class="calendar-widget__event-title">
-                      {{ event.title }}
-                    </div>
-                    <div class="calendar-widget__event-meta">
-                      <div class="calendar-widget__event-row">
-                        <q-icon name="schedule" />
-                        <span>{{ formatTimeRange(event) }}</span>
-                      </div>
-                      <div
-                        v-if="primaryLocation(event)"
-                        class="calendar-widget__event-row"
-                      >
-                        <q-icon name="place" />
-                        <span>{{ primaryLocation(event) }}</span>
-                      </div>
-                      <div class="calendar-widget__event-row">
-                        <q-icon name="event" />
-                        <span>{{ formatDate(event.startDateTime) }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </a>
+              </div>
             </div>
           </div>
         </div>
@@ -243,6 +246,23 @@ export default class CalendarSidebarWidget extends Vue {
       .sort((a, b) => a.startDateTime - b.startDateTime);
   }
 
+  get groupedDisplayedEvents() {
+    return this.buildEventGroups(this.displayedEvents);
+  }
+
+  expandedEvents: Record<number, boolean> = {};
+
+  isExpanded(eventId: number) {
+    return !!this.expandedEvents[eventId];
+  }
+
+  toggleExpanded(eventId: number) {
+    this.expandedEvents = {
+      ...this.expandedEvents,
+      [eventId]: !this.expandedEvents[eventId]
+    };
+  }
+
   async onNavigate({ year, month }: NavigationPayload) {
     const nextYear = Number(year);
     const nextMonth = Number(month);
@@ -323,6 +343,34 @@ export default class CalendarSidebarWidget extends Vue {
     return DateTime.fromISO(dateStr, {
       zone: SharedConstants.FFXIV_SERVER_TIMEZONE
     }).toFormat('dd.LL.yyyy');
+  }
+
+  private buildEventGroups(events: EventSummaryDto[]) {
+    const groups: { dateKey: string; dateLabel: string; weekday: string; events: EventSummaryDto[] }[] = [];
+    const sorted = events.slice().sort((a, b) => a.startDateTime - b.startDateTime);
+
+    for (const event of sorted) {
+      const dateKey = this.eventDateKey(event);
+      const existing = groups.find((group) => group.dateKey === dateKey);
+
+      if (existing) {
+        existing.events.push(event);
+        continue;
+      }
+
+      const date = DateTime.fromISO(dateKey, {
+        zone: SharedConstants.FFXIV_SERVER_TIMEZONE
+      }).setLocale('de');
+
+      groups.push({
+        dateKey,
+        dateLabel: date.toFormat('dd.LL.yyyy'),
+        weekday: date.toFormat('cccc'),
+        events: [event]
+      });
+    }
+
+    return groups;
   }
 
   formatDate(dateMillis: number) {
@@ -418,6 +466,34 @@ export default class CalendarSidebarWidget extends Vue {
   gap: 12px;
 }
 
+.calendar-widget__list-group {
+  display: grid;
+  gap: 10px;
+}
+
+.calendar-widget__list-cards {
+  display: grid;
+  gap: 10px;
+}
+
+.calendar-widget__date-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.calendar-widget__date-divider {
+  color: #999;
+  font-weight: 400;
+}
+
+.calendar-widget__date-weekday {
+  color: #666;
+  font-weight: 500;
+}
+
 .calendar-widget__event-card {
   border-radius: 12px;
   background: #fff;
@@ -466,9 +542,37 @@ export default class CalendarSidebarWidget extends Vue {
   min-width: 0;
 }
 
+.calendar-widget__event-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.calendar-widget__event-summary:focus {
+  outline: 2px solid rgba(22, 98, 149, 0.25);
+  outline-offset: 2px;
+}
+
+.calendar-widget__event-summary-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.calendar-widget__event-time {
+  font-size: 0.8rem;
+  color: #555;
+  margin-bottom: 2px;
+}
+
 .calendar-widget__event-title {
   font-weight: 700;
   margin-bottom: 6px;
+}
+
+.calendar-widget__event-summary .calendar-widget__event-title {
+  margin-bottom: 0;
 }
 
 .calendar-widget__event-meta {
@@ -486,6 +590,16 @@ export default class CalendarSidebarWidget extends Vue {
 
 .calendar-widget__event-row i {
   font-size: 16px;
+}
+
+.calendar-widget__event-details {
+  padding: 0 12px 12px;
+}
+
+.calendar-widget__event-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
 }
 
 @media screen and (max-width: $breakpoint-sm) {
