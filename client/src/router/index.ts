@@ -7,6 +7,8 @@ import {
   createWebHistory,
   Router
 } from 'vue-router';
+import { useApi } from 'src/boot/axios';
+import { notifyError, notifySuccess } from 'src/common/notify';
 import { StateInterface } from '../store';
 import routes from './routes';
 
@@ -21,7 +23,7 @@ import routes from './routes';
 
 let router: Router;
 
-export default route<StateInterface>(function (/* { store, ssrContext } */) {
+export default route<StateInterface>(function ({ store }) {
   const createHistory = process.env.SERVER
     ? createMemoryHistory
     : (process.env.VUE_ROUTER_MODE === 'history' ? createWebHistory : createWebHashHistory);
@@ -36,6 +38,29 @@ export default route<StateInterface>(function (/* { store, ssrContext } */) {
     history: createHistory(
       process.env.MODE === 'ssr' ? void 0 : process.env.VUE_ROUTER_BASE
     ),
+  });
+
+  router.beforeEach(async (to) => {
+    const token = to.query.token;
+    if (typeof token !== 'string' || token.length === 0) {
+      return true;
+    }
+
+    const api = useApi();
+    api.setAccessToken(token);
+
+    try {
+      const session = await api.user.getSession();
+      store.commit('setUser', session);
+      notifySuccess('Du wurdest erfolgreich eingeloggt.');
+
+      const needsTerms = session.characters.length === 0 && !session.termsAcceptedAt;
+      return { path: needsTerms ? '/signup' : '/verify' };
+    } catch (e) {
+      api.setAccessToken(null);
+      notifyError(e);
+      return { path: '/' };
+    }
   });
 
   router.afterEach((to) => {

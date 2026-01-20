@@ -1,17 +1,10 @@
 <template>
   <q-list class="user-menu" dense dark>
     <template v-if="!$store.getters.role">
-      <q-item clickable v-ripple to="/login">
+      <q-item clickable v-ripple @click="loginWithDiscord">
         <q-item-section>
           <q-item-label>
             Anmelden via Discord
-          </q-item-label>
-        </q-item-section>
-      </q-item>
-      <q-item clickable v-ripple to="/forgot-password">
-        <q-item-section>
-          <q-item-label>
-            Passwort vergessen?
           </q-item-label>
         </q-item-section>
       </q-item>
@@ -225,6 +218,10 @@ export default class UserMenu extends Vue {
     this.$api.setAccessToken(null);
     notifySuccess('Du hast dich ausgeloggt.');
     void this.$router.push('/');
+  }
+
+  loginWithDiscord() {
+    window.location.href = this.$api.user.getDiscordLoginUrl();
   }
 }
 </script>

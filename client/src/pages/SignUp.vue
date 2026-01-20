@@ -47,7 +47,7 @@ export default class PageSignUp extends Vue {
 
     const userId = this.$store.state.user?.id;
     if (!userId) {
-      void this.$router.replace('/login');
+      window.location.href = this.$api.user.getDiscordLoginUrl();
       return;
     }
 
@@ -57,7 +57,7 @@ export default class PageSignUp extends Vue {
   async onAcceptTerms() {
     const userId = this.$store.state.user?.id;
     if (!userId) {
-      void this.$router.replace('/login');
+      window.location.href = this.$api.user.getDiscordLoginUrl();
       return;
     }
 

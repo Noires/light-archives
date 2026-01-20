@@ -88,57 +88,11 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
-    // Note that we do not use MainLayout here. Confirm email is a minimal page
-    // that redirects you to the verify page once the email is confirmed.
-    path: '/confirm-email/:verificationToken',
-    component: () => import('pages/ConfirmEmail.vue'),
-    meta: {
-      title: 'E-Mail-Adresse bestätigen'
-    },
-  },
-
-  {
-    path: '/login',
-    component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/LogIn.vue') }],
-    meta: {
-      title: 'Einloggen'
-    },
-  },
-
-  {
     path: '/verify',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/Verify.vue') }],
     meta: {
       title: 'Account verifizieren'
-    },
-  },
-
-  {
-    path: '/forgot-password',
-    component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/ForgotPassword.vue') }],
-    meta: {
-      title: 'Passwort vergessen'
-    },
-  },
-
-  {
-    path: '/forgot-password/:email',
-    component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/ForgotPassword.vue') }],
-    meta: {
-      title: 'Passwort vergessen'
-    },
-  },
-
-  {
-    path: '/reset-password/:verificationToken',
-    component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/ResetPassword.vue') }],
-    meta: {
-      title: 'Passwort zurücksetzen'
     },
   },
 
