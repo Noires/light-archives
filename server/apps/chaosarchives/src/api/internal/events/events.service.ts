@@ -6,6 +6,7 @@ import { BaseEventDto } from '@app/shared/dto/events/base-event.dto';
 import { EventAnnouncementDto } from '@app/shared/dto/events/event-announcement.dto';
 import { EventCreaterResultDto } from '@app/shared/dto/events/event-create-result.dto';
 import { EventEditDto } from '@app/shared/dto/events/event-edit.dto';
+import { EventIconDto } from '@app/shared/dto/events/event-icon.dto';
 import { EventLocationDto } from '@app/shared/dto/events/event-location.dto';
 import { EventSearchResultDto } from '@app/shared/dto/events/event-search-result.dto';
 import { EventSummariesDto } from '@app/shared/dto/events/event-summaries.dto';
@@ -57,7 +58,7 @@ export class EventsService {
       where: {
         id,
       },
-      relations: ['owner', 'owner.user', 'locations', 'locations.server', 'banner', 'banner.owner'],
+      relations: ['owner', 'owner.user', 'locations', 'locations.server', 'banner', 'banner.owner', 'icon', 'icon.owner'],
     });
 
     if (!event) {
@@ -111,7 +112,7 @@ export class EventsService {
             },
           },
         },
-        relations: ['owner', 'owner.user', 'locations', 'locations.server', 'banner', 'banner.owner'],
+        relations: ['owner', 'owner.user', 'locations', 'locations.server', 'banner', 'banner.owner', 'icon', 'icon.owner'],
       });
 
       if (!event) {
@@ -157,6 +158,24 @@ export class EventsService {
       event.banner = Promise.resolve(banner);
     } else {
       event.banner = Promise.resolve(null as unknown as Image);
+    }
+
+    if (eventDto.icon && eventDto.icon.id) {
+      const icon = await em.getRepository(Image).findOne({
+        where: {
+          id: eventDto.icon.id,
+          owner: event.owner,
+        },
+        relations: ['owner'],
+      });
+
+      if (!icon) {
+        throw new BadRequestException('Icon not found');
+      }
+
+      event.icon = Promise.resolve(icon);
+    } else {
+      event.icon = Promise.resolve(null as unknown as Image);
     }
 
     if (eventDto.locations.length === 0) {
@@ -344,10 +363,10 @@ export class EventsService {
         createdAt: 'ASC',
       },
       take: this.MAX_RESULTS,
-      relations: ['locations', 'locations.server'],
+      relations: ['locations', 'locations.server', 'icon', 'icon.owner'],
     });
 
-    return events.map((event) => this.toEventSummaryDto(event));
+    return Promise.all(events.map((event) => this.toEventSummaryDto(event)));
   }
 
   private async saveEvents(events: ExternalEvent[]): Promise<void> {
@@ -491,6 +510,8 @@ export class EventsService {
       .createQueryBuilder('event')
       .leftJoinAndSelect('event.locations', 'location')
       .leftJoinAndSelect('location.server', 'server')
+      .leftJoinAndSelect('event.icon', 'icon')
+      .leftJoinAndSelect('icon.owner', 'iconOwner')
       .where('event.startDateTime >= :startOfMonth', { startOfMonth: startOfMonth.toJSDate() })
       .andWhere('event.startDateTime < :endOfMonth', { endOfMonth: endOfMonth.toJSDate() })
       .andWhere('event.hidden = :hidden', { hidden: false })
@@ -500,13 +521,28 @@ export class EventsService {
       })
       .getMany();
 
-    return events.map((event) => this.toEventSummaryDto(event));
+    return Promise.all(events.map((event) => this.toEventSummaryDto(event)));
   }
 
-  private toEventSummaryDto(event: Event): EventSummaryDto {
+  private async toEventSummaryDto(event: Event): Promise<EventSummaryDto> {
+    const icon = await event.icon;
+
+    if (icon) {
+      await this.imagesService.ensureIconThumb(icon);
+    }
+
     return {
       id: event.id,
       title: event.title,
+      icon: !icon
+        ? null
+        : new EventIconDto({
+            id: icon.id,
+            url: this.imagesService.getUrl(icon),
+            thumbUrl: this.imagesService.getIconUrl(icon),
+            width: icon.width,
+            height: icon.height,
+          }),
       startDateTime: event.startDateTime.getTime(),
       endDateTime: event.endDateTime ? event.endDateTime.getTime() : null,
       link: event.externalSourceLink || '',
@@ -525,8 +561,13 @@ export class EventsService {
 
   private async toEventDto(event: Event, edit: boolean, user?: UserInfo): Promise<BaseEventDto> {
     const banner = await event.banner;
+    const icon = await event.icon;
     let announcements: EventAnnouncement[] = [];
     let images: ImageSummaryDto[] = [];
+
+    if (icon) {
+      await this.imagesService.ensureIconThumb(icon);
+    }
 
     if (edit) {
       announcements = await event.announcements;
@@ -551,6 +592,15 @@ export class EventsService {
             url: this.imagesService.getUrl(banner),
             width: banner.width,
             height: banner.height,
+          }),
+      icon: !icon
+        ? null
+        : new EventIconDto({
+            id: icon.id,
+            url: this.imagesService.getUrl(icon),
+            thumbUrl: this.imagesService.getIconUrl(icon),
+            width: icon.width,
+            height: icon.height,
           }),
       locations: event.locations.map(location => new EventLocationDto({
         id: location.id,

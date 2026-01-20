@@ -6,6 +6,7 @@ import { Readable } from 'stream';
 import { AppError } from "./app-error";
 
 const THUMB_WIDTH = 174;
+const ICON_THUMB_WIDTH = 32;
 
 export interface ThumbProperties {
 	left: number;
@@ -16,6 +17,7 @@ export interface ThumbProperties {
 export interface ImageSanitizeResult {
 	buffer: Buffer;
 	thumb: Buffer;
+	iconThumb: Buffer;
 	format: ImageFormat;
 	width: number;
 	height: number;
@@ -141,9 +143,29 @@ export async function sanitizeImage(buffer: Buffer, thumb: ThumbProperties): Pro
 
 	const thumbBuffer = await thumbOperation.toBuffer();
 
+	// Generate icon thumbnail (32x32) from the same crop
+	const iconOperation = sharp(result)
+		.extract({
+			left: thumb.left,
+			top: thumb.top,
+			width: thumb.width,
+			height: thumb.width
+		})
+		.resize(ICON_THUMB_WIDTH)
+		.toFormat(format === ImageFormat.PNG ? 'png' : 'jpeg');
+
+	if (format === ImageFormat.JPEG) {
+		iconOperation.jpeg({
+			quality: 90
+		});
+	}
+
+	const iconThumbBuffer = await iconOperation.toBuffer();
+
 	return {
 		buffer: result,
 		thumb: thumbBuffer,
+		iconThumb: iconThumbBuffer,
 		format,
 		width: width || -1,
 		height: height || -1,

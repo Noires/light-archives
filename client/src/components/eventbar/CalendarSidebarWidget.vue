@@ -77,24 +77,38 @@
                 class="calendar-widget__event-link"
                 :to="`/event/${event.id}`"
               >
-                <div class="calendar-widget__event-title">
-                  {{ event.title }}
-                </div>
-                <div class="calendar-widget__event-meta">
-                  <div class="calendar-widget__event-row">
-                    <q-icon name="schedule" />
-                    <span>{{ formatTimeRange(event) }}</span>
+                <div class="calendar-widget__event-header">
+                  <div class="calendar-widget__event-icon">
+                    <q-img
+                      v-if="event.icon"
+                      :src="eventIconUrl(event)"
+                      :ratio="1"
+                      fit="cover"
+                      class="calendar-widget__event-icon-img"
+                    />
+                    <q-icon v-else name="event" />
                   </div>
-                  <div
-                    v-if="primaryLocation(event)"
-                    class="calendar-widget__event-row"
-                  >
-                    <q-icon name="place" />
-                    <span>{{ primaryLocation(event) }}</span>
-                  </div>
-                  <div class="calendar-widget__event-row">
-                    <q-icon name="event" />
-                    <span>{{ formatDate(event.startDateTime) }}</span>
+                  <div class="calendar-widget__event-content">
+                    <div class="calendar-widget__event-title">
+                      {{ event.title }}
+                    </div>
+                    <div class="calendar-widget__event-meta">
+                      <div class="calendar-widget__event-row">
+                        <q-icon name="schedule" />
+                        <span>{{ formatTimeRange(event) }}</span>
+                      </div>
+                      <div
+                        v-if="primaryLocation(event)"
+                        class="calendar-widget__event-row"
+                      >
+                        <q-icon name="place" />
+                        <span>{{ primaryLocation(event) }}</span>
+                      </div>
+                      <div class="calendar-widget__event-row">
+                        <q-icon name="event" />
+                        <span>{{ formatDate(event.startDateTime) }}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </router-link>
@@ -105,24 +119,38 @@
                 target="_blank"
                 rel="noopener"
               >
-                <div class="calendar-widget__event-title">
-                  {{ event.title }}
-                </div>
-                <div class="calendar-widget__event-meta">
-                  <div class="calendar-widget__event-row">
-                    <q-icon name="schedule" />
-                    <span>{{ formatTimeRange(event) }}</span>
+                <div class="calendar-widget__event-header">
+                  <div class="calendar-widget__event-icon">
+                    <q-img
+                      v-if="event.icon"
+                      :src="eventIconUrl(event)"
+                      :ratio="1"
+                      fit="cover"
+                      class="calendar-widget__event-icon-img"
+                    />
+                    <q-icon v-else name="event" />
                   </div>
-                  <div
-                    v-if="primaryLocation(event)"
-                    class="calendar-widget__event-row"
-                  >
-                    <q-icon name="place" />
-                    <span>{{ primaryLocation(event) }}</span>
-                  </div>
-                  <div class="calendar-widget__event-row">
-                    <q-icon name="event" />
-                    <span>{{ formatDate(event.startDateTime) }}</span>
+                  <div class="calendar-widget__event-content">
+                    <div class="calendar-widget__event-title">
+                      {{ event.title }}
+                    </div>
+                    <div class="calendar-widget__event-meta">
+                      <div class="calendar-widget__event-row">
+                        <q-icon name="schedule" />
+                        <span>{{ formatTimeRange(event) }}</span>
+                      </div>
+                      <div
+                        v-if="primaryLocation(event)"
+                        class="calendar-widget__event-row"
+                      >
+                        <q-icon name="place" />
+                        <span>{{ primaryLocation(event) }}</span>
+                      </div>
+                      <div class="calendar-widget__event-row">
+                        <q-icon name="event" />
+                        <span>{{ formatDate(event.startDateTime) }}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </a>
@@ -325,6 +353,10 @@ export default class CalendarSidebarWidget extends Vue {
     const location = event.locations[0];
     return location.name || location.address || location.server || '';
   }
+
+  eventIconUrl(event: EventSummaryDto) {
+    return event.icon?.thumbUrl || event.icon?.url || '';
+  }
 }
 </script>
 
@@ -403,6 +435,35 @@ export default class CalendarSidebarWidget extends Vue {
   padding: 12px;
   color: inherit;
   text-decoration: none;
+}
+
+.calendar-widget__event-header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.calendar-widget__event-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.calendar-widget__event-icon-img {
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+}
+
+.calendar-widget__event-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .calendar-widget__event-title {

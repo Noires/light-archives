@@ -90,6 +90,12 @@ export class Event extends BasicEntity {
   })
   banner: Promise<Image|null>;
 
+  @ManyToOne(() => Image, {
+    lazy: true,
+    nullable: true,
+  })
+  icon: Promise<Image | null>;
+
   @OneToMany(() => EventLocation, 'event', {
     cascade: true,
     orphanedRowAction: 'delete',

@@ -85,6 +85,7 @@
             <q-btn flat color="secondary" icon="add" label="Standort hinzufügen" @click="addLocation" />
           </div>
           </section>
+          <event-icon-edit-section v-model="event.icon" />
           <banner-edit-section v-model="event.banner" />
           <h6>Details</h6>
           <html-editor v-model="event.details" />
@@ -166,6 +167,7 @@ import { DateTime } from 'luxon';
 import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
+import EventIconEditSection from 'src/components/event/EventIconEditSection.vue';
 import WorldSelect from 'src/components/common/WorldSelect.vue';
 import EventView from 'src/components/event/EventView.vue';
 import { useRouter } from 'src/router';
@@ -209,6 +211,7 @@ async function load(params: RouteParams): Promise<{event: EventEditDto, eventId:
     QDateTimePicker,
     HtmlEditor,
     BannerEditSection,
+    EventIconEditSection,
     EventView,
     EventAnnouncementEditor,
     WorldSelect,
@@ -285,6 +288,7 @@ export default class PageEditEvent extends Vue {
         contact: '',
         recurring: false,
         banner: null,
+        icon: null,
         locations: [ this.newLocation() ],
         announcements: []
       });

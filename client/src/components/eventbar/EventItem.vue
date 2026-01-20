@@ -1,5 +1,15 @@
 <template>
   <q-item class="event-item" :clickable="!expanded" :to="event.link ? null : `/event/${event.id}`" @click="event.link ? expand() : null">
+    <q-item-section avatar class="event-item__icon">
+      <q-img
+        v-if="event.icon"
+        :src="eventIconUrl"
+        :ratio="1"
+        fit="cover"
+        class="event-item__icon-img"
+      />
+      <q-icon v-else name="event" />
+    </q-item-section>
     <q-item-section>
       <q-item-label :class="{ 'event-item__label_original': !event.link }">
 				<template v-if="!expanded">{{ event.title }}</template>
@@ -123,6 +133,10 @@ export default class EventItem extends Vue.with(Props) {
   formatDateLocal(date: number): string {
     return this.$display.formatDateTimeLocal(date);
   }
+
+  get eventIconUrl(): string {
+    return this.event.icon?.thumbUrl || this.event.icon?.url || '';
+  }
 }
 </script>
 
@@ -187,5 +201,15 @@ export default class EventItem extends Vue.with(Props) {
 
 .event-item dd:not(:last-child), .event-item li:not(:last-child) {
   padding-bottom: 8px;
+}
+
+.event-item__icon {
+  width: 32px;
+}
+
+.event-item__icon-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
 }
 </style>

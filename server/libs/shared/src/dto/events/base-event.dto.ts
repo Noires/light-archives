@@ -1,6 +1,7 @@
 import { Type } from "class-transformer";
 import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, MinLength, ValidateNested } from "class-validator";
 import { BannerDto } from "../characters/banner.dto";
+import { EventIconDto } from "./event-icon.dto";
 import { EventLocationDto } from "./event-location.dto";
 
 export abstract class BaseEventDto {
@@ -40,6 +41,11 @@ export abstract class BaseEventDto {
   @ValidateNested()
   @IsOptional()
   banner: BannerDto|null;
+
+  @Type(() => EventIconDto)
+  @ValidateNested()
+  @IsOptional()
+  icon: EventIconDto|null;
 
 	@Type(() => EventLocationDto)
 	@ValidateNested({ each: true })

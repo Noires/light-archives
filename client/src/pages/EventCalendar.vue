@@ -89,24 +89,38 @@
               class="page-event-calendar__event-link"
               v-bind="eventLinkProps(event)"
             >
-              <div class="page-event-calendar__event-title">
-                {{ event.title }}
-              </div>
-              <div class="page-event-calendar__event-meta">
-                <div class="page-event-calendar__event-row">
-                  <q-icon name="schedule" />
-                  <span>{{ formatTimeRange(event) }}</span>
+              <div class="page-event-calendar__event-header">
+                <div class="page-event-calendar__event-icon">
+                  <q-img
+                    v-if="event.icon"
+                    :src="eventIconUrl(event)"
+                    :ratio="1"
+                    fit="cover"
+                    class="page-event-calendar__event-icon-img"
+                  />
+                  <q-icon v-else name="event" />
                 </div>
-                <div
-                  v-if="primaryLocation(event)"
-                  class="page-event-calendar__event-row"
-                >
-                  <q-icon name="place" />
-                  <span>{{ primaryLocation(event) }}</span>
-                </div>
-                <div class="page-event-calendar__event-row">
-                  <q-icon name="event" />
-                  <span>{{ formatDate(event.startDateTime) }}</span>
+                <div class="page-event-calendar__event-content">
+                  <div class="page-event-calendar__event-title">
+                    {{ event.title }}
+                  </div>
+                  <div class="page-event-calendar__event-meta">
+                    <div class="page-event-calendar__event-row">
+                      <q-icon name="schedule" />
+                      <span>{{ formatTimeRange(event) }}</span>
+                    </div>
+                    <div
+                      v-if="primaryLocation(event)"
+                      class="page-event-calendar__event-row"
+                    >
+                      <q-icon name="place" />
+                      <span>{{ primaryLocation(event) }}</span>
+                    </div>
+                    <div class="page-event-calendar__event-row">
+                      <q-icon name="event" />
+                      <span>{{ formatDate(event.startDateTime) }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </component>
@@ -139,24 +153,38 @@
               class="page-event-calendar__event-link"
               v-bind="eventLinkProps(event)"
             >
-              <div class="page-event-calendar__event-title">
-                {{ event.title }}
-              </div>
-              <div class="page-event-calendar__event-meta">
-                <div class="page-event-calendar__event-row">
-                  <q-icon name="schedule" />
-                  <span>{{ formatTimeRange(event) }}</span>
+              <div class="page-event-calendar__event-header">
+                <div class="page-event-calendar__event-icon">
+                  <q-img
+                    v-if="event.icon"
+                    :src="eventIconUrl(event)"
+                    :ratio="1"
+                    fit="cover"
+                    class="page-event-calendar__event-icon-img"
+                  />
+                  <q-icon v-else name="event" />
                 </div>
-                <div
-                  v-if="primaryLocation(event)"
-                  class="page-event-calendar__event-row"
-                >
-                  <q-icon name="place" />
-                  <span>{{ primaryLocation(event) }}</span>
-                </div>
-                <div class="page-event-calendar__event-row">
-                  <q-icon name="event" />
-                  <span>{{ formatDate(event.startDateTime) }}</span>
+                <div class="page-event-calendar__event-content">
+                  <div class="page-event-calendar__event-title">
+                    {{ event.title }}
+                  </div>
+                  <div class="page-event-calendar__event-meta">
+                    <div class="page-event-calendar__event-row">
+                      <q-icon name="schedule" />
+                      <span>{{ formatTimeRange(event) }}</span>
+                    </div>
+                    <div
+                      v-if="primaryLocation(event)"
+                      class="page-event-calendar__event-row"
+                    >
+                      <q-icon name="place" />
+                      <span>{{ primaryLocation(event) }}</span>
+                    </div>
+                    <div class="page-event-calendar__event-row">
+                      <q-icon name="event" />
+                      <span>{{ formatDate(event.startDateTime) }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </component>
@@ -404,6 +432,10 @@ export default class PageEventCalendar extends Vue {
     return location.name || location.address || location.server || '';
   }
 
+  eventIconUrl(event: EventSummaryDto) {
+    return event.icon?.thumbUrl || event.icon?.url || '';
+  }
+
   get year() {
     return this.date.year;
   }
@@ -551,6 +583,35 @@ export default class PageEventCalendar extends Vue {
   padding: 16px;
   color: inherit;
   text-decoration: none;
+}
+
+.page-event-calendar__event-header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.page-event-calendar__event-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.page-event-calendar__event-icon-img {
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+}
+
+.page-event-calendar__event-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .page-event-calendar__event-title {

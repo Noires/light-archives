@@ -15,6 +15,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   ServiceUnavailableException
 } from '@nestjs/common';
@@ -23,6 +24,7 @@ import { escapeForLike } from 'apps/chaosarchives/src/common/db';
 import utils from 'apps/chaosarchives/src/common/utils';
 import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import sharp from 'sharp';
 import {
   ImageSanitizeError,
   ImageSanitizeResult,
@@ -32,6 +34,8 @@ import { StorageService } from './storage.service';
 
 @Injectable()
 export class ImagesService {
+  private readonly logger = new Logger(ImagesService.name);
+
   constructor(
     private storageService: StorageService,
     private connection: Connection,
@@ -231,7 +235,7 @@ export class ImagesService {
           throw e;
         }
 
-        const { buffer, thumb, format, width, height } = sanitizeResult;
+        const { buffer, thumb, iconThumb, format, width, height } = sanitizeResult;
         const size = buffer.length;
         const hash = await hashFile(buffer);
         const mimetype =
@@ -272,12 +276,15 @@ export class ImagesService {
 
         const path = `${character.id}/${hash}/${filename}`;
         const thumbPath = `${character.id}/${hash}/thumb_${filename}`;
+        const iconThumbPath = `${character.id}/${hash}/icon_${filename}`;
 
         try {
           await this.storageService.uploadFile(path, buffer, mimetype);
           uploadedPaths.push(path);
           await this.storageService.uploadFile(thumbPath, thumb, mimetype);
           uploadedPaths.push(thumbPath);
+          await this.storageService.uploadFile(iconThumbPath, iconThumb, mimetype);
+          uploadedPaths.push(iconThumbPath);
         } catch (e) {
           throw new ServiceUnavailableException(
             'Cannot upload file to storage service',
@@ -416,6 +423,14 @@ export class ImagesService {
         }) > 0) {
           throw new ConflictException('This image is in use as an event banner');
         }
+
+        if (await em.getRepository(Event).countBy({
+          icon: {
+            id: image.id
+          },
+        }) > 0) {
+          throw new ConflictException('This image is in use as an event icon');
+        }
       } else {
         // Unlink as a banner
 
@@ -434,6 +449,14 @@ export class ImagesService {
         }, {
           banner: null
         } as unknown as QueryDeepPartialEntity<Event>);
+
+        await em.getRepository(Event).update({
+          icon: {
+            id: image.id,
+          },
+        }, {
+          icon: null
+        } as unknown as QueryDeepPartialEntity<Event>);
       }
 
       // Delete from the database
@@ -445,10 +468,52 @@ export class ImagesService {
     await Promise.all([
       this.storageService.deleteFile(`${imageEntity.owner.id}/${imageEntity.hash}/${imageEntity.filename}`),
       this.storageService.deleteFile(`${imageEntity.owner.id}/${imageEntity.hash}/thumb_${imageEntity.filename}`),
+      this.storageService.deleteFile(`${imageEntity.owner.id}/${imageEntity.hash}/icon_${imageEntity.filename}`),
     ]);
   }
 
   getUrl(image: Image): string {
     return this.storageService.getUrl(`${image.owner.id}/${image.hash}/${image.filename}`);
+  }
+
+  getThumbUrl(image: Image): string {
+    return this.storageService.getUrl(`${image.owner.id}/${image.hash}/thumb_${image.filename}`);
+  }
+
+  getIconUrl(image: Image): string {
+    return this.storageService.getUrl(`${image.owner.id}/${image.hash}/icon_${image.filename}`);
+  }
+
+  async ensureIconThumb(image: Image): Promise<void> {
+    const iconPath = `${image.owner.id}/${image.hash}/icon_${image.filename}`;
+
+    try {
+      if (await this.storageService.fileExists(iconPath)) {
+        return;
+      }
+
+      const thumbPath = `${image.owner.id}/${image.hash}/thumb_${image.filename}`;
+      const thumbBuffer = await this.storageService.downloadFile(thumbPath);
+      const format = image.format === ImageFormat.PNG ? 'png' : 'jpeg';
+      const mimetype = image.format === ImageFormat.PNG ? 'image/png' : 'image/jpeg';
+
+      const iconOperation = sharp(thumbBuffer)
+        .resize(32)
+        .toFormat(format);
+
+      if (format === 'jpeg') {
+        iconOperation.jpeg({ quality: 90 });
+      }
+
+      const iconBuffer = await iconOperation.toBuffer();
+
+      await this.storageService.uploadFile(iconPath, iconBuffer, mimetype);
+    } catch (e) {
+      if (e instanceof Error) {
+        this.logger.warn(`Failed to generate icon thumbnail for image ${image.id}: ${e.message}`);
+      } else {
+        this.logger.warn(`Failed to generate icon thumbnail for image ${image.id}`);
+      }
+    }
   }
 }
