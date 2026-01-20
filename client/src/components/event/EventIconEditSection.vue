@@ -2,7 +2,7 @@
   <section class="event-icon-edit-section">
     <h6>Icon</h6>
     <p class="text-caption">
-      Optionales Icon fuer den Kalender. Empfohlen: quadratisch (z.B. 256x256).
+      Optionales Icon fuer den Kalender. Empfohlen: quadratisch (z.B. 32x32).
     </p>
     <q-responsive v-if="!modelValue" class="event-icon-edit-section__placeholder" :ratio="1">
       <div class="event-icon-edit-section__placeholder-content">
@@ -99,7 +99,7 @@ export default class EventIconEditSection extends Vue.with(Props) {
 .event-icon-edit-section__image {
   margin-bottom: 16px;
   border-radius: 12px;
-  width: 160px;
+  width: 32px;
   max-width: 100%;
 }
 
@@ -108,7 +108,7 @@ export default class EventIconEditSection extends Vue.with(Props) {
   background: #f0f2f6;
   border-radius: 12px;
   color: #6a7a8c;
-  width: 160px;
+  width: 32px;
   max-width: 100%;
 }
 

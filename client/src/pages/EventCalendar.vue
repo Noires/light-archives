@@ -49,12 +49,22 @@
               <div class="page-event-calendar__day-number">
                 {{ timestamp.day }}
               </div>
-              <div class="page-event-calendar__dots">
-                <span
-                  v-for="n in dayDotCount(timestamp.date)"
-                  :key="n"
-                  class="page-event-calendar__dot"
-                ></span>
+              <div class="page-event-calendar__day-icons">
+                <div
+                  v-for="event in dayIconEvents(timestamp.date)"
+                  :key="event.id"
+                  class="page-event-calendar__day-icon"
+                >
+                  <q-img
+                    v-if="event.icon"
+                    :src="eventIconUrl(event)"
+                    :ratio="1"
+                    fit="cover"
+                    class="page-event-calendar__day-icon-img"
+                  />
+                  <q-icon v-else name="event" size="14px" />
+                  <q-tooltip>{{ event.title }}</q-tooltip>
+                </div>
               </div>
             </div>
           </template>
@@ -326,9 +336,9 @@ export default class PageEventCalendar extends Vue {
     return this.selectedDate === dateStr;
   }
 
-  dayDotCount(dateStr: string) {
-    const count = this.eventMap[dateStr]?.length || 0;
-    return Math.min(count, 3);
+  dayIconEvents(dateStr: string) {
+    const events = this.eventMap[dateStr] || [];
+    return events.slice(0, 3);
   }
 
   get sidebarEvents() {
@@ -528,17 +538,28 @@ export default class PageEventCalendar extends Vue {
   font-weight: 600;
 }
 
-.page-event-calendar__dots {
+.page-event-calendar__day-icons {
   display: flex;
   gap: 4px;
   margin-top: 6px;
+  flex-wrap: wrap;
 }
 
-.page-event-calendar__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: $primary;
+.page-event-calendar__day-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-event-calendar__day-icon-img {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
 }
 
 .page-event-calendar__sidebar {

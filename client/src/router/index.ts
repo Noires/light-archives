@@ -55,7 +55,12 @@ export default route<StateInterface>(function ({ store }) {
       notifySuccess('Du wurdest erfolgreich eingeloggt.');
 
       const needsTerms = session.characters.length === 0 && !session.termsAcceptedAt;
-      return { path: needsTerms ? '/signup' : '/verify' };
+      if (needsTerms) {
+        return { path: '/signup' };
+      }
+
+      const hasVerifiedCharacter = session.characters.some((character) => character.verified);
+      return { path: hasVerifiedCharacter ? '/calendar' : '/verify' };
     } catch (e) {
       api.setAccessToken(null);
       notifyError(e);
