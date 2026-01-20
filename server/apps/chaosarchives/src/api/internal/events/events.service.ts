@@ -142,9 +142,13 @@ export class EventsService {
       const banner = await em.getRepository(Image).findOne({
         where: {
           id: eventDto.banner.id,
-          owner: event.owner,
+          owner: {
+            user: {
+              id: event.owner.user.id,
+            },
+          },
         },
-        relations: ['owner'],
+        relations: ['owner', 'owner.user'],
       });
 
       if (!banner) {
