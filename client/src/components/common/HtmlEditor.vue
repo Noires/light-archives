@@ -4,11 +4,13 @@
     <editor
     class="html-editor__editor"
     :style="{ height: height }"
-    api-key="v9oemu64giqfvnrk8y7f0quf7ygl5dnrpgs382udlcbkv7jv"
     :init="options"
-    :model-value="modelValue"
-     @click.capture="onClickCapture"
-    @update:model-value="onInput"
+    v-model="editorValue"
+    :inline="true"
+    output-format="html"
+    model-events="change keyup undo redo"
+    cdn-version="1"
+    @click.capture="onClickCapture"
   />
     <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername]] oder [[Charaktername|Mein Lehrer]], nutzen.</div>
   </div>
@@ -16,9 +18,9 @@
 
 <script lang="ts">
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
-import Editor from '@tinymce/tinymce-vue';
+import Editor from '@hugerte/hugerte-vue';
 import { onHtmlViewClickCapture } from 'src/common/html-view-utils';
-import { TinyMceEditor } from 'tinymce';
+import { DefineComponent } from 'vue';
 import { Options, prop, Vue } from 'vue-class-component';
 
 const FONTS = [
@@ -41,14 +43,13 @@ const FONTS = [
 
 const FONT_OPTION = FONTS.map(font => `${font}=${font},sans-serif`).join(';');
 
-const TINYMCE_PLUGINS = [
+const RTE_PLUGINS = [
   'code advlist autolink lists link image charmap hr nonbreaking',
   'searchreplace visualblocks',
   'table paste help wordcount'
 ];
 
-const TINYMCE_OPTIONS = {
-  inline: true,
+const RTE_OPTIONS = {
   toolbar:
     'undo redo | formatselect | bold italic | \
     alignleft aligncenter alignright | \
@@ -104,6 +105,32 @@ const TINYMCE_OPTIONS = {
 };
 
 let uid = 0;
+const HugeRteEditor = Editor as unknown as DefineComponent;
+
+type EditorRegistrySpec = {
+  text?: string;
+  tooltip?: string;
+  icon?: string;
+  onAction: () => void;
+};
+
+interface EditorApi {
+  ui: {
+    registry: {
+      addMenuItem(name: string, spec: EditorRegistrySpec): void;
+      addButton(name: string, spec: EditorRegistrySpec): void;
+    };
+  };
+  execCommand(command: string): void;
+  undoManager: {
+    transact(callback: () => void): void;
+  };
+  selection: {
+    getContent(options: { format: string }): string;
+    setContent(html: string): void;
+  };
+  focus(): void;
+}
 
 class Props {
   modelValue = prop<string>({
@@ -122,26 +149,34 @@ class Props {
 @Options({
   name: 'HtmlEditor',
   components: {
-    Editor
+    Editor: HugeRteEditor
   },
 })
 export default class HtmlEditor extends Vue.with(Props) {
   toolbarId = `html-editor__toolbar${uid++}`;
 
+  get editorValue() {
+    return this.modelValue;
+  }
+
+  set editorValue(newValue: string) {
+    this.onInput(newValue);
+  }
+
   get options() {
     let plugins: string[];
 
     if (this.allowImages) {
-      plugins = TINYMCE_PLUGINS;
+      plugins = RTE_PLUGINS;
     } else {
-      plugins = TINYMCE_PLUGINS.map(str => str.replace(/image/g, ''));
+      plugins = RTE_PLUGINS.map(str => str.replace(/image/g, ''));
     }
 
     return {
-      ...TINYMCE_OPTIONS,
+      ...RTE_OPTIONS,
       plugins,
       fixed_toolbar_container: `#${this.toolbarId}`,
-      setup: (editor: TinyMceEditor) => {
+      setup: (editor: EditorApi) => {
         editor.ui.registry.addMenuItem('outdent', {
           text: 'Einzug verkleinern',
           icon: 'outdent',
@@ -194,10 +229,13 @@ export default class HtmlEditor extends Vue.with(Props) {
   }
 
   onInput(newValue: string) {
+    if (newValue === this.modelValue) {
+      return;
+    }
     this.$emit('update:modelValue', newValue);
   }
 
-  private async onGalleryClick(editor: TinyMceEditor) {
+  private async onGalleryClick(editor: EditorApi) {
     const GalleryDialog = (await import('./GalleryDialog.vue')).default;
 
     this.$q.dialog({
@@ -207,7 +245,7 @@ export default class HtmlEditor extends Vue.with(Props) {
     });
   }
 
-  private async onUploadClick(editor: TinyMceEditor) {
+  private async onUploadClick(editor: EditorApi) {
     const UploadDialog = (await import('components/upload/UploadDialog.vue')).default;
 
     this.$q.dialog({
@@ -217,7 +255,7 @@ export default class HtmlEditor extends Vue.with(Props) {
     });
   }
 
-  private insertImage(editor: TinyMceEditor, src: string, width: number, height: number, title: string) {
+  private insertImage(editor: EditorApi, src: string, width: number, height: number, title: string) {
     editor.undoManager.transact(() => {
       const img = document.createElement('img');
       img.src = src;
@@ -229,7 +267,7 @@ export default class HtmlEditor extends Vue.with(Props) {
     });
   }
 
-  private onHideDetailsClick(editor: TinyMceEditor) {
+  private onHideDetailsClick(editor: EditorApi) {
     editor.undoManager.transact(() => {
       editor.focus();
       const content = editor.selection.getContent({ format: 'html' });

@@ -999,6 +999,11 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
+"@hugerte/hugerte-vue@^1.0.0":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@hugerte/hugerte-vue/-/hugerte-vue-1.0.2.tgz#47b735bdda41c7ef6c2213dc26d10b0f35fe0e66"
+  integrity sha512-PsOkEcX8/MNTCJ1D6aePFDO4Q0T+YAbL8/VlvTMMzfetnpTVyqsnxKqh5NDqmZk066c81nJuby1svnhSky95ww==
+
 "@humanwhocodes/config-array@^0.5.0":
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.5.0.tgz#1407967d4c6eecd7388f83acf1eaf4d0c6e58ef9"
@@ -1223,13 +1228,6 @@
   integrity sha512-Roe0bvnXDtSUvB6XMyAKAA6tsEikoVgSS4nLJptm4IPx1ylIj5KTwDtwuDr083cq9Pb4jCdmpj9wqz365NamLw==
   dependencies:
     serialize-javascript "^5.0.1"
-
-"@tinymce/tinymce-vue@^4":
-  version "4.0.7"
-  resolved "https://registry.yarnpkg.com/@tinymce/tinymce-vue/-/tinymce-vue-4.0.7.tgz#811dd87a2a9f70e60c43c2d9d932771c0c8b4677"
-  integrity sha512-1esB8wGWrjPCY+rK8vy3QB1cxwXo7HLJWuNrcyPl6LOVR+QJjub0OiV/C+TUEsLN6OpCtRv+QnIqMC5vXz783Q==
-  dependencies:
-    tinymce "^5.5.0"
 
 "@toby.mosque/quasar-ui-qdatetimepicker@^2.0.0-rc.3":
   version "2.0.0-rc.3"
@@ -3963,6 +3961,11 @@ http-proxy@^1.18.1:
     follow-redirects "^1.0.0"
     requires-port "^1.0.0"
 
+hugerte@^1.0.9:
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/hugerte/-/hugerte-1.0.9.tgz#cd8ae5df8b63cf36dd3c160c71d05be8db0e92f5"
+  integrity sha512-HNWGaUyyfmYkk07fEJ6Y9v8hnCwgg9OyS9Kqxbmi1EZbOJlOd4Z5Fn/gkMuV4vvp25vPLK92BX6Q/7gCywIaOw==
+
 human-signals@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/human-signals/-/human-signals-2.1.0.tgz#dc91fcba42e4d06e4abaed33b3e7a3c02f514ea0"
@@ -6314,11 +6317,6 @@ thunky@^1.0.2:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/thunky/-/thunky-1.1.0.tgz#5abaf714a9405db0504732bbccd2cedd9ef9537d"
   integrity sha512-eHY7nBftgThBqOyHGVN+l8gF0BucP09fMo0oO/Lb0w1OF80dJv+lDVpXG60WMQvkcxAkNybKsrEIE3ZtKGmPrA==
-
-tinymce@^5.5.0:
-  version "5.10.6"
-  resolved "https://registry.yarnpkg.com/tinymce/-/tinymce-5.10.6.tgz#ea03927e9d20c035619dfd32ec4fd471c55e32c5"
-  integrity sha512-bnF2LUoycDsoZZLQBNHbOijrmoJuEeR1rQdqgo4s77BedufpOVnDh00OZKbseHeTMCxhVH05wvOqxLsi6vpeZw==
 
 tmp@^0.0.33:
   version "0.0.33"
