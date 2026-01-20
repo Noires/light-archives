@@ -44,9 +44,7 @@ const FONTS = [
 
 const FONT_OPTION = FONTS.map(font => `${font}=${font},sans-serif`).join(';');
 
-const RTE_PLUGINS = [
-  'advlist autolink charmap code help hr image link lists nonbreaking paste searchreplace table visualblocks wordcount'
-];
+const RTE_PLUGINS = 'advlist autolink charmap code help hr image link lists nonbreaking paste searchreplace table visualblocks wordcount';
 
 const RTE_OPTIONS = {
   toolbar:
@@ -58,7 +56,7 @@ const RTE_OPTIONS = {
   toolbar_persist: true,
   menu: {
     edit: { title: 'Bearbeiten', items: 'undo redo | cut copy paste | selectall | searchreplace' },
-    view: { title: 'Ansicht', items: 'code | visualaid visualchars visualblocks' },
+    view: { title: 'Ansicht', items: 'code' },
     insert: { title: 'Einfügen', items: 'image gallery upload link | charmap nonbreaking hr | hidedetails' },
     format: { title: 'Format', items: 'bold italic underline strikethrough superscript subscript | formats blockformats fontformats fontsizes align lineheight | forecolor backcolor | removeformat' },
     list: { title: 'Listen', items: 'outdent indent' },
@@ -176,12 +174,12 @@ export default class HtmlEditor extends Vue.with(Props) {
   }
 
   get options() {
-    let plugins: string[];
+    let plugins: string;
 
     if (this.allowImages) {
       plugins = RTE_PLUGINS;
     } else {
-      plugins = RTE_PLUGINS.map(str => str.replace(/image/g, ''));
+      plugins = RTE_PLUGINS.replace(/\bimage\b/g, '').replace(/\s+/g, ' ').trim();
     }
 
     return {
