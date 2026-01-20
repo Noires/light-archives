@@ -550,6 +550,28 @@ export class CharactersService {
     }
   }
 
+  async removePendingCharacter(characterId: number, user: UserInfo): Promise<void> {
+    const character = await this.characterRepo.findOne({
+      where: {
+        id: characterId,
+        user: {
+          id: user.id,
+        },
+      },
+    });
+
+    if (!character) {
+      throw new NotFoundException('Character not found');
+    }
+
+    if (character.verifiedAt) {
+      throw new ConflictException('Character already verified');
+    }
+
+    await this.characterRepo.remove(character);
+    await this.publicAuthService.notifyUserChanged(user.id);
+  }
+
   // Utility methods
 
 

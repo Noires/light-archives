@@ -43,6 +43,10 @@ export default class CharactersAPI {
     return this.transport.authPost<CharacterRefreshResultDto>('refresh', request);
   }
 
+  async deleteAccountCharacter(id: number): Promise<void> {
+    await this.transport.authDelete<void>(`${id}`);
+  }
+
   async getCharacterContent(id: number): Promise<CharacterContentDto> {
     return this.transport.get<CharacterContentDto>(`${id}/content`);
   }

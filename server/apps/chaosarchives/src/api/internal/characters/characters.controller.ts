@@ -16,7 +16,7 @@ import { ImageDto } from '@app/shared/dto/image/image.dto';
 import { MyContentDto } from '@app/shared/dto/characters/my-content.dto';
 import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
 import { Role } from '@app/shared/enums/role.enum';
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ImagesService } from '../images/images.service';
 import { StoriesService } from '../stories/stories.service';
 import { CharactersService } from './characters.service';
@@ -48,6 +48,15 @@ export class CharactersController {
     @CurrentUser() user?: UserInfo,
   ): Promise<CharacterProfileDto> {
     return this.charactersService.getCharacterProfileById(id, user);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  async removePendingCharacter(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: UserInfo,
+  ): Promise<void> {
+    await this.charactersService.removePendingCharacter(id, user);
   }
 
   @Put('profile')

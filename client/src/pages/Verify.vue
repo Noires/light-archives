@@ -60,6 +60,15 @@
             <li><strong>Klicke erneut auf Bestätigen</strong> um deine Aenderungen zu speichern.</li>
           </ol>
           <p>Diese Seite wird sich automatisch aktualisieren sobald sie den Code in deiner Vorstellung erkennt.</p>
+          <div class="page-verify__actions">
+            <q-btn
+              outline
+              color="negative"
+              icon="delete"
+              label="Falschen Charakter entfernen"
+              @click="confirmRemoveCharacter"
+            />
+          </div>
         </template>
       </q-card-section>
     </q-card>
@@ -166,11 +175,43 @@ export default class PageVerify extends Vue {
       component: SwitchCharacterDialog
     });
   }
+
+  confirmRemoveCharacter() {
+    const characterName = this.$store.getters.character?.name || 'diesen Charakter';
+    const characterId = this.$store.getters.characterId;
+    if (!characterId) {
+      return;
+    }
+
+    this.$q.dialog({
+      title: 'Charakter entfernen?',
+      message: `Möchtest du ${characterName} wirklich entfernen?`,
+      cancel: true,
+      persistent: true,
+    }).onOk(async () => {
+      try {
+        await this.$api.characters.deleteAccountCharacter(characterId);
+        const session = await this.$api.user.getSession();
+        this.$store.commit('setUser', session);
+        notifySuccess('Charakter wurde entfernt.');
+
+        if (session.characters.length === 0) {
+          void this.$router.push('/');
+        }
+      } catch (e) {
+        notifyError(e);
+      }
+    });
+  }
 }
 </script>
 
 <style lang="scss">
 .page-verify__card {
   margin-bottom: 16px;
+}
+
+.page-verify__actions {
+  margin-top: 12px;
 }
 </style>
