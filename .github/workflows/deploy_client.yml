@@ -45,7 +45,7 @@ jobs:
           port: ${{ secrets.LIGHT_ARCHIVES_PORT }}
           key: ${{ secrets.LIGHT_ARCHIVES_PRIVATESSHKEY }}
           script: |
-            rm -rf ${{ secrets.LIGHT_ARCHIVES_DIRECTORY }}/*
+            rm -rf ${{ secrets.LIGHT_ARCHIVES_DIRECTORY }}/* || true
       - name: Copy files via SSH
         uses: appleboy/scp-action@v1
         with:
