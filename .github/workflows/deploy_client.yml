@@ -55,4 +55,4 @@ jobs:
           key: ${{ secrets.LIGHT_ARCHIVES_PRIVATESSHKEY }}
           source: "./client/dist/spa/*"
           target: ${{ secrets.LIGHT_ARCHIVES_DIRECTORY }}
-          strip_components: 2
+          strip_components: 3

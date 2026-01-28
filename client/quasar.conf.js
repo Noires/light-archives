@@ -95,7 +95,7 @@ module.exports = configure(function (ctx) {
 
       proxy: {
       '/api': {
-        target: 'https://www.elpisgarten.de',
+        target: 'https://elpisgarten.de/',
         changeOrigin: true,
       }
       }
