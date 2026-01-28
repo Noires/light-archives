@@ -52,8 +52,8 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @Post('resend-confirmation-email')
-  async resendConfirmationEmail(@CurrentUser() user: UserInfo): Promise<void> {
-    await this.userService.resendConfirmationEmail(user);
+  async resendConfirmationEmail(@CurrentUser() _user: UserInfo): Promise<void> {
+    throw new GoneException('Email confirmation has been replaced by Discord login.');
   }
 
   @Post('login')

@@ -1,6 +1,5 @@
 import { CurrentUser } from '@app/auth/decorators/current-user.decorator';
 import { UserInfo } from '@app/auth/model/user-info';
-import { serverConfiguration } from '@app/configuration';
 import { Character, User } from '@app/entity';
 import { checkPassword, generateVerificationCode, hashPassword } from '@app/security';
 import { ChangeEmailRequestDto } from '@app/shared/dto/user/change-email-request.dto';
@@ -21,7 +20,6 @@ import parse from 'node-html-parser';
 import { firstValueFrom } from 'rxjs';
 import { Connection, EntityManager, Repository } from 'typeorm';
 import { isQueryFailedError } from '../../../common/db';
-import { MailService } from '../../../mail/mail.service';
 import { CharactersService } from '../characters/characters.service';
 
 @Injectable()
@@ -31,7 +29,6 @@ export class UserService {
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Character) private characterRepo: Repository<Character>,
     private charactersService: CharactersService,
-    private mailService: MailService,
     private httpService: HttpService,
   ) {}
 
@@ -54,7 +51,6 @@ export class UserService {
         },
       );
 
-      void this.sendVerificationMail(userEntity, characterEntity.name); // no await
       return {
         userId: userEntity.id,
         characterVerificationCode: characterEntity.verificationCode!, // set by saveCharacterForUser
@@ -88,40 +84,6 @@ export class UserService {
       await this.updatePostVerifyRole(em, user);
       return user.id;
     });
-  }
-
-  async resendConfirmationEmail(user: UserInfo): Promise<void> {
-    const userEntity = (await this.userRepo.findOne({
-      where: {
-        id: user.id,
-      },
-      select: [ 'id', 'email', 'verificationCode' ]
-    }))!;
-
-    if (userEntity.verifiedAt) {
-      throw new ConflictException('Email already verified');
-    }
-
-    const characterData = await this.characterRepo.findOne({
-      where: {
-        user: userEntity
-      },
-      select: [ 'id', 'name' ],
-    });
-
-    if (!characterData) {
-      throw new ConflictException('User has no character? This should be impossible');
-    }
-
-    await this.sendVerificationMail(userEntity, characterData.name);
-  }
-
-  private async sendVerificationMail(user: User, name: string): Promise<void> {
-    const link = `${serverConfiguration.frontendRoot}/confirm-email/${user.verificationCode}`;
-    if (!user.email) {
-      throw new BadRequestException('User email is not set');
-    }
-    await this.mailService.sendUserVerificationMail(user.email, name, link);
   }
 
   toSession(userInfo: UserInfo): SessionDto {
@@ -300,8 +262,7 @@ export class UserService {
       return;
     }
 
-    const link = `${serverConfiguration.frontendRoot}/reset-password/${result.verificationCode}`;
-    await this.mailService.sendPasswordResetMail(result.email, result.name, link);
+    return;
   }
 
   async resetPassword(request: ResetPasswordRequestDto): Promise<void> {
@@ -387,8 +348,7 @@ export class UserService {
       };
     });
 
-    const link = `${serverConfiguration.frontendRoot}/confirm-new-email/${userEntity.newEmailVerificationCode}`;
-    await this.mailService.sendNewEmailVerificationMail(request.newEmail, characterName, link);
+    return;
   }
 
   async confirmNewEmail(newEmailVerificationCode: string): Promise<number> {

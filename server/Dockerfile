@@ -15,7 +15,7 @@ RUN npm install -g @nestjs/cli && rm -rf /root/npm/_cacache
 COPY package.json yarn.lock ./
 
 # Switch to unprivileged user
-RUN groupmod -g 1000 node && usermod -u 1000 -g 1000 node && chown -R node.node /usr/src/app
+RUN groupmod -g 1000 node && usermod -u 1000 -g 1000 node && chown -R node:node /usr/src/app
 USER node
 
 # Build application

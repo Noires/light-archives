@@ -9,7 +9,6 @@ import { RppModule } from './api/rpp/rpp.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GlobalExceptionsFilter } from './global-exceptions.filter';
-import { MailModule } from './mail/mail.module';
 import { UpdatesModule } from './websocket/updates/updates.module';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
 
@@ -18,7 +17,6 @@ import { RedisModule } from '@liaoliaots/nestjs-redis';
     TypeOrmModule.forRootAsync({ useFactory: () => dbConfiguration }),
     RedisModule.forRootAsync({ useFactory: () => ({ config: redisConfiguration }) }),
     EventEmitterModule.forRoot(),
-    MailModule,
     AuthModule,
     InternalApiModule,
     RppModule,

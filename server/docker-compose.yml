@@ -1,8 +1,6 @@
-version: '3.7'
-
 services:
   redis:
-    image: redis:6-alpine
+    image: redis:8.4-alpine
     restart: always
     volumes:
       - /home/_USER_/volumes/redis:/data:rw,z
@@ -12,7 +10,7 @@ services:
       - 6379
 
   mariadb:
-    image: mariadb:10.6
+    image: mariadb:11.8
     restart: always
     volumes:
       - /home/_USER_/volumes/mariadb:/var/lib/mysql:rw,z
