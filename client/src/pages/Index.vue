@@ -8,7 +8,9 @@
           Willkommen im Elpisgarten, der Enzyklopädie für Rollenspiel in Final Fantasy XIV.
           Stelle Charaktere vor, bewirb Events und Geschichten oder schau nach, wo aktuell RP stattfindet.
           Jede Rollenspielerin und jeder Rollenspieler ist eingeladen, eigene Projekte oder Charaktere hier darzustellen.
-          <strong>Hinweis:</strong> Dieses Wiki kann Spoiler zur Geschichte von Final Fantasy XIV oder zum Rollenspiel enthalten.
+        </p>
+        <p class="page-index__notice">
+          <strong>Hinweis:</strong> Diese Seite kann Spoiler zur Geschichte von Final Fantasy XIV oder zum Rollenspiel enthalten.
           Schreibe und lies nur so viel, wie für dich passend ist.
         </p>
         <div class="page-index__hero-cta">
@@ -350,6 +352,12 @@ export default class PageIndex extends Vue {
 .page-index__lead {
   margin: 0;
   color: rgba(35, 35, 35, 0.7);
+  max-width: none;
+}
+
+.page-index__notice {
+  margin: 10px 0 0;
+  color: rgba(35, 35, 35, 0.68);
   max-width: none;
 }
 
