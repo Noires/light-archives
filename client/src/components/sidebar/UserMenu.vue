@@ -24,7 +24,7 @@
         </q-item-section>
         <q-item-section>
           <q-item-label class="user-menu__discord-login-label">
-            Login with Discord
+            Login mit Discord
           </q-item-label>
         </q-item-section>
       </q-item>
