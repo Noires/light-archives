@@ -16,88 +16,94 @@
         <div class="page-stories__hero-chip">Community · kuratiert</div>
       </div>
     </header>
-    <q-table
-      class="page-stories__table"
-      :columns="columns"
-      :rows="stories"
-      row-key="id"
-      v-model:pagination="pagination"
-      grid
-      hide-header
-      @request="onPageRequest"
-    >
-      <template v-slot:top>
-        <section class="page-stories__top">
-          <q-form class="page-stories__filter">
-            <q-input
-              class="page-stories__filter-field page-stories__filter-search"
-              v-model="searchQuery"
-              label="Suche"
-              debounce="200"
-              filled
-              dense
-              clearable
-              @update:model-value="refresh"
-            />
-            <q-select
-              class="page-stories__filter-field page-stories__filter-type"
-              v-model="type"
-              label="Typ"
-              emit-value
-              map-options
-              :options="typeOptions"
-              filled
-              dense
-              @update:model-value="refresh"
-            />
-            <q-select
-              class="page-stories__filter-field page-stories__filter-tag"
-              v-model="tag"
-              label="Schlagworte"
-              :options="tagOptions"
-              use-input
-              emit-value
-              map-options
-              filled
-              dense
-              @filter="onTagFilter"
-              @update:model-value="refresh"
-            />
-          </q-form>
-          <div class="page-stories__result">
-            <span class="page-stories__result-text">
-              {{ pagination.rowsNumber }} gefundene Geschichten
-            </span>
-          </div>
-        </section>
-      </template>
-      <template v-slot:item="props">
-        <div class="page-stories__card">
-          <router-link :to="getLink(props.row)" class="page-stories__card-link">
-            <div class="page-stories__card-top">
-              <span class="page-stories__card-type">
-                {{ $display.storyTypes[props.row.type] }}
-              </span>
-              <div class="page-stories__card-meta">
-                <span class="page-stories__card-author">{{ props.row.author }}</span>
-                <span class="page-stories__card-time">{{ $display.relativeTime(props.row.createdAt) }}</span>
+    <section class="page-stories__content">
+      <div class="page-stories__toolbar">
+        <q-input
+          class="page-stories__search"
+          v-model="searchQuery"
+          label="Suche"
+          debounce="200"
+          filled
+          dense
+          clearable
+          @update:model-value="onFilterChange"
+        />
+        <q-select
+          class="page-stories__type-select"
+          v-model="type"
+          label="Typ"
+          emit-value
+          map-options
+          :options="typeOptions"
+          filled
+          dense
+          @update:model-value="onFilterChange"
+        />
+        <q-select
+          class="page-stories__tag-select"
+          v-model="tag"
+          label="Schlagworte"
+          :options="tagOptions"
+          use-input
+          emit-value
+          map-options
+          filled
+          dense
+          @filter="onTagFilter"
+          @update:model-value="onFilterChange"
+        />
+        <div class="page-stories__stats">
+          {{ pagination.rowsNumber }} gefundene Geschichten
+        </div>
+        <q-pagination
+          class="page-stories__pagination"
+          :model-value="pagination.page"
+          :max="maxPage"
+          input
+          @update:model-value="setPage"
+        />
+      </div>
+      <div class="page-stories__list">
+        <q-table
+          class="page-stories__table"
+          :columns="columns"
+          :rows="stories"
+          row-key="id"
+          v-model:pagination="pagination"
+          grid
+          hide-header
+          hide-bottom
+          @request="onPageRequest"
+        >
+          <template v-slot:item="props">
+            <div class="page-stories__card">
+              <router-link :to="getLink(props.row)" class="page-stories__card-link">
+                <div class="page-stories__card-top">
+                  <span class="page-stories__card-type">
+                    {{ $display.storyTypes[props.row.type] }}
+                  </span>
+                  <div class="page-stories__card-meta">
+                    <span class="page-stories__card-author">{{ props.row.author }}</span>
+                    <span class="page-stories__card-time">{{ $display.relativeTime(props.row.createdAt) }}</span>
+                  </div>
+                </div>
+                <h3 class="page-stories__card-title">{{ props.row.title }}</h3>
+                <p v-if="props.row.excerpt" class="page-stories__card-excerpt">{{ props.row.excerpt }}</p>
+                <span class="page-stories__card-action">Lesen</span>
+              </router-link>
+            </div>
+          </template>
+          <template v-slot:no-data>
+            <div class="page-stories__empty">
+              <div class="page-stories__empty-title">Noch keine Geschichten gefunden.</div>
+              <div class="page-stories__empty-subtitle">
+                Passe die Filter an oder starte mit einer neuen Geschichte.
               </div>
             </div>
-            <h3 class="page-stories__card-title">{{ props.row.title }}</h3>
-            <p v-if="props.row.excerpt" class="page-stories__card-excerpt">{{ props.row.excerpt }}</p>
-            <span class="page-stories__card-action">Lesen</span>
-          </router-link>
-        </div>
-      </template>
-      <template v-slot:no-data>
-        <div class="page-stories__empty">
-          <div class="page-stories__empty-title">Noch keine Geschichten gefunden.</div>
-          <div class="page-stories__empty-subtitle">
-            Passe die Filter an oder starte mit einer neuen Geschichte.
-          </div>
-        </div>
-      </template>
-    </q-table>
+          </template>
+        </q-table>
+      </div>
+    </section>
   </q-page>
 </template>
 
@@ -185,6 +191,10 @@ export default class PageStories extends Vue {
     ];
   }
 
+  get maxPage() {
+    return Math.max(1, Math.ceil(this.pagination.rowsNumber / this.pagination.rowsPerPage));
+  }
+
   setContent(stories: PagingResultDto<StorySummaryDto>, tags: string[]) {
 		this.allTagOptions = [
 			{
@@ -217,9 +227,19 @@ export default class PageStories extends Vue {
 		update();
 	}
 
+  onFilterChange() {
+    this.pagination.page = 1;
+    this.refresh();
+  }
+
 	refresh() {
 		void this.onPageRequest({ pagination: this.pagination });
 	}
+
+  setPage(newPage: number) {
+    this.pagination.page = Math.min(Math.max(newPage, 1), this.maxPage);
+    this.refresh();
+  }
 
   async onPageRequest(props: { pagination: { page: number; rowsPerPage: number } }) {
     const { page, rowsPerPage } = props.pagination;
@@ -338,62 +358,72 @@ export default class PageStories extends Vue {
   font-weight: 600;
 }
 
-.page-stories__top {
+.page-stories__content {
+  position: relative;
+  z-index: 1;
+}
+
+.page-stories__toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 0.6fr) minmax(200px, 0.8fr) auto auto;
+  gap: 12px;
   align-items: center;
-  gap: 16px;
   padding: 12px 14px;
+  margin-bottom: 18px;
   border-radius: 0;
   border: 1px solid rgba(221, 180, 118, 0.25);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
 }
 
-.page-stories__filter {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(160px, 0.6fr) minmax(200px, 0.8fr);
-  gap: 12px;
-  align-items: center;
-}
-
-.page-stories__filter-field .q-field__control {
+.page-stories__search .q-field__control,
+.page-stories__type-select .q-field__control,
+.page-stories__tag-select .q-field__control {
   background: #f6f1e8;
   border-radius: 0;
 }
 
-.page-stories__filter-field .q-field__native,
-.page-stories__filter-field .q-field__label {
+.page-stories__search .q-field__native,
+.page-stories__search .q-field__label,
+.page-stories__type-select .q-field__native,
+.page-stories__type-select .q-field__label,
+.page-stories__tag-select .q-field__native,
+.page-stories__tag-select .q-field__label {
   font-size: 0.9rem;
 }
 
-.page-stories__result {
+.page-stories__stats {
   text-align: right;
-}
-
-.page-stories__result-text {
+  white-space: nowrap;
   font-family: $header-font;
   font-size: 1.05rem;
   color: #20323d;
 }
 
-.page-stories__table {
-  position: relative;
-  z-index: 1;
+.page-stories__pagination {
+  justify-self: end;
+}
+
+.page-stories__list {
+  padding: 12px;
   border: 1px solid rgba(221, 180, 118, 0.25);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
 }
 
-.page-stories__table .q-table__top {
-  padding: 12px 12px 18px;
+.page-stories__table {
+  position: relative;
+  z-index: 1;
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .page-stories__table .q-table__grid-content {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 14px;
-  padding: 12px;
+  padding: 0;
 }
 
 .page-stories__table .q-table__grid-item {
@@ -524,17 +554,16 @@ export default class PageStories extends Vue {
     justify-items: start;
   }
 
-  .page-stories__top {
-    grid-template-columns: 1fr;
-    text-align: left;
-  }
-
-  .page-stories__result {
-    text-align: left;
-  }
-
-  .page-stories__filter {
+  .page-stories__toolbar {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .page-stories__stats {
+    text-align: left;
+  }
+
+  .page-stories__pagination {
+    justify-self: start;
   }
 }
 

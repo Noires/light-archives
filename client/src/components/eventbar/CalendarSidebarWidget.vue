@@ -628,7 +628,6 @@ export default class CalendarSidebarWidget extends Vue {
 }
 
 .calendar-widget__event-card {
-  border-radius: 12px;
   background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -681,11 +680,16 @@ export default class CalendarSidebarWidget extends Vue {
   gap: 10px;
   padding: 12px;
   cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .calendar-widget__event-summary:focus {
-  outline: 2px solid rgba(22, 98, 149, 0.25);
-  outline-offset: 2px;
+  outline: none;
+}
+
+.calendar-widget__event-summary:hover {
+  background: rgba(221, 180, 118, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(221, 180, 118, 0.25);
 }
 
 .calendar-widget__event-summary-text {
