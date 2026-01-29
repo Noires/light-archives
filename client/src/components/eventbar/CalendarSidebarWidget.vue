@@ -311,7 +311,7 @@ export default class CalendarSidebarWidget extends Vue {
 
     return collected
       .filter((event) => {
-        const endDateTime = event.endDateTime ?? event.startDateTime;
+        const endDateTime = event.endDateTime ? event.endDateTime : event.startDateTime;
         return event.startDateTime >= startOfDay || endDateTime >= startOfDay;
       })
       .sort((a, b) => a.startDateTime - b.startDateTime)

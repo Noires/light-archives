@@ -1,5 +1,5 @@
 <template>
-  <q-page>
+  <q-page class="page-verify">
     <template v-if="verificationStatus.characterVerified">
       <h2>Verifizierung abgeschlossen</h2>
       <p>
@@ -15,10 +15,13 @@
     </template>
     <q-card class="page-verify__card">
       <q-card-section
-        :class="{
-          'bg-positive': verificationStatus.characterVerified,
-          'text-white': verificationStatus.characterVerified,
-        }"
+        :class="[
+          'page-verify__card-section',
+          {
+            'bg-positive': verificationStatus.characterVerified,
+            'text-white': verificationStatus.characterVerified,
+          }
+        ]"
       >
         <h5>Charakterverifizierung</h5>
         <template v-if="verificationStatus.characterVerified">
@@ -39,9 +42,9 @@
             <strong>{{ $store.getters.character?.name }}</strong> dein Charakter ist, indem du das Profil im Lodestone
             bearbeitest. Um die Eigentümerschaft dieses Charakters zu bestätigen, sind die folgenden Schritte erforderlich:
           </p>
-          <ol>
+          <ol class="page-verify__steps">
             <li>
-              Oeffne
+              Öffne
               <a :href="lodestoneCharacterLink" target="_blank"
                 >{{ $store.getters.character?.name }}'s Profilseite im Lodestone
                 <q-icon class="external-link-icon" name="launch" /></a
@@ -56,10 +59,10 @@
                 </template>
               </q-input>
             </li>
-            <li>Klicke auf Bestätigen um eine Vorschau deiner Aenderungen zu sehen.</li>
-            <li><strong>Klicke erneut auf Bestätigen</strong> um deine Aenderungen zu speichern.</li>
+            <li>Klicke auf Bestätigen, um eine Vorschau deiner Änderungen zu sehen.</li>
+            <li><strong>Klicke erneut auf Bestätigen</strong> um deine Änderungen zu speichern.</li>
           </ol>
-          <p>Diese Seite wird sich automatisch aktualisieren sobald sie den Code in deiner Vorstellung erkennt.</p>
+          <p>Diese Seite wird sich automatisch aktualisieren, sobald sie den Code in deiner Vorstellung erkennt.</p>
           <div class="page-verify__actions">
             <q-btn
               outline
@@ -86,9 +89,7 @@ const REFRESH_INTERVAL = 5000;
 
 export default class PageVerify extends Vue {
   verificationStatus: VerificationStatusDto = {
-    emailVerified: false,
     characterVerified: false,
-    email: '',
     characterVerificationCode: null,
   };
 
@@ -207,11 +208,91 @@ export default class PageVerify extends Vue {
 </script>
 
 <style lang="scss">
+.page-verify {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.page-verify h2 {
+  font-family: Michroma, sans-serif;
+  letter-spacing: 0.02em;
+  margin-bottom: 8px;
+}
+
+.page-verify > p {
+  font-size: 1.05rem;
+  color: #333;
+}
+
 .page-verify__card {
-  margin-bottom: 16px;
+  margin: 18px 0 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(221, 180, 118, 0.35);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 246, 242, 0.98));
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+  animation: page-verify-rise 420ms ease-out both;
+}
+
+.page-verify__card-section {
+  position: relative;
+  padding: 20px 24px 24px;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.page-verify__card-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(800px 200px at 0% 0%, rgba(221, 180, 118, 0.16), transparent);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.page-verify__card-section.bg-positive::before {
+  opacity: 0.2;
+}
+
+.page-verify__card-section > * {
+  position: relative;
+  z-index: 1;
+}
+
+.page-verify__steps {
+  margin: 14px 0 12px;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.page-verify__steps li {
+  line-height: 1.45;
 }
 
 .page-verify__actions {
   margin-top: 12px;
+}
+
+@keyframes page-verify-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 700px) {
+  .page-verify__card-section {
+    padding: 16px 16px 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-verify__card {
+    animation: none;
+  }
 }
 </style>

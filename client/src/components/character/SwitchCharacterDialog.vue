@@ -136,8 +136,8 @@ export default class SwitchCharacterDialog extends Vue {
       return true;
     }
 
-    notifyError('Bitte akzeptiere zuerst die Nutzungsbedingungen, bevor du einen Charakter hinzufuegst.');
-    void this.$router.push('/signup');
+    notifyError('Bitte akzeptiere zuerst die Nutzungsbedingungen, bevor du einen Charakter hinzufügst.');
+    void this.$router.push('/terms');
     this.hide();
     return false;
   }

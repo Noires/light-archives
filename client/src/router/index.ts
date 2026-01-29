@@ -56,11 +56,11 @@ export default route<StateInterface>(function ({ store }) {
 
       const needsTerms = session.characters.length === 0 && !session.termsAcceptedAt;
       if (needsTerms) {
-        return { path: '/signup' };
+        return { path: '/terms' };
       }
 
       const hasVerifiedCharacter = session.characters.some((character) => character.verified);
-      return { path: hasVerifiedCharacter ? '/calendar' : '/verify' };
+      return { path: hasVerifiedCharacter ? '/' : '/verify' };
     } catch (e) {
       api.setAccessToken(null);
       notifyError(e);

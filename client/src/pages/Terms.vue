@@ -1,17 +1,17 @@
 <template>
-  <q-page>
+  <q-page class="page-terms">
     <h2>Nutzungsbedingungen</h2>
-    <q-form class="page-signup__form" @submit.prevent="onAcceptTerms">
+    <q-form class="page-terms__card" @submit.prevent="onAcceptTerms">
       <p>
-        Willkommen bei <strong>Elpisgarten</strong>. Um einen Charakter hinzuzufuegen, musst du zuerst die Nutzungsbedingungen akzeptieren.
+        Willkommen bei <strong>Elpisgarten</strong>. Um einen Charakter hinzuzufügen, musst du zuerst die Nutzungsbedingungen akzeptieren.
       </p>
       <h6>Nutzungsbedingungen</h6>
       <div
-        class="page-signup__terms-of-use rounded-borders"
+        class="page-terms__terms-of-use rounded-borders"
         v-html="rules"
       ></div>
       <q-toggle v-model="accept" label="Ich akzeptiere die Nutzungsbedingungen" />
-      <div class="page-signup__button-bar">
+      <div class="page-terms__button-bar">
         <q-btn
           label="Akzeptieren und fortfahren"
           type="submit"
@@ -29,7 +29,7 @@ import rules from 'src/markdown/rules.md';
 import { notifyError } from 'src/common/notify';
 import { Vue } from 'vue-class-component';
 
-export default class PageSignUp extends Vue {
+export default class PageTerms extends Vue {
   readonly rules = rules;
 
   accept = false;
@@ -77,20 +77,68 @@ export default class PageSignUp extends Vue {
 </script>
 
 <style lang="scss">
-.page-signup__form {
-  max-width: 600px;
+.page-terms {
+  max-width: 960px;
+  margin: 0 auto;
 }
 
-.page-signup__terms-of-use {
-  border: 1px solid #aaa;
-  background: white;
+.page-terms h2 {
+  font-family: Michroma, sans-serif;
+  letter-spacing: 0.02em;
+  margin-bottom: 8px;
+}
+
+.page-terms__card > p {
+  font-size: 1.05rem;
+  color: #333;
+}
+
+.page-terms__card {
+  margin: 16px 0 20px;
+  padding: 20px 24px 24px;
+  border-radius: 18px;
+  border: 1px solid rgba(221, 180, 118, 0.35);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 246, 242, 0.98));
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16);
+  animation: page-terms-rise 420ms ease-out both;
+}
+
+.page-terms__terms-of-use {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.96);
   padding: 16px;
   height: 400px;
   overflow-y: auto;
+  box-shadow: inset 0 0 0 1px rgba(221, 180, 118, 0.2);
 }
 
-.page-signup__button-bar {
-  margin-top: 8px;
+.page-terms__button-bar {
+  margin-top: 12px;
   margin-bottom: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+@keyframes page-terms-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 700px) {
+  .page-terms__card {
+    padding: 16px 16px 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-terms__card {
+    animation: none;
+  }
 }
 </style>

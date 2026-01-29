@@ -1,5 +1,4 @@
 import { Character, User } from '@app/entity';
-import { checkPassword } from '@app/security';
 import { Role } from '@app/shared/enums/role.enum';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -22,19 +21,9 @@ export class AuthImplService {
     private readonly redisService: Redis,
   ) {}
 
-  async validateUser(username: string, password: string): Promise<UserInfo> {
-    const user = await this.userRepo.findOneBy({ email: username });
-
-    if (!user || !user.passwordHash || !(await checkPassword(password, user.passwordHash))) {
-      throw new UnauthorizedException('Invalid email or password');
-    }
-
-    return this.getAndCacheUserInfo(user);
-  }
-
   async findOrCreateDiscordUser(profile: DiscordProfile): Promise<UserInfo> {
     const discordId = profile.id;
-    const email = profile.email ?? null;
+    const email = profile.email ? null;
     const whereConditions: Array<FindOptionsWhere<User>> = [ { discordId } ];
 
     if (email) {

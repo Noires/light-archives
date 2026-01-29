@@ -61,17 +61,45 @@ export default class ThumbGallery extends Vue.with(Props) {
 	margin-right: 12px;
 	margin-bottom: 12px;
 	cursor: pointer;
+	position: relative;
+	border-radius: 0;
+	overflow: hidden;
+	background: linear-gradient(135deg, rgba(24, 32, 48, 0.08), rgba(24, 32, 48, 0.02));
+	box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.thumb-gallery__image-wrapper:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
+}
+
+.thumb-gallery__image-wrapper::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0));
+	opacity: 0;
+	transition: opacity 0.2s ease;
+	pointer-events: none;
 }
 
 .thumb-gallery img {
 	background: #80a0c0;
 	width: 174px;
 	height: 174px;
+	display: block;
+	object-fit: cover;
+	transition: transform 0.25s ease, filter 0.25s ease;
 }
 
 .thumb-gallery img:hover {
-	filter: brightness(1.2);
-  transition: all 0.5s ease;
+	filter: brightness(1.05) saturate(1.05);
+	transform: scale(1.04);
+}
+
+.thumb-gallery__image-wrapper:hover::after {
+	opacity: 1;
 }
 
 @media screen and (max-width: $breakpoint-sm) {
@@ -102,6 +130,22 @@ export default class ThumbGallery extends Vue.with(Props) {
 	.thumb-gallery img {
 		width: 100%;
 		height: auto;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.thumb-gallery__image-wrapper,
+	.thumb-gallery img,
+	.thumb-gallery__image-wrapper::after {
+		transition: none;
+	}
+
+	.thumb-gallery__image-wrapper:hover {
+		transform: none;
+	}
+
+	.thumb-gallery img:hover {
+		transform: none;
 	}
 }
 </style>

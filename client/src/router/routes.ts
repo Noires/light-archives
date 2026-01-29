@@ -79,11 +79,11 @@ const routes: RouteRecordRaw[] = [
   // User actions
 
   {
-    path: '/signup',
+    path: '/terms',
     component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/SignUp.vue') }],
+    children: [{ path: '', component: () => import('pages/Terms.vue') }],
     meta: {
-      title: 'Anmelden'
+      title: 'Nutzungsbedingungen'
     },
   },
 

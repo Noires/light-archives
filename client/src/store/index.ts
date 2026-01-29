@@ -91,7 +91,7 @@ export default store(function (/* { ssrContext } */) {
           role: user.role,
           characters,
           currentCharacterId,
-          termsAcceptedAt: user.termsAcceptedAt ?? null
+          termsAcceptedAt: user.termsAcceptedAt ? user.termsAcceptedAt : null,
         };
       },
 

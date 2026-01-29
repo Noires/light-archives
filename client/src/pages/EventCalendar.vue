@@ -3,7 +3,9 @@
     <header class="page-event-calendar__header">
       <div>
         <h2>Eventkalender (Prototyp)</h2>
-        <div class="page-event-calendar__subtitle">{{ yearMonth }}</div>
+        <transition name="page-event-calendar__subtitle" mode="out-in">
+          <div :key="yearMonth" class="page-event-calendar__subtitle">{{ yearMonth }}</div>
+        </transition>
       </div>
       <div class="page-event-calendar__view-toggle">
         <q-btn-toggle
@@ -34,41 +36,45 @@
 
     <section v-if="viewMode === 'calendar'" class="page-event-calendar__layout">
       <div class="page-event-calendar__calendar">
-        <q-calendar-month
-          no-active-date
-          :model-value="dateStr"
-          :day-min-height="140"
-          :weekdays="[1, 2, 3, 4, 5, 6, 0]"
-        >
-          <template v-slot:day="{ scope: { timestamp } }">
-            <div
-              class="page-event-calendar__day"
-              :class="{ 'page-event-calendar__day_selected': isSelected(timestamp.date) }"
-              @click="selectDate(timestamp.date)"
+        <transition name="page-event-calendar__month" mode="out-in">
+          <div :key="dateStr" class="page-event-calendar__calendar-frame">
+            <q-calendar-month
+              no-active-date
+              :model-value="dateStr"
+              :day-min-height="140"
+              :weekdays="[1, 2, 3, 4, 5, 6, 0]"
             >
-              <div class="page-event-calendar__day-number">
-                {{ timestamp.day }}
-              </div>
-              <div class="page-event-calendar__day-icons">
+              <template v-slot:day="{ scope: { timestamp } }">
                 <div
-                  v-for="event in dayIconEvents(timestamp.date)"
-                  :key="event.id"
-                  class="page-event-calendar__day-icon"
+                  class="page-event-calendar__day"
+                  :class="{ 'page-event-calendar__day_selected': isSelected(timestamp.date) }"
+                  @click="selectDate(timestamp.date)"
                 >
-                  <q-img
-                    v-if="event.icon"
-                    :src="eventIconUrl(event)"
-                    :ratio="1"
-                    fit="cover"
-                    class="page-event-calendar__day-icon-img"
-                  />
-                  <q-icon v-else name="event" size="14px" />
-                  <q-tooltip>{{ event.title }}</q-tooltip>
+                  <div class="page-event-calendar__day-number">
+                    {{ timestamp.day }}
+                  </div>
+                  <div class="page-event-calendar__day-icons">
+                    <div
+                      v-for="event in dayIconEvents(timestamp.date)"
+                      :key="event.id"
+                      class="page-event-calendar__day-icon"
+                    >
+                      <q-img
+                        v-if="event.icon"
+                        :src="eventIconUrl(event)"
+                        :ratio="1"
+                        fit="cover"
+                        class="page-event-calendar__day-icon-img"
+                      />
+                      <q-icon v-else name="event" size="14px" />
+                      <q-tooltip>{{ event.title }}</q-tooltip>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </template>
-        </q-calendar-month>
+              </template>
+            </q-calendar-month>
+          </div>
+        </transition>
       </div>
 
       <aside class="page-event-calendar__sidebar">
@@ -79,7 +85,7 @@
             flat
             dense
             size="sm"
-            label="Zuruecksetzen"
+            label="Zurücksetzen"
             @click="clearSelection"
           />
         </div>
@@ -99,7 +105,7 @@
               <span class="page-event-calendar__date-divider">|</span>
               <span class="page-event-calendar__date-weekday">{{ group.weekday }}</span>
             </div>
-            <div class="page-event-calendar__sidebar-cards">
+            <transition-group name="page-event-calendar__cards" tag="div" class="page-event-calendar__sidebar-cards">
               <div
                 v-for="event in group.events"
                 :key="event.id"
@@ -160,7 +166,7 @@
                           flat
                           color="secondary"
                           icon="launch"
-                          label="Link oeffnen"
+                          label="Link öffnen"
                           type="a"
                           target="_blank"
                           :href="event.link"
@@ -178,7 +184,7 @@
                   </q-slide-transition>
                 </div>
               </div>
-            </div>
+            </transition-group>
           </div>
         </div>
       </aside>
@@ -202,7 +208,7 @@
             <span class="page-event-calendar__date-divider">|</span>
             <span class="page-event-calendar__date-weekday">{{ group.weekday }}</span>
           </div>
-          <div class="page-event-calendar__list-cards">
+          <transition-group name="page-event-calendar__cards" tag="div" class="page-event-calendar__list-cards">
             <div
               v-for="event in group.events"
               :key="event.id"
@@ -263,7 +269,7 @@
                         flat
                         color="secondary"
                         icon="launch"
-                        label="Link oeffnen"
+                        label="Link öffnen"
                         type="a"
                         target="_blank"
                         :href="event.link"
@@ -281,7 +287,7 @@
                 </q-slide-transition>
               </div>
             </div>
-          </div>
+          </transition-group>
         </div>
       </template>
     </section>
@@ -373,8 +379,8 @@ export default class PageEventCalendar extends Vue {
   eventMap: { [k: string]: EventSummaryDto[] } = {};
 
   viewOptions = [
-    { label: 'Calendar', value: 'calendar' },
-    { label: 'List', value: 'list' }
+    { label: 'Kalender', value: 'calendar' },
+    { label: 'Liste', value: 'list' }
   ];
 
   setContent(date: DateTime, events: EventSummaryDto[]) {
@@ -582,8 +588,32 @@ export default class PageEventCalendar extends Vue {
 <style src="@quasar/quasar-ui-qcalendar/dist/QCalendarDay.min.css"></style>
 
 <style lang="scss">
+.page-event-calendar {
+  position: relative;
+  padding: 28px 18px 42px;
+  background: linear-gradient(180deg, #f8f4ee 0%, #ffffff 45%, #f2ede4 100%);
+  border-radius: 30px;
+  overflow: hidden;
+  --calendar-surface: rgba(255, 255, 255, 0.92);
+  --calendar-surface-muted: #f9f7f2;
+  --calendar-ink: #2d2d2d;
+  --calendar-accent: #ddb476;
+}
+
+.page-event-calendar::before {
+  content: '';
+  position: absolute;
+  inset: -120px 0 auto;
+  height: 260px;
+  background: radial-gradient(circle at 20% 30%, rgba(221, 180, 118, 0.18), transparent 55%),
+    radial-gradient(circle at 80% 0%, rgba(15, 76, 104, 0.12), transparent 50%);
+  pointer-events: none;
+}
+
 .page-event-calendar h2 {
   margin-bottom: 0;
+  font-family: $header-font;
+  letter-spacing: 0.02em;
 }
 
 .page-event-calendar__header {
@@ -591,56 +621,103 @@ export default class PageEventCalendar extends Vue {
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 18px;
+  padding: 20px 22px;
+  border: 1px solid rgba(221, 180, 118, 0.25);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+  position: relative;
+  z-index: 1;
 }
 
 .page-event-calendar__subtitle {
   font-family: $header-font;
-  font-size: 1.4em;
+  font-size: 1.2em;
+  color: rgba(35, 35, 35, 0.7);
 }
 
 .page-event-calendar__view-toggle .q-btn {
   text-transform: none;
+  border-radius: 0;
+}
+
+.page-event-calendar__view-toggle .q-btn:hover {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
 }
 
 .page-event-calendar__navbar {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   flex-wrap: wrap;
   gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(221, 180, 118, 0.25);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  position: relative;
+  z-index: 1;
+}
+
+.page-event-calendar__navbar > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.page-event-calendar__navbar .q-btn {
+  border-radius: 0;
 }
 
 .page-event-calendar__layout {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   gap: 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .page-event-calendar__calendar {
-  border-radius: 16px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(221, 180, 118, 0.25);
+  background: var(--calendar-surface);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
   overflow: hidden;
+  animation: page-event-calendar-rise 420ms ease-out both;
+}
+
+.page-event-calendar__calendar-frame {
+  width: 100%;
+  height: 100%;
 }
 
 .page-event-calendar__day {
   height: 100%;
   padding: 8px;
-  border-radius: 12px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  position: relative;
+  border: 1px solid transparent;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .page-event-calendar__day:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(221, 180, 118, 0.12);
+  border-color: rgba(221, 180, 118, 0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
 }
 
 .page-event-calendar__day_selected {
-  background: rgba(22, 98, 149, 0.2);
+  background: rgba(22, 98, 149, 0.18);
+  border-color: transparent;
+  box-shadow: 0 10px 22px rgba(22, 98, 149, 0.18);
+  animation: page-event-calendar-select 260ms ease-out;
 }
 
 .page-event-calendar__day-number {
   font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--calendar-ink);
 }
 
 .page-event-calendar__day-icons {
@@ -653,7 +730,6 @@ export default class PageEventCalendar extends Vue {
 .page-event-calendar__day-icon {
   width: 20px;
   height: 20px;
-  border-radius: 6px;
   background: rgba(0, 0, 0, 0.08);
   overflow: hidden;
   display: flex;
@@ -664,15 +740,17 @@ export default class PageEventCalendar extends Vue {
 .page-event-calendar__day-icon-img {
   width: 20px;
   height: 20px;
-  border-radius: 6px;
 }
 
 .page-event-calendar__sidebar {
-  background: #fff;
-  border-radius: 16px;
+  background: var(--calendar-surface);
   padding: 16px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(221, 180, 118, 0.25);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
   align-self: start;
+  animation: page-event-calendar-rise 420ms ease-out both;
+  position: sticky;
+  top: 120px;
 }
 
 .page-event-calendar__sidebar-header {
@@ -699,19 +777,21 @@ export default class PageEventCalendar extends Vue {
 }
 
 .page-event-calendar__event-card {
-  border-radius: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: #fff;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid rgba(221, 180, 118, 0.2);
+  background: #ffffff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  animation: page-event-calendar-fade 360ms ease-out both;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
 }
 
 .page-event-calendar__event-card--list {
-  background: #fdfdfd;
+  background: #ffffff;
 }
 
 .page-event-calendar__event-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
+  border-color: rgba(221, 180, 118, 0.35);
 }
 
 .page-event-calendar__event-link {
@@ -730,7 +810,6 @@ export default class PageEventCalendar extends Vue {
 .page-event-calendar__event-icon {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
   background: rgba(0, 0, 0, 0.06);
   display: flex;
   align-items: center;
@@ -740,7 +819,6 @@ export default class PageEventCalendar extends Vue {
 }
 
 .page-event-calendar__event-icon-img {
-  border-radius: 8px;
   width: 32px;
   height: 32px;
 }
@@ -756,11 +834,11 @@ export default class PageEventCalendar extends Vue {
   gap: 12px;
   padding: 16px;
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-.page-event-calendar__event-summary:focus {
-  outline: 2px solid rgba(22, 98, 149, 0.3);
-  outline-offset: 2px;
+.page-event-calendar__event-summary:hover {
+  background: rgba(221, 180, 118, 0.08);
 }
 
 .page-event-calendar__event-summary-text {
@@ -797,7 +875,7 @@ export default class PageEventCalendar extends Vue {
 }
 
 .page-event-calendar__event-details {
-  padding: 0 16px 16px;
+  padding: 8px 16px 16px;
 }
 
 .page-event-calendar__event-actions {
@@ -809,6 +887,8 @@ export default class PageEventCalendar extends Vue {
 .page-event-calendar__list {
   display: grid;
   gap: 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .page-event-calendar__list-title {
@@ -851,6 +931,74 @@ export default class PageEventCalendar extends Vue {
   padding: 12px 0;
 }
 
+@keyframes page-event-calendar-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes page-event-calendar-fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-event-calendar__subtitle-enter-active,
+.page-event-calendar__subtitle-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.page-event-calendar__subtitle-enter-from,
+.page-event-calendar__subtitle-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.page-event-calendar__cards-enter-active,
+.page-event-calendar__cards-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.page-event-calendar__cards-enter-from,
+.page-event-calendar__cards-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.page-event-calendar__cards-move {
+  transition: transform 0.25s ease;
+}
+
+.page-event-calendar__month-enter-active,
+.page-event-calendar__month-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.page-event-calendar__month-enter-from,
+.page-event-calendar__month-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+@keyframes page-event-calendar-select {
+  from {
+    transform: translateY(-1px) scale(0.99);
+  }
+  to {
+    transform: translateY(0) scale(1);
+  }
+}
+
 @media screen and (max-width: 1100px) {
   .page-event-calendar__layout {
     grid-template-columns: 1fr;
@@ -858,9 +1006,54 @@ export default class PageEventCalendar extends Vue {
 }
 
 @media screen and (max-width: $breakpoint-sm) {
+  .page-event-calendar {
+    padding: 20px 14px 36px;
+  }
+
   .page-event-calendar__header {
     flex-direction: column;
     align-items: flex-start;
+    padding: 16px;
+  }
+
+  .page-event-calendar__navbar {
+    padding: 10px 12px;
+  }
+
+  .page-event-calendar__calendar {
+    border-radius: 0;
+  }
+
+  .page-event-calendar__sidebar {
+    position: static;
+  }
+
+  .page-event-calendar .q-calendar-month .q-calendar__day {
+    min-height: 110px;
+  }
+
+  .page-event-calendar__event-summary {
+    padding: 12px 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-event-calendar__calendar,
+  .page-event-calendar__sidebar,
+  .page-event-calendar__event-card,
+  .page-event-calendar__day_selected,
+  .page-event-calendar__month-enter-active,
+  .page-event-calendar__month-leave-active {
+    animation: none;
+  }
+
+  .page-event-calendar__month-enter-active,
+  .page-event-calendar__month-leave-active,
+  .page-event-calendar__subtitle-enter-active,
+  .page-event-calendar__subtitle-leave-active,
+  .page-event-calendar__cards-enter-active,
+  .page-event-calendar__cards-leave-active {
+    transition: none;
   }
 }
 </style>

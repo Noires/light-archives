@@ -6,4 +6,5 @@ export interface StorySummaryDto {
 	author: string;
 	createdAt: number;
 	type: StoryType;
+	excerpt?: string;
 }

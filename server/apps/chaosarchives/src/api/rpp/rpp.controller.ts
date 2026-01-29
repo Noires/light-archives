@@ -5,13 +5,11 @@ import { Scope } from "@app/auth/decorators/scope.decorator";
 import { AuthScope } from "@app/auth/model/auth-scope.enum";
 import { UserInfo } from "@app/auth/model/user-info";
 import { RppCharacterProfileDto } from "@app/shared/dto/rpp/rpp-character-profile.dto";
-import { RppLogInDto } from "@app/shared/dto/rpp/rpp-log-in.dto";
 import { RppLoginResponseDto } from "@app/shared/dto/rpp/rpp-login-response.dto";
 import { Role } from "@app/shared/enums/role.enum";
-import { Body, Controller, Get, GoneException, HttpStatus, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpStatus, Param, Put, Query, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import {
-	ApiBody,
 	ApiOperation,
 	ApiResponse,
 } from '@nestjs/swagger';
@@ -20,27 +18,6 @@ import { RppService } from "./rpp.service";
 @Controller('rpp')
 export class RppController {
 	constructor(private rppService: RppService, private authService: AuthService) {}
-
-	@Post('login')
-	@ApiOperation({
-		summary: 'Obtain an access token using a Chaos Archives account',
-	})
-	@ApiBody({
-		description: 'Login credentials',
-		type: RppLogInDto,
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		type: RppLoginResponseDto,
-		description: 'Successfully logged in',
-	})
-	@ApiResponse({
-		status: HttpStatus.UNAUTHORIZED,
-		description: 'Invalid email or password',
-	})
-  async login(@CurrentUser() _user: UserInfo): Promise<RppLoginResponseDto> {
-		throw new GoneException('Password-based login has been replaced by Discord login.');
-  }
 
 	@Get('login/discord')
 	@UseGuards(AuthGuard('discord-rpp'))

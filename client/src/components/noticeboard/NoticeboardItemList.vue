@@ -1,26 +1,24 @@
 <template>
-  <div class="noticeboard-item-list striped-list">
-    <q-list v-if="noticeboardItems.length" bordered>
-      <q-item
-        v-for="noticeboardItem in noticeboardItems"
-        :key="`${noticeboardItem.id}`"
-        clickable
-        v-ripple
-        :to="getLink(noticeboardItem)"
-      >
-        <q-item-section>
-            <q-item-label>{{noticeboardItem.title}}</q-item-label>
-            <q-item-label caption>{{$display.noticeboardLocations[noticeboardItem.location]}} — von {{noticeboardItem.author}}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-            <q-item-label>{{$display.relativeTime(noticeboardItem.createdAt)}}</q-item-label>
-        </q-item-section>
-      </q-item>
-    </q-list>
-    <p v-else>
-      Es gibt noch keine Aushänge auf <strong>Elpisgarten</strong>.
-    </p>
-  </div>
+  <q-list class="noticeboard-item-list" bordered>
+    <q-item
+      v-for="noticeboardItem in noticeboardItems"
+      :key="`${noticeboardItem.id}`"
+      class="noticeboard-item-list__item"
+      clickable
+      v-ripple
+      :to="getLink(noticeboardItem)"
+    >
+      <q-item-section class="noticeboard-item-list__content">
+        <q-item-label class="noticeboard-item-list__title">{{ noticeboardItem.title }}</q-item-label>
+        <q-item-label caption class="noticeboard-item-list__meta">
+          {{ $display.noticeboardLocations[noticeboardItem.location] }} - von {{ noticeboardItem.author }}
+        </q-item-label>
+      </q-item-section>
+      <q-item-section side class="noticeboard-item-list__time">
+        <q-item-label>{{ $display.relativeTime(noticeboardItem.createdAt) }}</q-item-label>
+      </q-item-section>
+    </q-item>
+  </q-list>
 </template>
 
 <script lang="ts">
@@ -38,10 +36,57 @@ class Props {
 })
 export default class NoticeboardItemList extends Vue.with(Props) {
   getLink(noticeboardItem: NoticeboardItemSummaryDto) {
-    return `/noticeboard/${noticeboardItem.id}`
+    return `/noticeboard/${noticeboardItem.id}`;
   }
 }
 </script>
 
 <style lang="scss">
+.noticeboard-item-list {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: none;
+  background: transparent;
+}
+
+.noticeboard-item-list__item {
+  border: 1px solid rgba(221, 180, 118, 0.2);
+  background: #ffffff;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.noticeboard-item-list__item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
+  border-color: rgba(221, 180, 118, 0.4);
+}
+
+.noticeboard-item-list__content {
+  gap: 2px;
+}
+
+.noticeboard-item-list__title {
+  font-weight: 700;
+  color: #1f2c38;
+}
+
+.noticeboard-item-list__meta {
+  color: rgba(35, 35, 35, 0.7);
+}
+
+.noticeboard-item-list__time {
+  color: rgba(35, 35, 35, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .noticeboard-item-list__item {
+    transition: none;
+  }
+
+  .noticeboard-item-list__item:hover {
+    transform: none;
+  }
+}
 </style>

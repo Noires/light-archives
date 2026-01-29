@@ -38,8 +38,8 @@ class Display {
 
 	readonly imageCategories: { [k: string]: string } = {
 		[ImageCategory.UNLISTED]: 'Ungelistet',
-		[ImageCategory.ARTWORK]: 'Kunstwerk',
-		[ImageCategory.SCREENSHOT]: 'Screenshot',
+		[ImageCategory.ARTWORK]: 'Kunstwerke',
+		[ImageCategory.SCREENSHOT]: 'Screenshots',
 	};
 
 	readonly venueLocations: { [k: string]: string } = {

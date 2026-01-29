@@ -8,11 +8,14 @@ import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import html from '@app/shared/html';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { decode } from 'html-entities';
 import { Connection, In, IsNull, Not, Repository } from 'typeorm';
 import { escapeForLike } from '../../../common/db';
 
 @Injectable()
 export class StoriesService {
+  private readonly excerptMaxLength = 180;
+
   constructor(
     private connection: Connection,
     @InjectRepository(Character) private characterRepo: Repository<Character>,
@@ -201,7 +204,7 @@ export class StoriesService {
       .createQueryBuilder('story')
       .innerJoinAndSelect('story.owner', 'character')
       .orderBy('story.createdAt', 'DESC')
-      .select(['story.id', 'character.name', 'story.title', 'story.createdAt', 'story.type'])
+      .select(['story.id', 'character.name', 'story.title', 'story.content', 'story.createdAt', 'story.type'])
       .offset(filter.offset)
       .limit(filter.limit);
 
@@ -240,8 +243,27 @@ export class StoriesService {
         author: story.owner.name,
         createdAt: story.createdAt!.getTime(),
         type: story.type,
+        excerpt: this.buildExcerpt(story.content || ''),
       }))
     };
+  }
+
+  private buildExcerpt(content: string): string {
+    const plainText = decode(content.replace(/<[^>]+>/g, ' '))
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!plainText) {
+      return '';
+    }
+
+    if (plainText.length <= this.excerptMaxLength) {
+      return plainText;
+    }
+
+    const truncated = plainText.slice(0, this.excerptMaxLength);
+    const trimmed = truncated.replace(/\s+\S*$/, '').trim();
+    return `${trimmed || truncated.trim()}...`;
   }
 
   async getTags(): Promise<string[]> {

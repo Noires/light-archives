@@ -10,7 +10,8 @@
     "lint": "eslint --ext .js,.ts,.vue ./",
     "test": "echo \"No test specified\" && exit 0",
     "build": "quasar build",
-    "deploy": "./deploy.sh"
+    "deploy": "./deploy.sh",
+    "postinstall": "node scripts/fix-qdatetimepicker-lang.js"
   },
   "dependencies": {
     "@hugerte/hugerte-vue": "^1.0.0",
