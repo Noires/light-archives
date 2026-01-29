@@ -23,7 +23,7 @@ export class AuthImplService {
 
   async findOrCreateDiscordUser(profile: DiscordProfile): Promise<UserInfo> {
     const discordId = profile.id;
-    const email = profile.email ? null;
+    const email = profile.email ?? null;
     const whereConditions: Array<FindOptionsWhere<User>> = [ { discordId } ];
 
     if (email) {
