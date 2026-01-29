@@ -18,8 +18,18 @@
 
     <section class="page-communities__content">
       <div class="page-communities__toolbar">
+        <q-input
+          class="page-communities__search"
+          v-model="searchQuery"
+          label="Suche"
+          debounce="200"
+          filled
+          dense
+          clearable
+          @update:model-value="onFilterChange"
+        />
         <div class="page-communities__stats">
-          {{ communities.length }} Einträge
+          {{ filteredCount }} von {{ communities.length }}
         </div>
         <q-pagination
           class="page-communities__pagination"
@@ -65,6 +75,7 @@ const $api = useApi();
 })
 export default class PageCommunities extends Vue {
 	communities: CommunitySummaryDto[] = [];
+  searchQuery = '';
   page = 1;
   readonly perPage = 12;
 
@@ -73,20 +84,39 @@ export default class PageCommunities extends Vue {
     this.page = 1;
 	}
 
+  get filteredCommunities() {
+    const query = this.searchQuery.trim().toLowerCase();
+    if (!query) {
+      return this.communities;
+    }
+    return this.communities.filter((community) => {
+      const haystack = `${community.name} ${community.goal || ''}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  }
+
+  get filteredCount() {
+    return this.filteredCommunities.length;
+  }
+
   get pagedCommunities() {
     const start = (this.page - 1) * this.perPage;
-    return this.communities.slice(start, start + this.perPage);
+    return this.filteredCommunities.slice(start, start + this.perPage);
   }
 
   get maxPage() {
-    return Math.max(1, Math.ceil(this.communities.length / this.perPage));
+    return Math.max(1, Math.ceil(this.filteredCount / this.perPage));
   }
 
   get emptyMessage() {
     if (this.communities.length == 0) {
       return 'Es gibt noch keine Communities auf Elpisgarten.';
     }
-    return 'Keine Einträge gefunden.';
+    return 'Keine Ergebnisse für die aktuellen Filter.';
+  }
+
+  onFilterChange() {
+    this.page = 1;
   }
 
   setPage(newPage: number) {
@@ -183,8 +213,8 @@ export default class PageCommunities extends Vue {
 }
 
 .page-communities__toolbar {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
@@ -192,6 +222,11 @@ export default class PageCommunities extends Vue {
   border: 1px solid rgba(221, 180, 118, 0.25);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+}
+
+.page-communities__search .q-field__control {
+  background: #f6f1e8;
+  border-radius: 0;
 }
 
 .page-communities__stats {
@@ -236,8 +271,7 @@ export default class PageCommunities extends Vue {
   }
 
   .page-communities__toolbar {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .page-communities__stats {

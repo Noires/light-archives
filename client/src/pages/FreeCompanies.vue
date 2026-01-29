@@ -18,8 +18,29 @@
 
     <section class="page-free-companies__content">
       <div class="page-free-companies__toolbar">
+        <q-input
+          class="page-free-companies__search"
+          v-model="searchQuery"
+          label="Suche"
+          debounce="200"
+          filled
+          dense
+          clearable
+          @update:model-value="onFilterChange"
+        />
+        <q-select
+          class="page-free-companies__server-select"
+          v-model="serverFilter"
+          label="Server"
+          emit-value
+          map-options
+          :options="serverOptions"
+          filled
+          dense
+          @update:model-value="onFilterChange"
+        />
         <div class="page-free-companies__stats">
-          {{ freeCompanies.length }} Einträge
+          {{ filteredCount }} von {{ freeCompanies.length }}
         </div>
         <q-pagination
           class="page-free-companies__pagination"
@@ -65,6 +86,8 @@ const $api = useApi();
 })
 export default class PageFreeCompanies extends Vue {
 	freeCompanies: FreeCompanySummaryDto[] = [];
+  searchQuery = '';
+  serverFilter = '';
   page = 1;
   readonly perPage = 12;
 
@@ -73,20 +96,50 @@ export default class PageFreeCompanies extends Vue {
     this.page = 1;
 	}
 
+  get serverOptions() {
+    const servers = Array.from(new Set(this.freeCompanies.map((fc) => fc.server))).sort();
+    return [
+      { label: 'Alle Server', value: '' },
+      ...servers.map((server) => ({ label: server, value: server })),
+    ];
+  }
+
+  get filteredFreeCompanies() {
+    const query = this.searchQuery.trim().toLowerCase();
+    return this.freeCompanies.filter((fc) => {
+      if (this.serverFilter && fc.server !== this.serverFilter) {
+        return false;
+      }
+      if (!query) {
+        return true;
+      }
+      const haystack = `${fc.name} ${fc.goal || ''} ${fc.server}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  }
+
+  get filteredCount() {
+    return this.filteredFreeCompanies.length;
+  }
+
   get pagedFreeCompanies() {
     const start = (this.page - 1) * this.perPage;
-    return this.freeCompanies.slice(start, start + this.perPage);
+    return this.filteredFreeCompanies.slice(start, start + this.perPage);
   }
 
   get maxPage() {
-    return Math.max(1, Math.ceil(this.freeCompanies.length / this.perPage));
+    return Math.max(1, Math.ceil(this.filteredCount / this.perPage));
   }
 
   get emptyMessage() {
     if (this.freeCompanies.length === 0) {
       return 'Hier gibt es keine Freien Gesellschaften... noch!';
     }
-    return 'Keine Einträge gefunden.';
+    return 'Keine Ergebnisse für die aktuellen Filter.';
+  }
+
+  onFilterChange() {
+    this.page = 1;
   }
 
   setPage(newPage: number) {
@@ -183,8 +236,8 @@ export default class PageFreeCompanies extends Vue {
 }
 
 .page-free-companies__toolbar {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 0.6fr) auto auto;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
@@ -192,6 +245,12 @@ export default class PageFreeCompanies extends Vue {
   border: 1px solid rgba(221, 180, 118, 0.25);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+}
+
+.page-free-companies__search .q-field__control,
+.page-free-companies__server-select .q-field__control {
+  background: #f6f1e8;
+  border-radius: 0;
 }
 
 .page-free-companies__stats {
@@ -236,8 +295,7 @@ export default class PageFreeCompanies extends Vue {
   }
 
   .page-free-companies__toolbar {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .page-free-companies__stats {

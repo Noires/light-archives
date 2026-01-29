@@ -32,6 +32,26 @@
 
     <div class="page-gallery__toolbar">
 
+      <q-input
+
+        class="page-gallery__search-query"
+
+        label="Suche"
+
+        debounce="200"
+
+        :model-value="searchQuery"
+
+        filled
+
+        dense
+
+        clearable
+
+        @update:model-value="setSearchQuery"
+
+      />
+
       <div class="page-gallery__stats">
 
         {{ first }}-{{ last }} von {{ total }}
@@ -89,12 +109,14 @@ const $router = useRouter();
 interface PageData {
   category: ImageCategory;
   page: number;
+  searchQuery: string;
   images: PagingResultDto<ImageSummaryDto>;
 }
 
 async function load(to: RouteLocationNormalized): Promise<PageData> {
   const category = to.params.category as ImageCategory;
   const page = Math.max(1, parseInt(to.query.page as string)) || 1;
+  const searchQuery = (to.query.searchQuery as string) || '';
 
   if (!Object.values(ImageCategory).includes(category) || category == ImageCategory.UNLISTED) {
     void $router.replace('/');
@@ -104,9 +126,11 @@ async function load(to: RouteLocationNormalized): Promise<PageData> {
   try {
     return {
       category,
+      searchQuery,
       page,
       images: await $api.images.getImages({
         category,
+        searchQuery,
         offset: (page - 1) * SharedConstants.DEFAULT_ROWS_PER_PAGE,
         limit: SharedConstants.DEFAULT_ROWS_PER_PAGE,
       }),
@@ -143,10 +167,12 @@ export default class PageGallery extends Vue {
   images = [] as ImageSummaryDto[];
   total = 0;
   page = 1;
+  searchQuery = '';
 
-  setContent({ category, page, images }: PageData) {
+  setContent({ category, page, images, searchQuery }: PageData) {
     this.category = category;
     this.page = page;
+    this.searchQuery = searchQuery;
     this.total = images.total;
     this.images = images.data;
     document.title = `${this.title} - Elpisgarten`;
@@ -192,10 +218,19 @@ export default class PageGallery extends Vue {
     }
   }
 
+  setSearchQuery(newSearchQuery: string) {
+    this.searchQuery = newSearchQuery;
+    this.refresh();
+  }
+
   refresh() {
 		const queryParams: { [ k: string] : string|number } = {
 			page: this.page,
     };
+
+		if (this.searchQuery) {
+			queryParams.searchQuery = this.searchQuery;
+		}
 
     void this.$router.replace({
       path: window.location.pathname,
@@ -289,8 +324,8 @@ export default class PageGallery extends Vue {
 .page-gallery__toolbar {
   position: relative;
   z-index: 1;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
@@ -298,6 +333,11 @@ export default class PageGallery extends Vue {
   border: 1px solid rgba(221, 180, 118, 0.25);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+}
+
+.page-gallery__search-query .q-field__control {
+  background: #f6f1e8;
+  border-radius: 0;
 }
 
 .page-gallery__stats {
@@ -329,8 +369,7 @@ export default class PageGallery extends Vue {
   }
 
   .page-gallery__toolbar {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .page-gallery__stats {

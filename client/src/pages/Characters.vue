@@ -16,55 +16,89 @@
       </div>
     </header>
 
-    <q-table
-      class="page-characters__table"
-      :columns="columns"
-      :rows="profiles"
-      :row-key="row => `${row.server}-${row.name}`"
-      v-model:pagination="pagination"
-      grid
-      hide-header
-      hide-bottom
-      @request="onPageRequest"
-    >
-      <template v-slot:top>
-        <div class="page-characters__toolbar">
-          <div class="page-characters__stats">
-            {{ pagination.rowsNumber }} Profile
-          </div>
-          <q-pagination
-            class="page-characters__pagination"
-            :model-value="pagination.page"
-            :max="maxPage"
-            input
-            @update:model-value="setPage"
-          />
+    <section class="page-characters__content">
+      <div class="page-characters__toolbar">
+        <q-input
+          class="page-characters__search"
+          v-model="searchQuery"
+          label="Suche"
+          debounce="200"
+          filled
+          dense
+          clearable
+          @update:model-value="onFilterChange"
+        />
+        <q-select
+          class="page-characters__race-select"
+          v-model="race"
+          label="Volk"
+          emit-value
+          map-options
+          :options="raceOptions"
+          filled
+          dense
+          @update:model-value="onFilterChange"
+        />
+        <q-select
+          class="page-characters__server-select"
+          v-model="server"
+          label="Server"
+          emit-value
+          map-options
+          :options="serverOptions"
+          filled
+          dense
+          @update:model-value="onFilterChange"
+        />
+        <div class="page-characters__stats">
+          {{ pagination.rowsNumber }} Profile
         </div>
-      </template>
-      <template v-slot:item="props">
-        <div class="page-characters__card">
-          <router-link :to="getLink(props.row)" class="page-characters__card-link">
-            <q-avatar round size="56px" class="page-characters__card-avatar">
-              <img :src="props.row.avatar" />
-            </q-avatar>
-            <div class="page-characters__card-body">
-              <div class="page-characters__card-name">{{ props.row.name }}</div>
-              <div class="page-characters__card-meta">
-                {{ $display.races[props.row.race] }} - {{ props.row.server }}
-              </div>
-              <div v-if="props.row.profession" class="page-characters__card-profession">
-                {{ props.row.profession }}
-              </div>
+        <q-pagination
+          class="page-characters__pagination"
+          :model-value="pagination.page"
+          :max="maxPage"
+          input
+          @update:model-value="setPage"
+        />
+      </div>
+      <div class="page-characters__list">
+        <q-table
+          class="page-characters__table"
+          :columns="columns"
+          :rows="profiles"
+          :row-key="row => `${row.server}-${row.name}`"
+          v-model:pagination="pagination"
+          grid
+          hide-header
+          hide-bottom
+          @request="onPageRequest"
+        >
+          <template v-slot:item="props">
+            <div class="page-characters__card">
+              <router-link :to="getLink(props.row)" class="page-characters__card-link">
+                <q-avatar round size="56px" class="page-characters__card-avatar">
+                  <img :src="props.row.avatar" />
+                </q-avatar>
+                <div class="page-characters__card-body">
+                  <div class="page-characters__card-name">{{ props.row.name }}</div>
+                  <div class="page-characters__card-meta">
+                    {{ $display.races[props.row.race] }} - {{ props.row.server }}
+                  </div>
+                  <div v-if="props.row.profession" class="page-characters__card-profession">
+                    {{ props.row.profession }}
+                  </div>
+                </div>
+              </router-link>
             </div>
-          </router-link>
-        </div>
-      </template>
-      <template v-slot:no-data>
-        <div class="page-characters__empty">
-          Keine Profile gefunden.
-        </div>
-      </template>
-    </q-table>
+          </template>
+          <template v-slot:no-data>
+            <div class="page-characters__empty">
+              Keine Profile gefunden.
+            </div>
+          </template>
+        </q-table>
+      </div>
+    </section>
   </q-page>
 </template>
 
@@ -72,6 +106,8 @@
 import { CharacterProfileFilterDto } from '@app/shared/dto/characters/character-profile-filter.dto';
 import { CharacterSummaryDto } from '@app/shared/dto/characters/character-summary.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
+import { ServerDto } from '@app/shared/dto/servers/server-dto';
+import { Race } from '@app/shared/enums/race.enum';
 import SharedConstants from '@app/shared/SharedConstants';
 import { useApi } from 'src/boot/axios';
 import { Options, Vue } from 'vue-class-component';
@@ -83,16 +119,28 @@ const $api = useApi();
   components: {
   },
   async beforeRouteEnter(to, __, next) {
+    const searchQuery = to.query.searchQuery as string || '';
+    const server = parseInt(to.query.server as string || '');
+    const race = to.query.race && Object.values(Race).includes(to.query.race as Race) ? to.query.race as Race : null;
     const page = parseInt(to.query.page as string, 10) || 1;
     const rowsPerPage = parseInt(to.query.rowsPerPage as string, 10) || SharedConstants.DEFAULT_ROWS_PER_PAGE;
 
     const filter: CharacterProfileFilterDto = {
       offset: (page - 1) * rowsPerPage,
       limit: SharedConstants.DEFAULT_ROWS_PER_PAGE,
+      searchQuery,
     };
 
+    const servers = await $api.servers.getServers();
+    if (server) {
+      filter.server = server;
+    }
+    if (race) {
+      filter.race = race;
+    }
+    
     const profiles = await $api.characters.getCharacterProfiles(filter);
-    next((vm) => (vm as PageCharacters).setContent(profiles, { page, rowsPerPage }));
+    next((vm) => (vm as PageCharacters).setContent(servers, profiles, searchQuery, race, server, { page, rowsPerPage }));
   }
 })
 export default class PageCharacters extends Vue {
@@ -102,6 +150,11 @@ export default class PageCharacters extends Vue {
     rowsPerPage: SharedConstants.DEFAULT_ROWS_PER_PAGE,
     rowsNumber: 0,
   };
+
+  searchQuery = '';
+  race: Race | null = null;
+  server: number | null = null;
+  servers: ServerDto[] = [];
 
   get columns() {
     return [
@@ -115,13 +168,32 @@ export default class PageCharacters extends Vue {
     ];
   }
 
+  get raceOptions() {
+    return [
+      { label: '(Alle)', value: null },
+      ...Object.values(Race).map((race) => ({ value: race, label: this.$display.races[race] })),
+    ];
+  }
+
+  get serverOptions() {
+    return [
+      { label: '(Alle)', value: null},
+      ...this.servers.map(server => ({ value: server.id, label: server.name}))
+    ]
+  }
+
   get maxPage() {
     return Math.max(1, Math.ceil(this.pagination.rowsNumber / this.pagination.rowsPerPage));
   }
 
-  setContent(profiles: PagingResultDto<CharacterSummaryDto>,
+  setContent(servers: ServerDto[], profiles: PagingResultDto<CharacterSummaryDto>, searchQuery: string, race: Race | null,
+      server: number | null,
       pagination: { page: number; rowsPerPage: number }) {
+    this.servers = servers;
     this.profiles = profiles.data;
+    this.searchQuery = searchQuery;
+    this.race = race;
+    this.server = server || null;
     this.pagination.page = pagination.page;
     this.pagination.rowsPerPage = pagination.rowsPerPage;
     this.pagination.rowsNumber = profiles.total;
@@ -129,6 +201,11 @@ export default class PageCharacters extends Vue {
 
   getLink(profile: CharacterSummaryDto) {
     return `/${profile.server}/${profile.name.replace(/ /g, '_')}`;
+  }
+
+  onFilterChange() {
+    this.pagination.page = 1;
+    this.refresh();
   }
 
   setPage(newPage: number) {
@@ -145,7 +222,16 @@ export default class PageCharacters extends Vue {
     const filter: CharacterProfileFilterDto = {
       offset: (page - 1) * rowsPerPage,
       limit: rowsPerPage,
+      searchQuery: this.searchQuery,
     };
+
+    if (this.race) {
+      filter.race = this.race;
+    }
+
+    if (this.server) {
+      filter.server = this.server;
+    }
 
     const profiles = await this.$api.characters.getCharacterProfiles(filter);
     this.profiles = profiles.data;
@@ -157,6 +243,18 @@ export default class PageCharacters extends Vue {
       page: this.pagination.page,
       rowsPerPage: this.pagination.rowsPerPage
     };
+
+    if (this.searchQuery) {
+      queryParams.searchQuery = this.searchQuery;
+    }
+
+    if (this.server) {
+      queryParams.server = this.server;
+    }
+
+    if (this.race) {
+      queryParams.race = this.race;
+    }
 
     void this.$router.replace({
       path: '/profiles',
@@ -247,15 +345,29 @@ export default class PageCharacters extends Vue {
   color: rgba(35, 35, 35, 0.6);
 }
 
+.page-characters__content {
+  position: relative;
+  z-index: 1;
+}
+
 .page-characters__toolbar {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 0.6fr) minmax(160px, 0.6fr) auto auto;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
+  width: 100%;
+  margin-bottom: 18px;
   border: 1px solid rgba(221, 180, 118, 0.25);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+}
+
+.page-characters__search .q-field__control,
+.page-characters__race-select .q-field__control,
+.page-characters__server-select .q-field__control {
+  background: #f6f1e8;
+  border-radius: 0;
 }
 
 .page-characters__stats {
@@ -270,23 +382,34 @@ export default class PageCharacters extends Vue {
   justify-self: end;
 }
 
-.page-characters__table {
-  position: relative;
-  z-index: 1;
+.page-characters__list {
+  padding: 12px;
   border: 1px solid rgba(221, 180, 118, 0.25);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+}
+
+.page-characters__table {
+  position: relative;
+  z-index: 1;
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .page-characters__table .q-table__top {
   padding: 0;
 }
 
+.page-characters__table .q-table__middle {
+  padding: 0;
+}
+
 .page-characters__table .q-table__grid-content {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 14px;
-  padding: 12px;
+  gap: 12px;
+  padding: 0;
 }
 
 .page-characters__table .q-table__grid-item {
@@ -336,7 +459,7 @@ export default class PageCharacters extends Vue {
 }
 
 .page-characters__empty {
-  margin: 12px;
+  margin: 0;
   padding: 18px;
   color: rgba(35, 35, 35, 0.7);
   border: 1px solid rgba(221, 180, 118, 0.2);
@@ -356,8 +479,7 @@ export default class PageCharacters extends Vue {
   }
 
   .page-characters__toolbar {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .page-characters__stats {

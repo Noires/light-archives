@@ -18,8 +18,29 @@
 
     <section class="page-noticeboard__content">
       <div class="page-noticeboard__toolbar">
+        <q-input
+          class="page-noticeboard__search"
+          v-model="searchQuery"
+          label="Suche"
+          debounce="200"
+          filled
+          dense
+          clearable
+          @update:model-value="onFilterChange"
+        />
+        <q-select
+          class="page-noticeboard__location-select"
+          v-model="locationFilter"
+          label="Ort"
+          emit-value
+          map-options
+          :options="locationOptions"
+          filled
+          dense
+          @update:model-value="onFilterChange"
+        />
         <div class="page-noticeboard__stats">
-          {{ noticeboardItems.length }} Einträge
+          {{ filteredCount }} von {{ noticeboardItems.length }}
         </div>
         <q-pagination
           class="page-noticeboard__pagination"
@@ -65,6 +86,8 @@ const $api = useApi();
 })
 export default class PageNoticeboard extends Vue {
 	noticeboardItems: NoticeboardItemSummaryDto[] = [];
+  searchQuery = '';
+  locationFilter = '';
   page = 1;
   readonly perPage = 12;
 
@@ -73,20 +96,50 @@ export default class PageNoticeboard extends Vue {
     this.page = 1;
 	}
 
+  get locationOptions() {
+    const locations = Array.from(new Set(this.noticeboardItems.map((item) => item.location))).sort();
+    return [
+      { label: 'Alle Orte', value: '' },
+      ...locations.map((location) => ({ label: this.$display.noticeboardLocations[location], value: location }))
+    ];
+  }
+
+  get filteredNoticeboardItems() {
+    const query = this.searchQuery.trim().toLowerCase();
+    return this.noticeboardItems.filter((item) => {
+      if (this.locationFilter && item.location !== this.locationFilter) {
+        return false;
+      }
+      if (!query) {
+        return true;
+      }
+      const haystack = `${item.title} ${item.author} ${this.$display.noticeboardLocations[item.location]}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  }
+
+  get filteredCount() {
+    return this.filteredNoticeboardItems.length;
+  }
+
   get pagedNoticeboardItems() {
     const start = (this.page - 1) * this.perPage;
-    return this.noticeboardItems.slice(start, start + this.perPage);
+    return this.filteredNoticeboardItems.slice(start, start + this.perPage);
   }
 
   get maxPage() {
-    return Math.max(1, Math.ceil(this.noticeboardItems.length / this.perPage));
+    return Math.max(1, Math.ceil(this.filteredCount / this.perPage));
   }
 
   get emptyMessage() {
     if (this.noticeboardItems.length == 0) {
       return 'Es gibt noch keine Aushänge auf Elpisgarten.';
     }
-    return 'Keine Einträge gefunden.';
+    return 'Keine Ergebnisse für die aktuellen Filter.';
+  }
+
+  onFilterChange() {
+    this.page = 1;
   }
 
   setPage(newPage: number) {
@@ -183,8 +236,8 @@ export default class PageNoticeboard extends Vue {
 }
 
 .page-noticeboard__toolbar {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 0.6fr) auto auto;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
@@ -192,6 +245,12 @@ export default class PageNoticeboard extends Vue {
   border: 1px solid rgba(221, 180, 118, 0.25);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+}
+
+.page-noticeboard__search .q-field__control,
+.page-noticeboard__location-select .q-field__control {
+  background: #f6f1e8;
+  border-radius: 0;
 }
 
 .page-noticeboard__stats {
@@ -236,8 +295,7 @@ export default class PageNoticeboard extends Vue {
   }
 
   .page-noticeboard__toolbar {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .page-noticeboard__stats {

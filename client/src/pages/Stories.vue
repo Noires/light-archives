@@ -24,23 +24,51 @@
       v-model:pagination="pagination"
       grid
       hide-header
-      hide-bottom
       @request="onPageRequest"
     >
       <template v-slot:top>
         <section class="page-stories__top">
+          <q-form class="page-stories__filter">
+            <q-input
+              class="page-stories__filter-field page-stories__filter-search"
+              v-model="searchQuery"
+              label="Suche"
+              debounce="200"
+              filled
+              dense
+              clearable
+              @update:model-value="refresh"
+            />
+            <q-select
+              class="page-stories__filter-field page-stories__filter-type"
+              v-model="type"
+              label="Typ"
+              emit-value
+              map-options
+              :options="typeOptions"
+              filled
+              dense
+              @update:model-value="refresh"
+            />
+            <q-select
+              class="page-stories__filter-field page-stories__filter-tag"
+              v-model="tag"
+              label="Schlagworte"
+              :options="tagOptions"
+              use-input
+              emit-value
+              map-options
+              filled
+              dense
+              @filter="onTagFilter"
+              @update:model-value="refresh"
+            />
+          </q-form>
           <div class="page-stories__result">
             <span class="page-stories__result-text">
-              {{ pagination.rowsNumber }} Geschichten
+              {{ pagination.rowsNumber }} gefundene Geschichten
             </span>
           </div>
-          <q-pagination
-            class="page-stories__pagination"
-            :model-value="pagination.page"
-            :max="maxPage"
-            input
-            @update:model-value="setPage"
-          />
         </section>
       </template>
       <template v-slot:item="props">
@@ -65,7 +93,7 @@
         <div class="page-stories__empty">
           <div class="page-stories__empty-title">Noch keine Geschichten gefunden.</div>
           <div class="page-stories__empty-subtitle">
-            Schau später vorbei oder starte mit einer neuen Geschichte.
+            Passe die Filter an oder starte mit einer neuen Geschichte.
           </div>
         </div>
       </template>
@@ -75,7 +103,9 @@
 
 <script lang="ts">
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
+import { StoryFilterDto } from '@app/shared/dto/stories/story-filter.dto';
 import { StorySummaryDto } from '@app/shared/dto/stories/story-summary.dto';
+import { StoryType } from '@app/shared/enums/story-type.enum';
 import SharedConstants from '@app/shared/SharedConstants';
 import { useApi } from 'src/boot/axios';
 import { Options, Vue } from 'vue-class-component';
@@ -88,13 +118,29 @@ const $api = useApi();
 
 	},
   async beforeRouteEnter(to, _, next) {
-    const page = parseInt(to.query.page as string, 10) || 1;
-    const rowsPerPage = parseInt(to.query.rowsPerPage as string, 10) || SharedConstants.DEFAULT_ROWS_PER_PAGE;
-    const stories = await $api.stories.getStories({
-      offset: (page - 1) * rowsPerPage,
-      limit: rowsPerPage,
-    });
-    next((vm) => (vm as PageStories).setContent(stories, { page, rowsPerPage }));
+		const tag = to.query.tag as string || '';
+		const type = to.query.type as StoryType || null;
+		const filter: StoryFilterDto = {
+      limit: SharedConstants.DEFAULT_ROWS_PER_PAGE,
+    };
+
+		if (tag) {
+			filter.tag = tag;
+		}
+
+		if (type) {
+			filter.type = type;
+		}
+
+    const [ stories, tags] = await Promise.all([
+			$api.stories.getStories(filter),
+			$api.stories.getTags(),
+		]);
+    next((vm) => {
+			(vm as PageStories).tag = tag;
+			(vm as PageStories).type = type;
+			(vm as PageStories).setContent(stories, tags);
+		});
   },
 })
 export default class PageStories extends Vue {
@@ -104,6 +150,19 @@ export default class PageStories extends Vue {
     rowsPerPage: SharedConstants.DEFAULT_ROWS_PER_PAGE,
     rowsNumber: 0,
   };
+
+  searchQuery = '';
+  tag = '';
+  type: StoryType|null = null;
+	tagOptions: {label: string, value: string}[] = [];
+	allTagOptions: {label: string, value: string}[] = [];
+
+  get typeOptions() {
+    return [
+      { label: '(Alle)', value: null },
+      ...Object.values(StoryType).map((type) => ({ value: type, label: this.$display.storyTypes[type] })),
+    ];
+  }
 
   get columns() {
     return [
@@ -126,46 +185,63 @@ export default class PageStories extends Vue {
     ];
   }
 
-  get maxPage() {
-    return Math.max(1, Math.ceil(this.pagination.rowsNumber / this.pagination.rowsPerPage));
-  }
+  setContent(stories: PagingResultDto<StorySummaryDto>, tags: string[]) {
+		this.allTagOptions = [
+			{
+				label: '(Alle)',
+				value: '',
+			},
+			...tags.map(tag => ({
+				label: tag,
+				value: tag
+			}))
+		];
 
-  setContent(stories: PagingResultDto<StorySummaryDto>, pagination: { page: number; rowsPerPage: number }) {
     this.stories = stories.data;
     this.pagination.rowsNumber = stories.total;
-    this.pagination.page = pagination.page;
-    this.pagination.rowsPerPage = pagination.rowsPerPage;
   }
 
   getLink(story: StorySummaryDto) {
     return `/story/${story.id}`;
   }
 
-  setPage(newPage: number) {
-    this.pagination.page = Math.min(Math.max(newPage, 1), this.maxPage);
-    void this.onPageRequest({ pagination: this.pagination });
-  }
+	onTagFilter(value: string, update: () => void) {
+    value = value.trim();
+
+    if (!value) {
+			this.tagOptions = this.allTagOptions;
+    } else {
+			this.tagOptions = [ this.allTagOptions[0], ...this.allTagOptions.filter(tag => tag.value.toLowerCase().includes(value.toLowerCase())) ];
+		}
+
+		update();
+	}
+
+	refresh() {
+		void this.onPageRequest({ pagination: this.pagination });
+	}
 
   async onPageRequest(props: { pagination: { page: number; rowsPerPage: number } }) {
     const { page, rowsPerPage } = props.pagination;
-    const filter = {
+    const filter: StoryFilterDto = {
       offset: (page - 1) * rowsPerPage,
       limit: rowsPerPage,
+      searchQuery: this.searchQuery,
     };
+
+    if (this.tag) {
+      filter.tag = this.tag;
+    }
+
+    if (this.type) {
+      filter.type = this.type;
+    }
 
     const stories = await this.$api.stories.getStories(filter);
     this.stories = stories.data;
     this.pagination.rowsNumber = stories.total;
     this.pagination.rowsPerPage = rowsPerPage;
     this.pagination.page = page;
-
-    void this.$router.replace({
-      path: '/stories',
-      query: {
-        page: this.pagination.page,
-        rowsPerPage: this.pagination.rowsPerPage,
-      },
-    });
   }
 }
 </script>
@@ -263,8 +339,8 @@ export default class PageStories extends Vue {
 }
 
 .page-stories__top {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 16px;
   padding: 12px 14px;
@@ -272,6 +348,23 @@ export default class PageStories extends Vue {
   border: 1px solid rgba(221, 180, 118, 0.25);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+}
+
+.page-stories__filter {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(160px, 0.6fr) minmax(200px, 0.8fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.page-stories__filter-field .q-field__control {
+  background: #f6f1e8;
+  border-radius: 0;
+}
+
+.page-stories__filter-field .q-field__native,
+.page-stories__filter-field .q-field__label {
+  font-size: 0.9rem;
 }
 
 .page-stories__result {
@@ -282,10 +375,6 @@ export default class PageStories extends Vue {
   font-family: $header-font;
   font-size: 1.05rem;
   color: #20323d;
-}
-
-.page-stories__pagination {
-  justify-self: end;
 }
 
 .page-stories__table {
@@ -436,16 +525,16 @@ export default class PageStories extends Vue {
   }
 
   .page-stories__top {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: 1fr;
+    text-align: left;
   }
 
   .page-stories__result {
     text-align: left;
   }
 
-  .page-stories__pagination {
-    justify-self: start;
+  .page-stories__filter {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

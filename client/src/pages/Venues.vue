@@ -18,8 +18,40 @@
 
     <section class="page-venues__content">
       <div class="page-venues__toolbar">
+        <q-input
+          class="page-venues__search"
+          v-model="searchQuery"
+          label="Suche"
+          debounce="200"
+          filled
+          dense
+          clearable
+          @update:model-value="onFilterChange"
+        />
+        <q-select
+          class="page-venues__area-select"
+          v-model="areaFilter"
+          label="Gebiet"
+          emit-value
+          map-options
+          :options="areaOptions"
+          filled
+          dense
+          @update:model-value="onFilterChange"
+        />
+        <q-select
+          class="page-venues__server-select"
+          v-model="serverFilter"
+          label="Server"
+          emit-value
+          map-options
+          :options="serverOptions"
+          filled
+          dense
+          @update:model-value="onFilterChange"
+        />
         <div class="page-venues__stats">
-          {{ venues.length }} Einträge
+          {{ filteredCount }} von {{ venues.length }}
         </div>
         <q-pagination
           class="page-venues__pagination"
@@ -41,6 +73,7 @@
 
 <script lang="ts">
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
+import { HousingArea } from '@app/shared/enums/housing-area.enum';
 import { useApi } from 'src/boot/axios';
 import { notifyError } from 'src/common/notify';
 import VenueList from 'src/components/venues/VenueList.vue';
@@ -65,6 +98,9 @@ const $api = useApi();
 })
 export default class PageVenues extends Vue {
 	venues: VenueSummaryDto[] = [];
+  searchQuery = '';
+  areaFilter: '' | '__none__' | HousingArea = '';
+  serverFilter = '';
   page = 1;
   readonly perPage = 12;
 
@@ -73,20 +109,81 @@ export default class PageVenues extends Vue {
     this.page = 1;
 	}
 
+  get serverOptions() {
+    const servers = Array.from(new Set(this.venues.map((venue) => venue.server))).sort();
+    return [
+      { label: 'Alle Server', value: '' },
+      ...servers.map((server) => ({ label: server, value: server }))
+    ];
+  }
+
+  get areaOptions(): { label: string; value: '' | '__none__' | HousingArea }[] {
+    const areas = Array.from(
+      new Set(
+        this.venues
+          .map((venue) => venue.housingArea)
+          .filter((area): area is HousingArea => area !== null),
+      ),
+    );
+
+    const options = areas
+      .map((area) => ({
+        value: area,
+        label: this.$display.housingAreas[area],
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+    return [
+      { label: 'Alle Gebiete', value: '' },
+      { label: 'Offene Welt', value: '__none__' },
+      ...options
+    ];
+  }
+
+  get filteredVenues() {
+    const query = this.searchQuery.trim().toLowerCase();
+    return this.venues.filter((venue) => {
+      if (this.serverFilter && venue.server !== this.serverFilter) {
+        return false;
+      }
+      if (this.areaFilter) {
+        if (this.areaFilter == '__none__' && venue.housingArea) {
+          return false;
+        }
+        if (this.areaFilter != '__none__' && venue.housingArea != this.areaFilter) {
+          return false;
+        }
+      }
+      if (!query) {
+        return true;
+      }
+      const areaLabel = venue.housingArea ? this.$display.housingAreas[venue.housingArea] : 'Offene Welt';
+      const haystack = `${venue.name} ${venue.purpose || ''} ${venue.server} ${venue.address || ''} ${areaLabel}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  }
+
+  get filteredCount() {
+    return this.filteredVenues.length;
+  }
+
   get pagedVenues() {
     const start = (this.page - 1) * this.perPage;
-    return this.venues.slice(start, start + this.perPage);
+    return this.filteredVenues.slice(start, start + this.perPage);
   }
 
   get maxPage() {
-    return Math.max(1, Math.ceil(this.venues.length / this.perPage));
+    return Math.max(1, Math.ceil(this.filteredCount / this.perPage));
   }
 
   get emptyMessage() {
     if (this.venues.length == 0) {
       return 'Es gibt noch keine Treffpunkte auf Elpisgarten.';
     }
-    return 'Keine Einträge gefunden.';
+    return 'Keine Ergebnisse für die aktuellen Filter.';
+  }
+
+  onFilterChange() {
+    this.page = 1;
   }
 
   setPage(newPage: number) {
@@ -183,8 +280,8 @@ export default class PageVenues extends Vue {
 }
 
 .page-venues__toolbar {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 0.7fr) minmax(160px, 0.6fr) auto auto;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
@@ -192,6 +289,13 @@ export default class PageVenues extends Vue {
   border: 1px solid rgba(221, 180, 118, 0.25);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+}
+
+.page-venues__search .q-field__control,
+.page-venues__area-select .q-field__control,
+.page-venues__server-select .q-field__control {
+  background: #f6f1e8;
+  border-radius: 0;
 }
 
 .page-venues__stats {
@@ -236,8 +340,7 @@ export default class PageVenues extends Vue {
   }
 
   .page-venues__toolbar {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .page-venues__stats {
