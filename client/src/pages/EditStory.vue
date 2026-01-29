@@ -22,7 +22,18 @@
             @update:model-value="onTagsChanged"
             label="Schlagworte (mit Komma getrennt)"
           />
-          <Multiselect v-model="story.contentNotes" :options="contentNoteOptions" mode="tags" :searchable="true" :closeOnSelect="false" valueProp="value" track-by="label" label="label"></Multiselect>
+          <h6>Inhaltswarnungen</h6>
+          <Multiselect
+            v-model="story.contentNotes"
+            :options="contentNoteOptions"
+            mode="tags"
+            :searchable="true"
+            :closeOnSelect="false"
+            valueProp="value"
+            track-by="label"
+            label="label"
+            class="page-edit-story__content-notes"
+          />
           <h6>Inhalt *</h6>
           <html-editor v-model="story.content" />
         </template>
@@ -226,5 +237,9 @@ export default class PageEditStory extends Vue {
 
 .page-edit-story__type-label {
   margin-top: 12px;
+}
+
+.page-edit-story__content-notes {
+  margin-bottom: 8px;
 }
 </style>

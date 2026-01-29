@@ -49,11 +49,15 @@
               label="Dies ist ein wiederkehrendes Event."
             />
             <h6>Inhaltswarnungen</h6>
-            <q-option-group
+            <Multiselect
               v-model="event.contentNotes"
               :options="contentNoteOptions"
-              type="checkbox"
-              class="page-edit-event__checkbox-list"
+              mode="tags"
+              :searchable="true"
+              :closeOnSelect="false"
+              valueProp="value"
+              track-by="label"
+              label="label"
             />
           <template v-for="(location, index) in event.locations" :key="index">
               <h6>Standort</h6>
@@ -190,6 +194,7 @@
 </template>
 
 <script lang="ts">
+import Multiselect from '@vueform/multiselect';
 import { EventAnnouncementDto } from '@app/shared/dto/events/event-announcement.dto';
 import { EventEditDto } from '@app/shared/dto/events/event-edit.dto';
 import { EventLocationDto } from '@app/shared/dto/events/event-location.dto';
@@ -262,6 +267,7 @@ async function load(params: RouteParams): Promise<{
     EventView,
     EventAnnouncementEditor,
     WorldSelect,
+    Multiselect,
   },
 	async beforeRouteEnter(to, _, next) {
 		const content = await load(to.params);
@@ -703,10 +709,6 @@ type VenueOption = {
   margin-bottom: 16px;
 }
 
-.page-edit-event__checkbox-list {
-  display: grid;
-  gap: 6px;
-}
 
 .page-edit-event__preview h6 {
   font-family: $header-font;
