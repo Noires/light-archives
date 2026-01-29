@@ -28,6 +28,10 @@ class Props {
 	banner = prop<boolean>({
 		default: false
 	});
+
+  minAspectRatio = prop<number | null>({
+    default: null,
+  });
 }
 
 @Options({
@@ -60,8 +64,10 @@ export default class ConfirmImageDeleteDialog extends Vue.with(Props) {
 			description: null,
 		}));
 
-		if (this.banner) {
-			this.images = this.images.filter(image => image.width / image.height >= SharedConstants.MIN_BANNER_ASPECT_RATIO);
+    const minAspectRatio = this.minAspectRatio ?? (this.banner ? SharedConstants.MIN_BANNER_ASPECT_RATIO : null);
+
+		if (minAspectRatio) {
+			this.images = this.images.filter(image => image.width / image.height >= minAspectRatio);
 		}
 	}
 
@@ -83,7 +89,8 @@ export default class ConfirmImageDeleteDialog extends Vue.with(Props) {
     this.$q.dialog({
       component: UploadDialog,
 			componentProps: {
-				banner: this.banner
+				banner: this.banner,
+        minAspectRatio: this.minAspectRatio,
 			}
     }).onOk((image: ImageSummaryDto) => {
       this.onImageSelect(image);

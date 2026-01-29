@@ -2,7 +2,7 @@
   <q-page class="page-event-calendar">
     <header class="page-event-calendar__header">
       <div>
-        <h2>Eventkalender (Prototyp)</h2>
+        <h2>Eventkalender</h2>
         <transition name="page-event-calendar__subtitle" mode="out-in">
           <div :key="yearMonth" class="page-event-calendar__subtitle">{{ yearMonth }}</div>
         </transition>
@@ -22,6 +22,26 @@
         <q-btn color="secondary" label="< Vorheriger Monat" :to="prevLink" />&nbsp;
         <q-btn color="secondary" label="Heute" to="/calendar" />&nbsp;
         <q-btn color="secondary" label="Nächster Monat >" :to="nextLink" />
+      </div>
+      <div class="page-event-calendar__filters">
+        <q-select
+          v-model="selectedType"
+          :options="eventTypeFilterOptions"
+          dense
+          outlined
+          emit-value
+          map-options
+          label="Event-Typ"
+        />
+        <q-select
+          v-model="sortMode"
+          :options="sortOptions"
+          dense
+          outlined
+          emit-value
+          map-options
+          label="Sortierung"
+        />
       </div>
       <div>
         <q-btn
@@ -131,7 +151,13 @@
                     </div>
                     <div class="page-event-calendar__event-summary-text">
                       <div class="page-event-calendar__event-time">
-                        {{ formatTimeRange(event) }}
+                        <span>{{ formatTimeRange(event) }}</span>
+                        <span
+                          v-if="isAdultEvent(event)"
+                          class="page-event-calendar__event-badge"
+                        >
+                          18+
+                        </span>
                       </div>
                       <div class="page-event-calendar__event-title">
                         {{ event.title }}
@@ -159,6 +185,26 @@
                           <q-icon name="event" />
                           <span>{{ formatDate(event.startDateTime) }}</span>
                         </div>
+                        <div class="page-event-calendar__event-row">
+                          <q-icon name="category" />
+                          <span>{{ eventTypeLabel(event) }}</span>
+                        </div>
+                      </div>
+                      <div class="page-event-calendar__event-warnings">
+                        <div class="page-event-calendar__event-warnings-title">Inhaltswarnungen</div>
+                        <div
+                          v-if="eventWarnings(event).length"
+                          class="page-event-calendar__event-warnings-list"
+                        >
+                          <span
+                            v-for="warning in eventWarnings(event)"
+                            :key="warning"
+                            class="page-event-calendar__event-warning"
+                          >
+                            {{ warning }}
+                          </span>
+                        </div>
+                        <div v-else class="page-event-calendar__event-warnings-empty">Keine Angaben.</div>
                       </div>
                       <div class="page-event-calendar__event-actions">
                         <q-btn
@@ -234,7 +280,13 @@
                   </div>
                   <div class="page-event-calendar__event-summary-text">
                     <div class="page-event-calendar__event-time">
-                      {{ formatTimeRange(event) }}
+                      <span>{{ formatTimeRange(event) }}</span>
+                      <span
+                        v-if="isAdultEvent(event)"
+                        class="page-event-calendar__event-badge"
+                      >
+                        18+
+                      </span>
                     </div>
                     <div class="page-event-calendar__event-title">
                       {{ event.title }}
@@ -262,6 +314,26 @@
                         <q-icon name="event" />
                         <span>{{ formatDate(event.startDateTime) }}</span>
                       </div>
+                      <div class="page-event-calendar__event-row">
+                        <q-icon name="category" />
+                        <span>{{ eventTypeLabel(event) }}</span>
+                      </div>
+                    </div>
+                    <div class="page-event-calendar__event-warnings">
+                      <div class="page-event-calendar__event-warnings-title">Inhaltswarnungen</div>
+                      <div
+                        v-if="eventWarnings(event).length"
+                        class="page-event-calendar__event-warnings-list"
+                      >
+                        <span
+                          v-for="warning in eventWarnings(event)"
+                          :key="warning"
+                          class="page-event-calendar__event-warning"
+                        >
+                          {{ warning }}
+                        </span>
+                      </div>
+                      <div v-else class="page-event-calendar__event-warnings-empty">Keine Angaben.</div>
                     </div>
                     <div class="page-event-calendar__event-actions">
                       <q-btn
@@ -301,6 +373,9 @@ import SharedConstants from '@app/shared/SharedConstants';
 import { DateTime } from 'luxon';
 import { Role } from '@app/shared/enums/role.enum';
 import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
+import { EventType } from '@app/shared/enums/event-type.enum';
+import { ContentNoteTexts } from '@common/common/api/content-notes-api';
+import { EventTypeLabels, EventTypeOptions } from 'src/common/event-types';
 import { useApi } from 'src/boot/axios';
 import { useRouter } from 'src/router';
 import { RouteParams } from 'vue-router';
@@ -362,6 +437,11 @@ interface EventGroup {
     const { date, events } = await load(to.params);
     (this as PageEventCalendar).setContent(date, events);
   },
+  watch: {
+    selectedType() {
+      (this as PageEventCalendar).rebuildEventMap();
+    },
+  },
   mixins: [
     createMetaMixin(function (this: PageEventCalendar) {
       return {
@@ -374,9 +454,21 @@ export default class PageEventCalendar extends Vue {
   Role = Role;
   viewMode: 'calendar' | 'list' = 'calendar';
   selectedDate = '';
+  selectedType: EventType | '' = '';
+  sortMode: 'time' | 'type' = 'time';
   private date: DateTime = this.getThisMonth();
   monthEvents: EventSummaryDto[] = [];
   eventMap: { [k: string]: EventSummaryDto[] } = {};
+
+  readonly eventTypeFilterOptions = [
+    { label: 'Alle Typen', value: '' },
+    ...EventTypeOptions,
+  ];
+
+  readonly sortOptions = [
+    { label: 'Zeit', value: 'time' },
+    { label: 'Typ', value: 'type' },
+  ];
 
   viewOptions = [
     { label: 'Kalender', value: 'calendar' },
@@ -386,14 +478,7 @@ export default class PageEventCalendar extends Vue {
   setContent(date: DateTime, events: EventSummaryDto[]) {
     this.date = date;
     this.monthEvents = events;
-    this.eventMap = {};
-
-    for (const event of events) {
-      const dateKey = this.eventDateKey(event);
-      const eventsForDay = this.eventMap[dateKey] || [];
-      eventsForDay.push(event);
-      this.eventMap[dateKey] = eventsForDay;
-    }
+    this.rebuildEventMap();
 
     if (this.selectedDate) {
       const monthKey = this.date.toFormat('yyyy-LL');
@@ -432,9 +517,7 @@ export default class PageEventCalendar extends Vue {
 
   get sidebarEvents() {
     if (this.selectedDate) {
-      return (this.eventMap[this.selectedDate] || [])
-        .slice()
-        .sort((a, b) => a.startDateTime - b.startDateTime);
+      return this.sortEvents(this.eventMap[this.selectedDate] || []);
     }
     return this.sortedMonthEvents;
   }
@@ -447,7 +530,7 @@ export default class PageEventCalendar extends Vue {
   }
 
   get sortedMonthEvents() {
-    return this.monthEvents.slice().sort((a, b) => a.startDateTime - b.startDateTime);
+    return this.sortEvents(this.filteredMonthEvents);
   }
 
   get groupedEvents(): EventGroup[] {
@@ -473,7 +556,7 @@ export default class PageEventCalendar extends Vue {
 
   private buildEventGroups(events: EventSummaryDto[]): EventGroup[] {
     const groups: EventGroup[] = [];
-    const sorted = events.slice().sort((a, b) => a.startDateTime - b.startDateTime);
+    const sorted = this.sortEvents(events);
 
     for (const event of sorted) {
       const dateKey = this.eventDateKey(event);
@@ -497,6 +580,41 @@ export default class PageEventCalendar extends Vue {
     }
 
     return groups;
+  }
+
+  private get filteredMonthEvents() {
+    if (!this.selectedType) {
+      return this.monthEvents;
+    }
+
+    return this.monthEvents.filter((event) => event.eventType === this.selectedType);
+  }
+
+  private sortEvents(events: EventSummaryDto[]): EventSummaryDto[] {
+    if (this.sortMode === 'type') {
+      return events.slice().sort((a, b) => {
+        const typeA = EventTypeLabels[a.eventType] || '';
+        const typeB = EventTypeLabels[b.eventType] || '';
+        const typeCompare = typeA.localeCompare(typeB);
+        if (typeCompare !== 0) {
+          return typeCompare;
+        }
+        return a.startDateTime - b.startDateTime;
+      });
+    }
+
+    return events.slice().sort((a, b) => a.startDateTime - b.startDateTime);
+  }
+
+  private rebuildEventMap() {
+    this.eventMap = {};
+
+    for (const event of this.filteredMonthEvents) {
+      const dateKey = this.eventDateKey(event);
+      const eventsForDay = this.eventMap[dateKey] || [];
+      eventsForDay.push(event);
+      this.eventMap[dateKey] = eventsForDay;
+    }
   }
 
   eventLinkProps(event: EventSummaryDto) {
@@ -555,6 +673,27 @@ export default class PageEventCalendar extends Vue {
 
   eventIconUrl(event: EventSummaryDto) {
     return event.icon?.thumbUrl || event.icon?.url || '';
+  }
+
+  isAdultEvent(event: EventSummaryDto) {
+    const typed = event as EventSummaryDto & { adultOnly?: boolean; isAdult?: boolean };
+    if (typed.adultOnly !== undefined) {
+      return typed.adultOnly;
+    }
+    if (typed.isAdult !== undefined) {
+      return typed.isAdult;
+    }
+    return /18\+/.test(event.title);
+  }
+
+  eventWarnings(event: EventSummaryDto): string[] {
+    const typed = event as EventSummaryDto & { contentWarnings?: string[] };
+    const notes = event.contentNotes?.length ? event.contentNotes : (typed.contentWarnings || []);
+    return notes.map((note) => (ContentNoteTexts as { [key: string]: string })[note] || note);
+  }
+
+  eventTypeLabel(event: EventSummaryDto): string {
+    return EventTypeLabels[event.eventType] || EventTypeLabels[EventType.GENERAL];
   }
 
   get year() {
@@ -664,6 +803,16 @@ export default class PageEventCalendar extends Vue {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.page-event-calendar__filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-event-calendar__filters .q-field {
+  min-width: 200px;
 }
 
 .page-event-calendar__navbar .q-btn {
@@ -847,18 +996,38 @@ export default class PageEventCalendar extends Vue {
 }
 
 .page-event-calendar__event-time {
-  font-size: 0.85rem;
-  color: #555;
-  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #2d2d2d;
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+  line-height: 1.2;
 }
 
 .page-event-calendar__event-title {
-  font-weight: 700;
+  font-weight: 500;
+  color: #555;
+  line-height: 1.3;
   margin-bottom: 8px;
 }
 
 .page-event-calendar__event-summary .page-event-calendar__event-title {
   margin-bottom: 0;
+}
+
+.page-event-calendar__event-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(204, 74, 74, 0.15);
+  color: #b33a3a;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .page-event-calendar__event-meta {
@@ -876,6 +1045,40 @@ export default class PageEventCalendar extends Vue {
 
 .page-event-calendar__event-details {
   padding: 8px 16px 16px;
+}
+
+.page-event-calendar__event-warnings {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.page-event-calendar__event-warnings-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(35, 35, 35, 0.65);
+  font-weight: 600;
+}
+
+.page-event-calendar__event-warnings-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.page-event-calendar__event-warning {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(221, 180, 118, 0.22);
+  color: #6b4c21;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.page-event-calendar__event-warnings-empty {
+  font-size: 0.85rem;
+  color: rgba(35, 35, 35, 0.6);
 }
 
 .page-event-calendar__event-actions {

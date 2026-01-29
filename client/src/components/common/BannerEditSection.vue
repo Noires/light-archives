@@ -1,11 +1,8 @@
 <template>
 	<section class="banner-edit-section">
-		<h6>Banner</h6>
-		<p class="text-caption">
-			Banner müssen ein Seitenverhältnis von 4:1 Breite:Höhe haben. Beispielsweise ist 500&times;100 und 400&times;100 in Ordnung, aber
-	    300&times;100 aber nicht.
-		</p>
-		<q-responsive v-if="!modelValue" class="banner-edit-section__placeholder" :ratio="4 / 1">
+		<h6>{{ title }}</h6>
+		<p class="text-caption">{{ hint }}</p>
+		<q-responsive v-if="!modelValue" class="banner-edit-section__placeholder" :ratio="ratio">
 			<div>Kein Banner</div>
 		</q-responsive>
 		<q-img
@@ -23,7 +20,7 @@
 				color="negative"
 				@click="onBannerRemoveClick"
 			/>&nbsp;
-			<q-btn flat label="Auswählen" icon="collections" color="secondary" @click="onBannerSelectClick" />&nbsp;
+			<q-btn flat label="AuswÃ¤hlen" icon="collections" color="secondary" @click="onBannerSelectClick" />&nbsp;
 			<q-btn flat label="Hochladen" icon="upload" color="secondary" @click="onBannerUploadClick" />
 		</div>
 	</section>
@@ -32,12 +29,28 @@
 <script lang="ts">
 import { BannerDto } from '@app/shared/dto/characters/banner.dto';
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
+import SharedConstants from '@app/shared/SharedConstants';
 import { Options, prop, Vue } from 'vue-class-component';
-
 
 class Props {
 	modelValue = prop<BannerDto>({
 		required: false
+	});
+
+	title = prop<string>({
+		default: 'Banner',
+	});
+
+	hint = prop<string>({
+		default: 'Banner mÃ¼ssen ein SeitenverhÃ¤ltnis von 4:1 Breite:HÃ¶he haben. Beispielsweise ist 500Ã—100 und 400Ã—100 in Ordnung, aber 300Ã—100 nicht.',
+	});
+
+	ratio = prop<number>({
+		default: 4 / 1,
+	});
+
+	minAspectRatio = prop<number>({
+		default: SharedConstants.MIN_BANNER_ASPECT_RATIO,
 	});
 }
 
@@ -53,6 +66,7 @@ export default class BannerEditSection extends Vue.with(Props) {
         component: GalleryDialog,
         componentProps: {
           banner: true,
+          minAspectRatio: this.minAspectRatio,
         },
       })
       .onOk((image: ImageSummaryDto) => {
@@ -73,6 +87,7 @@ export default class BannerEditSection extends Vue.with(Props) {
         component: UploadDialog,
         componentProps: {
           banner: true,
+          minAspectRatio: this.minAspectRatio,
         },
       })
       .onOk((image: ImageSummaryDto) => {

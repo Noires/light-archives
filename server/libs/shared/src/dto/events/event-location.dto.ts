@@ -20,6 +20,10 @@ export class EventLocationDto {
 	@IsString()
 	link: string;
 
+  @IsInt()
+  @IsOptional()
+  venueId?: number;
+
 	constructor(properties?: Readonly<EventLocationDto>) {
     if (properties) {
       Object.assign(this, properties);

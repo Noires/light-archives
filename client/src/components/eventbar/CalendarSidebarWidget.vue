@@ -5,7 +5,7 @@
         <div class="calendar-widget__heading">
           <q-icon name="event" />
           <div>
-            <div class="calendar-widget__title">Eventkalender (Prototyp)</div>
+            <div class="calendar-widget__title">Eventkalender</div>
             <div v-if="collapsed" class="calendar-widget__count">
               {{ upcomingCountLabel }}
             </div>
@@ -15,6 +15,15 @@
           </div>
         </div>
         <div class="calendar-widget__actions">
+          <q-btn
+            v-if="$store.getters.role && $store.getters.role !== Role.UNVERIFIED"
+            flat
+            round
+            dense
+            icon="add"
+            to="/create-event"
+            aria-label="Event erstellen"
+          />
           <q-btn
             flat
             round
@@ -48,6 +57,27 @@
             @update:model-value="onDateChange"
           />
 
+          <div class="calendar-widget__filters">
+            <q-select
+              v-model="selectedType"
+              :options="eventTypeFilterOptions"
+              dense
+              outlined
+              emit-value
+              map-options
+              label="Event-Typ"
+            />
+            <q-select
+              v-model="sortMode"
+              :options="sortOptions"
+              dense
+              outlined
+              emit-value
+              map-options
+              label="Sortierung"
+            />
+          </div>
+
           <div class="calendar-widget__list-header">
             <span>{{ listTitle }}</span>
             <q-btn
@@ -55,7 +85,7 @@
               flat
               dense
               size="sm"
-              label="Zuruecksetzen"
+              label="Zurücksetzen"
               @click="clearSelection"
             />
           </div>
@@ -103,7 +133,13 @@
                       </div>
                       <div class="calendar-widget__event-summary-text">
                         <div class="calendar-widget__event-time">
-                          {{ formatTimeRange(event) }}
+                          <span>{{ formatTimeRange(event) }}</span>
+                          <span
+                            v-if="isAdultEvent(event)"
+                            class="calendar-widget__event-badge"
+                          >
+                            18+
+                          </span>
                         </div>
                         <div class="calendar-widget__event-title">
                           {{ event.title }}
@@ -127,10 +163,30 @@
                             <q-icon name="place" />
                             <span>{{ primaryLocation(event) }}</span>
                           </div>
-                          <div class="calendar-widget__event-row">
-                            <q-icon name="event" />
-                            <span>{{ formatDate(event.startDateTime) }}</span>
+                        <div class="calendar-widget__event-row">
+                          <q-icon name="event" />
+                          <span>{{ formatDate(event.startDateTime) }}</span>
+                        </div>
+                        <div class="calendar-widget__event-row">
+                          <q-icon name="category" />
+                          <span>{{ eventTypeLabel(event) }}</span>
+                        </div>
+                        </div>
+                        <div class="calendar-widget__event-warnings">
+                          <div class="calendar-widget__event-warnings-title">Inhaltswarnungen</div>
+                          <div
+                            v-if="eventWarnings(event).length"
+                            class="calendar-widget__event-warnings-list"
+                          >
+                            <span
+                              v-for="warning in eventWarnings(event)"
+                              :key="warning"
+                              class="calendar-widget__event-warning"
+                            >
+                              {{ warning }}
+                            </span>
                           </div>
+                          <div v-else class="calendar-widget__event-warnings-empty">Keine Angaben.</div>
                         </div>
                         <div class="calendar-widget__event-actions">
                           <q-btn
@@ -138,7 +194,7 @@
                             flat
                             color="secondary"
                             icon="launch"
-                            label="Link oeffnen"
+                            label="Link öffnen"
                             type="a"
                             target="_blank"
                             :href="event.link"
@@ -168,16 +224,28 @@
 <script lang="ts">
 import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
 import SharedConstants from '@app/shared/SharedConstants';
+import { Role } from '@app/shared/enums/role.enum';
+import { EventType } from '@app/shared/enums/event-type.enum';
+import { ContentNoteTexts } from '@common/common/api/content-notes-api';
 import { DateTime } from 'luxon';
 import { notifyError } from 'src/common/notify';
+import { EventTypeLabels, EventTypeOptions } from 'src/common/event-types';
 import { Options, Vue } from 'vue-class-component';
 
 type NavigationPayload = { year: number | string; month: number | string };
 
-@Options({})
+@Options({
+  watch: {
+    selectedType() {
+      (this as CalendarSidebarWidget).updateEventDates();
+    },
+  },
+})
 export default class CalendarSidebarWidget extends Vue {
   collapsed = false;
   selectedDate: string | null = null;
+  selectedType: EventType | '' = '';
+  sortMode: 'time' | 'type' = 'time';
   upcomingEvents: EventSummaryDto[] = [];
   monthEvents: EventSummaryDto[] = [];
   eventDates: string[] = [];
@@ -185,6 +253,17 @@ export default class CalendarSidebarWidget extends Vue {
   loadingMonth = false;
   calendarYear = DateTime.now().year;
   calendarMonth: number = DateTime.now().month;
+  Role = Role;
+
+  readonly eventTypeFilterOptions = [
+    { label: 'Alle Typen', value: '' },
+    ...EventTypeOptions,
+  ];
+
+  readonly sortOptions = [
+    { label: 'Zeit', value: 'time' },
+    { label: 'Typ', value: 'type' },
+  ];
 
   async created() {
     try {
@@ -236,18 +315,42 @@ export default class CalendarSidebarWidget extends Vue {
 
   get displayedEvents() {
     if (this.selectedDate) {
-      return this.monthEvents
-        .filter((event) => this.eventDateKey(event) === this.selectedDate)
-        .sort((a, b) => a.startDateTime - b.startDateTime);
+      return this.sortEvents(
+        this.filterEvents(
+          this.monthEvents.filter((event) => this.eventDateKey(event) === this.selectedDate),
+        ),
+      );
     }
 
-    return this.upcomingEvents
-      .slice()
-      .sort((a, b) => a.startDateTime - b.startDateTime);
+    return this.sortEvents(this.filterEvents(this.upcomingEvents.slice()));
   }
 
   get groupedDisplayedEvents() {
     return this.buildEventGroups(this.displayedEvents);
+  }
+
+  private filterEvents(events: EventSummaryDto[]) {
+    if (!this.selectedType) {
+      return events;
+    }
+
+    return events.filter((event) => event.eventType === this.selectedType);
+  }
+
+  private sortEvents(events: EventSummaryDto[]) {
+    if (this.sortMode === 'type') {
+      return events.slice().sort((a, b) => {
+        const typeA = EventTypeLabels[a.eventType] || '';
+        const typeB = EventTypeLabels[b.eventType] || '';
+        const typeCompare = typeA.localeCompare(typeB);
+        if (typeCompare !== 0) {
+          return typeCompare;
+        }
+        return a.startDateTime - b.startDateTime;
+      });
+    }
+
+    return events.slice().sort((a, b) => a.startDateTime - b.startDateTime);
   }
 
   expandedEvents: Record<number, boolean> = {};
@@ -328,9 +431,12 @@ export default class CalendarSidebarWidget extends Vue {
 
   private async loadMonthEvents(year: number, month: number) {
     this.monthEvents = await this.$api.events.getEventsForMonth(year, month);
-    this.eventDates = Array.from(
-      new Set(this.monthEvents.map((event) => this.eventDateKey(event)))
-    );
+    this.updateEventDates();
+  }
+
+  private updateEventDates() {
+    const events = this.filterEvents(this.monthEvents);
+    this.eventDates = Array.from(new Set(events.map((event) => this.eventDateKey(event))));
   }
 
   private eventDateKey(event: EventSummaryDto): string {
@@ -405,6 +511,27 @@ export default class CalendarSidebarWidget extends Vue {
   eventIconUrl(event: EventSummaryDto) {
     return event.icon?.thumbUrl || event.icon?.url || '';
   }
+
+  isAdultEvent(event: EventSummaryDto) {
+    const typed = event as EventSummaryDto & { adultOnly?: boolean; isAdult?: boolean };
+    if (typed.adultOnly !== undefined) {
+      return typed.adultOnly;
+    }
+    if (typed.isAdult !== undefined) {
+      return typed.isAdult;
+    }
+    return /18\+/.test(event.title);
+  }
+
+  eventWarnings(event: EventSummaryDto): string[] {
+    const typed = event as EventSummaryDto & { contentWarnings?: string[] };
+    const notes = event.contentNotes?.length ? event.contentNotes : (typed.contentWarnings || []);
+    return notes.map((note) => (ContentNoteTexts as { [key: string]: string })[note] || note);
+  }
+
+  eventTypeLabel(event: EventSummaryDto): string {
+    return EventTypeLabels[event.eventType] || EventTypeLabels[EventType.GENERAL];
+  }
 }
 </script>
 
@@ -447,6 +574,12 @@ export default class CalendarSidebarWidget extends Vue {
   padding: 12px 16px 16px;
 }
 
+.calendar-widget__filters {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 8px;
+}
+
 .calendar-widget__list-header {
   display: flex;
   justify-content: space-between;
@@ -473,7 +606,7 @@ export default class CalendarSidebarWidget extends Vue {
 
 .calendar-widget__list-cards {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .calendar-widget__date-header {
@@ -561,18 +694,38 @@ export default class CalendarSidebarWidget extends Vue {
 }
 
 .calendar-widget__event-time {
-  font-size: 0.8rem;
-  color: #555;
-  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #2d2d2d;
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+  line-height: 1.2;
 }
 
 .calendar-widget__event-title {
-  font-weight: 700;
+  font-weight: 500;
+  color: #555;
+  line-height: 1.3;
   margin-bottom: 6px;
 }
 
 .calendar-widget__event-summary .calendar-widget__event-title {
   margin-bottom: 0;
+}
+
+.calendar-widget__event-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(204, 74, 74, 0.15);
+  color: #b33a3a;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .calendar-widget__event-meta {
@@ -594,6 +747,40 @@ export default class CalendarSidebarWidget extends Vue {
 
 .calendar-widget__event-details {
   padding: 0 12px 12px;
+}
+
+.calendar-widget__event-warnings {
+  margin-top: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.calendar-widget__event-warnings-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(35, 35, 35, 0.65);
+  font-weight: 600;
+}
+
+.calendar-widget__event-warnings-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.calendar-widget__event-warning {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(221, 180, 118, 0.22);
+  color: #6b4c21;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.calendar-widget__event-warnings-empty {
+  font-size: 0.8rem;
+  color: rgba(35, 35, 35, 0.6);
 }
 
 .calendar-widget__event-actions {

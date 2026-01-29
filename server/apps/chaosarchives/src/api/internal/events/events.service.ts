@@ -1,6 +1,6 @@
 import { UserInfo } from '@app/auth/model/user-info';
 import { serverConfiguration } from '@app/configuration';
-import { Character, Event, EventAnnouncement, EventLocation, Image, Server } from '@app/entity';
+import { Character, ContentNote, Event, EventAnnouncement, EventLocation, Image, Server, Venue } from '@app/entity';
 import { BannerDto } from '@app/shared/dto/characters/banner.dto';
 import { BaseEventDto } from '@app/shared/dto/events/base-event.dto';
 import { EventAnnouncementDto } from '@app/shared/dto/events/event-announcement.dto';
@@ -14,6 +14,7 @@ import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
 import { EventDto } from '@app/shared/dto/events/event.dto';
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 import { EventSource } from '@app/shared/enums/event-source.enum';
+import { EventType } from '@app/shared/enums/event-type.enum';
 import html from '@app/shared/html';
 import SharedConstants from '@app/shared/SharedConstants';
 import { isValidUrl } from '@app/shared/validation/validators';
@@ -58,7 +59,7 @@ export class EventsService {
       where: {
         id,
       },
-      relations: ['owner', 'owner.user', 'locations', 'locations.server', 'banner', 'banner.owner', 'icon', 'icon.owner'],
+      relations: ['owner', 'owner.user', 'locations', 'locations.server', 'locations.venue', 'banner', 'banner.owner', 'discordBanner', 'discordBanner.owner', 'icon', 'icon.owner', 'contentNotes'],
     });
 
     if (!event) {
@@ -112,7 +113,7 @@ export class EventsService {
             },
           },
         },
-        relations: ['owner', 'owner.user', 'locations', 'locations.server', 'banner', 'banner.owner', 'icon', 'icon.owner'],
+        relations: ['owner', 'owner.user', 'locations', 'locations.server', 'locations.venue', 'banner', 'banner.owner', 'discordBanner', 'discordBanner.owner', 'icon', 'icon.owner', 'contentNotes'],
       });
 
       if (!event) {
@@ -137,6 +138,12 @@ export class EventsService {
     event.link = eventDto.link; // TODO: Validate
     event.contact = eventDto.contact;
     event.recurring = eventDto.recurring;
+    event.eventType = eventDto.eventType || EventType.GENERAL;
+    if (eventDto.contentNotes !== undefined) {
+      event.contentNotes = eventDto.contentNotes
+        .filter(note => note !== '')
+        .map((note) => new ContentNote({ name: note }));
+    }
 
     if (eventDto.banner && eventDto.banner.id) {
       const banner = await em.getRepository(Image).findOne({
@@ -186,6 +193,32 @@ export class EventsService {
       event.icon = Promise.resolve(null as unknown as Image);
     }
 
+    if (eventDto.discordBanner && eventDto.discordBanner.id) {
+      const discordBanner = await em.getRepository(Image).findOne({
+        where: {
+          id: eventDto.discordBanner.id,
+          owner: {
+            user: {
+              id: event.owner.user.id,
+            },
+          },
+        },
+        relations: ['owner', 'owner.user'],
+      });
+
+      if (!discordBanner) {
+        throw new BadRequestException('Discord banner not found');
+      }
+
+      if (discordBanner.width / discordBanner.height < SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO) {
+        throw new BadRequestException('Discord banner is too tall for its width');
+      }
+
+      event.discordBanner = Promise.resolve(discordBanner);
+    } else {
+      event.discordBanner = Promise.resolve(null as unknown as Image);
+    }
+
     if (eventDto.locations.length === 0) {
       throw new BadRequestException('Event must have at least one location');
     }
@@ -206,6 +239,19 @@ export class EventsService {
 
     if (locationsToRemove.length > 0) {
       await Promise.all(locationsToRemove.map((location) => em.remove(location)));
+    }
+
+    const venueIds = eventDto.locations.map((location) => location.venueId).filter((id): id is number => !!id);
+    const venuesById = new Map<number, Venue>();
+
+    if (venueIds.length > 0) {
+      const venues = await em.getRepository(Venue).find({
+        where: {
+          id: In(venueIds),
+        },
+        relations: ['server'],
+      });
+      venues.forEach((venue) => venuesById.set(venue.id, venue));
     }
 
     const locationServers = await em.getRepository(Server).find({
@@ -232,13 +278,25 @@ export class EventsService {
         throw new BadRequestException(`Invalid location link: ${location.link}`);
       }
 
-      const server = locationServers.find(s => s.name === dtoLocation.server);
-  
-      if (!server) {
-        throw new BadRequestException(`Server ${dtoLocation.server} not found`);
+      if (dtoLocation.venueId) {
+        const venue = venuesById.get(dtoLocation.venueId);
+
+        if (!venue) {
+          throw new BadRequestException(`Venue ${dtoLocation.venueId} not found`);
+        }
+
+        location.venue = venue;
+        location.server = venue.server;
+      } else {
+        location.venue = null;
+        const server = locationServers.find(s => s.name === dtoLocation.server);
+
+        if (!server) {
+          throw new BadRequestException(`Server ${dtoLocation.server} not found`);
+        }
+
+        location.server = server;
       }
-  
-      location.server = server;
     }
 
     event.locations = locations;
@@ -371,7 +429,7 @@ export class EventsService {
         createdAt: 'ASC',
       },
       take: this.MAX_RESULTS,
-      relations: ['locations', 'locations.server', 'icon', 'icon.owner'],
+      relations: ['locations', 'locations.server', 'locations.venue', 'icon', 'icon.owner', 'contentNotes'],
     });
 
     return Promise.all(events.map((event) => this.toEventSummaryDto(event)));
@@ -427,13 +485,14 @@ export class EventsService {
             locations: [],
           });
 
-        event.title = eventDto.title;
-        event.details = html.sanitize(eventDto.details);
-        event.recurring = eventDto.recurring;
-        event.startDateTime = new Date(eventDto.startDateTime);
-        event.endDateTime = eventDto.endDateTime ? new Date(eventDto.endDateTime) : null;
-        event.source = eventDto.source;
-        event.externalSourceLink = eventDto.link;
+      event.title = eventDto.title;
+      event.details = html.sanitize(eventDto.details);
+      event.recurring = eventDto.recurring;
+      event.startDateTime = new Date(eventDto.startDateTime);
+      event.endDateTime = eventDto.endDateTime ? new Date(eventDto.endDateTime) : null;
+      event.source = eventDto.source;
+      event.eventType = EventType.GENERAL;
+      event.externalSourceLink = eventDto.link;
 
         const dtoLocations = eventDto.locations;
 
@@ -518,8 +577,10 @@ export class EventsService {
       .createQueryBuilder('event')
       .leftJoinAndSelect('event.locations', 'location')
       .leftJoinAndSelect('location.server', 'server')
+      .leftJoinAndSelect('location.venue', 'venue')
       .leftJoinAndSelect('event.icon', 'icon')
       .leftJoinAndSelect('icon.owner', 'iconOwner')
+      .leftJoinAndSelect('event.contentNotes', 'contentNotes')
       .where('event.startDateTime >= :startOfMonth', { startOfMonth: startOfMonth.toJSDate() })
       .andWhere('event.startDateTime < :endOfMonth', { endOfMonth: endOfMonth.toJSDate() })
       .andWhere('event.hidden = :hidden', { hidden: false })
@@ -527,6 +588,31 @@ export class EventsService {
         'event.startDateTime': 'ASC',
         'event.createdAt': 'ASC',
       })
+      .getMany();
+
+    return Promise.all(events.map((event) => this.toEventSummaryDto(event)));
+  }
+
+  async getEventsForVenue(venueId: number): Promise<EventSummaryDto[]> {
+    const startOfDay = DateTime.now().setZone(SharedConstants.FFXIV_SERVER_TIMEZONE).startOf('day');
+    const events = await this.eventRepo
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.locations', 'location')
+      .leftJoinAndSelect('location.server', 'server')
+      .leftJoinAndSelect('location.venue', 'venue')
+      .leftJoinAndSelect('event.icon', 'icon')
+      .leftJoinAndSelect('icon.owner', 'iconOwner')
+      .leftJoinAndSelect('event.contentNotes', 'contentNotes')
+      .where('venue.id = :venueId', { venueId })
+      .andWhere('event.hidden = :hidden', { hidden: false })
+      .andWhere('(event.startDateTime >= :startOfDay OR event.endDateTime >= :startOfDay)', {
+        startOfDay: startOfDay.toJSDate(),
+      })
+      .orderBy({
+        'event.startDateTime': 'ASC',
+        'event.createdAt': 'ASC',
+      })
+      .distinct(true)
       .getMany();
 
     return Promise.all(events.map((event) => this.toEventSummaryDto(event)));
@@ -555,7 +641,9 @@ export class EventsService {
       endDateTime: event.endDateTime ? event.endDateTime.getTime() : null,
       link: event.externalSourceLink || '',
       source: event.source,
+      eventType: event.eventType || EventType.GENERAL,
       recurring: event.recurring,
+      contentNotes: (event.contentNotes || []).map((note) => note.name),
       locations: event.locations.map((location) => ({
         id: location.id,
         name: location.name,
@@ -563,12 +651,14 @@ export class EventsService {
         server: location.server?.name || '',
         tags: location.tags,
         link: location.link,
+        venueId: location.venue?.id,
       })),
     };
   }
 
   private async toEventDto(event: Event, edit: boolean, user?: UserInfo): Promise<BaseEventDto> {
     const banner = await event.banner;
+    const discordBanner = await event.discordBanner;
     const icon = await event.icon;
     let announcements: EventAnnouncement[] = [];
     let images: ImageSummaryDto[] = [];
@@ -593,6 +683,8 @@ export class EventsService {
       endDateTime: event.endDateTime ? event.endDateTime.getTime() : null,
       link: event.externalSourceLink || event.link,
       contact: event.contact,
+      eventType: event.eventType || EventType.GENERAL,
+      contentNotes: (event.contentNotes || []).map((note) => note.name),
       banner: !banner
         ? null
         : new BannerDto({
@@ -600,6 +692,14 @@ export class EventsService {
             url: this.imagesService.getUrl(banner),
             width: banner.width,
             height: banner.height,
+          }),
+      discordBanner: !discordBanner
+        ? null
+        : new BannerDto({
+            id: discordBanner.id,
+            url: this.imagesService.getUrl(discordBanner),
+            width: discordBanner.width,
+            height: discordBanner.height,
           }),
       icon: !icon
         ? null
@@ -617,6 +717,7 @@ export class EventsService {
         server: location.server.name,
         tags: location.tags,
         link: location.link,
+        venueId: location.venue?.id,
       })),
     };
 

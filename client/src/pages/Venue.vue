@@ -5,7 +5,7 @@
 				<router-link :to="`/edit-venue/${venue.id}`">Treffpunkt bearbeiten</router-link>
 				<q-btn flat color="negative" label="Treffpunkt löschen" @click="onDeleteClick" />
 			</section>
-			<venue-profile :venue="venue" />
+			<venue-profile :venue="venue" :planned-events="plannedEvents" />
     	<report-violation-section :pageType="PageType.VENUE" :pageId="venue.id" />
 		</template>
 	</q-page>	
@@ -13,6 +13,7 @@
 
 <script lang="ts">
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
+import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
 import VenueProfile from 'components/venues/VenueProfile.vue';
 import { useApi } from 'src/boot/axios';
 import { Options, Vue } from 'vue-class-component';
@@ -27,7 +28,7 @@ import ReportViolationSection from 'src/components/common/ReportViolationSection
 const $api = useApi();
 const $router = useRouter();
 
-async function load(params: RouteParams): Promise<VenueDto> {
+async function load(params: RouteParams): Promise<{ venue: VenueDto; events: EventSummaryDto[] }> {
 		const id = parseInt(params.id as string, 10);
 		const name = params.name as string;
 		const server = params.server as string;
@@ -38,11 +39,11 @@ async function load(params: RouteParams): Promise<VenueDto> {
 		}
 
 		try {
-			if (id) {
-				return await $api.venues.getVenue(id);
-			} else {
-				return await $api.venues.getVenueByName(name.replace(/_/g, ' '), server);
-			}
+      const venue = id
+        ? await $api.venues.getVenue(id)
+        : await $api.venues.getVenueByName(name.replace(/_/g, ' '), server);
+      const events = venue.id ? await $api.events.getEventsForVenue(venue.id) : [];
+      return { venue, events };
 		} catch (e) {			
 			notifyError(e);
 			throw e;
@@ -91,9 +92,11 @@ export default class PageVenue extends Vue {
 	readonly PageType = PageType;
 	
 	venue: VenueDto = new VenueDto();
+  plannedEvents: EventSummaryDto[] = [];
 
-	setContent(venue: VenueDto) {
-		this.venue = venue;
+	setContent(content: { venue: VenueDto; events: EventSummaryDto[] }) {
+		this.venue = content.venue;
+    this.plannedEvents = content.events || [];
 	}
 
 	onDeleteClick() {

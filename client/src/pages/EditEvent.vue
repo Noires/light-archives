@@ -12,6 +12,16 @@
                 $rules.required('Dieses Feld ist erforderlich.'),
               ]"
             />
+            <q-select
+              v-model="event.eventType"
+              label="Event-Typ *"
+              :options="eventTypeOptions"
+              emit-value
+              map-options
+              :rules="[
+                $rules.required('Dieses Feld ist erforderlich.'),
+              ]"
+            />
             <q-date-time-picker
               v-if="startDateTimeVisible"
               label="Datum/Uhrzeit Beginn *"
@@ -38,11 +48,30 @@
               v-model="event.recurring"
               label="Dies ist ein wiederkehrendes Event."
             />
-            <template v-for="(location, index) in event.locations" :key="index">
+            <h6>Inhaltswarnungen</h6>
+            <q-option-group
+              v-model="event.contentNotes"
+              :options="contentNoteOptions"
+              type="checkbox"
+              class="page-edit-event__checkbox-list"
+            />
+          <template v-for="(location, index) in event.locations" :key="index">
               <h6>Standort</h6>
+              <q-select
+                v-model="location.venueId"
+                label="Treffpunkt-Name (Verknüpfen)"
+                use-input
+                input-debounce="250"
+                emit-value
+                map-options
+                clearable
+                :options="venueOptions[index] || []"
+                @filter="(val, update, abort) => onVenueSearch(val, update, abort, index)"
+                @update:model-value="(value) => onVenueSelected(value, index)"
+              />
               <q-input
                 v-model="location.name"
-                label="Name *"
+                label="Treffpunkt-Name *"
                 :rules="[
                   $rules.required('Dieses Feld ist erforderlich.'),
                 ]"
@@ -85,12 +114,19 @@
             <q-btn flat color="secondary" icon="add" label="Standort hinzufügen" @click="addLocation" />
           </div>
           </section>
-          <event-icon-edit-section v-model="event.icon" />
-          <banner-edit-section v-model="event.banner" />
           <h6>Details</h6>
           <html-editor v-model="event.details" />
           <h6>OOC Details</h6>
           <html-editor v-model="event.oocDetails" />
+          <event-icon-edit-section v-model="event.icon" />
+          <banner-edit-section v-model="event.banner" />
+          <banner-edit-section
+            v-model="event.discordBanner"
+            title="Discord-Banner"
+            :ratio="5 / 2"
+            :min-aspect-ratio="minDiscordBannerAspectRatio"
+            hint="Discord-Banner sollten ein SeitenverhÃ¤ltnis von 5:2 haben (z. B. 800Ã—320)."
+          />
           <q-input
             v-model="event.link"
             label="Link"
@@ -102,13 +138,13 @@
             v-model="event.contact"
             label="Kontakt"
           />
-          <h6>Ankündigungen</h6>
-          <p>You can let the Chaos Archives Discord bot announce the event on the <tt>#rp-event-announcements</tt> channel some time before the event starts. You can add as many announcements as you like.</p>
+          <h6>Vorankündigungen</h6>
+          <p>Der Chaos Archives Discord-Bot kann das Event im <tt>#rp-event-announcements</tt>-Channel ankündigen. Du kannst Vorankündigungen flexibel planen (z. B. 2 Wochen, 1 Woche oder 2 Tage vorher).</p>
           <template v-for="(_, index) in event.announcements" :key="index">
             <event-announcement-editor v-model="event.announcements[index]" @remove="removeAnnouncement(index)" />
           </template>
           <div class="page-edit-event__button-bar" style="justify-content: end">
-            <q-btn flat color="secondary" icon="add" label="Ankündigung hinzufügen" @click="addAnnouncement" />
+            <q-btn flat color="secondary" icon="add" label="Vorankündigung hinzufügen" @click="addAnnouncement" />
           </div>
         </template>
         <section v-else class="page-edit-event__preview">
@@ -157,10 +193,16 @@
 import { EventAnnouncementDto } from '@app/shared/dto/events/event-announcement.dto';
 import { EventEditDto } from '@app/shared/dto/events/event-edit.dto';
 import { EventLocationDto } from '@app/shared/dto/events/event-location.dto';
+import { VenueDto } from '@app/shared/dto/venues/venue.dto';
+import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
+import { EventType } from '@app/shared/enums/event-type.enum';
+import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import errors from '@app/shared/errors';
 import SharedConstants from '@app/shared/SharedConstants';
 import { Component as QDateTimePicker } from '@toby.mosque/quasar-ui-qdatetimepicker';
 import '@toby.mosque/quasar-ui-qdatetimepicker/dist/index.css'; // Temp, move somewhere
+import { ContentNoteTexts } from '@common/common/api/content-notes-api';
+import { EventTypeOptions } from 'src/common/event-types';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
 import EventAnnouncementEditor from 'components/event/EventAnnouncementEditor.vue';
 import { DateTime } from 'luxon';
@@ -179,21 +221,26 @@ const $api = useApi();
 const $router = useRouter();
 const $store = useStore();
 
-async function load(params: RouteParams): Promise<{event: EventEditDto, eventId: number}|null> {
+async function load(params: RouteParams): Promise<{
+  event: EventEditDto | null;
+  eventId: number | null;
+  contentNotes: { name: string }[];
+}> {
   if (!$store.getters.characterId) {
     throw new Error();
   }
 
+  const contentNotes = await $api.contentNotes.getContentNotes();
 	const id = parseInt(params.id as string, 10);
 
 	if (!id) {
-		return null;
+		return { event: null, eventId: null, contentNotes };
 	}
 
 	try {
 		const event = await $api.events.getEventForEdit(id);
 		document.title = `${event.title} — Elpisgarten`;
-		return { event, eventId: id };
+		return { event, eventId: id, contentNotes };
 	} catch (e) {
 		if (errors.getStatusCode(e) === 404) {
 			notifyError('Event konnte nicht gefunden werden.');
@@ -255,9 +302,13 @@ export default class PageEditEvent extends Vue {
     { label: 'Vorschau', value: true },
   ];
 
-	eventId: number|null = null;
+  eventId: number|null = null;
   event = new EventEditDto();
   eventBackup = new EventEditDto();
+  contentNoteOptions: { label: string; value: string }[] = [];
+  readonly eventTypeOptions = EventTypeOptions;
+  readonly minDiscordBannerAspectRatio = SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO;
+  venueOptions: VenueOption[][] = [];
 
   startDateTime: string|null = null;
   endDateTime: string|null = null;
@@ -271,10 +322,20 @@ export default class PageEditEvent extends Vue {
 
   confirmRevert = false;
 
-  setContent(content: { event: EventEditDto, eventId: number }|null) {
-		if (content) {
+  setContent(content: { event: EventEditDto | null; eventId: number | null; contentNotes?: { name: string }[] }) {
+    if (content.contentNotes) {
+      this.contentNoteOptions = content.contentNotes.map((contentNote) => ({
+        label: (ContentNoteTexts as { [key: string]: string })[contentNote.name] || contentNote.name,
+        value: contentNote.name,
+      }));
+    }
+
+		if (content.event) {
 			this.eventId = content.eventId;
 			this.eventBackup = new EventEditDto(content.event);
+      this.eventBackup.contentNotes = this.eventBackup.contentNotes || [];
+      this.eventBackup.eventType = this.eventBackup.eventType || EventType.GENERAL;
+      this.eventBackup.discordBanner = this.eventBackup.discordBanner || null;
     } else {
       this.eventId = null;
       this.eventBackup = new EventEditDto({
@@ -287,12 +348,25 @@ export default class PageEditEvent extends Vue {
         link: '',
         contact: '',
         recurring: false,
+        eventType: EventType.GENERAL,
         banner: null,
+        discordBanner: null,
         icon: null,
         locations: [ this.newLocation() ],
-        announcements: []
+        announcements: [
+          new EventAnnouncementDto({ minutesBefore: 360, content: '' }),
+          new EventAnnouncementDto({ minutesBefore: -180, content: '' }),
+        ],
+        contentNotes: [],
       });
     }
+
+    this.venueOptions = this.eventBackup.locations.map(() => []);
+    this.eventBackup.locations.forEach((location, index) => {
+      if (location.venueId) {
+        void this.seedVenueOption(index, location.venueId);
+      }
+    });
 
     this.loaded = true;
     this.event = new EventEditDto(this.eventBackup);
@@ -350,7 +424,7 @@ export default class PageEditEvent extends Vue {
 
   addAnnouncement() {
     this.event.announcements.push(new EventAnnouncementDto({
-      minutesBefore: 15,
+      minutesBefore: 20160,
       content: '',
     }));
   }
@@ -361,6 +435,7 @@ export default class PageEditEvent extends Vue {
 
   addLocation() {
     this.event.locations.push(this.newLocation());
+    this.venueOptions.push([]);
   }
 
   newLocation() {
@@ -370,11 +445,148 @@ export default class PageEditEvent extends Vue {
       server: this.$store.getters.character!.server,
       tags: '',
       link: '',
+      venueId: undefined,
     });
   }
 
   removeLocation(index: number) {
     this.event.locations.splice(index, 1);
+    this.venueOptions.splice(index, 1);
+  }
+
+  async onVenueSearch(value: string, update: (fn: () => void) => void, _abort: () => void, index: number) {
+    const query = value.trim();
+
+    if (query.length < 2) {
+      update(() => {
+        this.venueOptions.splice(index, 1, []);
+      });
+      return;
+    }
+
+    const server = this.event.locations[index]?.server || undefined;
+    const venues = await this.$api.venues.searchVenues(query, server || undefined);
+
+    const options = venues.map((venue) => ({
+      label: `${venue.name} (${venue.server})`,
+      value: venue.id,
+      venue,
+    }));
+
+    update(() => {
+      this.venueOptions.splice(index, 1, options);
+    });
+  }
+
+  async onVenueSelected(venueId: number | null, index: number) {
+    const location = this.event.locations[index];
+    if (!location) {
+      return;
+    }
+
+    if (!venueId) {
+      location.venueId = undefined;
+      return;
+    }
+
+    location.venueId = venueId;
+
+    const option = this.venueOptions[index]?.find((candidate) => candidate.value === venueId);
+    if (option) {
+      this.applyVenueToLocation(location, option.venue);
+    }
+
+    try {
+      const venue = await this.$api.venues.getVenue(venueId);
+      this.applyVenueTemplate(venue);
+
+      if (!option) {
+        const summary = this.toVenueSummary(venue);
+        const seededOption = {
+          label: `${summary.name} (${summary.server})`,
+          value: summary.id,
+          venue: summary,
+        };
+        this.venueOptions.splice(index, 1, [seededOption]);
+        this.applyVenueToLocation(location, summary);
+      }
+    } catch (e) {
+      notifyError(e);
+    }
+  }
+
+  private async seedVenueOption(index: number, venueId: number) {
+    try {
+      const venue = await this.$api.venues.getVenue(venueId);
+      const summary = this.toVenueSummary(venue);
+      this.venueOptions.splice(index, 1, [
+        {
+          label: `${summary.name} (${summary.server})`,
+          value: summary.id,
+          venue: summary,
+        },
+      ]);
+    } catch (e) {
+      notifyError(e);
+    }
+  }
+
+  private applyVenueToLocation(location: EventLocationDto, venue: VenueSummaryDto) {
+    location.name = venue.name;
+    location.address = venue.address;
+    location.server = venue.server;
+  }
+
+  private applyVenueTemplate(venue: VenueDto) {
+    if (!this.event.details && venue.eventDescription) {
+      this.event.details = venue.eventDescription;
+    }
+
+    if (!this.event.oocDetails && venue.eventOocDetails) {
+      this.event.oocDetails = venue.eventOocDetails;
+    }
+
+    if (!this.event.contact && venue.eventContact) {
+      this.event.contact = venue.eventContact;
+    }
+
+    if (!this.event.link && (venue.eventLink || venue.website)) {
+      this.event.link = venue.eventLink || venue.website;
+    }
+
+    if ((!this.event.contentNotes || this.event.contentNotes.length === 0) && venue.eventContentNotes?.length) {
+      this.event.contentNotes = [...venue.eventContentNotes];
+    }
+  }
+
+  private toVenueSummary(venue: VenueDto): VenueSummaryDto {
+    return {
+      id: venue.id,
+      name: venue.name,
+      server: venue.server,
+      purpose: venue.purpose,
+      housingArea: venue.housingArea,
+      address: this.formatVenueAddress(venue),
+    };
+  }
+
+  private formatVenueAddress(venue: VenueDto): string {
+    if (venue.location === VenueLocation.OPEN_WORLD) {
+      return venue.address;
+    }
+
+    const plotNumber = venue.plot ?? '';
+    const roomNumber = venue.room ?? '';
+    const plot = venue.location === VenueLocation.HOUSE ? `Grundstück ${plotNumber}` : `Wohnung ${roomNumber}`;
+    const housingArea = venue.housingArea ? this.$display.housingAreas[venue.housingArea] : '';
+    const ward = venue.ward ?? '';
+    let address = `${housingArea}, Bezirk ${ward}, ${plot}`;
+
+    if (venue.subdivision) {
+      address += ' (Erweiterung)';
+    }
+
+    return address;
   }
 
   revert() {
@@ -387,10 +599,13 @@ export default class PageEditEvent extends Vue {
     if (this.eventId) {
       this.setContent({
         event: this.eventBackup,
-        eventId: this.eventId
+        eventId: this.eventId,
       });
     } else {
-      this.setContent(null);
+      this.setContent({
+        event: null,
+        eventId: null,
+      });
     }
   }
 
@@ -398,6 +613,8 @@ export default class PageEditEvent extends Vue {
     this.saving = true;
 
     try {
+      this.applyAnnouncementDefaults();
+
       if (!this.eventId) {
         const characterId = this.$store.getters.characterId!;
         const result = await this.$api.events.createEvent(this.event, { characterId });
@@ -429,7 +646,43 @@ export default class PageEditEvent extends Vue {
       void this.$router.push(`/event/${this.eventId}`);
     }
   }
+
+  private applyAnnouncementDefaults() {
+    const content = this.buildAnnouncementContent();
+    if (!content) {
+      return;
+    }
+
+    this.event.announcements.forEach((announcement) => {
+      if (!announcement.content || announcement.content.trim().length === 0) {
+        announcement.content = content;
+      }
+    });
+  }
+
+  private buildAnnouncementContent(): string {
+    const title = (this.event.title || '').trim();
+    const details = this.stripHtml(this.event.details || '').trim();
+
+    if (title && details) {
+      return `${title}\n\n${details}`;
+    }
+
+    return details || title;
+  }
+
+  private stripHtml(content: string): string {
+    const container = document.createElement('div');
+    container.innerHTML = content;
+    return container.textContent || '';
+  }
 }
+
+type VenueOption = {
+  label: string;
+  value: number;
+  venue: VenueSummaryDto;
+};
 </script>
 
 <style lang="scss">
@@ -448,6 +701,11 @@ export default class PageEditEvent extends Vue {
   justify-content: space-between;
   margin-top: 16px;
   margin-bottom: 16px;
+}
+
+.page-edit-event__checkbox-list {
+  display: grid;
+  gap: 6px;
 }
 
 .page-edit-event__preview h6 {

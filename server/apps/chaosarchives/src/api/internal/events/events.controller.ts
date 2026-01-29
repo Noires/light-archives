@@ -57,6 +57,11 @@ export class EventsController {
     return this.eventsService.getByMonth(year, month);
   }
 
+  @Get('/venue/:id')
+  async getEventsForVenue(@Param('id', ParseIntPipe) id: number): Promise<EventSummaryDto[]> {
+    return this.eventsService.getEventsForVenue(id);
+  }
+
   @Get('/:id')
   @UseGuards(OptionalJwtAuthGuard)
   async getEvent(

@@ -1,8 +1,9 @@
 import { HousingArea } from '@app/shared/enums/housing-area.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
-import { Column, Entity, Index, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { Column, Entity, Index, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique } from 'typeorm';
 import { BasicEntity } from './basic.entity';
 import { Character } from './character.entity';
+import { ContentNote } from './content-note.entity';
 import { Image } from './image.entity';
 import { SearchFields } from './search-fields';
 import { Server } from './server.entity';
@@ -42,6 +43,32 @@ export class Venue extends BasicEntity {
     default: ''
   })
   description: string;
+
+  @Column({
+    type: 'mediumtext',
+    nullable: false,
+    default: ''
+  })
+  eventDescription: string;
+
+  @Column({
+    type: 'mediumtext',
+    nullable: false,
+    default: ''
+  })
+  eventOocDetails: string;
+
+  @Column({
+    nullable: false,
+    default: ''
+  })
+  eventContact: string;
+
+  @Column({
+    nullable: false,
+    default: ''
+  })
+  eventLink: string;
 
   @Column({
     nullable: false,
@@ -122,4 +149,8 @@ export class Venue extends BasicEntity {
     cascade: true,
   })
 	tags: VenueTag[]
+
+  @ManyToMany(() => ContentNote)
+  @JoinTable()
+  eventContentNotes: ContentNote[];
 }

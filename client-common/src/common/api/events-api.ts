@@ -44,4 +44,8 @@ export default class EventsAPI {
   async getEventsForMonth(year: number, month: number): Promise<EventSummaryDto[]> {
     return this.transport.tokenGet<EventSummaryDto[]>(`month/${year}/${month}`);
   }
+
+  async getEventsForVenue(venueId: number): Promise<EventSummaryDto[]> {
+    return this.transport.tokenGet<EventSummaryDto[]>(`venue/${venueId}`);
+  }
 }

@@ -1,5 +1,5 @@
 import { UserInfo } from '@app/auth/model/user-info';
-import { Character, Image, Server, Venue } from '@app/entity';
+import { Character, ContentNote, Image, Server, Venue } from '@app/entity';
 import { VenueTag } from '@app/entity/venue-tag.entity';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
@@ -13,6 +13,7 @@ import crypto from 'crypto';
 import { DateTime } from 'luxon';
 import { Connection, EntityManager, Repository } from 'typeorm';
 import { checkCarrdProfile } from '../../../common/api-checks';
+import { Contains } from '../../../common/db';
 import { ImagesService } from '../images/images.service';
 
 @Injectable()
@@ -33,6 +34,30 @@ export class VenuesService {
 
 		return myVenues.map(venue => this.toVenueSummaryDto(venue));
 	}
+
+  async searchVenues(query: string, server?: string): Promise<VenueSummaryDto[]> {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      return [];
+    }
+
+    const where: { name: ReturnType<typeof Contains>; server?: { name: string } } = {
+      name: Contains(trimmed),
+    };
+
+    if (server) {
+      where.server = { name: server };
+    }
+
+    const venues = await this.venueRepo.find({
+      where,
+      order: { name: 'ASC' },
+      relations: ['server'],
+      take: 10,
+    });
+
+    return venues.map((venue) => this.toVenueSummaryDto(venue));
+  }
 
 	private toVenueSummaryDto(venue: Venue): VenueSummaryDto {
 		let address: string;
@@ -66,7 +91,7 @@ export class VenuesService {
 					name: server,
 				},
 			},
-			relations: [ 'server', 'owner', 'owner.server', 'banner', 'banner.owner', 'tags' ]
+			relations: [ 'server', 'owner', 'owner.server', 'banner', 'banner.owner', 'tags', 'eventContentNotes' ]
 		});
 
 		if (!venue) {
@@ -81,7 +106,7 @@ export class VenuesService {
 			where: {
 				id: venueId,
 			},
-			relations: [ 'server', 'owner', 'owner.server', 'banner', 'banner.owner', 'tags' ]
+			relations: [ 'server', 'owner', 'owner.server', 'banner', 'banner.owner', 'tags', 'eventContentNotes' ]
 		});
 
 		if (!venue) {
@@ -103,6 +128,10 @@ export class VenuesService {
 			owner: venue.owner.name,
 			ownerServer: venue.owner.server.name,
 			description: venue.description,
+			eventDescription: venue.eventDescription,
+			eventOocDetails: venue.eventOocDetails,
+			eventContact: venue.eventContact,
+			eventLink: venue.eventLink,
 			purpose: venue.purpose,
 			website: venue.website,
 			status: venue.status,
@@ -115,6 +144,7 @@ export class VenuesService {
 			subdivision: venue.subdivision,
 			carrdProfile: venue.carrdProfile,
 			tags: venue.tags.map(tag => tag.name),
+      eventContentNotes: venue.eventContentNotes?.map((note) => note.name) || [],
 			banner: !banner ? null : {
 				id: banner.id,
 				url: this.imagesService.getUrl(banner),
@@ -177,6 +207,10 @@ export class VenuesService {
 	private async saveInternal(em: EntityManager, venue: Venue, venueDto: VenueDto, user: UserInfo): Promise<void> {
 		venue.name = venueDto.name;
 		venue.description = html.sanitize(venueDto.description);
+    venue.eventDescription = html.sanitize(venueDto.eventDescription || '');
+    venue.eventOocDetails = html.sanitize(venueDto.eventOocDetails || '');
+    venue.eventContact = venueDto.eventContact || '';
+    venue.eventLink = venueDto.eventLink || '';
 		venue.website = venueDto.website; // TODO: Validate
 		venue.purpose = venueDto.purpose;
 		venue.status = venueDto.status;
@@ -291,6 +325,10 @@ export class VenuesService {
 					}),
 			),
 		];
+
+    venue.eventContentNotes = (venueDto.eventContentNotes || [])
+      .filter(note => note !== '')
+      .map((note) => new ContentNote({ name: note }));
 
 		if (tagsToDelete.length > 0) {
 			await Promise.all(tagsToDelete.map(tag => em.remove(tag)));

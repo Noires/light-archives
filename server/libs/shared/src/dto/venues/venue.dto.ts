@@ -33,6 +33,22 @@ export class VenueDto {
   description: string;
 
   @IsString()
+  @IsOptional()
+  eventDescription: string;
+
+  @IsString()
+  @IsOptional()
+  eventOocDetails: string;
+
+  @IsString()
+  @IsOptional()
+  eventContact: string;
+
+  @IsString()
+  @IsOptional()
+  eventLink: string;
+
+  @IsString()
   website: string;
 
   @IsString()
@@ -81,6 +97,11 @@ export class VenueDto {
   @IsArray()
   @IsString({ each: true })
   tags: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  eventContentNotes: string[];
 	
 	constructor(properties?: Readonly<VenueDto>) {
     if (properties) {

@@ -134,6 +134,33 @@
           <banner-edit-section v-model="venue.banner" />
           <h6>Beschreibung</h6>
           <html-editor v-model="venue.description" />
+          <h6>Event-Vorlage</h6>
+          <q-input
+            v-model="venue.eventContact"
+            label="Event-Kontakt"
+          />
+          <q-input
+            v-model="venue.eventLink"
+            label="Event-Link"
+            :rules="[
+              $rules.url('Bitte hinterlasse einen Link.'),
+            ]"
+          />
+          <h6>Event-Beschreibung</h6>
+          <html-editor v-model="venue.eventDescription" />
+          <h6>Event-OOC Details</h6>
+          <html-editor v-model="venue.eventOocDetails" />
+          <h6>Event-Inhaltswarnungen</h6>
+          <Multiselect
+            v-model="venue.eventContentNotes"
+            :options="contentNoteOptions"
+            mode="tags"
+            :searchable="true"
+            :closeOnSelect="false"
+            valueProp="value"
+            track-by="label"
+            label="label"
+          />
           <carrd-edit-section
             class="page-edit-venue__form-controls"
             entity-type="venue"
@@ -183,11 +210,13 @@
 </template>
 
 <script lang="ts">
+import Multiselect from '@vueform/multiselect';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { HousingArea } from '@app/shared/enums/housing-area.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import errors from '@app/shared/errors';
 import SharedConstants from '@app/shared/SharedConstants';
+import { ContentNoteTexts } from '@common/common/api/content-notes-api';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
 import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
@@ -202,16 +231,17 @@ import { RouteParams } from 'vue-router';
 const $api = useApi();
 const $router = useRouter();
 
-async function load(params: RouteParams): Promise<VenueDto|null> {
+async function load(params: RouteParams): Promise<{ venue: VenueDto | null; contentNotes: { name: string }[] }> {
 	const id = parseInt(params.id as string, 10);
+  const contentNotes = await $api.contentNotes.getContentNotes();
 
 	if (!id) {
-		return null;
+		return { venue: null, contentNotes };
 	}
 
 	try {
 		const venue = await $api.venues.getVenue(id);
-		return venue;
+		return { venue, contentNotes };
 	} catch (e) {
 		if (errors.getStatusCode(e) === 404) {
 			notifyError('Treffpunkt konnte nicht gefunden werden.');
@@ -232,6 +262,7 @@ async function load(params: RouteParams): Promise<VenueDto|null> {
     BannerEditSection,
     CarrdEditSection,
     WorldSelect,
+    Multiselect,
   },
 	async beforeRouteEnter(to, _, next) {
 		const content = await load(to.params);
@@ -254,6 +285,7 @@ export default class PageEditVenue extends Vue {
 	venueId: number|null = null;
   venue = new VenueDto();
   venueBackup = new VenueDto();
+  contentNoteOptions: { label: string; value: string }[] = [];
 
   preview = false;
   loaded = false;
@@ -261,10 +293,22 @@ export default class PageEditVenue extends Vue {
 
   confirmRevert = false;
 
-  setContent(venue: VenueDto|null) {
-		if (venue) {
-			this.venueId = venue.id;
-			this.venueBackup = new VenueDto(venue);
+  setContent(content: { venue: VenueDto | null; contentNotes?: { name: string }[] }) {
+    if (content.contentNotes) {
+      this.contentNoteOptions = content.contentNotes.map((contentNote) => ({
+        label: (ContentNoteTexts as { [key: string]: string })[contentNote.name] || contentNote.name,
+        value: contentNote.name,
+      }));
+    }
+
+		if (content.venue) {
+			this.venueId = content.venue.id;
+			this.venueBackup = new VenueDto(content.venue);
+      this.venueBackup.eventContentNotes = this.venueBackup.eventContentNotes || [];
+      this.venueBackup.eventDescription = this.venueBackup.eventDescription || '';
+      this.venueBackup.eventOocDetails = this.venueBackup.eventOocDetails || '';
+      this.venueBackup.eventContact = this.venueBackup.eventContact || '';
+      this.venueBackup.eventLink = this.venueBackup.eventLink || '';
     } else {
       this.venueId = null;
       this.venueBackup = new VenueDto({
@@ -288,7 +332,12 @@ export default class PageEditVenue extends Vue {
         subdivision: false,
         carrdProfile: '',
         banner: null,
-        tags: []
+        tags: [],
+        eventDescription: '',
+        eventOocDetails: '',
+        eventContact: '',
+        eventLink: '',
+        eventContentNotes: [],
       });
     }
 
@@ -378,6 +427,8 @@ export default class PageEditVenue extends Vue {
   }
 }
 </script>
+
+<style src="@vueform/multiselect/themes/default.css"></style>
 
 <style lang="scss">
 .page-edit-venue__form-controls {

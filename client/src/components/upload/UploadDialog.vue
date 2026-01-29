@@ -12,6 +12,7 @@
 				<q-step :name="Step.SELECT_IMAGE" title="Bild auswählen" icon="folder_open" active-icon="folder_open" :done="step !== Step.SELECT_IMAGE">
 					<step-select-image
             :banner="banner"
+            :min-aspect-ratio="minAspectRatio"
 						v-model="fileModel"
 					/>
 				</q-step>
@@ -90,6 +91,10 @@ class Props {
 	banner = prop<boolean>({
 		default: false
 	});
+
+  minAspectRatio = prop<number | null>({
+    default: null,
+  });
 }
 
 const MIN_BANNER_ASPECT_RATIO = SharedConstants.MIN_BANNER_ASPECT_RATIO;
@@ -206,12 +211,14 @@ export default class UploadDialog extends Vue.with(Props) {
   }
 
 	get canGoNext() {
+    const minAspectRatio = this.minAspectRatio ?? (this.banner ? MIN_BANNER_ASPECT_RATIO : null);
+
 		switch (this.step) {
       case Step.SELECT_IMAGE:
         return !!this.fileModel.image
             && !!this.fileModel.convertedFile
             && this.fileModel.convertedFile.size <= SharedConstants.MAX_UPLOAD_SIZE
-            && (!this.banner || (this.fileModel.image.width / this.fileModel.image.height >= MIN_BANNER_ASPECT_RATIO));
+            && (!minAspectRatio || (this.fileModel.image.width / this.fileModel.image.height >= minAspectRatio));
       case Step.THUMBNAIL:
         return this.thumbModel.left !== -1;
       case Step.IMAGE_DETAILS:

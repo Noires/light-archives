@@ -1,6 +1,7 @@
 import { Type } from "class-transformer";
-import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, MinLength, ValidateNested } from "class-validator";
+import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, MinLength, ValidateNested } from "class-validator";
 import { BannerDto } from "../characters/banner.dto";
+import { EventType } from "../../enums/event-type.enum";
 import { EventIconDto } from "./event-icon.dto";
 import { EventLocationDto } from "./event-location.dto";
 
@@ -37,10 +38,23 @@ export abstract class BaseEventDto {
 	@IsString()
 	contact: string;
 
+	@IsEnum(EventType)
+	@IsOptional()
+	eventType: EventType;
+
+	@IsString({ each: true })
+	@IsOptional()
+	contentNotes: string[];
+
   @Type(() => BannerDto)
   @ValidateNested()
   @IsOptional()
   banner: BannerDto|null;
+
+  @Type(() => BannerDto)
+  @ValidateNested()
+  @IsOptional()
+  discordBanner: BannerDto|null;
 
   @Type(() => EventIconDto)
   @ValidateNested()

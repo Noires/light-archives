@@ -2,6 +2,7 @@ import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { BasicEntity } from "./basic.entity";
 import { Event } from './event.entity';
 import { Server } from "./server.entity";
+import { Venue } from "./venue.entity";
 
 @Entity()
 export class EventLocation extends BasicEntity {
@@ -33,6 +34,11 @@ export class EventLocation extends BasicEntity {
     nullable: false,
   })
   server: Server;
+
+  @ManyToOne(() => Venue, {
+    nullable: true,
+  })
+  venue: Venue | null;
 
   @ManyToOne(() => Event, {
     nullable: false,

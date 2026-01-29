@@ -1,5 +1,6 @@
 import { EventLocationDto } from '@app/shared/dto/events/event-location.dto';
 import { EventSource } from '@app/shared/enums/event-source.enum';
+import { EventType } from '@app/shared/enums/event-type.enum';
 import SharedConstants from '@app/shared/SharedConstants';
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
@@ -31,18 +32,20 @@ export class ChocoboChronicleService {
       .startOf('day')
 			.toMillis();
 
-		return events.map(event => (<ExternalEvent>{
-			id: -1,
-			title: this.processTitle(event.title),
-			details: event.description,
-			recurring: isRecurringEvent(event.title),
-			startDateTime: this.parseDate(event.utc_start_date),
-			endDateTime: this.parseDate(event.utc_end_date),
-			image: event.image.url,
-			link: event.url,
-			locations: this.parseLocations(event.description),
-			source: EventSource.CHOCOBO_CHRONICLE,
-		})).filter(event => event.startDateTime >= today && this.isPublicEvent(event));
+			return events.map(event => (<ExternalEvent>{
+				id: -1,
+				title: this.processTitle(event.title),
+				details: event.description,
+				recurring: isRecurringEvent(event.title),
+				startDateTime: this.parseDate(event.utc_start_date),
+				endDateTime: this.parseDate(event.utc_end_date),
+				image: event.image.url,
+				link: event.url,
+				locations: this.parseLocations(event.description),
+      contentNotes: [],
+			eventType: EventType.GENERAL,
+				source: EventSource.CHOCOBO_CHRONICLE,
+			})).filter(event => event.startDateTime >= today && this.isPublicEvent(event));
 	}
 
 	private isPublicEvent(event: ExternalEvent): boolean {

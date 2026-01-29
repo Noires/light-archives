@@ -1,6 +1,7 @@
 import { EventLocationDto } from '@app/shared/dto/events/event-location.dto';
 import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
 import { EventSource } from '@app/shared/enums/event-source.enum';
+import { EventType } from '@app/shared/enums/event-type.enum';
 import SharedConstants from '@app/shared/SharedConstants';
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
@@ -117,6 +118,8 @@ export class CrescentMoonPublishingService {
 					link: href,
 					startDateTime: date!.toMillis(),
 					endDateTime: null,
+          contentNotes: [],
+          eventType: EventType.GENERAL,
 					source: EventSource.CRESCENT_MOON_PUBLISHING,
 				};
 			} catch (e) {

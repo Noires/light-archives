@@ -34,8 +34,7 @@
       v-if="modelValue.image && !isValidAspectRatio"
       class="step-select-image__not-image bg-negative text-white"
     >
-      Banner müssen ein Seitenverhältnis von 4:1 Breite:Höhe haben. Beispielsweise ist 500&times;100 und 400&times;100 in Ordnung, aber
-	    300&times;100 aber nicht.
+      Banner müssen ein Seitenverhältnis von mindestens {{ aspectRatioHint }} haben.
     </q-banner>
     <template v-if="modelValue.file && modelValue.image">
       <section
@@ -109,6 +108,10 @@ class Props {
   banner = prop<boolean>({
 		default: false
 	});
+
+  minAspectRatio = prop<number | null>({
+    default: null,
+  });
 }
 
 @Options({
@@ -268,11 +271,31 @@ export default class StepSelectImage extends Vue.with(Props) {
   }
 
   get isValidAspectRatio() {
-    if (!this.banner || !this.modelValue.image) {
+    if (!this.modelValue.image) {
       return true;
     }
 
-    return this.modelValue.image.width / this.modelValue.image.height >= SharedConstants.MIN_BANNER_ASPECT_RATIO;
+    const minAspectRatio = this.minAspectRatio ?? (this.banner ? SharedConstants.MIN_BANNER_ASPECT_RATIO : null);
+
+    if (!minAspectRatio) {
+      return true;
+    }
+
+    return this.modelValue.image.width / this.modelValue.image.height >= minAspectRatio;
+  }
+
+  get aspectRatioHint() {
+    const minAspectRatio = this.minAspectRatio ?? (this.banner ? SharedConstants.MIN_BANNER_ASPECT_RATIO : null);
+
+    if (!minAspectRatio || minAspectRatio === 4 / 1) {
+      return '4:1';
+    }
+
+    if (minAspectRatio === 5 / 2) {
+      return '5:2';
+    }
+
+    return `${minAspectRatio.toFixed(2)}:1`;
   }
 }
 </script>

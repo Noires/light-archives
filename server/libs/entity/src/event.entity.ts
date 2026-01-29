@@ -1,7 +1,9 @@
 import { EventSource } from '@app/shared/enums/event-source.enum';
-import { Column, Entity, Index, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { EventType } from '@app/shared/enums/event-type.enum';
+import { Column, Entity, Index, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BasicEntity } from './basic.entity';
 import { Character } from './character.entity';
+import { ContentNote } from './content-note.entity';
 import { EventLocation } from './event-location.entity';
 import { EventAnnouncement } from './event-announcement.entity';
 import { Image } from './image.entity';
@@ -74,6 +76,14 @@ export class Event extends BasicEntity {
   source: EventSource;
 
   @Column({
+    type: 'enum',
+    enum: EventType,
+    nullable: false,
+    default: EventType.GENERAL,
+  })
+  eventType: EventType;
+
+  @Column({
     nullable: false,
     default: false,
   })
@@ -94,6 +104,12 @@ export class Event extends BasicEntity {
     lazy: true,
     nullable: true,
   })
+  discordBanner: Promise<Image | null>;
+
+  @ManyToOne(() => Image, {
+    lazy: true,
+    nullable: true,
+  })
   icon: Promise<Image | null>;
 
   @OneToMany(() => EventLocation, 'event', {
@@ -108,4 +124,8 @@ export class Event extends BasicEntity {
     lazy: true,
   })
   announcements: Promise<EventAnnouncement[]>;
+
+  @ManyToMany(() => ContentNote)
+  @JoinTable()
+  contentNotes: ContentNote[];
 }

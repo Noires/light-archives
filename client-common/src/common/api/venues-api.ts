@@ -1,7 +1,7 @@
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
-import APITransport from './api-transport';
+import APITransport, { QueryParams } from './api-transport';
 
 export default class VenuesAPI {
   private readonly transport: APITransport;
@@ -13,6 +13,11 @@ export default class VenuesAPI {
 	async getVenues(filter?: { characterId?: number }): Promise<VenueSummaryDto[]> {
 		return this.transport.get<VenueSummaryDto[]>('', filter);
 	}
+
+  async searchVenues(query: string, server?: string): Promise<VenueSummaryDto[]> {
+    const params: QueryParams = server ? { query, server } : { query };
+    return this.transport.get<VenueSummaryDto[]>('search', params);
+  }
 
 	async getVenue(id: number): Promise<VenueDto> {
 		return this.transport.tokenGet<VenueDto>(`${id}`);

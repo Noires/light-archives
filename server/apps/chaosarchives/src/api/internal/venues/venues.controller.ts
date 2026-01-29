@@ -18,6 +18,11 @@ export class VenuesController {
 		return this.venuesService.getVenues(filter);
 	}
 
+	@Get('search')
+	async searchVenues(@Query('query') query: string, @Query('server') server?: string): Promise<VenueSummaryDto[]> {
+		return this.venuesService.searchVenues(query, server);
+	}
+
 	@Get(':server/:name')
 	@UseGuards(OptionalJwtAuthGuard)
 	async getVenueByName(@Param('name') name: string, @Param('server') server: string, @CurrentUser() user?: UserInfo): Promise<VenueDto> {

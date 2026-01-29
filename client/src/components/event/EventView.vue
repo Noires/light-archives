@@ -12,9 +12,15 @@
 				<span class="event-view__local-time">({{$display.formatDateTimeLocal(event.endDateTime)}})</span>
 				</template>
 			</p>
+      <p>
+        <strong>Typ:</strong> {{ eventTypeLabel }}
+      </p>
 			<p v-for="(location, index) in event.locations" :key="index">
 				<strong>Standort: </strong>
-				<template v-if="location.link">
+        <template v-if="location.venueId">
+          <router-link :to="`/venue/${location.venueId}`">{{location.name}}</router-link>
+        </template>
+				<template v-else-if="location.link">
 					<a :href="location.link" target="_blank">{{location.name}}</a>
 				</template>
 				<template v-else>{{location.name}}</template>
@@ -46,6 +52,7 @@
 <script lang="ts">
 import { EventDto } from '@app/shared/dto/events/event.dto';
 import { Options, prop, Vue } from 'vue-class-component';
+import { getEventTypeLabel } from 'src/common/event-types';
 import BannerView from '../common/BannerView.vue';
 import HtmlViewer from '../common/HtmlViewer.vue';
 
@@ -72,6 +79,10 @@ export default class EventView extends Vue.with(Props) {
 
 	get endDateTime(): string {
     return this.event.endDateTime ? this.$display.formatDateTimeServer(this.event.startDateTime) : '';
+  }
+
+  get eventTypeLabel(): string {
+    return getEventTypeLabel(this.event.eventType);
   }
 
 	/*
