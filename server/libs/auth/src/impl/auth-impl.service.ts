@@ -1,13 +1,32 @@
-import { Character, User } from '@app/entity';
+import { authConfiguration } from '@app/configuration';
+import { Character, RefreshToken, User } from '@app/entity';
 import { Role } from '@app/shared/enums/role.enum';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Profile as DiscordProfile } from 'passport-discord-auth';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, LessThan, Repository } from 'typeorm';
 import { UserCharacterInfo } from '../model/user-character-info';
 import { UserInfo } from '../model/user-info';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { Redis } from 'ioredis';
+import { randomBytes } from 'crypto';
+
+// Simple duration parser for strings like '30d', '1h', '15m'
+function parseDuration(duration: string): number {
+  const match = duration.match(/^(\d+)([smhd])$/);
+  if (!match) {
+    throw new Error(`Invalid duration format: ${duration}`);
+  }
+  const value = parseInt(match[1], 10);
+  const unit = match[2];
+  const multipliers: Record<string, number> = {
+    s: 1000,
+    m: 60 * 1000,
+    h: 60 * 60 * 1000,
+    d: 24 * 60 * 60 * 1000,
+  };
+  return value * multipliers[unit];
+}
 
 @Injectable()
 export class AuthImplService {
@@ -17,6 +36,8 @@ export class AuthImplService {
     @InjectRepository(User) private readonly userRepo: Repository<User>,
     @InjectRepository(Character)
     private readonly characterRepo: Repository<Character>,
+    @InjectRepository(RefreshToken)
+    private readonly refreshTokenRepo: Repository<RefreshToken>,
     @InjectRedis()
     private readonly redisService: Redis,
   ) {}
@@ -128,4 +149,62 @@ export class AuthImplService {
       // Do nothing
     }
 	}
+
+  async createRefreshToken(
+    userId: number,
+    userAgent: string | null,
+    ipAddress: string | null,
+  ): Promise<string> {
+    const token = randomBytes(32).toString('hex');
+    const expiryMs = parseDuration(authConfiguration.refreshTokenExpiry);
+    const expiresAt = new Date(Date.now() + expiryMs);
+
+    await this.refreshTokenRepo.save({
+      token,
+      userId,
+      expiresAt,
+      userAgent,
+      ipAddress,
+      revoked: false,
+    });
+
+    // Clean up expired tokens for this user
+    await this.refreshTokenRepo.delete({
+      userId,
+      expiresAt: LessThan(new Date()),
+    });
+
+    return token;
+  }
+
+  async validateRefreshToken(token: string): Promise<RefreshToken | null> {
+    const refreshToken = await this.refreshTokenRepo.findOne({
+      where: { token },
+      relations: ['user'],
+    });
+
+    if (!refreshToken) {
+      return null;
+    }
+
+    if (refreshToken.revoked) {
+      // Token reuse detected - revoke all tokens for this user as a security measure
+      await this.revokeAllUserRefreshTokens(refreshToken.userId);
+      return null;
+    }
+
+    if (refreshToken.expiresAt < new Date()) {
+      return null;
+    }
+
+    return refreshToken;
+  }
+
+  async revokeRefreshToken(token: string): Promise<void> {
+    await this.refreshTokenRepo.update({ token }, { revoked: true });
+  }
+
+  async revokeAllUserRefreshTokens(userId: number): Promise<void> {
+    await this.refreshTokenRepo.update({ userId, revoked: false }, { revoked: true });
+  }
 }

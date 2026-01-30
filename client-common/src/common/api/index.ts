@@ -50,14 +50,38 @@ export default class API {
   readonly weather = new WeatherAPI(this.transport);
   readonly wiki = new WikiAPI(this.transport);
 
-  // Access token management
+  // Token management
 
   hasAccessToken() {
     return this.transport.hasAccessToken();
   }
 
+  hasRefreshToken() {
+    return this.transport.hasRefreshToken();
+  }
+
   setAccessToken(accessToken: string | null) {
     this.transport.setAccessToken(accessToken);
+  }
+
+  setRefreshToken(refreshToken: string | null) {
+    this.transport.setRefreshToken(refreshToken);
+  }
+
+  setTokens(accessToken: string | null, refreshToken: string | null) {
+    this.transport.setTokens(accessToken, refreshToken);
+  }
+
+  clearTokens() {
+    this.transport.clearTokens();
+  }
+
+  setLogoutHandler(handler: () => void) {
+    this.transport.setLogoutHandler(handler);
+  }
+
+  getRefreshToken() {
+    return this.transport['refreshToken'];
   }
 
   // Regular API calls

@@ -42,12 +42,16 @@ export default route<StateInterface>(function ({ store }) {
 
   router.beforeEach(async (to) => {
     const token = to.query.token;
+    const refreshToken = to.query.refreshToken;
     if (typeof token !== 'string' || token.length === 0) {
       return true;
     }
 
     const api = useApi();
     api.setAccessToken(token);
+    if (typeof refreshToken === 'string' && refreshToken.length > 0) {
+      api.setRefreshToken(refreshToken);
+    }
 
     try {
       const session = await api.user.getSession();
@@ -62,7 +66,7 @@ export default route<StateInterface>(function ({ store }) {
       const hasVerifiedCharacter = session.characters.some((character) => character.verified);
       return { path: hasVerifiedCharacter ? '/' : '/verify' };
     } catch (e) {
-      api.setAccessToken(null);
+      api.clearTokens();
       notifyError(e);
       return { path: '/' };
     }

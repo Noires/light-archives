@@ -3,20 +3,26 @@ import { CurrentUser } from '@app/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@app/auth/guards/jwt-auth.guard';
 import { UserInfo } from '@app/auth/model/user-info';
 import { serverConfiguration } from '@app/configuration';
+import { RefreshTokenRequestDto } from '@app/shared/dto/user/refresh-token-request.dto';
 import { SessionDto } from '@app/shared/dto/user/session.dto';
+import { TokenResponseDto } from '@app/shared/dto/user/token-response.dto';
 import { VerificationStatusDto } from '@app/shared/dto/user/verification-status.dto';
 import { VerifyCharacterDto } from '@app/shared/dto/user/verify-character.dto';
 import {
   Body,
   Controller,
-  Get, ParseIntPipe,
+  Get,
+  Headers,
+  Ip,
+  ParseIntPipe,
   Post,
   Query,
+  Req,
   Res,
   UseGuards
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -36,10 +42,13 @@ export class UserController {
   @UseGuards(AuthGuard('discord'))
   async discordCallback(
     @CurrentUser() user: UserInfo,
+    @Req() request: Request,
     @Res() response: Response,
   ): Promise<void> {
-    const accessToken = this.publicAuthService.createAccessToken(user.id);
-    const redirectUrl = `${serverConfiguration.frontendRoot}/login?token=${encodeURIComponent(accessToken)}`;
+    const userAgent = request.headers['user-agent'] || null;
+    const ipAddress = request.ip || null;
+    const tokenPair = await this.publicAuthService.createTokenPair(user.id, userAgent, ipAddress);
+    const redirectUrl = `${serverConfiguration.frontendRoot}/login?token=${encodeURIComponent(tokenPair.accessToken)}&refreshToken=${encodeURIComponent(tokenPair.refreshToken)}`;
     response.redirect(redirectUrl);
   }
 
@@ -47,6 +56,25 @@ export class UserController {
   @Get('session')
   async getSession(@CurrentUser() user: UserInfo): Promise<SessionDto> {
     return this.userService.toSession(user);
+  }
+
+  @Post('refresh')
+  async refreshToken(
+    @Body() body: RefreshTokenRequestDto,
+    @Req() request: Request,
+  ): Promise<TokenResponseDto> {
+    const userAgent = request.headers['user-agent'] || null;
+    const ipAddress = request.ip || null;
+    return this.publicAuthService.refreshTokens(body.refreshToken, userAgent, ipAddress);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  async logout(
+    @CurrentUser() user: UserInfo,
+    @Body() body: RefreshTokenRequestDto,
+  ): Promise<void> {
+    await this.publicAuthService.revokeRefreshToken(body.refreshToken);
   }
 
   @UseGuards(JwtAuthGuard)

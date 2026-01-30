@@ -16,10 +16,16 @@ export function useApi() {
   return api;
 }
 
-export default boot(async ({ app, store }) => {
+export default boot(async ({ app, store, router }) => {
   app.config.globalProperties.$axios = axios;
 
   app.config.globalProperties.$api = api;
+
+  // Set up automatic logout handler when refresh token fails
+  api.setLogoutHandler(() => {
+    store.commit('setUser', null);
+    void router.push('/');
+  });
 
   if (api.hasAccessToken()) {
     try {
@@ -27,6 +33,8 @@ export default boot(async ({ app, store }) => {
       store.commit('setUser', session);
     } catch (e) {
       console.log(errors.getMessage(e));
+      // If we can't get the session, clear tokens
+      api.clearTokens();
     }
   }
 });

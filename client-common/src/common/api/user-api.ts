@@ -1,4 +1,5 @@
 import { SessionDto } from '@app/shared/dto/user/session.dto';
+import { TokenResponseDto } from '@app/shared/dto/user/token-response.dto';
 import { VerificationStatusDto } from '@app/shared/dto/user/verification-status.dto';
 import { VerifyCharacterDto } from '@app/shared/dto/user/verify-character.dto';
 import APITransport from './api-transport';
@@ -27,6 +28,14 @@ export default class UserAPI {
 
   async acceptTerms(): Promise<void> {
     await this.transport.authPost<void>('accept-terms', {});
+  }
+
+  async logout(refreshToken: string): Promise<void> {
+    await this.transport.authPost<void>('logout', { refreshToken });
+  }
+
+  async refreshToken(refreshToken: string): Promise<TokenResponseDto> {
+    return this.transport.post<TokenResponseDto>('refresh', { refreshToken });
   }
 
   getDiscordLoginUrl(): string {

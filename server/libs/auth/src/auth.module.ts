@@ -1,5 +1,5 @@
 import { authConfiguration } from '@app/configuration';
-import { Character, User } from '@app/entity';
+import { Character, RefreshToken, User } from '@app/entity';
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
@@ -13,7 +13,7 @@ import { DiscordRppStrategy, DiscordStrategy } from './strategies/discord.strate
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Character]),
+    TypeOrmModule.forFeature([User, Character, RefreshToken]),
     JwtModule.registerAsync({
       useFactory: () => ({
         secret: authConfiguration.jwtSecret,

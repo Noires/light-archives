@@ -233,9 +233,17 @@ export default class UserMenu extends Vue {
     });
   }
 
-  logOut() {
+  async logOut() {
+    try {
+      const refreshToken = this.$api.getRefreshToken();
+      if (refreshToken) {
+        await this.$api.user.logout(refreshToken);
+      }
+    } catch (e) {
+      // Ignore logout errors - continue with local logout
+    }
     this.$store.commit('setUser', null);
-    this.$api.setAccessToken(null);
+    this.$api.clearTokens();
     notifySuccess('Du hast dich ausgeloggt.');
     void this.$router.push('/');
   }

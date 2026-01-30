@@ -15,6 +15,7 @@ export { News } from './news.entity';
 export { NewsCategory } from './news-category.entity';
 export { NewsIssue } from './news-issue.entity';
 export { NoticeboardItem } from './noticeboard-item.entity';
+export { RefreshToken } from './refresh-token.entity';
 export { Server } from './server.entity';
 export { Story } from './story.entity';
 export { StoryTag } from './story-tag.entity';

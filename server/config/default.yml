@@ -26,6 +26,7 @@ auth:
   jwtSecret: '_JWTSECRET_'
   jwtExpiry: '_JWTEXPIRY_'
   scopedJwtExpiry: '_JWTSCOPEDEXPIRY_'
+  refreshTokenExpiry: '30d'
   discordClientId: '_DISCORDCLIENTID_'
   discordClientSecret: '_DISCORDCLIENTSECRET_'
   discordCallbackUrl: '_DISCORDCALLBACKURL_'
