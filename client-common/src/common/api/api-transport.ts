@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import { LocalStorage } from 'quasar';
 
 const API_PREFIX = '/api/internal/';
@@ -38,7 +38,7 @@ export default class APITransport {
     this.axios.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
-        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+        const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
         // Only handle 401 errors for authenticated requests
         if (error.response?.status !== 401 || !originalRequest || originalRequest._retry) {
