@@ -216,6 +216,7 @@ export default class PageVenues extends Vue {
   margin: 0;
   font-family: $header-font;
   letter-spacing: 0.02em;
+  font-size: 2.5rem;
 }
 
 .page-venues__hero {
@@ -225,11 +226,12 @@ export default class PageVenues extends Vue {
   justify-content: space-between;
   align-items: flex-end;
   gap: 24px;
-  padding: 20px 22px;
-  margin-bottom: 18px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(221, 180, 118, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 20px 48px rgba(0, 0, 0, 0.06);
+  border-radius: 2px;
 }
 
 .page-venues__eyebrow {
@@ -282,13 +284,14 @@ export default class PageVenues extends Vue {
 .page-venues__toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(160px, 0.7fr) minmax(160px, 0.6fr) auto auto;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
-  padding: 12px 14px;
-  margin-bottom: 18px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(221, 180, 118, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.06);
+  border-radius: 2px;
 }
 
 .page-venues__search .q-field__control,
@@ -311,9 +314,10 @@ export default class PageVenues extends Vue {
 }
 
 .page-venues__list {
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(221, 180, 118, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.06);
+  border-radius: 2px;
 }
 
 .page-venues__list .q-list {
@@ -321,11 +325,14 @@ export default class PageVenues extends Vue {
 }
 
 .page-venues__empty {
-  padding: 18px;
-  color: rgba(35, 35, 35, 0.7);
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  padding: 48px 24px;
+  color: rgba(35, 35, 35, 0.6);
+  border: 1px solid rgba(221, 180, 118, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.06);
+  border-radius: 2px;
+  text-align: center;
+  font-style: italic;
 }
 
 @media screen and (max-width: 1100px) {

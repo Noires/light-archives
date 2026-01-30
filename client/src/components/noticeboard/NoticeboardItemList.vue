@@ -44,40 +44,48 @@ export default class NoticeboardItemList extends Vue.with(Props) {
 <style lang="scss">
 .noticeboard-item-list {
   display: grid;
-  gap: 12px;
-  padding: 12px;
+  gap: 16px;
+  padding: 16px;
   border: none;
   background: transparent;
 }
 
 .noticeboard-item-list__item {
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: #ffffff;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  border: 1px solid rgba(221, 180, 118, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  border-radius: 2px;
+  padding: 16px 20px;
 }
 
 .noticeboard-item-list__item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
-  border-color: rgba(221, 180, 118, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), 0 20px 40px rgba(0, 0, 0, 0.08);
+  border-color: rgba(221, 180, 118, 0.5);
 }
 
 .noticeboard-item-list__content {
-  gap: 2px;
+  gap: 4px;
 }
 
 .noticeboard-item-list__title {
   font-weight: 700;
   color: #1f2c38;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
 }
 
 .noticeboard-item-list__meta {
   color: rgba(35, 35, 35, 0.7);
+  font-size: 0.9rem;
 }
 
 .noticeboard-item-list__time {
   color: rgba(35, 35, 35, 0.6);
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -18,6 +18,7 @@ body {
 	background-size: cover;
 	background-attachment: fixed;
 	scrollbar-color: dark;
+	line-height: 1.6;
 }
 
 html.webp body {
@@ -106,6 +107,7 @@ form h6 {
 a {
 	text-decoration: none;
 	color: $link-color;
+	transition: color 0.3s ease;
 }
 
 .q-page a:visited {
@@ -122,7 +124,6 @@ a {
 
 .q-page a:hover {
 	color: $link-hover-color;
-	transition: all 0.3s ease;
 }
 
 .q-page a.q-item:hover {
@@ -163,9 +164,13 @@ ol li {
 	top: -1px;
 }
 
+.thumb-link img {
+	transition: all 0.3s ease;
+}
+
 .thumb-link img:hover {
-	filter: brightness(1.2);
-  transition: all 0.5s ease;
+	filter: brightness(1.15);
+	transform: scale(1.02);
 }
 
 .striped-list .q-item, .striped-list tbody tr {

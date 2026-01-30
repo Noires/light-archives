@@ -46,23 +46,25 @@ export default class VenueList extends Vue.with(Props) {
 <style lang="scss">
 .venue-list {
   display: grid;
-  gap: 12px;
-  padding: 12px;
+  gap: 16px;
+  padding: 16px;
   border: none;
   background: transparent;
 }
 
 .venue-list__item {
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: #ffffff;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  border: 1px solid rgba(221, 180, 118, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  border-radius: 2px;
+  padding: 16px 20px;
 }
 
 .venue-list__item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
-  border-color: rgba(221, 180, 118, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), 0 20px 40px rgba(0, 0, 0, 0.08);
+  border-color: rgba(221, 180, 118, 0.5);
 }
 
 .venue-list__content {
@@ -72,17 +74,22 @@ export default class VenueList extends Vue.with(Props) {
 .venue-list__name {
   font-weight: 700;
   color: #1f2c38;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
 }
 
 .venue-list__meta {
   color: rgba(35, 35, 35, 0.7);
+  font-size: 0.9rem;
+  margin-top: 4px;
 }
 
 .venue-list__server {
   color: rgba(35, 35, 35, 0.6);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 @media (prefers-reduced-motion: reduce) {

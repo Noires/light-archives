@@ -537,8 +537,10 @@ export default class CalendarSidebarWidget extends Vue {
 
 <style lang="scss">
 .calendar-widget__card {
-  border-radius: 16px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  border-radius: 2px;
+  border: 1px solid rgba(221, 180, 118, 0.25);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
 
@@ -546,62 +548,164 @@ export default class CalendarSidebarWidget extends Vue {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background: rgba(0, 0, 0, 0.04);
+  padding: 16px 18px;
+  background: linear-gradient(135deg, rgba(221, 180, 118, 0.15) 0%, rgba(221, 180, 118, 0.08) 100%);
+  border-bottom: 2px solid transparent;
+  border-image: linear-gradient(90deg, rgba(221, 180, 118, 0.4) 0%, rgba(221, 180, 118, 0.15) 50%, rgba(221, 180, 118, 0.4) 100%);
+  border-image-slice: 1;
 }
 
 .calendar-widget__heading {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.calendar-widget__heading .q-icon {
+  color: #ddb476;
+  font-size: 1.3rem;
 }
 
 .calendar-widget__title {
-  font-weight: bold;
+  font-family: $header-font;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #1f2c38;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .calendar-widget__subtitle,
 .calendar-widget__count {
   font-size: 0.85rem;
-  color: #666;
+  color: rgba(35, 35, 35, 0.7);
+  margin-top: 2px;
+}
+
+.calendar-widget__actions {
+  display: flex;
+  gap: 4px;
 }
 
 .calendar-widget__actions .q-btn {
-  color: $primary;
+  color: #1f4d64;
+  transition: all 0.2s ease;
+}
+
+.calendar-widget__actions .q-btn:hover {
+  color: #ddb476;
+  background: rgba(221, 180, 118, 0.12);
+  transform: scale(1.05);
 }
 
 .calendar-widget__body {
-  padding: 12px 16px 16px;
+  padding: 16px 18px 18px;
+}
+
+.calendar-widget .q-date {
+  border-radius: 0;
+  box-shadow: none;
+  width: 100%;
+}
+
+.calendar-widget .q-date__header {
+  background: linear-gradient(135deg, rgba(221, 180, 118, 0.12) 0%, transparent 100%);
+  color: #1f2c38;
+  font-family: $header-font;
+  padding: 12px;
+  border-bottom: 1px solid rgba(221, 180, 118, 0.2);
+}
+
+.calendar-widget .q-date__header-link {
+  color: #1f2c38;
+}
+
+.calendar-widget .q-date__header-link:hover {
+  color: #ddb476;
+}
+
+.calendar-widget .q-date__calendar-weekdays {
+  background: rgba(221, 180, 118, 0.08);
+  color: rgba(35, 35, 35, 0.7);
+  font-weight: 600;
+}
+
+.calendar-widget .q-date__calendar-item--out {
+  opacity: 0.3;
+}
+
+.calendar-widget .q-date__calendar-item button {
+  border-radius: 0;
+  transition: all 0.2s ease;
+}
+
+.calendar-widget .q-date__calendar-item button:hover {
+  background: rgba(221, 180, 118, 0.15) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.calendar-widget .q-date__calendar-item--selected {
+  background: rgba(221, 180, 118, 0.25) !important;
+  box-shadow: inset 0 0 0 2px rgba(221, 180, 118, 0.4);
+}
+
+.calendar-widget .q-date__event {
+  background: #ddb476 !important;
+  border-radius: 0;
+  width: 6px;
+  height: 6px;
 }
 
 .calendar-widget__filters {
   display: grid;
   gap: 10px;
-  margin: 12px 0 8px;
+  margin: 14px 0 10px;
+}
+
+.calendar-widget__filters .q-field__control {
+  background: #f6f1e8;
+  border-radius: 0;
+  border: 1px solid rgba(221, 180, 118, 0.25);
+  transition: all 0.2s ease;
+}
+
+.calendar-widget__filters .q-field__control:hover {
+  border-color: rgba(221, 180, 118, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.calendar-widget__filters .q-field__control:before,
+.calendar-widget__filters .q-field__control:after {
+  display: none;
 }
 
 .calendar-widget__list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 8px 0 12px;
+  margin: 10px 0 14px;
   font-weight: 600;
+  color: #1f2c38;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(221, 180, 118, 0.2);
 }
 
 .calendar-widget__empty {
-  font-size: 0.85rem;
-  color: #666;
-  padding: 8px 0;
+  font-size: 0.9rem;
+  color: rgba(35, 35, 35, 0.6);
+  padding: 12px 0;
+  text-align: center;
 }
 
 .calendar-widget__list {
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 
 .calendar-widget__list-group {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .calendar-widget__list-cards {
@@ -614,28 +718,35 @@ export default class CalendarSidebarWidget extends Vue {
   align-items: baseline;
   gap: 8px;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  color: #1f2c38;
+  border-bottom: 1px solid rgba(221, 180, 118, 0.2);
+  padding-bottom: 6px;
+  margin-bottom: 12px;
 }
 
 .calendar-widget__date-divider {
-  color: #999;
+  color: rgba(221, 180, 118, 0.6);
   font-weight: 400;
 }
 
 .calendar-widget__date-weekday {
-  color: #666;
+  color: rgba(35, 35, 35, 0.65);
   font-weight: 500;
 }
 
 .calendar-widget__event-card {
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: #ffffff;
+  border: 1px solid rgba(221, 180, 118, 0.2);
+  border-radius: 0;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .calendar-widget__event-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
+  border-color: rgba(221, 180, 118, 0.4);
 }
 
 .calendar-widget__event-link {
@@ -654,8 +765,10 @@ export default class CalendarSidebarWidget extends Vue {
 .calendar-widget__event-icon {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.06);
+  border-radius: 0;
+  background: rgba(221, 180, 118, 0.12);
+  border: 1px solid rgba(221, 180, 118, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -663,8 +776,12 @@ export default class CalendarSidebarWidget extends Vue {
   flex-shrink: 0;
 }
 
+.calendar-widget__event-icon .q-icon {
+  color: #ddb476;
+}
+
 .calendar-widget__event-icon-img {
-  border-radius: 8px;
+  border-radius: 0;
   width: 32px;
   height: 32px;
 }
@@ -724,7 +841,7 @@ export default class CalendarSidebarWidget extends Vue {
   display: inline-flex;
   align-items: center;
   padding: 2px 6px;
-  border-radius: 6px;
+  border-radius: 0;
   background: rgba(204, 74, 74, 0.15);
   color: #b33a3a;
   font-size: 0.7rem;
@@ -796,6 +913,24 @@ export default class CalendarSidebarWidget extends Vue {
 @media screen and (max-width: $breakpoint-sm) {
   .calendar-widget__body {
     padding: 12px;
+  }
+
+  .calendar-widget__header {
+    padding: 14px 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calendar-widget__event-card,
+  .calendar-widget__actions .q-btn,
+  .calendar-widget .q-date__calendar-item button {
+    transition: none;
+  }
+
+  .calendar-widget__event-card:hover,
+  .calendar-widget__actions .q-btn:hover,
+  .calendar-widget .q-date__calendar-item button:hover {
+    transform: none;
   }
 }
 </style>

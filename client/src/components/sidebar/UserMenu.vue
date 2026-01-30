@@ -260,42 +260,51 @@ export default class UserMenu extends Vue {
 }
 
 .user-menu__discord-login {
-  margin: 8px 10px;
-  padding: 8px 16px;
+  margin: 0 12px 12px 12px !important;
+  padding: 10px 18px !important;
   min-height: 44px;
+  background: #5865f2 !important;
   border-radius: 8px;
-  background: #5865f2;
-  border: none;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  gap: 10px;
+}
+
+.user-menu__discord-login .q-focus-helper {
+  display: none;
+}
+
+.user-menu__discord-login .q-item__section {
+  color: #ffffff;
+  padding: 0;
+  min-width: auto;
+}
+
+.user-menu__discord-login .q-item__section--avatar {
+  min-width: auto !important;
 }
 
 .user-menu__discord-login:hover {
-  background: #4752c4;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+  background: #4752c4 !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.24);
 }
 
 .user-menu__discord-login:active {
-  background: #3c45a5;
+  background: #3c45a5 !important;
   transform: translateY(1px);
-}
-
-.user-menu__discord-login-icon {
-  min-width: 36px;
 }
 
 .user-menu__discord-logo {
   width: 22px;
   height: 22px;
   display: block;
-  color: #ffffff;
 }
 
 .user-menu__discord-login-label {
   font-weight: 600;
-  font-size: 13px;
-  letter-spacing: 0.015em;
-  color: #ffffff;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  color: #ffffff !important;
 }
 
 </style>

@@ -299,8 +299,8 @@ export default class PageIndex extends Vue {
 <style lang="scss">
 .page-index {
   position: relative;
-  padding: 28px 18px 42px;
-  background: linear-gradient(180deg, #f8f4ee 0%, #ffffff 45%, #f2ede4 100%);
+  padding: 32px 20px 48px;
+  background: linear-gradient(180deg, #f8f4ee 0%, #ffffff 35%, #fafaf8 65%, #f2ede4 100%);
   border-radius: 30px;
   overflow: hidden;
 }
@@ -322,6 +322,13 @@ export default class PageIndex extends Vue {
   letter-spacing: 0.02em;
 }
 
+.page-index h5 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #1f2c38;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
 .page-index__hero {
   position: relative;
   z-index: 1;
@@ -329,11 +336,12 @@ export default class PageIndex extends Vue {
   grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   align-items: start;
-  padding: 20px 22px;
-  margin-bottom: 18px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+  padding: 24px 28px;
+  margin-bottom: 32px;
+  border: 1px solid rgba(221, 180, 118, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 20px 48px rgba(0, 0, 0, 0.06);
+  border-radius: 2px;
 }
 
 .page-index__eyebrow {
@@ -407,11 +415,12 @@ export default class PageIndex extends Vue {
 .page-index__welcome {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
+  gap: 14px;
+  padding: 10px 16px;
   border-radius: 10px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(221, 180, 118, 0.35);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 244, 238, 0.9) 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .page-index__welcome-avatar {
@@ -436,16 +445,23 @@ export default class PageIndex extends Vue {
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 24px;
 }
 
 .page-index__panel {
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(221, 180, 118, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   min-height: 120px;
+  border-radius: 2px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.page-index__panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1), 0 20px 40px rgba(0, 0, 0, 0.08);
 }
 
 .page-index__panel--wide {
@@ -457,8 +473,11 @@ export default class PageIndex extends Vue {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(221, 180, 118, 0.2);
+  padding: 16px 20px;
+  border-bottom: 2px solid transparent;
+  border-image: linear-gradient(90deg, rgba(221, 180, 118, 0.4) 0%, rgba(221, 180, 118, 0.15) 50%, rgba(221, 180, 118, 0.4) 100%);
+  border-image-slice: 1;
+  background: linear-gradient(180deg, rgba(248, 244, 238, 0.3) 0%, transparent 100%);
 }
 
 .page-index__panel-header a {
@@ -470,6 +489,25 @@ export default class PageIndex extends Vue {
   font-size: 0.85rem;
   font-weight: 600;
   color: #1f4d64;
+  transition: color 0.2s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.page-index__panel-link:hover {
+  color: #ddb476;
+  transform: translateX(2px);
+}
+
+.page-index__panel-link::after {
+  content: '→';
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.page-index__panel-link:hover::after {
+  transform: translateX(3px);
 }
 
 .page-index__panel-meta {
@@ -495,6 +533,15 @@ export default class PageIndex extends Vue {
 
 .page-index__panel-content .thumb-gallery__image-wrapper {
   margin-right: 12px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.page-index__panel-content .thumb-gallery__image-wrapper:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 2;
 }
 
 .page-index__stories-grid {
@@ -633,8 +680,11 @@ export default class PageIndex extends Vue {
 }
 
 .page-index__empty {
-  color: rgba(35, 35, 35, 0.7);
+  color: rgba(35, 35, 35, 0.6);
   font-size: 0.95rem;
+  font-style: italic;
+  text-align: center;
+  padding: 24px 16px;
 }
 
 @media screen and (max-width: 1100px) {
@@ -664,13 +714,19 @@ export default class PageIndex extends Vue {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .page-index__panel,
   .page-index .page-stories__card,
-  .page-index .page-characters__card {
+  .page-index .page-characters__card,
+  .page-index__panel-content .thumb-gallery__image-wrapper,
+  .page-index__discord-button {
     transition: none;
   }
 
+  .page-index__panel:hover,
   .page-index .page-stories__card:hover,
-  .page-index .page-characters__card:hover {
+  .page-index .page-characters__card:hover,
+  .page-index__panel-content .thumb-gallery__image-wrapper:hover,
+  .page-index__discord-button:hover {
     transform: none;
   }
 }

@@ -1,5 +1,14 @@
 <template>
-	<q-input v-model="value" color="white" label="Suche" dark clearable @keydown="onSearchKeyDown" />
+	<q-input
+		v-model="value"
+		color="white"
+		label="Suche"
+		dark
+		clearable
+		@keydown="onSearchKeyDown"
+		filled
+		dense
+	/>
 </template>
 
 <script lang="ts">
