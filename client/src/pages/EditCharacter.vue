@@ -201,6 +201,33 @@ export default class PageEditCharacter extends Vue {
 
 .edit-drawer .q-item {
   color: #1b1b1b;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.edit-drawer .q-item:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #000000;
+}
+
+.edit-drawer .q-item:hover .q-icon {
+  color: #000000;
+  transform: scale(1.1);
+}
+
+.edit-drawer .q-item .q-icon {
+  transition: color 0.3s ease, transform 0.2s ease;
+}
+
+.edit-drawer .q-item.q-router-link--active,
+.edit-drawer .q-item.q-router-link--exact-active {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #000000;
+  font-weight: 600;
+}
+
+.edit-drawer .q-item.q-router-link--active .q-icon,
+.edit-drawer .q-item.q-router-link--exact-active .q-icon {
+  color: #000000;
 }
 
 </style>
