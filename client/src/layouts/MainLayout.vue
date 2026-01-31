@@ -228,13 +228,13 @@ $color-dark: #1b1b1b;
   min-width: 280px;
   min-height: var(--nav-height);
   position: relative;
-  z-index: +1;
   text-transform: uppercase;
   border-radius: 0;
   background: linear-gradient(135deg, rgba(221, 180, 118, 0.12) 0%, rgba(51, 51, 51, 0.9) 100%);
-  border-right: 1px solid rgba(221, 180, 118, 0.2);
   box-shadow: 4px 0 16px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
+  transition: background 0.3s ease,
+              box-shadow 0.3s ease,
+              color 0.3s ease;
   animation: navReveal 0.55s ease both;
   cursor: pointer;
 }
@@ -251,18 +251,18 @@ $color-dark: #1b1b1b;
   top: 0;
   right: 0;
   transform: translateX(100%);
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 64px 32px 0 0;
-  border-color: rgba(51, 51, 51, 0.9) transparent transparent transparent;
-  transition: border-color 0.3s ease;
+  width: 32px;
+  height: 64px;
+  background: linear-gradient(135deg, rgba(221, 180, 118, 0.12) 0%, rgba(51, 51, 51, 0.9) 100%);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  transition: background 0.3s ease;
   pointer-events: none;
   animation: navRevealDivider 0.55s ease both;
+  will-change: background;
 }
 
 .layout__char-name:hover::after {
-  border-color: rgba(59, 59, 59, 0.95) transparent transparent transparent;
+  background: linear-gradient(135deg, rgba(221, 180, 118, 0.2) 0%, rgba(59, 59, 59, 0.95) 100%);
 }
 
 .layout__char-name:hover {
@@ -571,8 +571,8 @@ $color-dark: #1b1b1b;
 }
 
 .layout__nav-links a:first-child {
-  padding-left: 32px;
-  margin-left: 16px;
+  padding-left: 48px;
+  margin-left: 0;
 }
 
 .layout__nav-links a::after {
