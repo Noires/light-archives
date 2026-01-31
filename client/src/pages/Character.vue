@@ -280,18 +280,23 @@ export default class PageCharacter extends Vue {
 </script>
 
 <style lang="scss">
-.edit-profile {
+.q-item.edit-profile {
 	background-color: #9F848D;
 	color: #1b1b1b;
 	transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-.edit-profile:hover {
-	background-color: rgba(139, 103, 115, 0.8);
+.q-item.edit-profile:hover {
+	background-color: #615056;
 	color: #000000;
 }
 
 .q-item.edit-profile:hover .q-icon {
 	color: #000000;
+}
+
+.q-item.edit-profile .q-icon,
+.q-item.edit-profile .q-item-section {
+	transition: color 0.25s ease;
 }
 </style>
