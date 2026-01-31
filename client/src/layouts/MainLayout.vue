@@ -379,7 +379,6 @@ $color-dark: #1b1b1b;
 .q-drawer--left {
   background: linear-gradient(135deg, rgba(26, 26, 26, 0.98) 0%, rgba(15, 15, 15, 0.98) 100%);
   border-right: 1px solid rgba(221, 180, 118, 0.25);
-  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(12px);
 }
 
@@ -406,8 +405,6 @@ $color-dark: #1b1b1b;
 }
 
 .q-drawer .q-item:first-child {
-  padding: 20px 12px 12px;
-  margin: 0;
   background: transparent;
 }
 
