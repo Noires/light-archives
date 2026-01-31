@@ -228,6 +228,8 @@ $color-dark: #1b1b1b;
   min-width: 280px;
   min-height: var(--nav-height);
   position: relative;
+  z-index: 3;
+  isolation: isolate;
   text-transform: uppercase;
   border-radius: 0;
   background: linear-gradient(135deg, rgba(221, 180, 118, 0.12) 0%, rgba(51, 51, 51, 0.9) 100%);
@@ -253,16 +255,16 @@ $color-dark: #1b1b1b;
   transform: translateX(100%);
   width: 32px;
   height: 64px;
-  background: linear-gradient(135deg, rgba(221, 180, 118, 0.12) 0%, rgba(51, 51, 51, 0.9) 100%);
+  background: rgb(50,50,48);
   clip-path: polygon(0 0, 100% 0, 0 100%);
-  transition: background 0.3s ease;
+
   pointer-events: none;
   animation: navRevealDivider 0.55s ease both;
   will-change: background;
 }
 
 .layout__char-name:hover::after {
-  background: linear-gradient(135deg, rgba(221, 180, 118, 0.2) 0%, rgba(59, 59, 59, 0.95) 100%);
+  background:  rgba(59, 59, 59, 0.95) 100%;
 }
 
 .layout__char-name:hover {
@@ -540,6 +542,7 @@ $color-dark: #1b1b1b;
   justify-content: flex-start;
   gap: 0;
   position: relative;
+  z-index: 1;
   min-height: var(--nav-height);
   padding: 0 4px 0 0;
   background: transparent;
@@ -566,6 +569,7 @@ $color-dark: #1b1b1b;
   box-shadow: none;
   transition: all 0.3s ease;
   position: relative;
+  z-index: 0;
   overflow: hidden;
   border-bottom: 3px solid transparent;
 }
@@ -727,7 +731,7 @@ $color-dark: #1b1b1b;
   --calendar-width: 320px;
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1300px) var(--calendar-width);
+  grid-template-columns: 1fr minmax(0, 1300px) var(--calendar-width) 1fr;
   gap: 24px;
   align-items: start;
   margin: 0 auto;
