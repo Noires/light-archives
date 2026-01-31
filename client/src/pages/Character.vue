@@ -90,7 +90,7 @@
 						</q-item-section>
 
 						<q-item-section class="edit-profile">
-							Profil bearbeiten
+							Bearbeiten
 						</q-item-section>
 					</q-item>
 

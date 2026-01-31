@@ -129,7 +129,7 @@
             title="Discord-Banner"
             :ratio="5 / 2"
             :min-aspect-ratio="minDiscordBannerAspectRatio"
-            hint="Discord-Banner sollten ein SeitenverhÃ¤ltnis von 5:2 haben (z. B. 800Ã—320)."
+            hint="Discord-Banner sollten ein Seitenverhältnis von 5:2 haben (z. B. 800x320)."
           />
           <q-input
             v-model="event.link"

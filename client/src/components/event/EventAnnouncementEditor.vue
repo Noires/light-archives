@@ -1,24 +1,24 @@
 <template>
   <q-card class="event-announcement-editor">
     <q-card-section>
-      <div>Poste eine VorankÃ¼ndigung auf Discord relativ zum Eventbeginn:</div>
+      <div>Poste eine Vorankündigung auf Discord relativ zum Eventbeginn:</div>
       <div>
         <q-option-group :options="options" :model-value="minutesBefore" @update:model-value="setMinutesBefore" />
       </div>
       <q-input v-model.number="modelValue.minutesBefore" v-if="custom" label="Benutzerdefiniert" style="width: 200px">
         <template v-slot:after><span style="font-size: 16px">Minuten</span></template>
       </q-input>
-      <div>Inhalt der VorankÃ¼ndigung:</div>
+      <div>Inhalt der Vorankündigung:</div>
       <q-input
 				input-style="height: 300px"
         type="textarea"
         outlined
         v-model="modelValue.content"
       />
-      <div class="text-caption">Discordformatierung (Markdown) kann genutzt werden. Um eine Rolle zu erwÃ¤hnen, fÃ¼ge ein @-Symbol vor die Rolle: <strong>@eventankÃ¼ndigungen</strong>. Um einen Nutzer zu erwÃ¤hnen, verwende deren Discordname <strong>@UserName#1234</strong> oder Nickname auf dem Server in geschweiften Klammern: <strong>@{Sharshulam Noykin [Shiva]}</strong>. Wenn du das Feld leer lÃ¤sst, wird automatisch der Eventtext verwendet.</div>
+      <div class="text-caption">Discordformatierung (Markdown) kann genutzt werden. Um eine Rolle zu erwähnen, füge ein @-Symbol vor die Rolle: <strong>@eventankündigungen</strong>. Um einen Nutzer zu erwähnen, verwende deren Discordname <strong>@UserName#1234</strong> oder Nickname auf dem Server in geschweiften Klammern: <strong>@{Sharshulam Noykin [Shiva]}</strong>. Wenn du das Feld leer lässt, wird automatisch der Eventtext verwendet.</div>
     </q-card-section>
     <q-card-actions align="right">
-      <q-btn flat color="negative" label="VorankÃ¼ndigung entfernen" @click="onRemoveClick" />
+      <q-btn flat color="negative" label="Vorankündigung entfernen" @click="onRemoveClick" />
     </q-card-actions>
   </q-card>
 </template>

@@ -67,7 +67,7 @@
           :to="`/edit-character/${$store.getters.characterId}/profile`"
         >
           <q-item-section>
-            <q-item-label>Profil bearbeiten</q-item-label>
+            <q-item-label>Bearbeiten</q-item-label>
           </q-item-section>
         </q-item>
         <q-item

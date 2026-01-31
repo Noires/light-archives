@@ -20,7 +20,7 @@
 				color="negative"
 				@click="onBannerRemoveClick"
 			/>&nbsp;
-			<q-btn flat label="AuswÃ¤hlen" icon="collections" color="secondary" @click="onBannerSelectClick" />&nbsp;
+			<q-btn flat label="Auswählen" icon="collections" color="secondary" @click="onBannerSelectClick" />&nbsp;
 			<q-btn flat label="Hochladen" icon="upload" color="secondary" @click="onBannerUploadClick" />
 		</div>
 	</section>
@@ -42,7 +42,7 @@ class Props {
 	});
 
 	hint = prop<string>({
-		default: 'Banner mÃ¼ssen ein SeitenverhÃ¤ltnis von 4:1 Breite:HÃ¶he haben. Beispielsweise ist 500Ã—100 und 400Ã—100 in Ordnung, aber 300Ã—100 nicht.',
+		default: 'Banner müssen ein Seitenverhältnis von 4:1 Breite:Höhe haben. Beispielsweise ist 500x100 und 400x100 in Ordnung, aber 300x100 nicht.',
 	});
 
 	ratio = prop<number>({
