@@ -1,5 +1,5 @@
 import { Role, roleImplies } from '@app/shared/enums/role.enum';
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { ROLES_KEY } from '../decorators/role-required.decorator';
@@ -26,7 +26,17 @@ export class RolesGuard implements CanActivate {
 		}
 
 		const request = context.switchToHttp().getRequest();
-		const user = (request.user?.user || null) as UserInfo|null; 
-		return user !== null && roleImplies(user.role, requiredRole);
+		const user = (request.user?.user || null) as UserInfo|null;
+
+		if (user !== null && roleImplies(user.role, requiredRole)) {
+			return true;
+		}
+
+		// Throw a descriptive error message for unverified users
+		if (user && user.role === Role.UNVERIFIED) {
+			throw new ForbiddenException('Dein Account muss verifiziert sein, um Bilder hochzuladen. Bitte verifiziere mindestens einen Charakter.');
+		}
+
+		return false;
 	}
 }
