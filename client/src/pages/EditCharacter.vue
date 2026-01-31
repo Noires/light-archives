@@ -201,20 +201,6 @@ export default class PageEditCharacter extends Vue {
 
 .edit-drawer .q-item {
   color: #1b1b1b;
-  transition: background-color 0.25s ease;
-}
-
-.edit-drawer .q-item:hover {
-  background-color: rgba(139, 103, 115, 0.6);
-}
-
-.edit-drawer .q-item .q-icon {
-  color: #1b1b1b;
-  transition: color 0.25s ease;
-}
-
-.edit-drawer .q-item:hover .q-icon {
-  color: #000000;
 }
 
 </style>
