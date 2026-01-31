@@ -1,6 +1,6 @@
 import { Race } from "@app/shared/enums/race.enum";
 import { Type } from "class-transformer";
-import { IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsEnum, IsNumber, IsOptional, IsString, Matches } from "class-validator";
 import { PagingDto } from "../common/paging.dto";
 
 export class CharacterProfileFilterDto extends PagingDto {
@@ -26,4 +26,9 @@ export class CharacterProfileFilterDto extends PagingDto {
 	@IsNumber()
 	@IsOptional()
 	communityId?: number;
+
+	@IsString()
+	@IsOptional()
+	@Matches(/^[A-Z]$/)
+	letter?: string;
 }

@@ -412,6 +412,10 @@ export class CharactersService {
         .select('1'));
     }
 
+    if (filter.letter) {
+      query.andWhere('UPPER(SUBSTRING(character.name, 1, 1)) = :letter', { letter: filter.letter });
+    }
+
     const total = await query.getCount();
 
     if (filter.offset) {

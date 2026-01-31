@@ -17,6 +17,24 @@
     </header>
 
     <section class="page-characters__content">
+      <div class="page-characters__alphabet-nav">
+        <button
+          v-for="letter in alphabet"
+          :key="letter"
+          class="page-characters__alphabet-btn"
+          :class="{ 'page-characters__alphabet-btn--active': selectedLetter === letter }"
+          @click="selectLetter(letter)"
+        >
+          {{ letter }}
+        </button>
+        <button
+          class="page-characters__alphabet-btn page-characters__alphabet-btn--all"
+          :class="{ 'page-characters__alphabet-btn--active': selectedLetter === null }"
+          @click="selectLetter(null)"
+        >
+          Alle
+        </button>
+      </div>
       <div class="page-characters__toolbar">
         <q-input
           class="page-characters__search"
@@ -122,6 +140,7 @@ const $api = useApi();
     const searchQuery = to.query.searchQuery as string || '';
     const server = parseInt(to.query.server as string || '');
     const race = to.query.race && Object.values(Race).includes(to.query.race as Race) ? to.query.race as Race : null;
+    const letter = to.query.letter && /^[A-Z]$/.test(to.query.letter as string) ? to.query.letter as string : null;
     const page = parseInt(to.query.page as string, 10) || 1;
     const rowsPerPage = parseInt(to.query.rowsPerPage as string, 10) || SharedConstants.DEFAULT_ROWS_PER_PAGE;
 
@@ -138,9 +157,12 @@ const $api = useApi();
     if (race) {
       filter.race = race;
     }
-    
+    if (letter) {
+      filter.letter = letter;
+    }
+
     const profiles = await $api.characters.getCharacterProfiles(filter);
-    next((vm) => (vm as PageCharacters).setContent(servers, profiles, searchQuery, race, server, { page, rowsPerPage }));
+    next((vm) => (vm as PageCharacters).setContent(servers, profiles, searchQuery, race, server, letter, { page, rowsPerPage }));
   }
 })
 export default class PageCharacters extends Vue {
@@ -154,7 +176,10 @@ export default class PageCharacters extends Vue {
   searchQuery = '';
   race: Race | null = null;
   server: number | null = null;
+  selectedLetter: string | null = null;
   servers: ServerDto[] = [];
+
+  readonly alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
   get columns() {
     return [
@@ -187,13 +212,14 @@ export default class PageCharacters extends Vue {
   }
 
   setContent(servers: ServerDto[], profiles: PagingResultDto<CharacterSummaryDto>, searchQuery: string, race: Race | null,
-      server: number | null,
+      server: number | null, letter: string | null,
       pagination: { page: number; rowsPerPage: number }) {
     this.servers = servers;
     this.profiles = profiles.data;
     this.searchQuery = searchQuery;
     this.race = race;
     this.server = server || null;
+    this.selectedLetter = letter;
     this.pagination.page = pagination.page;
     this.pagination.rowsPerPage = pagination.rowsPerPage;
     this.pagination.rowsNumber = profiles.total;
@@ -201,6 +227,12 @@ export default class PageCharacters extends Vue {
 
   getLink(profile: CharacterSummaryDto) {
     return `/${profile.server}/${profile.name.replace(/ /g, '_')}`;
+  }
+
+  selectLetter(letter: string | null) {
+    this.selectedLetter = letter;
+    this.pagination.page = 1;
+    this.refresh();
   }
 
   onFilterChange() {
@@ -233,6 +265,10 @@ export default class PageCharacters extends Vue {
       filter.server = this.server;
     }
 
+    if (this.selectedLetter) {
+      filter.letter = this.selectedLetter;
+    }
+
     const profiles = await this.$api.characters.getCharacterProfiles(filter);
     this.profiles = profiles.data;
     this.pagination.rowsNumber = profiles.total;
@@ -254,6 +290,10 @@ export default class PageCharacters extends Vue {
 
     if (this.race) {
       queryParams.race = this.race;
+    }
+
+    if (this.selectedLetter) {
+      queryParams.letter = this.selectedLetter;
     }
 
     void this.$router.replace({
@@ -348,6 +388,52 @@ export default class PageCharacters extends Vue {
 .page-characters__content {
   position: relative;
   z-index: 1;
+}
+
+.page-characters__alphabet-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(221, 180, 118, 0.25);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  justify-content: center;
+}
+
+.page-characters__alphabet-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid rgba(221, 180, 118, 0.3);
+  background: #ffffff;
+  color: rgba(35, 35, 35, 0.75);
+  font-family: $header-font;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.page-characters__alphabet-btn:hover {
+  background: rgba(221, 180, 118, 0.1);
+  border-color: rgba(221, 180, 118, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.page-characters__alphabet-btn--active {
+  background: linear-gradient(135deg, rgba(221, 180, 118, 0.25) 0%, rgba(221, 180, 118, 0.15) 100%);
+  border-color: rgba(221, 180, 118, 0.6);
+  color: #20323d;
+  box-shadow: 0 4px 12px rgba(221, 180, 118, 0.3);
+}
+
+.page-characters__alphabet-btn--all {
+  min-width: 48px;
+  font-size: 0.85rem;
 }
 
 .page-characters__toolbar {
@@ -498,6 +584,22 @@ export default class PageCharacters extends Vue {
 
   .page-characters__hero {
     padding: 16px;
+  }
+
+  .page-characters__alphabet-nav {
+    gap: 4px;
+    padding: 10px;
+  }
+
+  .page-characters__alphabet-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 0.85rem;
+  }
+
+  .page-characters__alphabet-btn--all {
+    min-width: 44px;
   }
 
   .page-characters__table .q-table__grid-content {
