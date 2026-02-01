@@ -29,8 +29,41 @@
       </section>
       <community-profile :community="community" />
       <template v-if="!community.canManageMembers">
-        <h3>Mitglieder</h3>
-        <character-name-list :profiles="members" />
+        <section class="page-community__members">
+          <header class="page-community__members-header">
+            <h3>Mitglieder</h3>
+            <div class="page-community__members-count">
+              {{ members.length }} {{ members.length === 1 ? 'Mitglied' : 'Mitglieder' }}
+            </div>
+          </header>
+
+          <div class="page-community__members-grid">
+            <div
+              v-for="profile in members"
+              :key="`${profile.name}_${profile.server}`"
+              class="page-community__member-card"
+            >
+              <router-link :to="getLink(profile)" class="page-community__member-link">
+                <q-avatar round size="56px" class="page-community__member-avatar">
+                  <img :src="profile.avatar" />
+                </q-avatar>
+                <div class="page-community__member-body">
+                  <div class="page-community__member-name">{{ profile.name }}</div>
+                  <div class="page-community__member-meta">
+                    {{ $display.races[profile.race] }} - {{ profile.server }}
+                  </div>
+                  <div v-if="profile.profession" class="page-community__member-profession">
+                    {{ profile.profession }}
+                  </div>
+                </div>
+              </router-link>
+            </div>
+          </div>
+
+          <div v-if="members.length === 0" class="page-community__members-empty">
+            Keine Mitglieder gefunden.
+          </div>
+        </section>
       </template>
       <template v-else>
 				<template v-if="applicants.length > 0">
@@ -56,7 +89,6 @@
 <script lang="ts">
 import { CommunityDto } from '@app/shared/dto/communities/community.dto';
 import CommunityProfile from 'components/communities/CommunityProfile.vue';
-import CharacterNameList from 'components/mainpage/CharacterNameList.vue';
 import { useApi } from 'src/boot/axios';
 import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
@@ -103,7 +135,6 @@ async function load(
 @Options({
   components: {
     CommunityProfile,
-    CharacterNameList,
     CommunityApplicantEditor,
 		CommunityMemberEditor,
 		ReportViolationSection,
@@ -162,6 +193,10 @@ export default class PageCommunity extends Vue {
     const allMembers = await this.$api.communities.getMembers(this.community.id);
     this.applicants = allMembers.filter((member) => member.status === MembershipStatus.APPLIED);
     this.confirmedMembers = allMembers.filter((member) => member.status === MembershipStatus.CONFIRMED);
+  }
+
+  getLink(profile: CharacterSummaryDto) {
+    return `/${profile.server}/${profile.name.replace(/ /g, '_')}`;
   }
 
   onDeleteClick() {
@@ -229,5 +264,116 @@ export default class PageCommunity extends Vue {
 .page-community__join-button-bar {
   text-align: center;
   margin-bottom: 8px;
+}
+
+.page-community__members {
+  margin: 32px 0;
+}
+
+.page-community__members-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  padding: 20px 22px;
+  border: 1px solid rgba(221, 180, 118, 0.25);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+}
+
+.page-community__members-header h3 {
+  margin: 0;
+  font-family: $header-font;
+  letter-spacing: 0.02em;
+}
+
+.page-community__members-count {
+  font-family: $header-font;
+  font-size: 1.05rem;
+  color: #20323d;
+}
+
+.page-community__members-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(221, 180, 118, 0.25);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+}
+
+.page-community__member-card {
+  border: 1px solid rgba(221, 180, 118, 0.2);
+  background: #ffffff;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.page-community__member-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
+  border-color: rgba(221, 180, 118, 0.4);
+}
+
+.page-community__member-link {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.page-community__member-avatar {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+}
+
+.page-community__member-name {
+  font-weight: 700;
+  color: #1f2c38;
+}
+
+.page-community__member-meta {
+  color: rgba(35, 35, 35, 0.7);
+  font-size: 0.85rem;
+}
+
+.page-community__member-profession {
+  color: rgba(35, 35, 35, 0.65);
+  font-size: 0.9rem;
+}
+
+.page-community__members-empty {
+  margin: 0;
+  padding: 18px;
+  color: rgba(35, 35, 35, 0.7);
+  border: 1px solid rgba(221, 180, 118, 0.2);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  text-align: center;
+}
+
+@media screen and (max-width: $breakpoint-sm) {
+  .page-community__members-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .page-community__members-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-community__member-card {
+    transition: none;
+  }
+
+  .page-community__member-card:hover {
+    transform: none;
+  }
 }
 </style>
