@@ -27,7 +27,6 @@ import 'hugerte/skins/content/default/content.js';
 import 'hugerte/plugins/advlist';
 import 'hugerte/plugins/autolink';
 import 'hugerte/plugins/charmap';
-import 'hugerte/plugins/code';
 import 'hugerte/plugins/help';
 import 'hugerte/plugins/image';
 import 'hugerte/plugins/importcss';

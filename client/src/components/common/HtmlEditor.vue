@@ -43,7 +43,7 @@ const FONTS = [
 
 const FONT_OPTION = FONTS.map(font => `${font}=${font},sans-serif`).join(';');
 
-const RTE_PLUGINS = 'importcss advlist autolink charmap code help image link lists nonbreaking searchreplace table visualblocks wordcount';
+const RTE_PLUGINS = 'importcss advlist autolink charmap help image link lists nonbreaking searchreplace table visualblocks wordcount';
 
 const RTE_OPTIONS = {
   toolbar:
@@ -128,6 +128,8 @@ interface EditorApi {
     getContent(options: { format: string }): string;
     setContent(html: string): void;
   };
+  getContent(): string;
+  setContent(content: string): void;
   focus(): void;
 }
 
@@ -186,6 +188,19 @@ export default class HtmlEditor extends Vue.with(Props) {
       plugins,
       fixed_toolbar_container: `#${this.toolbarId}`,
       setup: (editor: EditorApi) => {
+        // Custom code dialog with CodeMirror syntax highlighting
+        editor.ui.registry.addButton('code', {
+          tooltip: 'Quellcode bearbeiten',
+          icon: 'sourcecode',
+          onAction: () => this.openCodeDialog(editor)
+        });
+
+        editor.ui.registry.addMenuItem('code', {
+          text: 'Quellcode',
+          icon: 'sourcecode',
+          onAction: () => this.openCodeDialog(editor)
+        });
+
         editor.ui.registry.addMenuItem('outdent', {
           text: 'Einzug verkleinern',
           icon: 'outdent',
@@ -283,6 +298,20 @@ export default class HtmlEditor extends Vue.with(Props) {
       editor.selection.setContent(`<section class="hide-details hide-details_visible"><div class="hide-details__title">[insert title here]</div><div class="hide-details__content">${content || '[insert text here]'}</div></section>`);
     });
   }
+
+  private async openCodeDialog(editor: EditorApi) {
+    const CodeEditorDialog = (await import('./CodeEditorDialog.vue')).default;
+    const initialContent = editor.getContent();
+
+    this.$q.dialog({
+      component: CodeEditorDialog,
+      componentProps: {
+        modelValue: initialContent,
+      }
+    }).onOk((newContent: string) => {
+      editor.setContent(newContent);
+    });
+  }
 }
 </script>
 
@@ -314,5 +343,27 @@ export default class HtmlEditor extends Vue.with(Props) {
   border: 1px solid #aaa;
   background: white;
   color: #666;
+}
+
+// CodeMirror in TinyMCE dialog
+.tox-dialog .CodeMirror {
+  height: 500px !important;
+  min-height: 500px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.tox-dialog .tox-form__group {
+  max-width: none !important;
+}
+
+.tox-dialog .tox-textarea {
+  display: none;
+}
+
+.tox-dialog--width-lg {
+  max-width: 1200px;
+  width: 90vw;
 }
 </style>
