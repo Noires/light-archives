@@ -28,13 +28,13 @@ const html = {
 					'letter-spacing': [/.*/],
 					'word-spacing': [/.*/],
 
-					// Safe spacing (contained units only)
-					'margin': [/^\d+(?:px|em|rem|%)$/],
+					// Safe spacing (contained units only, supports 1-4 value shorthand)
+					'margin': [/^(?:\d+(?:px|em|rem|%)\s*){1,4}$/],
 					'margin-top': [/^\d+(?:px|em|rem|%)$/],
 					'margin-bottom': [/^\d+(?:px|em|rem|%)$/],
 					'margin-left': [/^\d+(?:px|em|rem|%)$/],
 					'margin-right': [/^\d+(?:px|em|rem|%)$/],
-					'padding': [/^\d+(?:px|em|rem|%)$/],
+					'padding': [/^(?:\d+(?:px|em|rem|%)\s*){1,4}$/],
 					'padding-top': [/^\d+(?:px|em|rem|%)$/],
 					'padding-bottom': [/^\d+(?:px|em|rem|%)$/],
 					'padding-left': [/^\d+(?:px|em|rem|%)$/],
@@ -63,8 +63,8 @@ const html = {
 					'border-color': [/.*/],
 					'border-radius': [/.*/],
 
-					// Display (safe values only)
-					'display': [/^inline$/, /^block$/, /^inline-block$/, /^none$/],
+					// Display (safe values only - basic + flex/grid)
+					'display': [/^inline$/, /^block$/, /^inline-block$/, /^none$/, /^flex$/, /^inline-flex$/, /^grid$/, /^inline-grid$/],
 
 					// Float (contained)
 					'float': [/^left$/, /^right$/, /^none$/],
@@ -72,6 +72,19 @@ const html = {
 
 					// Opacity
 					'opacity': [/^[0-9.]+$/],
+
+					// Flexbox/Grid layout (safe - only affects internal layout)
+					'flex-direction': [/^row$/, /^row-reverse$/, /^column$/, /^column-reverse$/],
+					'flex-wrap': [/^nowrap$/, /^wrap$/, /^wrap-reverse$/],
+					'justify-content': [/^flex-start$/, /^flex-end$/, /^center$/, /^space-between$/, /^space-around$/, /^space-evenly$/],
+					'align-items': [/^flex-start$/, /^flex-end$/, /^center$/, /^baseline$/, /^stretch$/],
+					'align-content': [/^flex-start$/, /^flex-end$/, /^center$/, /^space-between$/, /^space-around$/, /^stretch$/],
+					'gap': [/^\d+(?:px|em|rem|%)$/],
+					'row-gap': [/^\d+(?:px|em|rem|%)$/],
+					'column-gap': [/^\d+(?:px|em|rem|%)$/],
+					'grid-template-columns': [/.*/],
+					'grid-template-rows': [/.*/],
+					'vertical-align': [/^top$/, /^middle$/, /^bottom$/, /^baseline$/, /^text-top$/, /^text-bottom$/],
 
 					// EXPLICITLY DENIED (not listed):
 					// - position (fixed, absolute, sticky)
