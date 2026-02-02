@@ -1,6 +1,9 @@
 <template>
 <template v-if="character.id">
-      <h2>Aussehen bearbeiten</h2>
+      <div class="page-edit-character__header">
+        <h2>Aussehen bearbeiten</h2>
+        <q-btn outline color="secondary" @click="onWikiImportClick" icon="download" label="Wiki Import" />
+      </div>
       <q-form @submit="onSubmit">
         <template v-if="!preview">
           <section class="page-edit-character__form-controls">
@@ -64,6 +67,7 @@ import HtmlEditor from '../components/common/HtmlEditor.vue';
 import { ref } from 'vue';
 import { Dialog } from 'quasar';
 import CharacterAppearance from 'src/components/character/CharacterAppearance.vue';
+import type { ParsedCharacterData } from 'src/common/wiki-import';
 
 const $api = useApi();
 const isDirty = ref(false);
@@ -161,6 +165,22 @@ export default class PageEditProfile extends Vue {
       });
   }
 
+  async onWikiImportClick() {
+    const WikiImportDialog = (await import('src/components/character/WikiImportDialog.vue')).default;
+
+    this.$q
+      .dialog({
+        component: WikiImportDialog,
+        componentProps: {
+          targetSection: 'appearance',
+        },
+      })
+      .onOk((importedData: ParsedCharacterData) => {
+        Object.assign(this.character, importedData);
+        this.onChange();
+      });
+  }
+
   onChange() {
     isDirty.value = true;
   }
@@ -236,5 +256,16 @@ export default class PageEditProfile extends Vue {
 
 .page-edit-character__preview h6 {
   font-family: $header-font;
+}
+
+.page-edit-character__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0;
+  }
 }
 </style>
