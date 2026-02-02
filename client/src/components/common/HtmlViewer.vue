@@ -33,7 +33,7 @@ export default class HtmlViewer extends Vue.with(Props) {
 
 	initializeTabs() {
 		// Initialize Fandom tabs after content is rendered
-		this.$nextTick(() => {
+		void this.$nextTick(() => {
 			const container = this.$el as HTMLElement;
 			if (container) {
 				initializeFandomTabs(container);
