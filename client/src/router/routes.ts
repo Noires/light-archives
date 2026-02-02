@@ -41,6 +41,15 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
+    path: '/test-editor',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/TestEditor.vue') }],
+    meta: {
+      title: 'Wiki Import Test'
+    },
+  },
+
+  {
     path: '/create-location',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditLocation.vue') }],

@@ -361,6 +361,11 @@ function applyComputedStylesToElement(element: HTMLElement, win: Window): void {
  * Preserves structure, styling, and Fandom-specific elements for accurate rendering
  */
 function extractMainContent(html: string): string {
+  if (!html || typeof html !== 'string') {
+    console.error('extractMainContent received invalid input:', typeof html);
+    return '';
+  }
+
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
 
@@ -381,8 +386,39 @@ function extractMainContent(html: string): string {
   // Get the main content wrapper
   const content = doc.querySelector('.mw-parser-output') || doc.body;
 
+  // Clean up all attributes to ensure they're strings
+  const allElements = content.querySelectorAll('*');
+  allElements.forEach(el => {
+    // Check all attributes
+    Array.from(el.attributes).forEach(attr => {
+      const value = attr.value;
+      // If value is not a string or is an empty string, it might cause issues
+      if (typeof value !== 'string') {
+        console.warn(`Invalid ${attr.name} attribute detected on ${el.tagName}, removing:`, value);
+        el.removeAttribute(attr.name);
+      } else if (attr.name === 'style' && value.includes('undefined')) {
+        // Clean up style attributes with undefined values
+        const cleanedStyle = value.split(';')
+          .filter(rule => rule.trim() && !rule.includes('undefined'))
+          .join(';');
+        if (cleanedStyle) {
+          el.setAttribute('style', cleanedStyle);
+        } else {
+          el.removeAttribute('style');
+        }
+      }
+    });
+  });
+
   // Return with minimal processing - preserve all structure, styles, and classes
-  return content.innerHTML.trim();
+  const result = content.innerHTML.trim();
+
+  if (!result || typeof result !== 'string') {
+    console.error('extractMainContent produced invalid output:', typeof result);
+    return '';
+  }
+
+  return result;
 }
 
 /**
