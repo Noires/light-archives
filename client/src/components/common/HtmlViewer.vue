@@ -6,6 +6,7 @@
 import html from '@app/shared/html';
 import { onHtmlViewClickCapture } from 'src/common/html-view-utils';
 import { parseWikilinksInHtml } from '@common/common/wikilinks';
+import { initializeFandomTabs } from 'src/common/fandom-tabs';
 import { Options, prop, Vue } from 'vue-class-component';
 
 class Props {
@@ -20,6 +21,24 @@ class Props {
 export default class HtmlViewer extends Vue.with(Props) {
 	get sanitizedContent() {
 		return parseWikilinksInHtml(html.sanitize(this.content));
+	}
+
+	mounted() {
+		this.initializeTabs();
+	}
+
+	updated() {
+		this.initializeTabs();
+	}
+
+	initializeTabs() {
+		// Initialize Fandom tabs after content is rendered
+		this.$nextTick(() => {
+			const container = this.$el as HTMLElement;
+			if (container) {
+				initializeFandomTabs(container);
+			}
+		});
 	}
 
 	onClickCapture(event: Event) {
