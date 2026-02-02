@@ -16,6 +16,7 @@ export interface WikiPageData {
   title: string;
   text: string;
   cleanedHtml: string; // Full page content, sanitized for editor
+  css?: string; // Optional CSS styles from the wiki page
   properties: Record<string, string>;
   sections: WikiSection[];
 }
@@ -133,7 +134,7 @@ interface FandomApiResponse {
 /**
  * Fetches wiki page data from the Fandom API
  */
-export async function fetchWikiPage(pageName: string): Promise<WikiPageData> {
+export async function fetchWikiPage(pageName: string, options: { includeCss?: boolean } = {}): Promise<WikiPageData> {
   const apiUrl = new URL(FANDOM_API_BASE);
   apiUrl.searchParams.set('action', 'parse');
   apiUrl.searchParams.set('page', pageName);
@@ -174,6 +175,14 @@ export async function fetchWikiPage(pageName: string): Promise<WikiPageData> {
   const rawHtml = parse.text?.['*'] || '';
   const cleanedHtml = extractMainContent(rawHtml);
 
+  // Note: External CSS fetching disabled due to CORS restrictions
+  // The API response already includes inline styles for most elements
+  // Additional styling is provided by our local fandom-tabs.scss and wiki styles
+  if (options.includeCss) {
+    console.log('Note: External CSS fetching is disabled due to CORS restrictions.');
+    console.log('Using inline styles from API response + local CSS.');
+  }
+
   return {
     title: parse.title,
     text: rawHtml,
@@ -184,32 +193,185 @@ export async function fetchWikiPage(pageName: string): Promise<WikiPageData> {
 }
 
 /**
+ * Fetches CSS styles from the wiki page
+ */
+async function fetchWikiCss(pageName: string): Promise<string> {
+  // Fetch the actual HTML page to get CSS links
+  const pageUrl = `https://${ALLOWED_DOMAIN}/de/wiki/${encodeURIComponent(pageName)}`;
+  console.log('Fetching wiki page HTML from:', pageUrl);
+
+  const response = await fetch(pageUrl);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch page: ${response.status}`);
+  }
+
+  const html = await response.text();
+  console.log('Wiki page HTML fetched, length:', html.length);
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  // Extract CSS link URLs
+  const cssUrls: string[] = [];
+  const linkElements = doc.querySelectorAll('link[rel="stylesheet"]');
+  console.log('Found stylesheet links:', linkElements.length);
+
+  linkElements.forEach(link => {
+    const href = link.getAttribute('href');
+    if (href) {
+      // Convert relative URLs to absolute
+      const absoluteUrl = href.startsWith('http') ? href : `https:${href}`;
+      // Only include Fandom CDN CSS (safe and relevant)
+      if (absoluteUrl.includes('fandom') || absoluteUrl.includes('wikia')) {
+        cssUrls.push(absoluteUrl);
+      }
+    }
+  });
+
+  console.log('Filtered CSS URLs (Fandom/Wikia only):', cssUrls.length);
+  console.log('CSS URLs:', cssUrls.slice(0, 3));
+
+  // Fetch and combine CSS files
+  const cssPromises = cssUrls.slice(0, 10).map(async url => {
+    try {
+      console.log('Fetching CSS from:', url);
+      const cssResponse = await fetch(url);
+      if (cssResponse.ok) {
+        const cssText = await cssResponse.text();
+        console.log(`CSS fetched from ${url}, length:`, cssText.length);
+        return cssText;
+      }
+    } catch (e) {
+      console.warn(`Failed to fetch CSS from ${url}:`, e);
+    }
+    return '';
+  });
+
+  const cssContents = await Promise.all(cssPromises);
+  const combinedCss = cssContents.filter(css => css).join('\n\n');
+  console.log('Combined CSS length:', combinedCss.length);
+  return combinedCss;
+}
+
+/**
+ * Applies CSS styles as inline styles to HTML elements
+ * Creates a temporary hidden iframe to compute styles and extract them
+ */
+export async function applyInlineStyles(html: string, css: string): Promise<string> {
+  return new Promise((resolve) => {
+    // Create a hidden iframe to render the content with CSS
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.left = '-9999px';
+    iframe.style.width = '1000px';
+    iframe.style.height = '1000px';
+    document.body.appendChild(iframe);
+
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) {
+      document.body.removeChild(iframe);
+      resolve(html); // Fallback to original HTML
+      return;
+    }
+
+    // Write HTML and CSS to iframe
+    iframeDoc.open();
+    iframeDoc.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>${css}</style>
+      </head>
+      <body>
+        <div id="content">${html}</div>
+      </body>
+      </html>
+    `);
+    iframeDoc.close();
+
+    // Wait for styles to compute
+    setTimeout(() => {
+      const contentDiv = iframeDoc.getElementById('content');
+      if (contentDiv) {
+        // Apply computed styles as inline styles
+        applyComputedStylesToElement(contentDiv, iframeDoc.defaultView || window);
+        resolve(contentDiv.innerHTML);
+      } else {
+        resolve(html);
+      }
+
+      // Clean up iframe
+      document.body.removeChild(iframe);
+    }, 500); // Wait for CSS to load and apply
+  });
+}
+
+/**
+ * Recursively applies computed styles to an element and its children
+ */
+function applyComputedStylesToElement(element: HTMLElement, win: Window): void {
+  // Get computed style
+  const computed = win.getComputedStyle(element);
+
+  // Properties to copy as inline styles
+  const importantProps = [
+    'color', 'background-color', 'background-image', 'background-size',
+    'background-position', 'background-repeat', 'font-family', 'font-size',
+    'font-weight', 'font-style', 'text-align', 'text-decoration',
+    'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+    'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+    'border', 'border-radius', 'width', 'height', 'max-width', 'max-height',
+    'display', 'position', 'top', 'left', 'right', 'bottom', 'z-index',
+    'opacity', 'overflow', 'flex-direction', 'justify-content', 'align-items'
+  ];
+
+  const existingStyle = element.getAttribute('style') || '';
+  const newStyles: string[] = [];
+
+  // Only add styles that differ from defaults
+  importantProps.forEach(prop => {
+    const value = computed.getPropertyValue(prop);
+    if (value && value !== 'none' && value !== 'normal' && value !== 'auto') {
+      // Skip default values
+      if (prop === 'color' && value === 'rgb(0, 0, 0)') return;
+      if (prop === 'background-color' && (value === 'rgba(0, 0, 0, 0)' || value === 'transparent')) return;
+      if (prop === 'font-size' && value === '16px') return;
+      if (prop === 'display' && value === 'block') return;
+
+      newStyles.push(`${prop}: ${value}`);
+    }
+  });
+
+  if (newStyles.length > 0) {
+    const combinedStyle = existingStyle + '; ' + newStyles.join('; ');
+    element.setAttribute('style', combinedStyle);
+  }
+
+  // Recursively apply to children
+  Array.from(element.children).forEach(child => {
+    if (child instanceof HTMLElement) {
+      applyComputedStylesToElement(child, win);
+    }
+  });
+}
+
+/**
  * Extracts and cleans the main content from wiki HTML
- * Removes navigation, categories, infobox chrome but keeps content
+ * Preserves structure, styling, and Fandom-specific elements for accurate rendering
  */
 function extractMainContent(html: string): string {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
 
-  // Remove unwanted elements but keep main content
+  // Only remove truly unwanted elements - keep structure intact
   const removeSelectors = [
     'script',
     'style',
     '.noprint',
     '.mw-editsection',
-    '.mw-headline-anchor',
-    '.toc',
-    '.navbox',
-    '.reference',
-    '.references',
-    '.mbox-image',
-    '.ambox',
-    '.metadata',
-    '.sistersitebox',
     '.catlinks',
     '.printfooter',
-    '[style*="display:none"]',
-    '[style*="display: none"]',
   ];
 
   removeSelectors.forEach(selector => {
@@ -219,18 +381,8 @@ function extractMainContent(html: string): string {
   // Get the main content wrapper
   const content = doc.querySelector('.mw-parser-output') || doc.body;
 
-  // Clean up the HTML
-  let cleanedHtml = content.innerHTML;
-
-  // Convert wiki links to plain text or keep as links
-  cleanedHtml = cleanedHtml
-    // Remove edit section links
-    .replace(/<span class="mw-editsection">.*?<\/span>/gi, '')
-    // Clean up excessive whitespace
-    .replace(/\n\s*\n\s*\n/g, '\n\n')
-    .trim();
-
-  return sanitizeWikiHtml(cleanedHtml);
+  // Return with minimal processing - preserve all structure, styles, and classes
+  return content.innerHTML.trim();
 }
 
 /**
@@ -284,71 +436,26 @@ function convertTabbersToCollapsible(doc: Document): void {
 }
 
 /**
- * Sanitizes HTML content from the wiki
- * Removes wiki-specific elements and keeps only safe HTML
+ * Minimal sanitization of wiki HTML
+ * Preserves all structure, styling, and Fandom-specific elements
+ * Server-side sanitizer will handle security filtering
  */
 export function sanitizeWikiHtml(html: string): string {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
 
-  // Convert tabber structure to collapsible sections
-  convertTabbersToCollapsible(doc);
-
-  // Remove unwanted elements
+  // Only remove scripts and truly dangerous elements
   const removeSelectors = [
     'script',
     'style',
-    '.noprint',
-    '.mw-editsection',
-    '.mw-headline-anchor',
-    '.toc',
-    '.navbox',
-    '.reference',
-    '.references',
-    '.mbox-image',
-    '.ambox',
-    '.metadata',
-    '.sistersitebox',
-    '[style*="display:none"]',
-    '[style*="display: none"]',
   ];
 
   removeSelectors.forEach(selector => {
     doc.querySelectorAll(selector).forEach(el => el.remove());
   });
 
-  // Remove all attributes except href on links
-  const allElements = doc.body.querySelectorAll('*');
-  allElements.forEach(el => {
-    const tagName = el.tagName.toLowerCase();
-    const attrs = Array.from(el.attributes);
-
-    attrs.forEach(attr => {
-      if (tagName === 'a' && attr.name === 'href') {
-        // Keep href but convert wiki links
-        const href = attr.value;
-        if (href.startsWith('/de/wiki/') || href.startsWith('/wiki/')) {
-          // Convert to plain text or remove link
-          const text = el.textContent || '';
-          el.replaceWith(document.createTextNode(text));
-        }
-      } else {
-        el.removeAttribute(attr.name);
-      }
-    });
-  });
-
-  // Get the cleaned HTML
-  let cleanedHtml = doc.body.innerHTML;
-
-  // Remove empty paragraphs and excessive whitespace
-  cleanedHtml = cleanedHtml
-    .replace(/<p>\s*<\/p>/gi, '')
-    .replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '<br>')
-    .replace(/\n\s*\n/g, '\n')
-    .trim();
-
-  return cleanedHtml;
+  // Return with all attributes, classes, and inline styles preserved
+  return doc.body.innerHTML.trim();
 }
 
 /**

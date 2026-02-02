@@ -3,13 +3,12 @@ import sanitizeHtml from 'sanitize-html';
 const html = {
 	sanitize(input: string): string {
 		return sanitizeHtml(input, {
-			allowedTags: [ ...sanitizeHtml.defaults.allowedTags, 'img' ],
+			allowedTags: [ ...sanitizeHtml.defaults.allowedTags, 'img', 'aside', 'section', 'nav', 'summary', 'details' ],
 			allowedClasses: {
-				'section': [ 'hide-details' ],
-				'div': [ 'hide-details__title', 'hide-details__content' ],
+				'*': true, // Allow all classes for wiki imports (Fandom WDS, MediaWiki classes)
 			},
 			allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes,
-				'*': [ 'style' ],
+				'*': [ 'style', 'class', 'id', 'data-hash', 'data-source', 'role' ],
 				'table': [ 'border', 'cellpadding', 'cellspacing' ],
 				'img': [ 'src', 'alt', 'title', 'width', 'height' ],
 			},
@@ -48,9 +47,14 @@ const html = {
 					'min-width': [/^\d+(?:px|em|rem|%)$/],
 					'min-height': [/^\d+(?:px|em|rem|%)$/],
 
-					// Background styling (no url() allowed via regex)
+					// Background styling (allow url() for wiki imports)
 					'background-color': [/.*/],
-					'background': [/^(?!.*url).*$/i], // Deny url() to prevent external resources
+					'background': [/.*/],
+					'background-image': [/.*/],
+					'background-size': [/.*/],
+					'background-position': [/.*/],
+					'background-repeat': [/.*/],
+					'background-attachment': [/.*/],
 
 					// Border styling
 					'border': [/.*/],
@@ -86,14 +90,38 @@ const html = {
 					'grid-template-rows': [/.*/],
 					'vertical-align': [/^top$/, /^middle$/, /^bottom$/, /^baseline$/, /^text-top$/, /^text-bottom$/],
 
-					// EXPLICITLY DENIED (not listed):
-					// - position (fixed, absolute, sticky)
-					// - z-index
-					// - top, left, right, bottom
-					// - transform
-					// - overflow
-					// - clip-path
-					// - Any viewport units (vw, vh, vmin, vmax)
+					// Positioning (for wiki imports with complex layouts)
+					'position': [/^static$/, /^relative$/, /^absolute$/],
+					'top': [/^-?\d+(?:px|em|rem|%)$/],
+					'left': [/^-?\d+(?:px|em|rem|%)$/],
+					'right': [/^-?\d+(?:px|em|rem|%)$/],
+					'bottom': [/^-?\d+(?:px|em|rem|%)$/],
+					'z-index': [/^-?\d+$/],
+
+					// Overflow (for scrollable content)
+					'overflow': [/^visible$/, /^hidden$/, /^scroll$/, /^auto$/],
+					'overflow-x': [/^visible$/, /^hidden$/, /^scroll$/, /^auto$/],
+					'overflow-y': [/^visible$/, /^hidden$/, /^scroll$/, /^auto$/],
+
+					// Transform (for visual effects)
+					'transform': [/.*/],
+					'transform-origin': [/.*/],
+
+					// Box shadow
+					'box-shadow': [/.*/],
+
+					// Cursor
+					'cursor': [/^pointer$/, /^default$/, /^text$/, /^move$/, /^help$/, /^not-allowed$/],
+
+					// List styling
+					'list-style': [/.*/],
+					'list-style-type': [/.*/],
+					'list-style-position': [/.*/],
+
+					// Note: The following are still denied for security:
+					// - position: fixed, sticky (can break page layout)
+					// - clip-path (can hide content unexpectedly)
+					// - Viewport units (vw, vh, vmin, vmax) - can break responsive design
 				}
 			}
 		});
