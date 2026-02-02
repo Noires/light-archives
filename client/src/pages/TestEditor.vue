@@ -76,6 +76,13 @@
               <p><strong>HTML Length:</strong> {{ debugInfo.htmlLength }} characters</p>
               <p><strong>Tabs Found:</strong> {{ debugInfo.tabsFound }}</p>
               <p><strong>Tab Contents:</strong> {{ debugInfo.contentsFound }}</p>
+              <p class="text-positive">
+                <q-icon name="check_circle" />
+                <strong>Client-side sanitization applied</strong> (aggressive attribute cleaning)
+              </p>
+              <p class="text-caption">
+                This HTML has been cleaned to prevent parsing errors. Check console for details.
+              </p>
             </q-card-section>
           </q-card>
         </q-expansion-item>
@@ -94,6 +101,7 @@ interface DebugInfo {
   htmlLength: number;
   tabsFound: number;
   contentsFound: number;
+  attributesCleaned?: number;
 }
 
 @Options({
@@ -128,7 +136,7 @@ export default class TestEditor extends Vue {
     try {
       const pageData = await fetchWikiPage(pageName, { includeCss: true });
 
-      console.log('Page data received:', {
+      console.log('✅ Page data received:', {
         title: pageData.title,
         htmlType: typeof pageData.cleanedHtml,
         htmlLength: pageData.cleanedHtml?.length || 0
@@ -137,6 +145,9 @@ export default class TestEditor extends Vue {
       if (!pageData.cleanedHtml || typeof pageData.cleanedHtml !== 'string') {
         throw new Error('Invalid HTML received from wiki import');
       }
+
+      console.log('✅ HTML has been sanitized (aggressive attribute cleaning applied)');
+      console.log('📋 Check console above for sanitization details');
 
       this.importedHtml = pageData.cleanedHtml;
 

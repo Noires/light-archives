@@ -466,15 +466,54 @@ function extractMainContent(html: string): string {
     return '';
   }
 
-  // Final cleanup: ensure all quotes are properly escaped
-  // This prevents issues with attribute parsing
+  // Aggressive final sanitization to prevent indexOf errors
   try {
-    // Parse and re-serialize to normalize the HTML
+    // Parse once more and aggressively remove all problematic attributes
     const finalDoc = new DOMParser().parseFromString(result, 'text/html');
+    const finalElements = finalDoc.body.querySelectorAll('*');
+
+    finalElements.forEach(el => {
+      const attrsToRemove: string[] = [];
+
+      // Check each attribute
+      Array.from(el.attributes).forEach(attr => {
+        const name = attr.name;
+        const value = attr.value;
+
+        // Remove any attribute that might cause indexOf errors
+        if (
+          typeof value !== 'string' ||
+          value === null ||
+          value === undefined ||
+          value === 'undefined' ||
+          value === 'null' ||
+          value.trim() === '' ||
+          // Remove data-* attributes except whitelisted ones
+          (name.startsWith('data-') && name !== 'data-hash' && name !== 'data-source') ||
+          // Remove event handlers
+          name.startsWith('on') ||
+          // Remove aria attributes that might be problematic
+          (name.startsWith('aria-') && name !== 'aria-label' && name !== 'aria-hidden')
+        ) {
+          attrsToRemove.push(name);
+        }
+      });
+
+      // Remove problematic attributes
+      attrsToRemove.forEach(name => {
+        try {
+          el.removeAttribute(name);
+        } catch (e) {
+          console.error(`Failed to remove attribute ${name}:`, e);
+        }
+      });
+    });
+
     result = finalDoc.body.innerHTML;
+    console.log(`Final aggressive sanitization completed`);
   } catch (e) {
-    console.error('Error in final HTML normalization:', e);
-    // Continue with original result if normalization fails
+    console.error('Error in final aggressive sanitization:', e);
+    // Continue with original result if sanitization fails
   }
 
   console.log(`extractMainContent completed, output length: ${result.length}`);
