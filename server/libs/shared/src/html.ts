@@ -7,10 +7,18 @@ const html = {
 			allowedClasses: {
 				'*': true, // Allow all classes for wiki imports (Fandom WDS, MediaWiki classes)
 			},
-			allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes,
-				'*': [ 'style', 'class', 'id', 'data-hash', 'data-source', 'role' ],
-				'table': [ 'border', 'cellpadding', 'cellspacing' ],
-				'img': [ 'src', 'alt', 'title', 'width', 'height' ],
+			allowedAttributes: {
+				'*': [ 'style', 'class', 'id', 'data-hash', 'data-source', 'role', 'title', 'aria-label', 'aria-hidden' ],
+				'a': [ 'href', 'name', 'target', 'rel' ],
+				'img': [ 'src', 'alt', 'title', 'width', 'height', 'loading' ],
+				'table': [ 'border', 'cellpadding', 'cellspacing', 'summary' ],
+				'td': [ 'colspan', 'rowspan', 'headers' ],
+				'th': [ 'colspan', 'rowspan', 'headers', 'scope' ],
+				'ol': [ 'start', 'type' ],
+				'ul': [ 'type' ],
+				'li': [ 'value' ],
+				'div': [ 'align' ],
+				'p': [ 'align' ],
 			},
 			allowedStyles: {
 				'*': {

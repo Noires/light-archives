@@ -386,38 +386,98 @@ function extractMainContent(html: string): string {
   // Get the main content wrapper
   const content = doc.querySelector('.mw-parser-output') || doc.body;
 
-  // Clean up all attributes to ensure they're strings
+  // Clean up all attributes to ensure they're valid
   const allElements = content.querySelectorAll('*');
-  allElements.forEach(el => {
-    // Check all attributes
-    Array.from(el.attributes).forEach(attr => {
-      const value = attr.value;
-      // If value is not a string or is an empty string, it might cause issues
-      if (typeof value !== 'string') {
-        console.warn(`Invalid ${attr.name} attribute detected on ${el.tagName}, removing:`, value);
-        el.removeAttribute(attr.name);
-      } else if (attr.name === 'style' && value.includes('undefined')) {
-        // Clean up style attributes with undefined values
-        const cleanedStyle = value.split(';')
-          .filter(rule => rule.trim() && !rule.includes('undefined'))
-          .join(';');
-        if (cleanedStyle) {
-          el.setAttribute('style', cleanedStyle);
-        } else {
-          el.removeAttribute('style');
+  let cleanupCount = 0;
+
+  allElements.forEach((el, index) => {
+    // Get a copy of attributes to avoid modifying while iterating
+    const attrs = Array.from(el.attributes);
+
+    attrs.forEach(attr => {
+      try {
+        const name = attr.name;
+        const value = attr.value;
+
+        // Check if attribute name or value is problematic
+        if (!name || typeof name !== 'string') {
+          console.warn(`Invalid attribute name on ${el.tagName}:`, name);
+          el.removeAttribute(name);
+          cleanupCount++;
+          return;
+        }
+
+        // Check if value is not a string or contains problematic content
+        if (value === null || value === undefined || typeof value !== 'string') {
+          console.warn(`Invalid ${name} value on ${el.tagName}:`, typeof value, value);
+          el.removeAttribute(name);
+          cleanupCount++;
+          return;
+        }
+
+        // Clean up style attributes
+        if (name === 'style') {
+          if (value.includes('undefined') || value.includes('null')) {
+            const cleanedStyle = value.split(';')
+              .filter(rule => {
+                const trimmed = rule.trim();
+                return trimmed &&
+                       !trimmed.includes('undefined') &&
+                       !trimmed.includes('null') &&
+                       trimmed.includes(':');
+              })
+              .join(';');
+
+            if (cleanedStyle) {
+              el.setAttribute('style', cleanedStyle);
+            } else {
+              el.removeAttribute('style');
+              cleanupCount++;
+            }
+          }
+        }
+
+        // Remove data attributes that might have complex values
+        if (name.startsWith('data-') && name !== 'data-hash' && name !== 'data-source') {
+          el.removeAttribute(name);
+          cleanupCount++;
+        }
+      } catch (e) {
+        console.error(`Error processing attribute on ${el.tagName}:`, e);
+        try {
+          el.removeAttribute(attr.name);
+          cleanupCount++;
+        } catch (e2) {
+          console.error('Failed to remove problematic attribute:', e2);
         }
       }
     });
   });
 
-  // Return with minimal processing - preserve all structure, styles, and classes
-  const result = content.innerHTML.trim();
+  if (cleanupCount > 0) {
+    console.log(`Cleaned up ${cleanupCount} problematic attributes`);
+  }
+
+  // Get the HTML content
+  let result = content.innerHTML.trim();
 
   if (!result || typeof result !== 'string') {
     console.error('extractMainContent produced invalid output:', typeof result);
     return '';
   }
 
+  // Final cleanup: ensure all quotes are properly escaped
+  // This prevents issues with attribute parsing
+  try {
+    // Parse and re-serialize to normalize the HTML
+    const finalDoc = new DOMParser().parseFromString(result, 'text/html');
+    result = finalDoc.body.innerHTML;
+  } catch (e) {
+    console.error('Error in final HTML normalization:', e);
+    // Continue with original result if normalization fails
+  }
+
+  console.log(`extractMainContent completed, output length: ${result.length}`);
   return result;
 }
 
