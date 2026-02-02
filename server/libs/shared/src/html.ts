@@ -4,9 +4,7 @@ const html = {
 	sanitize(input: string): string {
 		return sanitizeHtml(input, {
 			allowedTags: [ ...sanitizeHtml.defaults.allowedTags, 'img', 'aside', 'section', 'nav', 'summary', 'details' ],
-			allowedClasses: {
-				'*': true, // Allow all classes for wiki imports (Fandom WDS, MediaWiki classes)
-			},
+			// allowedClasses not specified = allow all classes (since 'class' is in allowedAttributes)
 			allowedAttributes: {
 				'*': [ 'style', 'class', 'id', 'data-hash', 'data-source', 'role', 'title', 'aria-label', 'aria-hidden' ],
 				'a': [ 'href', 'name', 'target', 'rel' ],
