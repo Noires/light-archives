@@ -235,6 +235,7 @@ function extractMainContent(html: string): string {
 
 /**
  * Converts Fandom tabber structure to collapsible sections
+ * Uses the existing hide-details pattern that's already supported by the sanitizer
  */
 function convertTabbersToCollapsible(doc: Document): void {
   const tabbers = doc.querySelectorAll('.tabber, .wds-tabber');
@@ -250,32 +251,30 @@ function convertTabbersToCollapsible(doc: Document): void {
     const container = doc.createElement('div');
     container.className = 'imported-tabs';
 
-    // Convert each tab to a collapsible section
+    // Convert each tab to a hide-details section
     tabs.forEach((tab, index) => {
       const labelEl = tab.querySelector('.wds-tabs__tab-label, a');
       const label = labelEl?.textContent?.trim() || `Tab ${index + 1}`;
       const content = contents[index];
 
       if (content) {
-        // Create details/summary structure
-        const details = doc.createElement('details');
-        // Open first tab by default
-        if (index === 0) {
-          details.setAttribute('open', '');
-        }
+        // Create section with hide-details pattern (used by TinyMCE editor)
+        const section = doc.createElement('section');
+        section.className = 'hide-details hide-details_visible';
 
-        const summary = doc.createElement('summary');
-        const strong = doc.createElement('strong');
-        strong.textContent = label;
-        summary.appendChild(strong);
-        details.appendChild(summary);
+        // Title
+        const titleDiv = doc.createElement('div');
+        titleDiv.className = 'hide-details__title';
+        titleDiv.textContent = label;
+        section.appendChild(titleDiv);
 
-        // Move content into details
+        // Content
         const contentDiv = doc.createElement('div');
+        contentDiv.className = 'hide-details__content';
         contentDiv.innerHTML = content.innerHTML;
-        details.appendChild(contentDiv);
+        section.appendChild(contentDiv);
 
-        container.appendChild(details);
+        container.appendChild(section);
       }
     });
 
