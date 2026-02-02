@@ -474,28 +474,78 @@ function extractMainContent(html: string): string {
 
     finalElements.forEach(el => {
       const attrsToRemove: string[] = [];
+      const attrsToFix: Array<{name: string; value: string}> = [];
 
       // Check each attribute
       Array.from(el.attributes).forEach(attr => {
         const name = attr.name;
-        const value = attr.value;
+        let value = attr.value;
 
-        // Remove any attribute that might cause indexOf errors
+        // Log any suspicious attributes for debugging
+        if (typeof value !== 'string') {
+          console.warn(`Non-string attribute value on ${el.tagName}.${name}:`, typeof value, value);
+        }
+
+        // Convert any non-string values to strings
+        if (value === null || value === undefined) {
+          attrsToRemove.push(name);
+          return;
+        }
+
+        // Force convert to string if it's not already
+        if (typeof value !== 'string') {
+          try {
+            value = String(value);
+            console.log(`Converted ${name} to string:`, value);
+          } catch (e) {
+            console.error(`Failed to convert ${name} to string:`, e);
+            attrsToRemove.push(name);
+            return;
+          }
+        }
+
+        // Remove problematic values
         if (
-          typeof value !== 'string' ||
-          value === null ||
-          value === undefined ||
           value === 'undefined' ||
           value === 'null' ||
-          value.trim() === '' ||
-          // Remove data-* attributes except whitelisted ones
+          value === '[object Object]' ||
+          value.includes('[object') ||
+          value.trim() === ''
+        ) {
+          attrsToRemove.push(name);
+          return;
+        }
+
+        // Remove problematic attribute types
+        if (
+          name.startsWith('on') || // Event handlers
           (name.startsWith('data-') && name !== 'data-hash' && name !== 'data-source') ||
-          // Remove event handlers
-          name.startsWith('on') ||
-          // Remove aria attributes that might be problematic
           (name.startsWith('aria-') && name !== 'aria-label' && name !== 'aria-hidden')
         ) {
           attrsToRemove.push(name);
+          return;
+        }
+
+        // Clean up style attributes
+        if (name === 'style' && value) {
+          const cleanedStyle = value.split(';')
+            .filter(rule => {
+              const trimmed = rule.trim();
+              return trimmed &&
+                     !trimmed.includes('undefined') &&
+                     !trimmed.includes('null') &&
+                     !trimmed.includes('[object') &&
+                     trimmed.includes(':');
+            })
+            .join(';');
+
+          if (cleanedStyle !== value) {
+            if (cleanedStyle) {
+              attrsToFix.push({ name, value: cleanedStyle });
+            } else {
+              attrsToRemove.push(name);
+            }
+          }
         }
       });
 
@@ -505,6 +555,15 @@ function extractMainContent(html: string): string {
           el.removeAttribute(name);
         } catch (e) {
           console.error(`Failed to remove attribute ${name}:`, e);
+        }
+      });
+
+      // Fix attributes that need updating
+      attrsToFix.forEach(({ name, value }) => {
+        try {
+          el.setAttribute(name, value);
+        } catch (e) {
+          console.error(`Failed to fix attribute ${name}:`, e);
         }
       });
     });
