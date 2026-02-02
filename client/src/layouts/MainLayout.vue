@@ -461,7 +461,7 @@ $color-dark: #1b1b1b;
 .q-drawer .q-item {
   color: rgba(232, 212, 176, 0.9);
   transition: all 0.3s ease;
-  padding: 14px 20px;
+  padding: 14px 5px;
   margin: 4px 8px;
   border-radius: 6px;
 }
