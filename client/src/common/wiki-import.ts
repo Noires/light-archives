@@ -135,6 +135,10 @@ interface FandomApiResponse {
  * Fetches wiki page data from the Fandom API
  */
 export async function fetchWikiPage(pageName: string, options: { includeCss?: boolean } = {}): Promise<WikiPageData> {
+  if (!pageName || typeof pageName !== 'string') {
+    throw new Error('Ungültiger Seitenname.');
+  }
+
   const apiUrl = new URL(FANDOM_API_BASE);
   apiUrl.searchParams.set('action', 'parse');
   apiUrl.searchParams.set('page', pageName);
@@ -161,6 +165,13 @@ export async function fetchWikiPage(pageName: string, options: { includeCss?: bo
   if (!parse) {
     throw new Error('Ungültige Antwort vom Wiki-Server.');
   }
+
+  console.log('API response received:', {
+    title: parse.title,
+    hasText: !!parse.text?.['*'],
+    sectionsCount: parse.sections?.length || 0,
+    propertiesCount: parse.properties?.length || 0
+  });
 
   // Extract properties from the parsed data
   const properties: Record<string, string> = {};
@@ -657,6 +668,8 @@ export function sanitizeWikiHtml(html: string): string {
  * Handles multiple formats: standard headings, mw-headline, collapsible sections
  */
 function extractSectionContent(html: string, sectionTitle: string): string {
+  if (!sectionTitle) return '';
+
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
   const searchTitle = sectionTitle.toLowerCase();
@@ -665,9 +678,9 @@ function extractSectionContent(html: string, sectionTitle: string): string {
   const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
   for (let i = 0; i < headings.length; i++) {
     const heading = headings[i];
-    const headingText = heading.textContent?.trim().toLowerCase();
+    const headingText = (heading.textContent?.trim() || '').toLowerCase();
 
-    if (headingText === searchTitle || headingText?.includes(searchTitle)) {
+    if (headingText === searchTitle || headingText.includes(searchTitle)) {
       // Find the next heading at the same or higher level
       const startLevel = parseInt(heading.tagName[1]);
       let endElement: Element | null = null;
@@ -1027,6 +1040,8 @@ export function parseWikiContent(pageData: WikiPageData): ParsedCharacterData {
 
   // Parse sections for HTML content fields
   for (const section of pageData.sections) {
+    if (!section || !section.title) continue;
+
     const normalizedTitle = section.title.toLowerCase().trim();
     const mappedField = SECTION_MAPPING[normalizedTitle];
     if (mappedField) {
