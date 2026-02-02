@@ -234,12 +234,66 @@ function extractMainContent(html: string): string {
 }
 
 /**
+ * Converts Fandom tabber structure to collapsible sections
+ */
+function convertTabbersToCollapsible(doc: Document): void {
+  const tabbers = doc.querySelectorAll('.tabber, .wds-tabber');
+
+  tabbers.forEach(tabber => {
+    // Find all tabs and their content
+    const tabs = Array.from(tabber.querySelectorAll('.wds-tabs__tab'));
+    const contents = Array.from(tabber.querySelectorAll('.wds-tab__content'));
+
+    if (tabs.length === 0 || contents.length === 0) return;
+
+    // Create container for converted tabs
+    const container = doc.createElement('div');
+    container.className = 'imported-tabs';
+
+    // Convert each tab to a collapsible section
+    tabs.forEach((tab, index) => {
+      const labelEl = tab.querySelector('.wds-tabs__tab-label, a');
+      const label = labelEl?.textContent?.trim() || `Tab ${index + 1}`;
+      const content = contents[index];
+
+      if (content) {
+        // Create details/summary structure
+        const details = doc.createElement('details');
+        // Open first tab by default
+        if (index === 0) {
+          details.setAttribute('open', '');
+        }
+
+        const summary = doc.createElement('summary');
+        const strong = doc.createElement('strong');
+        strong.textContent = label;
+        summary.appendChild(strong);
+        details.appendChild(summary);
+
+        // Move content into details
+        const contentDiv = doc.createElement('div');
+        contentDiv.innerHTML = content.innerHTML;
+        details.appendChild(contentDiv);
+
+        container.appendChild(details);
+      }
+    });
+
+    // Replace tabber with converted structure
+    tabber.replaceWith(container);
+  });
+}
+
+/**
  * Sanitizes HTML content from the wiki
  * Removes wiki-specific elements and keeps only safe HTML
  */
 export function sanitizeWikiHtml(html: string): string {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
+
+  // Convert tabber structure to collapsible sections
+  convertTabbersToCollapsible(doc);
 
   // Remove unwanted elements
   const removeSelectors = [
