@@ -25,7 +25,7 @@ import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
 import { checkCarrdProfile } from '../../../common/api-checks';
 import { andWhereExists, escapeForLike, isQueryFailedError } from '../../../common/db';
 import { ImagesService } from '../images/images.service';
-import { getTribeByName } from '@app/shared/enums/tribe.enum';
+import { getTribeByName, Tribe } from '@app/shared/enums/tribe.enum';
 import { LodestoneService } from '../lodestone/lodestone.service';
 
 @Injectable()
@@ -383,7 +383,7 @@ export class CharactersService {
 			.where('character.verifiedAt IS NOT NULL')
 			.orderBy('character.name', 'ASC')
 			.innerJoinAndSelect('character.server', 'server')
-			.select([ 'character.name', 'character.profession', 'character.race', 'character.avatar', 'server.name' ]);
+			.select([ 'character.name', 'character.profession', 'character.race', 'character.tribe', 'character.avatar', 'server.name' ]);
 
     if (filter.searchQuery) {
       query.andWhere(`(character.name LIKE :searchQuery OR character.profession LIKE :searchQuery)`,
@@ -392,6 +392,10 @@ export class CharactersService {
 
     if (filter.race) {
       query.andWhere('character.race = :race', { race: filter.race });
+    }
+
+    if (filter.tribe) {
+      query.andWhere('character.tribe = :tribe', { tribe: filter.tribe });
     }
 
     if (filter.server) {
