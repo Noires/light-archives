@@ -14,7 +14,7 @@
             <q-input readonly v-model="character.ticks" label="Eigenheiten" />
     </section>
     <h6>Persönlichkeit</h6>
-    <html-viewer v-model="character.personality" />
+    <html-viewer :content="character.personality" />
   </div>
 </template>
 

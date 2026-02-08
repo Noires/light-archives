@@ -13,9 +13,9 @@
       <q-input readonly v-model="character.specialfeatures" label="Besonderheiten" />
     </section>
     <h6>Erscheinungsbild</h6>
-    <html-viewer v-model="character.appearance" />
+    <html-viewer :content="character.appearance" />
     <h6>Äther</h6>
-    <html-viewer v-model="character.aether" />
+    <html-viewer :content="character.aether" />
   </div>
 </template>
 
