@@ -25,7 +25,7 @@ import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
 import { checkCarrdProfile } from '../../../common/api-checks';
 import { andWhereExists, escapeForLike, isQueryFailedError } from '../../../common/db';
 import { ImagesService } from '../images/images.service';
-import { getTribeByName, Tribe } from '@app/shared/enums/tribe.enum';
+import { getTribeByName } from '@app/shared/enums/tribe.enum';
 import { LodestoneService } from '../lodestone/lodestone.service';
 
 @Injectable()

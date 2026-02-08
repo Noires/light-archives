@@ -860,12 +860,6 @@ export default class PageEventCalendar extends Vue {
   animation: page-event-calendar-select 260ms ease-out;
 }
 
-.page-event-calendar__day-number {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--calendar-ink);
-}
-
 .page-event-calendar__day-icons {
   display: flex;
   gap: 4px;
