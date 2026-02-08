@@ -541,7 +541,7 @@ export default class PageCharacters extends Vue {
 
 .page-characters__card-profession {
   color: rgba(35, 35, 35, 0.65);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .page-characters__empty {

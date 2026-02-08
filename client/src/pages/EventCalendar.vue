@@ -70,9 +70,6 @@
                   :class="{ 'page-event-calendar__day_selected': isSelected(timestamp.date) }"
                   @click="selectDate(timestamp.date)"
                 >
-                  <div class="page-event-calendar__day-number">
-                    {{ timestamp.day }}
-                  </div>
                   <div class="page-event-calendar__day-icons">
                     <div
                       v-for="event in dayIconEvents(timestamp.date)"
@@ -861,12 +858,6 @@ export default class PageEventCalendar extends Vue {
   border-color: transparent;
   box-shadow: 0 10px 22px rgba(22, 98, 149, 0.18);
   animation: page-event-calendar-select 260ms ease-out;
-}
-
-.page-event-calendar__day-number {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--calendar-ink);
 }
 
 .page-event-calendar__day-icons {
