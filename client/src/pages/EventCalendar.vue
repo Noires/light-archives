@@ -70,9 +70,6 @@
                   :class="{ 'page-event-calendar__day_selected': isSelected(timestamp.date) }"
                   @click="selectDate(timestamp.date)"
                 >
-                  <div class="page-event-calendar__day-number">
-                    {{ timestamp.day }}
-                  </div>
                   <div class="page-event-calendar__day-icons">
                     <div
                       v-for="event in dayIconEvents(timestamp.date)"
