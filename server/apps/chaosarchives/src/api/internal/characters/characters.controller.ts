@@ -31,6 +31,16 @@ export class CharactersController {
     private myContentService: MyContentService,
   ) {}
 
+  @Get('registration-status')
+  @UseGuards(OptionalJwtAuthGuard)
+  async getRegistrationStatus(
+    @Query('name') name: string,
+    @Query('lodestoneId', ParseIntPipe) lodestoneId: number,
+    @CurrentUser() user?: UserInfo,
+  ): Promise<CharacterRegistrationStatusResultDto> {
+    return this.charactersService.getRegistrationStatus(name, lodestoneId, user);
+  }
+
   @Get('profile/:server/:name')
   @UseGuards(OptionalJwtAuthGuard)
   async getCharacterProfile(
@@ -117,15 +127,5 @@ export class CharactersController {
     @CurrentUser() user: UserInfo,
   ): Promise<MyContentDto> {
     return this.myContentService.getMyContent(characterId, user);
-  }
-
-  @Get('registration-status')
-  @UseGuards(OptionalJwtAuthGuard)
-  async getRegistrationStatus(
-    @Query('name') name: string,
-    @Query('lodestoneId', ParseIntPipe) lodestoneId: number,
-    @CurrentUser() user?: UserInfo,
-  ): Promise<CharacterRegistrationStatusResultDto> {
-    return this.charactersService.getRegistrationStatus(name, lodestoneId, user);
   }
 }
