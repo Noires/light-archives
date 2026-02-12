@@ -35,7 +35,7 @@ export default class NewsAPI {
 	}
 
 	async getMyArticles(characterId: number): Promise<NewsArticleDto[]> {
-		return this.transport.authGet('my-articles', { characterId });
+		return this.transport.authGet('my-articles', { characterId: characterId.toString() });
 	}
 
 	async getSubmittedArticles(): Promise<NewsArticleDto[]> {

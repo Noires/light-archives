@@ -26,7 +26,7 @@ export default class EventsAPI {
   }
 
   async createEvent(event: EventEditDto, params: { characterId: number }): Promise<EventCreaterResultDto> {
-    return this.transport.authPost<EventCreaterResultDto>('', event, params);
+    return this.transport.authPost<EventCreaterResultDto>('', event, { characterId: params.characterId.toString() });
   }
 
   async updateEvent(id: number, event: EventEditDto): Promise<EventEditDto> {

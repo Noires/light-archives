@@ -55,7 +55,10 @@ export default class CharactersAPI {
     name: string;
     lodestoneId: number;
   }): Promise<CharacterRegistrationStatusResultDto> {
-    return this.transport.tokenGet<CharacterRegistrationStatusResultDto>('registration-status', params);
+    return this.transport.tokenGet<CharacterRegistrationStatusResultDto>('registration-status', {
+      name: params.name,
+      lodestoneId: params.lodestoneId.toString()
+    });
   }
 
   async getMyImages(characterId: number): Promise<ImageDto[]> {

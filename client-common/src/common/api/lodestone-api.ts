@@ -19,6 +19,6 @@ export default class LodestoneAPI {
   }
 
   async getCharacter(lodestoneId: number): Promise<CharacterInfo | null> {
-    return this.transport.get<CharacterInfo | null>('character', { lodestoneId });
+    return this.transport.get<CharacterInfo | null>('character', { lodestoneId: lodestoneId.toString() });
   }
 }

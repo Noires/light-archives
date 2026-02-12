@@ -14,7 +14,7 @@ export default class CommunitiesAPI {
   }
 
   async getMyCommunities(characterId: number): Promise<MyCommunitySummaryDto[]> {
-    return this.transport.authGet('my-communities', { characterId });
+    return this.transport.authGet('my-communities', { characterId: characterId.toString() });
   }
 
   async getCommunities(): Promise<CommunitySummaryDto[]> {

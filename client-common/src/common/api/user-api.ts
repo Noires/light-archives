@@ -18,7 +18,7 @@ export default class UserAPI {
 
   async getVerificationStatus(characterId: number): Promise<VerificationStatusDto> {
     return this.transport.authGet<VerificationStatusDto>('verification-status', {
-      characterId
+      characterId: characterId.toString()
     });
   }
 
