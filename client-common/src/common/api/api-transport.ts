@@ -69,7 +69,7 @@ export default class APITransport {
 
         try {
           const response = await axios.post<TokenResponse>(
-            `${this.prefix}user/refresh`,
+            `${API_PREFIX}user/refresh`,
             { refreshToken: this.refreshToken }
           );
 
