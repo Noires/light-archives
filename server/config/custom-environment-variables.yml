@@ -5,6 +5,7 @@ auth:
   jwtSecret: JWT_SECRET
   jwtExpiry: JWT_EXPIRY
   scopedJwtExpiry: JWT_SCOPED_EXPIRY
+  refreshTokenExpiry: REFRESH_TOKEN_EXPIRY
   discordClientId: AUTH_DISCORD_CLIENT_ID
   discordClientSecret: AUTH_DISCORD_CLIENT_SECRET
   discordCallbackUrl: AUTH_DISCORD_CALLBACK_URL

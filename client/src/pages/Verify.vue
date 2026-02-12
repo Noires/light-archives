@@ -126,9 +126,15 @@ export default class PageVerify extends Vue {
     if (!this.verificationStatus.characterVerified) {
       this.refreshTimerId = setTimeout(() => void this.refresh(), REFRESH_INTERVAL);
     } else {
-      // Update user role
+      // Update user role and refresh verification status
       const session = await this.$api.user.getSession();
       this.$store.commit('setUser', session);
+
+      // Refresh local component state to reflect verified status
+      const characterId = this.$store.getters.characterId;
+      if (characterId) {
+        this.verificationStatus = await this.$api.user.getVerificationStatus(characterId);
+      }
     }
   }
 

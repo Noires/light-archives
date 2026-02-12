@@ -129,6 +129,19 @@ export default store(function (/* { ssrContext } */) {
         Object.assign(character, { name, server, avatar });
       },
 
+      setCharacterVerified(state, characterId: number) {
+        if (!state.user) {
+          return;
+        }
+
+        const character = state.user.characters.get(characterId);
+        if (!character) {
+          return;
+        }
+
+        character.verified = true;
+      },
+
       setEvents(state, events: EventDto[]) {
         state.events = events;
       }
