@@ -93,37 +93,21 @@ export default class CharacterSelector extends Vue.with(Props) {
 </script>
 
 <style lang="scss">
-.q-menu:has(.character-selector__dropdown) {
-  background-color: white !important;
-}
-
 .character-selector__dropdown {
-  background-color: white !important;
+  background: white !important;
 
   .q-item {
     color: rgba(0, 0, 0, 0.87) !important;
+    background: white !important;
 
     &:hover,
     &.q-manual-focusable--focused {
-      background-color: rgba(0, 0, 0, 0.04) !important;
+      background: rgba(0, 0, 0, 0.04) !important;
     }
-  }
-
-  .q-item__label {
-    color: rgba(0, 0, 0, 0.87) !important;
   }
 
   .q-item__label--caption {
     color: rgba(0, 0, 0, 0.6) !important;
-  }
-
-  .q-item-section {
-    color: rgba(0, 0, 0, 0.87) !important;
-  }
-
-  // Override dark theme avatar background
-  .q-avatar {
-    background-color: transparent !important;
   }
 }
 </style>
