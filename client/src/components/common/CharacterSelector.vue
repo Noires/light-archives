@@ -12,6 +12,27 @@
     <template v-slot:prepend>
       <q-icon name="person" />
     </template>
+    <template v-slot:option="scope">
+      <q-item v-bind="scope.itemProps">
+        <q-item-section avatar>
+          <q-avatar size="32px">
+            <img :src="getAvatarUrl(scope.opt.character)" :alt="scope.opt.character.name" />
+          </q-avatar>
+        </q-item-section>
+        <q-item-section>
+          <q-item-label>{{ scope.opt.character.name }}</q-item-label>
+          <q-item-label caption>{{ scope.opt.character.server }}</q-item-label>
+        </q-item-section>
+      </q-item>
+    </template>
+    <template v-slot:selected-item="scope">
+      <div class="row items-center q-gutter-sm">
+        <q-avatar size="24px">
+          <img :src="getAvatarUrl(scope.opt.character)" :alt="scope.opt.character.name" />
+        </q-avatar>
+        <span>{{ scope.opt.character.name }} ({{ scope.opt.character.server }})</span>
+      </div>
+    </template>
   </q-select>
 </template>
 
@@ -22,6 +43,7 @@ import { Options, prop, Vue } from 'vue-class-component';
 interface CharacterOption {
   label: string;
   value: number;
+  character: SessionCharacterDto;
 }
 
 class Props {
@@ -59,7 +81,13 @@ export default class CharacterSelector extends Vue.with(Props) {
       .map(char => ({
         label: `${char.name} (${char.server})`,
         value: char.id,
+        character: char,
       }));
+  }
+
+  getAvatarUrl(character: SessionCharacterDto): string {
+    // Use Lodestone avatar URL if available, otherwise use a default avatar
+    return character.avatar || `https://img.finalfantasyxiv.com/lds/pc/global/images/common/common_defaultthumb.png`;
   }
 }
 </script>
