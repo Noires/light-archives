@@ -55,6 +55,9 @@ services:
       - steward
     environment:
       - NODE_ENV=${NODE_ENV:-production}
+      # Database settings
+      - DB_LOGGING=${DB_LOGGING:-["error","warn"]}
+      # Authentication
       - JWT_SECRET=${JWT_SECRET:-_JWTSECRET_}
       - REFRESH_TOKEN_EXPIRY=${REFRESH_TOKEN_EXPIRY:-30d}
       - AUTH_DISCORD_CLIENT_ID=${AUTH_DISCORD_CLIENT_ID:-_DISCORDCLIENTID_}

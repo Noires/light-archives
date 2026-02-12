@@ -16,7 +16,9 @@ db:
   username: 'mariadb'
   password: 'mariadb'
   synchronize: true
-  logging: true
+  logging:
+    - error
+    - warn
 
 redis:
   host: 'redis'

@@ -24,6 +24,9 @@ db:
   database: DB_NAME
   username: DB_USER
   password: DB_PASSWORD
+  logging:
+    __name: DB_LOGGING
+    __format: json
 
 redis:
   host: REDIS_HOST

@@ -46,6 +46,8 @@ export const dbConfiguration: TypeOrmModuleOptions = {
     Weather,
   ],
   synchronize: dbConfig.synchronize,
+  // Logging can be: true (all), false (none), or array of types: 'query', 'error', 'schema', 'warn', 'info', 'log', 'migration'
+  // Controlled by DB_LOGGING env var (JSON format) or config/default.yml
   logging: dbConfig.logging,
   keepConnectionAlive: true,
 };

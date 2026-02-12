@@ -6,5 +6,5 @@ export interface DbConfigInterface {
 	password: string,
 	database: string,
 	synchronize: boolean,
-	logging: boolean,
+	logging: boolean | ('query' | 'error' | 'schema' | 'warn' | 'info' | 'log' | 'migration')[],
 }
