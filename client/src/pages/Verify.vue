@@ -82,11 +82,21 @@
 import { VerificationStatusDto } from '@app/shared/dto/user/verification-status.dto';
 import { copyToClipboard } from 'quasar';
 import errors from '@app/shared/errors';
-import { Vue } from 'vue-class-component';
+import { Options, Vue } from 'vue-class-component';
 import { notifyError, notifySuccess } from 'src/common/notify';
 
 const REFRESH_INTERVAL = 5000;
 
+@Options({
+  watch: {
+    '$store.getters.characterId': {
+      handler() {
+        // Character changed - refresh verification status
+        void this.onCharacterChange();
+      }
+    }
+  }
+})
 export default class PageVerify extends Vue {
   verificationStatus: VerificationStatusDto = {
     characterVerified: false,
@@ -94,12 +104,16 @@ export default class PageVerify extends Vue {
   };
 
   private refreshTimerId: NodeJS.Timeout|null = null;
+  private isUnmounted = false;
+  private currentCharacterId: number|null = null;
 
   async created() {
+    this.currentCharacterId = this.$store.getters.characterId;
     await this.refresh();
   }
 
   unmounted() {
+    this.isUnmounted = true;
     // We're leaving the page, so stop the refresh timer.
     if (this.refreshTimerId !== null) {
       clearTimeout(this.refreshTimerId);
@@ -107,49 +121,125 @@ export default class PageVerify extends Vue {
     }
   }
 
+  private async onCharacterChange() {
+    const newCharacterId = this.$store.getters.characterId;
+
+    // Don't refresh if character ID is null (all characters deleted)
+    if (!newCharacterId) {
+      return;
+    }
+
+    // Don't refresh if character ID hasn't actually changed
+    if (newCharacterId === this.currentCharacterId) {
+      return;
+    }
+
+    // Update tracked character ID
+    this.currentCharacterId = newCharacterId;
+
+    // Stop the current refresh timer
+    if (this.refreshTimerId !== null) {
+      clearTimeout(this.refreshTimerId);
+      this.refreshTimerId = null;
+    }
+
+    // Reset verification status
+    this.verificationStatus = {
+      characterVerified: false,
+      characterVerificationCode: null,
+    };
+
+    // Fetch new character's verification status
+    await this.refresh();
+  }
+
   private async refresh() {
+    const characterId = this.$store.getters.characterId;
+    if (!characterId) {
+      return;
+    }
+
     try {
-      const characterId = this.$store.getters.characterId;
-      if (!characterId) {
+      const verificationStatus = await this.$api.user.getVerificationStatus(characterId);
+
+      // Check if component was unmounted or character changed during API call
+      if (this.isUnmounted || this.$store.getters.characterId !== characterId) {
         return;
       }
 
-      this.verificationStatus = await this.$api.user.getVerificationStatus(characterId);
+      this.verificationStatus = verificationStatus;
 
       if (!this.verificationStatus.characterVerified) {
         await this.refreshLodestoneStatus();
       }
     } catch (e) {
       console.log(e);
+      // Don't schedule retry if component is unmounted or character changed
+      if (this.isUnmounted || this.$store.getters.characterId !== characterId) {
+        return;
+      }
+    }
+
+    // Check again before scheduling next refresh or updating session
+    if (this.isUnmounted || this.$store.getters.characterId !== characterId) {
+      return;
     }
 
     if (!this.verificationStatus.characterVerified) {
       this.refreshTimerId = setTimeout(() => void this.refresh(), REFRESH_INTERVAL);
     } else {
-      // Update user role and refresh verification status
-      const session = await this.$api.user.getSession();
-      this.$store.commit('setUser', session);
+      // Character was just verified - update session and refresh status
+      try {
+        const session = await this.$api.user.getSession();
 
-      // Refresh local component state to reflect verified status
-      const characterId = this.$store.getters.characterId;
-      if (characterId) {
-        this.verificationStatus = await this.$api.user.getVerificationStatus(characterId);
+        // Check if component was unmounted or character changed during API call
+        if (this.isUnmounted || this.$store.getters.characterId !== characterId) {
+          return;
+        }
+
+        this.$store.commit('setUser', session);
+
+        // Refresh local component state to reflect verified status
+        const updatedStatus = await this.$api.user.getVerificationStatus(characterId);
+
+        // Final check before updating state
+        if (this.isUnmounted || this.$store.getters.characterId !== characterId) {
+          return;
+        }
+
+        this.verificationStatus = updatedStatus;
+      } catch (e) {
+        console.log('Failed to update session after verification:', e);
+        // Continue showing verified state even if session update fails
       }
     }
   }
 
   private async refreshLodestoneStatus() {
-    try {
-      const characterId = this.$store.getters.characterId;
-      const verificationCode = this.verificationStatus.characterVerificationCode;
+    const characterId = this.$store.getters.characterId;
+    const verificationCode = this.verificationStatus.characterVerificationCode;
 
-      if (!characterId || !verificationCode) {
+    if (!characterId || !verificationCode) {
+      return;
+    }
+
+    try {
+      await this.$api.user.verifyCharacter({ id: characterId });
+
+      // Check if component was unmounted or character changed during API call
+      if (this.isUnmounted || this.$store.getters.characterId !== characterId) {
         return;
       }
 
-      await this.$api.user.verifyCharacter({ id: characterId });
       // If we get here, this means character verification succeeded.
-      this.verificationStatus = await this.$api.user.getVerificationStatus(characterId);
+      const updatedStatus = await this.$api.user.getVerificationStatus(characterId);
+
+      // Final check before updating state
+      if (this.isUnmounted || this.$store.getters.characterId !== characterId) {
+        return;
+      }
+
+      this.verificationStatus = updatedStatus;
     } catch (e) {
       if (errors.getStatusCode(e) !== 404) {
         console.log(e);
