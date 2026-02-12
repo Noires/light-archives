@@ -1,5 +1,10 @@
 <template>
   <q-form class="step-image-details">
+    <character-selector
+      v-model="modelValue.characterId"
+      :rules="[$rules.required('Bitte wähle einen Charakter aus.')]"
+      @update:model-value="onModelUpdated"
+    />
     Kategorie:
     <q-option-group
       v-model="modelValue.category"
@@ -67,6 +72,7 @@
 <script lang="ts">
 import { EventSearchResultDto } from '@app/shared/dto/events/event-search-result.dto';
 import { ImageCategory } from '@app/shared/enums/image-category.enum';
+import CharacterSelector from 'components/common/CharacterSelector.vue';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
 import { QForm } from 'quasar';
 import { Options, prop, Vue } from 'vue-class-component';
@@ -81,6 +87,7 @@ class Props {
 @Options({
   name: 'StepImageDetails',
   components: {
+    CharacterSelector,
     HtmlEditor,
   },
   emits: ['update:model-value'],

@@ -129,12 +129,18 @@ export default class UploadDialog extends Vue.with(Props) {
     width: -1,
   };
   detailsModel: ImageDetailsModel = {
+    characterId: null,
 		category: ImageCategory.UNLISTED,
     title: '',
 		description: '',
     credits: '',
     event: null,
   };
+
+  created() {
+    // Initialize with current character
+    this.detailsModel.characterId = this.$store.getters.characterId || null;
+  }
 
   show() {
     (this.$refs.dialog as DialogRef).show();
@@ -241,6 +247,7 @@ export default class UploadDialog extends Vue.with(Props) {
 
 	get canUpload() {
 		return this.step === Step.IMAGE_DETAILS
+      && !!this.detailsModel.characterId
       && (this.detailsModel.category === ImageCategory.UNLISTED || !!this.detailsModel.title)
       && !!this.detailsModel.credits;
 	}
@@ -266,11 +273,11 @@ export default class UploadDialog extends Vue.with(Props) {
   }
 
   private async upload(): Promise<ImageSummaryDto> {
-    const characterId = this.$store.getters.characterId;
     const { convertedFile, filename } = this.fileModel;
+    const { characterId } = this.detailsModel;
 
     if (!characterId || !convertedFile || !filename) {
-      throw new Error();
+      throw new Error('Missing required upload data');
     }
 
     // Converts if necessary, otherwise leaves the original file intact

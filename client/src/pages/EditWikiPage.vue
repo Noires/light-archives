@@ -4,6 +4,13 @@
       <h2>{{ wikiPage.id ? 'Wikibeitrag bearbeiten' : 'Neuen Wikibeitrag erstellen' }}</h2>
       <q-form @submit="onSubmit">
         <template v-if="!preview">
+          <character-selector
+            v-if="!wikiPage.id"
+            v-model="selectedCharacterId"
+            :rules="[
+              $rules.required('Bitte wähle einen Charakter aus.'),
+            ]"
+          />
           <q-input
             v-model="wikiPage.title"
             label="Titel *"
@@ -64,6 +71,7 @@ import { WikiPageDto } from '@app/shared/dto/wiki/wiki-page.dto';
 import { EditPermission } from '@app/shared/enums/edit-permission.enum';
 import { StoryType } from '@app/shared/enums/story-type.enum';
 import { wikify } from '@common/common/wikilinks';
+import CharacterSelector from 'components/common/CharacterSelector.vue';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
 import { displayOptions } from 'src/boot/display';
 import { notifyError, notifySuccess } from 'src/common/notify';
@@ -74,6 +82,7 @@ import { RouteParams } from 'vue-router';
 @Options({
   name: 'PageEditWikiPage',
   components: {
+    CharacterSelector,
     HtmlEditor,
     WikiPageView,
   },
@@ -103,6 +112,8 @@ export default class PageEditWikiPage extends Vue {
 
   confirmRevert = false;
 
+  selectedCharacterId: number | null = null;
+
   private async load(params: RouteParams) {
     const id = parseInt(params.id as string, 10);
     const character = this.$store.getters.character;
@@ -129,6 +140,9 @@ export default class PageEditWikiPage extends Vue {
       this.loaded = true;
     }
 
+    // Initialize selected character (default to current active character)
+    this.selectedCharacterId = this.$store.getters.characterId || null;
+
     this.wikiPage = new WikiPageDto(this.wikiPageBackup);
   }
 
@@ -145,6 +159,10 @@ export default class PageEditWikiPage extends Vue {
 
     try {
       if (!this.wikiPage.id) {
+        if (!this.selectedCharacterId) {
+          throw new Error('No character selected');
+        }
+        this.wikiPage.characterId = this.selectedCharacterId;
         const { id } = await this.$api.wiki.createWikiPage(this.wikiPage);
         this.wikiPage.id = id;
         void this.$router.replace(`/edit-wiki-page/${id}`);

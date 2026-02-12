@@ -44,8 +44,8 @@ export default class WikiPageView extends Vue.with(Props) {
   }
 
   get authorLink(): string {
-    const server = this.wikiPage.authorServer;
-    const character = this.wikiPage.author.replace(/ /g, '_');
+    const server = this.wikiPage.authorServer || '';
+    const character = this.wikiPage.author?.replace(/ /g, '_') || '';
     return `/${server}/${character}`;
   }
 }

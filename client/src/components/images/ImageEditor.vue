@@ -41,6 +41,7 @@ export default class ImageEditor extends Vue.with(Props) {
 
 	created() {
 		this.imageDetails = {
+			characterId: null, // Not used for editing existing images
 			title: this.modelValue.title,
 			description: this.modelValue.description,
 			category: this.modelValue.category,

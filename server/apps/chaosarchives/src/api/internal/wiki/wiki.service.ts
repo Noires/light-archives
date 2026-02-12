@@ -8,6 +8,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { InjectRepository } from '@nestjs/typeorm';
 import crypto from 'crypto';
 import { Connection, IsNull, Not, Repository } from 'typeorm';
+import { getVerifiedCharacter } from '../../../common/api-checks';
 
 @Injectable()
 export class WikiService {
@@ -60,23 +61,35 @@ export class WikiService {
 
   async createWikiPage(wikiPageDto: WikiPageDto & { id: undefined }, user: UserInfo): Promise<IdWrapper> {
     const storyEntity = await this.connection.transaction(async (em) => {
-      const character = await em.getRepository(Character).findOne({
-        where: {
-          name: wikiPageDto.author,
-          server: {
-            name: wikiPageDto.authorServer,
-          },
-          user: {
-            id: user.id,
-          },
-          verifiedAt: Not(IsNull()),
-        },
-        relations: ['server'],
-        select: ['id'],
-      });
+      let character: Character;
 
-      if (!character) {
-        throw new BadRequestException(`Author character "${wikiPageDto.author}" not found`);
+      if (wikiPageDto.characterId) {
+        // New approach: use character ID
+        character = await getVerifiedCharacter(em, wikiPageDto.characterId, user);
+      } else if (wikiPageDto.author && wikiPageDto.authorServer) {
+        // Legacy approach: use name + server
+        const foundCharacter = await em.getRepository(Character).findOne({
+          where: {
+            name: wikiPageDto.author,
+            server: {
+              name: wikiPageDto.authorServer,
+            },
+            user: {
+              id: user.id,
+            },
+            verifiedAt: Not(IsNull()),
+          },
+          relations: ['server'],
+          select: ['id'],
+        });
+
+        if (!foundCharacter) {
+          throw new BadRequestException(`Author character "${wikiPageDto.author}" not found or not verified`);
+        }
+
+        character = foundCharacter;
+      } else {
+        throw new BadRequestException('Either characterId or author/authorServer must be provided');
       }
 
       const wikiPageRepo = em.getRepository(WikiPage);
