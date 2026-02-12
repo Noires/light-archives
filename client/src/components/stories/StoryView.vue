@@ -70,8 +70,8 @@ export default class StoryView extends Vue.with(Props) {
   }
 
   get authorLink(): string {
-    const server = this.story.authorServer;
-    const character = this.story.author.replace(/ /g, '_');
+    const server = this.story.authorServer || '';
+    const character = this.story.author?.replace(/ /g, '_') || '';
     return `/${server}/${character}`;
   }
 }

@@ -1,4 +1,5 @@
 import { NoticeboardLocation } from "@app/shared/enums/noticeboard-location.enum";
+import { Type } from "class-transformer";
 import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class NoticeboardItemDto {
@@ -10,11 +11,18 @@ export class NoticeboardItemDto {
 	@IsOptional()
 	mine: boolean;
 
-	@IsString()
-	author: string;
+	@Type(() => Number)
+	@IsNumber()
+	@IsOptional()
+	characterId?: number;
 
 	@IsString()
-	authorServer: string;
+	@IsOptional()
+	author?: string;
+
+	@IsString()
+	@IsOptional()
+	authorServer?: string;
 
 	@IsNumber()
 	@IsOptional()

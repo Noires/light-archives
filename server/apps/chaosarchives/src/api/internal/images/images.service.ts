@@ -30,6 +30,7 @@ import {
   ImageSanitizeResult,
   sanitizeImage
 } from '../../../common/image-lib';
+import { getVerifiedCharacter } from '../../../common/api-checks';
 import { StorageService } from './storage.service';
 
 @Injectable()
@@ -199,21 +200,7 @@ export class ImagesService {
     try {
       return await this.connection.transaction(async (em) => {
         // Validate character ID
-        const character = await em.getRepository(Character).findOne({
-          where: {
-            id: request.characterId,
-            verifiedAt: Not(IsNull()),
-            user: {
-              id: user.id,
-            },
-          },
-          select: ['id', 'name'],
-          relations: [ 'server' ],
-        });
-
-        if (!character) {
-          throw new BadRequestException('Invalid character ID');
-        }
+        const character = await getVerifiedCharacter(em, request.characterId, user);
 
         // Replace characters forbidden in Windows and Unix filenames and URLs
         const filename = origFilename.replace(/[<>:"/\\|?*#]/g, '_');

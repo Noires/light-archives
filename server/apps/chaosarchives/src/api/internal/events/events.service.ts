@@ -24,6 +24,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime, Duration } from 'luxon';
 import { firstValueFrom } from 'rxjs';
 import { Connection, EntityManager, In, IsNull, MoreThanOrEqual, Not, Repository } from 'typeorm';
+import { getVerifiedCharacter } from '../../../common/api-checks';
 import { Contains } from '../../../common/db';
 import utils from '../../../common/utils';
 import { ImagesService } from '../images/images.service';
@@ -71,20 +72,7 @@ export class EventsService {
 
   async createEvent(eventDto: EventEditDto, characterId: number, user: UserInfo): Promise<EventCreaterResultDto> {
     const eventEntity = await this.connection.transaction(async (em) => {
-      const character = await em.getRepository(Character).findOne({
-        where: {
-          id: characterId,
-          user: {
-            id: user.id,
-          },
-          verifiedAt: Not(IsNull()),
-        },
-        relations: ['user'],
-      });
-
-      if (!character) {
-        throw new BadRequestException('Invalid character ID');
-      }
+      const character = await getVerifiedCharacter(em, characterId, user);
 
       const event = new Event();
       event.locations = [];

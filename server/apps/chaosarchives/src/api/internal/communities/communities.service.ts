@@ -14,8 +14,8 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import { InjectRepository } from '@nestjs/typeorm';
 import crypto from 'crypto';
 import { DateTime } from 'luxon';
-import { Connection, EntityManager, FindOneOptions, Repository } from 'typeorm';
-import { assertUserCharacterId, checkCarrdProfile } from '../../../common/api-checks';
+import { Connection, EntityManager, FindOneOptions, IsNull, Not, Repository } from 'typeorm';
+import { assertUserCharacterId, checkCarrdProfile, getVerifiedCharacter } from '../../../common/api-checks';
 import { ImagesService } from '../images/images.service';
 
 @Injectable()
@@ -198,21 +198,30 @@ export class CommunitiesService {
 
   async createCommunity(communityDto: CommunityDto, user: UserInfo): Promise<IdWrapper> {
     return this.connection.transaction(async (em) => {
-      const character = await em.getRepository(Character).findOne({
-        where: {
-          name: communityDto.owner,
-          server: {
-            name: communityDto.ownerServer,
-          },
-          user: {
-            id: user.id,
-          },
-        },
-        relations: ['server', 'user'],
-      });
+      let character: Character;
 
-      if (!character) {
-        throw new BadRequestException('Invalid owner character');
+      if (communityDto.characterId) {
+        // New approach: use character ID
+        character = await getVerifiedCharacter(em, communityDto.characterId, user);
+      } else if (communityDto.owner && communityDto.ownerServer) {
+        // Legacy approach: use name + server WITH VERIFICATION
+        const foundCharacter = await em.getRepository(Character).findOne({
+          where: {
+            name: communityDto.owner,
+            server: { name: communityDto.ownerServer },
+            user: { id: user.id },
+            verifiedAt: Not(IsNull()),
+          },
+          relations: ['server', 'user'],
+        });
+
+        if (!foundCharacter) {
+          throw new BadRequestException('Invalid owner character or character not verified');
+        }
+
+        character = foundCharacter;
+      } else {
+        throw new BadRequestException('Either characterId or owner/ownerServer must be provided');
       }
 
       const community = new Community();

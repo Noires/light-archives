@@ -10,6 +10,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { decode } from 'html-entities';
 import { Connection, In, IsNull, Not, Repository } from 'typeorm';
+import { getVerifiedCharacter } from '../../../common/api-checks';
 import { escapeForLike } from '../../../common/db';
 
 @Injectable()
@@ -62,23 +63,31 @@ export class StoriesService {
 
   async createStory(storyDto: StoryDto & { id: undefined }, user: UserInfo): Promise<IdWrapper> {
     const storyEntity = await this.connection.transaction(async (em) => {
-      const character = await em.getRepository(Character).findOne({
-        where: {
-          name: storyDto.author,
-          server: {
-            name: storyDto.authorServer,
-          },
-          user: {
-            id: user.id,
-          },
-          verifiedAt: Not(IsNull()),
-        },
-        relations: ['server'],
-        select: ['id'],
-      });
+      let character: Character;
 
-      if (!character) {
-        throw new BadRequestException(`Author character "${storyDto.author}" not found`);
+      if (storyDto.characterId) {
+        // New approach: use character ID
+        character = await getVerifiedCharacter(em, storyDto.characterId, user);
+      } else if (storyDto.author && storyDto.authorServer) {
+        // Legacy approach: use name + server
+        const foundCharacter = await em.getRepository(Character).findOne({
+          where: {
+            name: storyDto.author,
+            server: { name: storyDto.authorServer },
+            user: { id: user.id },
+            verifiedAt: Not(IsNull()),
+          },
+          relations: ['server'],
+          select: ['id'],
+        });
+
+        if (!foundCharacter) {
+          throw new BadRequestException(`Author character "${storyDto.author}" not found or not verified`);
+        }
+
+        character = foundCharacter;
+      } else {
+        throw new BadRequestException('Either characterId or author/authorServer must be provided');
       }
 
       const storyRepo = em.getRepository(Story);

@@ -11,8 +11,8 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import crypto from 'crypto';
 import { DateTime } from 'luxon';
-import { Connection, EntityManager, Repository } from 'typeorm';
-import { checkCarrdProfile } from '../../../common/api-checks';
+import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
+import { checkCarrdProfile, getVerifiedCharacter } from '../../../common/api-checks';
 import { Contains } from '../../../common/db';
 import { ImagesService } from '../images/images.service';
 
@@ -156,21 +156,30 @@ export class VenuesService {
 
 	async createVenue(venueDto: VenueDto, user: UserInfo): Promise<IdWrapper> {
 		return this.connection.transaction(async em => {
-			const character = await em.getRepository(Character).findOne({
-				where: {
-					name: venueDto.owner,
-					server: {
-						name: venueDto.ownerServer,
-					},
-					user: {
-						id: user.id
-					},
-				},
-				relations: [ 'server', 'user' ]
-			});
+			let character: Character;
 
-			if (!character) {
-				throw new BadRequestException('Invalid owner character');
+			if (venueDto.characterId) {
+				// New approach: use character ID
+				character = await getVerifiedCharacter(em, venueDto.characterId, user);
+			} else if (venueDto.owner && venueDto.ownerServer) {
+				// Legacy approach: use name + server WITH VERIFICATION
+				const foundCharacter = await em.getRepository(Character).findOne({
+					where: {
+						name: venueDto.owner,
+						server: { name: venueDto.ownerServer },
+						user: { id: user.id },
+						verifiedAt: Not(IsNull()),
+					},
+					relations: ['server', 'user'],
+				});
+
+				if (!foundCharacter) {
+					throw new BadRequestException('Invalid owner character or character not verified');
+				}
+
+				character = foundCharacter;
+			} else {
+				throw new BadRequestException('Either characterId or owner/ownerServer must be provided');
 			}
 
 			const venue = new Venue();

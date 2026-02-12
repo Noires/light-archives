@@ -119,8 +119,8 @@ export default class VenueProfile extends Vue.with(Props) {
   }
 
   get ownerLink(): string {
-    const server = this.venue.ownerServer;
-    const character = this.venue.owner.replace(/ /g, '_');
+    const server = this.venue.ownerServer || '';
+    const character = this.venue.owner?.replace(/ /g, '_') || '';
     return `/${server}/${character}`;
   }
 

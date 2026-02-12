@@ -4,6 +4,13 @@
       <h2>{{ story.id ? 'Geschichte bearbeiten' : 'Neue Geschichte erstellen' }}</h2>
       <q-form @submit="onSubmit">
         <template v-if="!preview">
+          <character-selector
+            v-if="!story.id"
+            v-model="selectedCharacterId"
+            :rules="[
+              $rules.required('Bitte wähle einen Charakter aus.'),
+            ]"
+          />
           <q-input
             v-model="story.title"
             label="Titel *"
@@ -85,6 +92,7 @@ import Multiselect from '@vueform/multiselect'
 import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import { StoryType } from '@app/shared/enums/story-type.enum';
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
+import CharacterSelector from 'components/common/CharacterSelector.vue';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
 import StoryView from 'components/stories/StoryView.vue';
 import { displayOptions } from 'src/boot/display';
@@ -94,6 +102,7 @@ import { RouteParams } from 'vue-router';
 
 @Options({
   components: {
+    CharacterSelector,
     HtmlEditor,
     StoryView,
     Multiselect
@@ -125,6 +134,8 @@ export default class PageEditStory extends Vue {
 
   confirmRevert = false;
 
+  selectedCharacterId: number | null = null;
+
   private async load(params: RouteParams) {
     const contentNotes = await this.$api.contentNotes.getContentNotes();
     this.contentNoteOptions = contentNotes.map((contentNote) => ({
@@ -147,8 +158,6 @@ export default class PageEditStory extends Vue {
     } else {
       this.storyBackup = new StoryDto({
         mine: true,
-        author: character.name,
-        authorServer: character.server,
         createdAt: Date.now(),
         type: StoryType.PUBLISHED_WORK,
         title: '',
@@ -158,6 +167,9 @@ export default class PageEditStory extends Vue {
       });
       this.loaded = true;
     }
+
+    // Initialize selected character (default to current active character)
+    this.selectedCharacterId = this.$store.getters.characterId || null;
 
     this.story = new StoryDto(this.storyBackup);
   }
@@ -174,6 +186,10 @@ export default class PageEditStory extends Vue {
     this.saving = true;
     try {
       if (!this.story.id) {
+        if (!this.selectedCharacterId) {
+          throw new Error('No character selected');
+        }
+        this.story.characterId = this.selectedCharacterId;
         const { id } = await this.$api.stories.createStory(this.story);
         this.story.id = id;
         void this.$router.replace(`/edit-story/${id}`);

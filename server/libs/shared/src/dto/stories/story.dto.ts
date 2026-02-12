@@ -1,4 +1,5 @@
 import { StoryType } from "@app/shared/enums/story-type.enum";
+import { Type } from "class-transformer";
 import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
 import { ContentNoteDto } from "../content-notes/content-note.dto";
 
@@ -11,11 +12,18 @@ export class StoryDto {
 	@IsOptional()
 	mine: boolean;
 
-	@IsString()
-	author: string;
+	@Type(() => Number)
+	@IsNumber()
+	@IsOptional()
+	characterId?: number;
 
 	@IsString()
-	authorServer: string;
+	@IsOptional()
+	author?: string;
+
+	@IsString()
+	@IsOptional()
+	authorServer?: string;
 
 	@IsNumber()
 	@IsOptional()

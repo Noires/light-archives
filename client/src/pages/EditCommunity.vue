@@ -5,6 +5,13 @@
       <q-form ref="form" @submit="onSubmit">
         <template v-if="!preview">
           <section class="page-edit-community__form-controls">
+            <character-selector
+              v-if="!communityId"
+              v-model="selectedCharacterId"
+              :rules="[
+                $rules.required('Bitte wähle einen Charakter aus.'),
+              ]"
+            />
             <q-input
               v-model="community.name"
               label="Name *"
@@ -130,6 +137,7 @@ import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
 import CarrdEditSection from 'src/components/common/CarrdEditSection.vue';
+import CharacterSelector from 'src/components/common/CharacterSelector.vue';
 import CommunityProfile from 'src/components/communities/CommunityProfile.vue';
 import { useRouter } from 'src/router';
 import { useStore } from 'src/store';
@@ -168,6 +176,7 @@ async function load(params: RouteParams): Promise<CommunityDto|null> {
     HtmlEditor,
     BannerEditSection,
     CarrdEditSection,
+    CharacterSelector,
   },
 	async beforeRouteEnter(to, _, next) {
 		const content = await load(to.params);
@@ -195,6 +204,8 @@ export default class PageEditCommunity extends Vue {
 
   confirmRevert = false;
 
+  selectedCharacterId: number | null = null;
+
   setContent(community: CommunityDto|null) {
 		if (community) {
 			this.communityId = community.id;
@@ -209,8 +220,6 @@ export default class PageEditCommunity extends Vue {
         canManageMembers: true,
         foundedAt: null,
         name: '',
-        owner: this.$store.getters.character!.name,
-        ownerServer: this.$store.getters.character!.server,
         description: '',
         website: '',
         discord: '',
@@ -222,6 +231,9 @@ export default class PageEditCommunity extends Vue {
         tags: []
       });
     }
+
+    // Initialize selected character (default to current active character)
+    this.selectedCharacterId = this.$store.getters.characterId || null;
 
     this.loaded = true;
     this.community = new CommunityDto(this.communityBackup);
@@ -252,6 +264,10 @@ export default class PageEditCommunity extends Vue {
 
     try {
       if (!this.communityId) {
+        if (!this.selectedCharacterId) {
+          throw new Error('No character selected');
+        }
+        this.community.characterId = this.selectedCharacterId;
         const result = await this.$api.communities.createCommunity(this.community);
         this.community.id = result.id;
         this.communityId = result.id;

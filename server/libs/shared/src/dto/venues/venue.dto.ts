@@ -13,11 +13,18 @@ export class VenueDto {
   @IsBoolean()
   mine: boolean;
 
-	@IsString()
-	owner: string;
+	@Type(() => Number)
+	@IsNumber()
+	@IsOptional()
+	characterId?: number;
 
 	@IsString()
-	ownerServer: string;
+	@IsOptional()
+	owner?: string;
+
+	@IsString()
+	@IsOptional()
+	ownerServer?: string;
 
   @IsString()
   @IsOptional()

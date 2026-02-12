@@ -4,6 +4,13 @@
       <h2>{{ noticeboardItem.id ? 'Aushang bearbeiten' : 'Neuen Aushang erstellen' }}</h2>
       <q-form @submit="onSubmit">
         <template v-if="!preview">
+          <character-selector
+            v-if="!noticeboardItem.id"
+            v-model="selectedCharacterId"
+            :rules="[
+              $rules.required('Bitte wähle einen Charakter aus.'),
+            ]"
+          />
           <q-input
             v-model="noticeboardItem.title"
             label="Titel *"
@@ -68,6 +75,7 @@
 <script lang="ts">
 import { NoticeboardItemDto } from '@app/shared/dto/noticeboard/noticeboard-item.dto';
 import { NoticeboardLocation } from '@app/shared/enums/noticeboard-location.enum';
+import CharacterSelector from 'components/common/CharacterSelector.vue';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
 import NoticeboardItemView from 'components/noticeboard/NoticeboardItemView.vue';
 import { displayOptions } from 'src/boot/display';
@@ -78,6 +86,7 @@ import { RouteParams } from 'vue-router';
 @Options({
   name: 'PageEditNoticeboardItem',
   components: {
+    CharacterSelector,
     HtmlEditor,
     NoticeboardItemView,
   },
@@ -108,6 +117,8 @@ export default class PageEditNoticeboardItem extends Vue {
 
   confirmRevert = false;
 
+  selectedCharacterId: number | null = null;
+
   private async load(params: RouteParams) {
     const id = parseInt(params.id as string, 10);
     const character = this.$store.getters.character;
@@ -124,8 +135,6 @@ export default class PageEditNoticeboardItem extends Vue {
     } else {
       this.noticeboardItemBackup = new NoticeboardItemDto({
         mine: true,
-        author: character.name,
-        authorServer: character.server,
         createdAt: Date.now(),
         location: NoticeboardLocation.MULTIPLE_LOCATIONS,
         title: '',
@@ -133,6 +142,9 @@ export default class PageEditNoticeboardItem extends Vue {
       });
       this.loaded = true;
     }
+
+    // Initialize selected character (default to current active character)
+    this.selectedCharacterId = this.$store.getters.characterId || null;
 
     this.noticeboardItem = new NoticeboardItemDto(this.noticeboardItemBackup);
   }
@@ -150,6 +162,10 @@ export default class PageEditNoticeboardItem extends Vue {
 
     try {
       if (!this.noticeboardItem.id) {
+        if (!this.selectedCharacterId) {
+          throw new Error('No character selected');
+        }
+        this.noticeboardItem.characterId = this.selectedCharacterId;
         const { id } = await this.$api.noticeboard.createNoticeboardItem(this.noticeboardItem, this.postOnDiscord);
         this.noticeboardItem.id = id;
         void this.$router.replace(`/edit-noticeboard-item/${id}`);

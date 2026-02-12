@@ -5,6 +5,13 @@
       <q-form ref="form" @submit="onSubmit">
         <template v-if="!preview">
           <section class="page-edit-event__form-controls">
+            <character-selector
+              v-if="!eventId"
+              v-model="selectedCharacterId"
+              :rules="[
+                $rules.required('Bitte wähle einen Charakter aus.'),
+              ]"
+            />
             <q-input
               v-model="event.title"
               label="Titel *"
@@ -214,6 +221,7 @@ import { DateTime } from 'luxon';
 import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
+import CharacterSelector from 'src/components/common/CharacterSelector.vue';
 import EventIconEditSection from 'src/components/event/EventIconEditSection.vue';
 import WorldSelect from 'src/components/common/WorldSelect.vue';
 import EventView from 'src/components/event/EventView.vue';
@@ -263,6 +271,7 @@ async function load(params: RouteParams): Promise<{
     QDateTimePicker,
     HtmlEditor,
     BannerEditSection,
+    CharacterSelector,
     EventIconEditSection,
     EventView,
     EventAnnouncementEditor,
@@ -328,6 +337,8 @@ export default class PageEditEvent extends Vue {
 
   confirmRevert = false;
 
+  selectedCharacterId: number | null = null;
+
   setContent(content: { event: EventEditDto | null; eventId: number | null; contentNotes?: { name: string }[] }) {
     if (content.contentNotes) {
       this.contentNoteOptions = content.contentNotes.map((contentNote) => ({
@@ -373,6 +384,9 @@ export default class PageEditEvent extends Vue {
         void this.seedVenueOption(index, location.venueId);
       }
     });
+
+    // Initialize selected character (default to current active character)
+    this.selectedCharacterId = this.$store.getters.characterId || null;
 
     this.loaded = true;
     this.event = new EventEditDto(this.eventBackup);
@@ -622,8 +636,10 @@ export default class PageEditEvent extends Vue {
       this.applyAnnouncementDefaults();
 
       if (!this.eventId) {
-        const characterId = this.$store.getters.characterId!;
-        const result = await this.$api.events.createEvent(this.event, { characterId });
+        if (!this.selectedCharacterId) {
+          throw new Error('No character selected');
+        }
+        const result = await this.$api.events.createEvent(this.event, this.selectedCharacterId);
         this.event = new EventEditDto(result);
         this.eventId = result.id;
         void this.$router.replace(`/edit-event/${result.id}`);

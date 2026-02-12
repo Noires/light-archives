@@ -5,6 +5,13 @@
       <q-form ref="form" @submit="onSubmit">
         <template v-if="!preview">
           <section class="page-edit-venue__form-controls">
+            <character-selector
+              v-if="!venueId"
+              v-model="selectedCharacterId"
+              :rules="[
+                $rules.required('Bitte wähle einen Charakter aus.'),
+              ]"
+            />
             <q-input
               v-model="venue.name"
               label="Name *"
@@ -222,6 +229,7 @@ import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
 import CarrdEditSection from 'src/components/common/CarrdEditSection.vue';
+import CharacterSelector from 'src/components/common/CharacterSelector.vue';
 import WorldSelect from 'src/components/common/WorldSelect.vue';
 import VenueProfile from 'src/components/venues/VenueProfile.vue';
 import { useRouter } from 'src/router';
@@ -261,6 +269,7 @@ async function load(params: RouteParams): Promise<{ venue: VenueDto | null; cont
     HtmlEditor,
     BannerEditSection,
     CarrdEditSection,
+    CharacterSelector,
     WorldSelect,
     Multiselect,
   },
@@ -293,6 +302,8 @@ export default class PageEditVenue extends Vue {
 
   confirmRevert = false;
 
+  selectedCharacterId: number | null = null;
+
   setContent(content: { venue: VenueDto | null; contentNotes?: { name: string }[] }) {
     if (content.contentNotes) {
       this.contentNoteOptions = content.contentNotes.map((contentNote) => ({
@@ -317,8 +328,6 @@ export default class PageEditVenue extends Vue {
         foundedAt: null,
         name: '',
         server: this.$store.getters.character!.server,
-        owner: this.$store.getters.character!.name,
-        ownerServer: this.$store.getters.character!.server,
         description: '',
         website: '',
         purpose: '',
@@ -340,6 +349,9 @@ export default class PageEditVenue extends Vue {
         eventContentNotes: [],
       });
     }
+
+    // Initialize selected character (default to current active character)
+    this.selectedCharacterId = this.$store.getters.characterId || null;
 
     this.loaded = true;
     this.venue = new VenueDto(this.venueBackup);
@@ -398,6 +410,10 @@ export default class PageEditVenue extends Vue {
 
     try {
       if (!this.venueId) {
+        if (!this.selectedCharacterId) {
+          throw new Error('No character selected');
+        }
+        this.venue.characterId = this.selectedCharacterId;
         const result = await this.$api.venues.createVenue(this.venue);
         this.venue.id = result.id;
         this.venueId = result.id;

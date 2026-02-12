@@ -10,6 +10,7 @@ import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, IsNull, Not, Repository } from 'typeorm';
 import { firstValueFrom } from 'rxjs';
+import { getVerifiedCharacter } from '../../../common/api-checks';
 
 @Injectable()
 export class NoticeboardService {
@@ -49,23 +50,31 @@ export class NoticeboardService {
 
   async createNoticeboardItem(noticeboardItemDto: NoticeboardItemDto & { id: undefined }, postOnDiscord: boolean, user: UserInfo): Promise<IdWrapper> {
     const noticeboardItemEntity = await this.connection.transaction(async (em) => {
-      const character = await em.getRepository(Character).findOne({
-        where: {
-          name: noticeboardItemDto.author,
-          server: {
-            name: noticeboardItemDto.authorServer,
-          },
-          user: {
-            id: user.id,
-          },
-          verifiedAt: Not(IsNull()),
-        },
-        relations: ['server'],
-        select: ['id'],
-      });
+      let character: Character;
 
-      if (!character) {
-        throw new BadRequestException(`Author character "${noticeboardItemDto.author}" not found`);
+      if (noticeboardItemDto.characterId) {
+        // New approach: use character ID
+        character = await getVerifiedCharacter(em, noticeboardItemDto.characterId, user);
+      } else if (noticeboardItemDto.author && noticeboardItemDto.authorServer) {
+        // Legacy approach: use name + server
+        const foundCharacter = await em.getRepository(Character).findOne({
+          where: {
+            name: noticeboardItemDto.author,
+            server: { name: noticeboardItemDto.authorServer },
+            user: { id: user.id },
+            verifiedAt: Not(IsNull()),
+          },
+          relations: ['server'],
+          select: ['id'],
+        });
+
+        if (!foundCharacter) {
+          throw new BadRequestException(`Author character "${noticeboardItemDto.author}" not found or not verified`);
+        }
+
+        character = foundCharacter;
+      } else {
+        throw new BadRequestException('Either characterId or author/authorServer must be provided');
       }
 
       const noticeboardItemRepo = em.getRepository(NoticeboardItem);

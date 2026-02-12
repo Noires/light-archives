@@ -12,6 +12,7 @@ import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
 import { EventDto } from '@app/shared/dto/events/event.dto';
 import { Role } from '@app/shared/enums/role.enum';
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -76,9 +77,16 @@ export class EventsController {
   @RoleRequired(Role.USER)
   async createEvent(
     @Body() event: EventEditDto,
-    @Query('characterId', ParseIntPipe) characterId: number,
     @CurrentUser() user: UserInfo,
+    @Query('characterId') queryCharacterId?: string,
   ): Promise<EventCreaterResultDto> {
+    // Support both DTO and query param during transition
+    const characterId = event.characterId ?? (queryCharacterId ? parseInt(queryCharacterId, 10) : undefined);
+
+    if (!characterId) {
+      throw new BadRequestException('characterId is required (in body or query)');
+    }
+
     return this.eventsService.createEvent(event, characterId, user);
   }
 

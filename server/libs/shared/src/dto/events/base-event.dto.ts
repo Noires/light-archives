@@ -14,6 +14,11 @@ export abstract class BaseEventDto {
 	@IsOptional()
 	mine: boolean;
 
+	@Type(() => Number)
+	@IsNumber()
+	@IsOptional()
+	characterId?: number;
+
 	@IsBoolean()
 	@IsOptional()
 	recurring: boolean;
