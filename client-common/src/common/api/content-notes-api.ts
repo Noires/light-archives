@@ -36,5 +36,6 @@ export const ContentNoteTexts: {[key:string]: string} = {
     'MISOGYNY': 'Misogynie',
     'MISANDRY': 'Misandrie',
     'HOMOPHOBE': 'Homophobie',
-    'TRANSPHOBIA': 'Transphobie'
+    'TRANSPHOBIA': 'Transphobie',
+    'RACISM': 'Rassismus'
   } as {[key:string]: string}
