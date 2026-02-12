@@ -34,7 +34,7 @@
             <q-input @update:model-value="onChange" :model-value="character.name" label="Name" readonly />
             <q-input @update:model-value="onChange" :model-value="$display.races[character.race]" label="Volk"
               readonly />
-            <q-input @update:model-value="onChange" :model-value="$display.tribes[character.tribe]" label="Stamm"
+            <q-input @update:model-value="onChange" :model-value="$display.tribes[character.tribe]" label="Untervolk"
               readonly />
           </section>
           <section v-if="character.active">
@@ -215,8 +215,8 @@ export default class PageEditProfile extends Vue {
         },
       })
       .onOk((characterData: CharacterRefreshResultDto) => {
-        const { name, race, server, avatar } = characterData;
-        Object.assign(this.character, { name, race, server, avatar });
+        const { name, race, tribe, server, avatar } = characterData;
+        Object.assign(this.character, { name, race, tribe, server, avatar });
       });
   }
 
