@@ -83,20 +83,12 @@ import { VerificationStatusDto } from '@app/shared/dto/user/verification-status.
 import { copyToClipboard } from 'quasar';
 import errors from '@app/shared/errors';
 import { Options, Vue } from 'vue-class-component';
+import { Watch } from 'vue-property-decorator';
 import { notifyError, notifySuccess } from 'src/common/notify';
 
 const REFRESH_INTERVAL = 5000;
 
-@Options({
-  watch: {
-    '$store.getters.characterId': {
-      handler() {
-        // Character changed - refresh verification status
-        void this.onCharacterChange();
-      }
-    }
-  }
-})
+@Options({})
 export default class PageVerify extends Vue {
   verificationStatus: VerificationStatusDto = {
     characterVerified: false,
@@ -121,6 +113,7 @@ export default class PageVerify extends Vue {
     }
   }
 
+  @Watch('$store.getters.characterId')
   private async onCharacterChange() {
     const newCharacterId = this.$store.getters.characterId;
 
