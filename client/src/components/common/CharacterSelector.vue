@@ -71,9 +71,7 @@ class Props {
 export default class CharacterSelector extends Vue.with(Props) {
 
   get characters(): SessionCharacterDto[] {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const user = (this.$store.getters as any).user as { characters?: SessionCharacterDto[] } | undefined;
-    return user?.characters || [];
+    return this.$store.getters.characters;
   }
 
   get characterOptions(): CharacterOption[] {

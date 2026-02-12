@@ -38,6 +38,7 @@ export interface GettersInterface {
   characterId: number|null;
   characterShortName: string|null;
   character: SessionCharacterDto|null;
+  characters: SessionCharacterDto[];
   role: Role|null;
   realRole: Role|null;
   isTrusted: boolean;
@@ -178,6 +179,14 @@ export default store(function (/* { ssrContext } */) {
         }
 
         return state.user.characters.get(state.user.currentCharacterId) || null;
+      },
+
+      characters(state): SessionCharacterDto[] {
+        if (!state.user) {
+          return [];
+        }
+
+        return Array.from(state.user.characters.values());
       },
 
       role(state): Role|null {
