@@ -26,12 +26,13 @@
       </q-item>
     </template>
     <template v-slot:selected-item="scope">
-      <div class="row items-center q-gutter-sm">
+      <div v-if="scope.opt && scope.opt.character" class="row items-center q-gutter-sm">
         <q-avatar size="24px">
           <img :src="getAvatarUrl(scope.opt.character)" :alt="scope.opt.character.name" />
         </q-avatar>
         <span>{{ scope.opt.character.name }} ({{ scope.opt.character.server }})</span>
       </div>
+      <span v-else>{{ scope.opt ? scope.opt.label : '' }}</span>
     </template>
   </q-select>
 </template>
