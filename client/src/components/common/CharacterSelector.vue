@@ -8,6 +8,7 @@
     map-options
     :rules="rules"
     :hint="hint"
+    popup-content-class="character-selector__dropdown"
   >
     <template v-slot:prepend>
       <q-icon name="person" />
@@ -92,4 +93,20 @@ export default class CharacterSelector extends Vue.with(Props) {
 </script>
 
 <style lang="scss">
+.character-selector__dropdown {
+  background-color: white !important;
+
+  .q-item {
+    color: rgba(0, 0, 0, 0.87);
+
+    &:hover,
+    &.q-manual-focusable--focused {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  .q-item__label--caption {
+    color: rgba(0, 0, 0, 0.6);
+  }
+}
 </style>
