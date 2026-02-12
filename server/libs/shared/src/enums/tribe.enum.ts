@@ -46,7 +46,7 @@ export const tribes: { [k: string]: string } = {
   [Tribe.DUSKWIGHT]: "Dunkelalben",
   [Tribe.PLAINSFOLK]: 'Halmlinge',
   [Tribe.DUNESFOLK]: 'Sandlinge',
-  [Tribe.SEEKERSOFTHESUN]: 'Sonnentatzen',
+  [Tribe.SEEKERSOFTHESUN]: 'Goldtatzen',
   [Tribe.KEEPERSOFTHEMOON]: 'Mondstreuner',
   [Tribe.SEAWOLVES]: 'Seewölfe',
   [Tribe.HELLSGUARD]: 'Lohengarde',
