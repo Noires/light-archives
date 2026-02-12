@@ -93,6 +93,10 @@ export default class CharacterSelector extends Vue.with(Props) {
 </script>
 
 <style lang="scss">
+.q-menu:has(.character-selector__dropdown) {
+  background-color: white !important;
+}
+
 .character-selector__dropdown {
   background-color: white !important;
 
