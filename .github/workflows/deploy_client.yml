@@ -12,6 +12,9 @@ jobs:
       SENTRY_RELEASE: ${{ github.sha }}
       SENTRY_ENVIRONMENT: production
       SENTRY_DSN: ${{ secrets.SENTRY_DSN_CLIENT }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+      SENTRY_PROJECT_CLIENT: ${{ secrets.SENTRY_PROJECT_CLIENT }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,12 +66,12 @@ jobs:
           target: ${{ secrets.LIGHT_ARCHIVES_DIRECTORY }}
           strip_components: 3
       - name: Create Sentry release and upload sourcemaps
-        if: ${{ secrets.SENTRY_AUTH_TOKEN != '' && secrets.SENTRY_ORG != '' && secrets.SENTRY_PROJECT_CLIENT != '' }}
+        if: ${{ env.SENTRY_AUTH_TOKEN != '' && env.SENTRY_ORG != '' && env.SENTRY_PROJECT_CLIENT != '' }}
         uses: getsentry/action-release@v3
         env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT_CLIENT }}
+          SENTRY_AUTH_TOKEN: ${{ env.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ env.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ env.SENTRY_PROJECT_CLIENT }}
         with:
           release: ${{ env.SENTRY_RELEASE }}
           environment: ${{ env.SENTRY_ENVIRONMENT }}
