@@ -16,6 +16,7 @@
   "dependencies": {
     "@hugerte/hugerte-vue": "^1.0.0",
     "@quasar/extras": "^1.10.11",
+    "@sentry/vue": "^10.38.0",
     "@toby.mosque/quasar-ui-qdatetimepicker": "^2.0.0-rc.3",
     "@vueform/multiselect": "^2.5.8",
     "axios": "^1.7.0",

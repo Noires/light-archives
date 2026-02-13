@@ -2,6 +2,7 @@ import { SessionDto } from '@app/shared/dto/user/session.dto';
 import { TokenResponseDto } from '@app/shared/dto/user/token-response.dto';
 import { VerificationStatusDto } from '@app/shared/dto/user/verification-status.dto';
 import { VerifyCharacterDto } from '@app/shared/dto/user/verify-character.dto';
+import { TelemetryConsentStatus } from '@app/shared/enums/telemetry-consent-status.enum';
 import APITransport from './api-transport';
 
 // Client for the user management API.
@@ -28,6 +29,10 @@ export default class UserAPI {
 
   async acceptTerms(): Promise<void> {
     await this.transport.authPost<void>('accept-terms', {});
+  }
+
+  async setTelemetryConsent(status: TelemetryConsentStatus): Promise<void> {
+    await this.transport.authPost<void>('telemetry-consent', { status });
   }
 
   async logout(refreshToken: string): Promise<void> {

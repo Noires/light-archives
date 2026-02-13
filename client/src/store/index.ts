@@ -3,9 +3,18 @@ import { EventDto } from '@app/shared/dto/events/event.dto'
 import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto'
 import { SessionDto } from '@app/shared/dto/user/session.dto'
 import { Role, roleImplies } from '@app/shared/enums/role.enum'
+import { TelemetryConsentStatus, isTelemetryConsentStatus } from '@app/shared/enums/telemetry-consent-status.enum'
 import { LocalStorage } from 'quasar'
 import { store } from 'quasar/wrappers'
 import { useApi } from 'src/boot/axios'
+import {
+  TELEMETRY_CONSENT_VERSION,
+  TelemetryConsentPreference,
+  getStoredTelemetryConsent,
+  normalizeTelemetryConsent,
+  saveTelemetryConsent,
+  shouldPromptTelemetryConsent as shouldPromptTelemetryConsentPreference
+} from 'src/common/telemetry-consent'
 import { InjectionKey } from 'vue'
 import {
   createStore,
@@ -27,11 +36,15 @@ export interface StoreUser {
   currentCharacterId: number | null;
   characters: Map<number, SessionCharacterDto>;
   termsAcceptedAt: string | null;
+  telemetryConsentStatus: TelemetryConsentStatus;
+  telemetryConsentVersion: number;
+  telemetryConsentUpdatedAt: string | null;
 }
 
 export interface StateInterface {
   user: StoreUser | null;
   events: EventDto[];
+  telemetryConsent: TelemetryConsentPreference;
 }
 
 export interface GettersInterface {
@@ -43,6 +56,8 @@ export interface GettersInterface {
   realRole: Role|null;
   isTrusted: boolean;
   hasAcceptedTerms: boolean;
+  telemetryConsentStatus: TelemetryConsentStatus;
+  shouldPromptTelemetryConsent: boolean;
 }
 
 type CAStore = Omit<VuexStore<StateInterface>, 'getters'> & { getters: GettersInterface };
@@ -68,6 +83,7 @@ export default store(function (/* { ssrContext } */) {
     state: {
       user: null,
       events: [],
+      telemetryConsent: getStoredTelemetryConsent(),
     },
 
     mutations: {
@@ -93,7 +109,14 @@ export default store(function (/* { ssrContext } */) {
           characters,
           currentCharacterId,
           termsAcceptedAt: user.termsAcceptedAt ? user.termsAcceptedAt : null,
+          telemetryConsentStatus: user.telemetryConsentStatus,
+          telemetryConsentVersion: user.telemetryConsentVersion,
+          telemetryConsentUpdatedAt: user.telemetryConsentUpdatedAt,
         };
+
+        const telemetryConsent = resolveTelemetryConsentFromSession(user);
+        state.telemetryConsent = telemetryConsent;
+        saveTelemetryConsent(telemetryConsent);
       },
 
       setCurrentCharacterId(state, characterId: number) {
@@ -145,6 +168,29 @@ export default store(function (/* { ssrContext } */) {
 
       setEvents(state, events: EventDto[]) {
         state.events = events;
+      },
+
+      setTelemetryConsent(state, payload: {
+        status: TelemetryConsentStatus,
+        version?: number,
+        updatedAt?: string | null,
+      }) {
+        const telemetryConsent = normalizeTelemetryConsent({
+          status: payload.status,
+          version: payload.version ?? TELEMETRY_CONSENT_VERSION,
+          updatedAt: Object.prototype.hasOwnProperty.call(payload, 'updatedAt')
+            ? (payload.updatedAt ?? null)
+            : new Date().toISOString(),
+        });
+
+        state.telemetryConsent = telemetryConsent;
+        saveTelemetryConsent(telemetryConsent);
+
+        if (state.user) {
+          state.user.telemetryConsentStatus = telemetryConsent.status;
+          state.user.telemetryConsentVersion = telemetryConsent.version;
+          state.user.telemetryConsentUpdatedAt = telemetryConsent.updatedAt;
+        }
       }
     },
 
@@ -233,6 +279,14 @@ export default store(function (/* { ssrContext } */) {
 
         return !!state.user.termsAcceptedAt;
       },
+
+      telemetryConsentStatus(state): TelemetryConsentStatus {
+        return state.telemetryConsent.status;
+      },
+
+      shouldPromptTelemetryConsent(state): boolean {
+        return shouldPromptTelemetryConsentPreference(state.telemetryConsent);
+      },
     },
 
     // enable strict mode (adds overhead!)
@@ -259,6 +313,24 @@ function toMap(characters: SessionCharacterDto[]) {
   }
 
   return result;
+}
+
+function resolveTelemetryConsentFromSession(session: SessionDto): TelemetryConsentPreference {
+  const status = isTelemetryConsentStatus(session.telemetryConsentStatus)
+    ? session.telemetryConsentStatus
+    : TelemetryConsentStatus.UNKNOWN;
+  const version = typeof session.telemetryConsentVersion === 'number'
+    ? session.telemetryConsentVersion
+    : TELEMETRY_CONSENT_VERSION;
+  const updatedAt = typeof session.telemetryConsentUpdatedAt === 'string'
+    ? session.telemetryConsentUpdatedAt
+    : null;
+
+  return normalizeTelemetryConsent({
+    status,
+    version,
+    updatedAt,
+  });
 }
 
 export function useStore() {

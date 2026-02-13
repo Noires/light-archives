@@ -30,6 +30,7 @@ module.exports = configure(function (ctx) {
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli/boot-files
     boot: [
+      'sentry',
       'axios',
       'display',
       'iframe-resizer',
@@ -57,6 +58,11 @@ module.exports = configure(function (ctx) {
 
     // Full list of options: https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
     build: {
+      env: {
+        SENTRY_DSN: process.env.SENTRY_DSN,
+        SENTRY_ENVIRONMENT: process.env.SENTRY_ENVIRONMENT,
+        SENTRY_RELEASE: process.env.SENTRY_RELEASE,
+      },
       vueRouterMode: 'history', // available values: 'hash', 'history'
 
       // transpile: false,

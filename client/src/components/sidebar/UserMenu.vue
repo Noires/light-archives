@@ -28,6 +28,12 @@
           </q-item-label>
         </q-item-section>
       </q-item>
+      <q-separator v-if="sentryConfigured" dark />
+      <q-item v-if="sentryConfigured" clickable v-ripple @click="openTelemetryConsentSettings">
+        <q-item-section>
+          <q-item-label>Datenschutz &amp; Fehlerdiagnose</q-item-label>
+        </q-item-section>
+      </q-item>
     </template>
     <template v-else>
       <q-item
@@ -175,6 +181,12 @@
         </q-item>
       </template>
       <q-separator dark />
+      <q-item v-if="sentryConfigured" clickable v-ripple @click="openTelemetryConsentSettings">
+        <q-item-section>
+          <q-item-label>Datenschutz &amp; Fehlerdiagnose</q-item-label>
+        </q-item-section>
+      </q-item>
+      <q-separator v-if="sentryConfigured" dark />
       <q-item clickable v-ripple @click="logOut">
         <q-item-section>
           <q-item-label>Ausloggen</q-item-label>
@@ -189,13 +201,17 @@ import { Options, Vue } from 'vue-class-component';
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 import { Role } from '@app/shared/enums/role.enum';
 import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
-import { notifySuccess } from 'src/common/notify';
+import { TelemetryConsentStatus } from '@app/shared/enums/telemetry-consent-status.enum';
+import { notifyError, notifySuccess } from 'src/common/notify';
+import { persistTelemetryConsent } from 'src/common/telemetry-consent-actions';
+import { isSentryConfigured } from 'src/common/sentry';
 
 @Options({
   
 })
 export default class UserMenu extends Vue {
   readonly Role = Role;
+  readonly sentryConfigured = isSentryConfigured();
   get myProfileLink() {
 		const server = this.$store.getters.character?.server || '';
 		const character = this.$store.getters.character?.name.replace(/ /g, '_') || '';
@@ -250,6 +266,33 @@ export default class UserMenu extends Vue {
 
   loginWithDiscord() {
     window.location.href = this.$api.user.getDiscordLoginUrl();
+  }
+
+  async openTelemetryConsentSettings() {
+    const TelemetryConsentDialog = (await import('components/common/TelemetryConsentDialog.vue')).default;
+
+    this.$q.dialog({
+      component: TelemetryConsentDialog,
+      componentProps: {
+        settingsMode: true,
+      },
+    }).onOk((status: TelemetryConsentStatus) => {
+      void this.onTelemetryConsentSelection(status);
+    });
+  }
+
+  async onTelemetryConsentSelection(status: TelemetryConsentStatus) {
+    try {
+      await persistTelemetryConsent(this.$api, this.$store, status);
+
+      if (status === TelemetryConsentStatus.GRANTED) {
+        notifySuccess('Freiwillige Fehlerdiagnose wurde aktiviert.');
+      } else {
+        notifySuccess('Freiwillige Fehlerdiagnose wurde deaktiviert.');
+      }
+    } catch (e) {
+      notifyError(e);
+    }
   }
 }
 </script>

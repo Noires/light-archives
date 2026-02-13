@@ -50,6 +50,15 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
+    path: '/test-character-selector',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/TestCharacterSelector.vue') }],
+    meta: {
+      title: 'Character Selector Test'
+    },
+  },
+
+  {
     path: '/create-location',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditLocation.vue') }],

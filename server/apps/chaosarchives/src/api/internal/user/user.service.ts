@@ -4,6 +4,7 @@ import { SessionDto } from '@app/shared/dto/user/session.dto';
 import { VerificationStatusDto } from '@app/shared/dto/user/verification-status.dto';
 import { VerifyCharacterDto } from '@app/shared/dto/user/verify-character.dto';
 import { Role } from '@app/shared/enums/role.enum';
+import { TelemetryConsentStatus } from '@app/shared/enums/telemetry-consent-status.enum';
 import errors from '@app/shared/errors';
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, GoneException, HttpStatus, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
@@ -14,6 +15,8 @@ import { Connection, EntityManager, Repository } from 'typeorm';
 
 @Injectable()
 export class UserService {
+  private readonly TELEMETRY_CONSENT_VERSION = 1;
+
   constructor(
     private connection: Connection,
     @InjectRepository(User) private userRepo: Repository<User>,
@@ -163,6 +166,27 @@ export class UserService {
     }
 
     userEntity.termsAcceptedAt = new Date();
+    await this.userRepo.save(userEntity);
+  }
+
+  async setTelemetryConsent(
+    user: UserInfo,
+    status: TelemetryConsentStatus,
+  ): Promise<void> {
+    const userEntity = await this.userRepo.findOne({
+      where: {
+        id: user.id,
+      },
+      select: [ 'id', 'telemetryConsentStatus', 'telemetryConsentVersion', 'telemetryConsentUpdatedAt' ]
+    });
+
+    if (!userEntity) {
+      throw new GoneException();
+    }
+
+    userEntity.telemetryConsentStatus = status;
+    userEntity.telemetryConsentVersion = this.TELEMETRY_CONSENT_VERSION;
+    userEntity.telemetryConsentUpdatedAt = new Date();
     await this.userRepo.save(userEntity);
   }
 }

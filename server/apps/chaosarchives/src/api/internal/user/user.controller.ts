@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '@app/auth/guards/jwt-auth.guard';
 import { UserInfo } from '@app/auth/model/user-info';
 import { serverConfiguration } from '@app/configuration';
 import { RefreshTokenRequestDto } from '@app/shared/dto/user/refresh-token-request.dto';
+import { SetTelemetryConsentDto } from '@app/shared/dto/user/set-telemetry-consent.dto';
 import { SessionDto } from '@app/shared/dto/user/session.dto';
 import { TokenResponseDto } from '@app/shared/dto/user/token-response.dto';
 import { VerificationStatusDto } from '@app/shared/dto/user/verification-status.dto';
@@ -81,6 +82,16 @@ export class UserController {
   @Post('accept-terms')
   async acceptTerms(@CurrentUser() user: UserInfo): Promise<void> {
     await this.userService.acceptTerms(user);
+    await this.publicAuthService.notifyUserChanged(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('telemetry-consent')
+  async setTelemetryConsent(
+    @CurrentUser() user: UserInfo,
+    @Body() body: SetTelemetryConsentDto,
+  ): Promise<void> {
+    await this.userService.setTelemetryConsent(user, body.status);
     await this.publicAuthService.notifyUserChanged(user.id);
   }
 

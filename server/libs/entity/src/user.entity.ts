@@ -1,4 +1,5 @@
 import { Role } from '@app/shared/enums/role.enum';
+import { TelemetryConsentStatus } from '@app/shared/enums/telemetry-consent-status.enum';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { BasicEntity } from './basic.entity';
 
@@ -64,4 +65,25 @@ export class User extends BasicEntity {
     nullable: true
   })
   termsAcceptedAt: Date | null;
+
+  @Column({
+    type: 'enum',
+    enum: TelemetryConsentStatus,
+    nullable: false,
+    default: TelemetryConsentStatus.UNKNOWN,
+  })
+  telemetryConsentStatus: TelemetryConsentStatus;
+
+  @Column({
+    type: 'int',
+    nullable: false,
+    default: 1,
+  })
+  telemetryConsentVersion: number;
+
+  @Column({
+    type: 'datetime',
+    nullable: true
+  })
+  telemetryConsentUpdatedAt: Date | null;
 }

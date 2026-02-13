@@ -1,6 +1,7 @@
 import { authConfiguration } from '@app/configuration';
 import { Character, RefreshToken, User } from '@app/entity';
 import { Role } from '@app/shared/enums/role.enum';
+import { TelemetryConsentStatus } from '@app/shared/enums/telemetry-consent-status.enum';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Profile as DiscordProfile } from 'passport-discord-auth';
@@ -31,6 +32,7 @@ function parseDuration(duration: string): number {
 @Injectable()
 export class AuthImplService {
   private readonly USER_INFO_CACHE_SEC = 86400;
+  private readonly TELEMETRY_CONSENT_VERSION = 1;
 
   constructor(
     @InjectRepository(User) private readonly userRepo: Repository<User>,
@@ -64,6 +66,9 @@ export class AuthImplService {
         verifiedAt: null,
         verificationCode: null,
         termsAcceptedAt: null,
+        telemetryConsentStatus: TelemetryConsentStatus.UNKNOWN,
+        telemetryConsentVersion: this.TELEMETRY_CONSENT_VERSION,
+        telemetryConsentUpdatedAt: null,
       });
     } else if (user.discordId && user.discordId !== discordId) {
       throw new UnauthorizedException('Discord account already linked');
@@ -120,6 +125,9 @@ export class AuthImplService {
       id: user.id,
       role: user.role as Role,
       termsAcceptedAt: user.termsAcceptedAt ? user.termsAcceptedAt.toISOString() : null,
+      telemetryConsentStatus: this.getEffectiveTelemetryConsentStatus(user),
+      telemetryConsentVersion: this.TELEMETRY_CONSENT_VERSION,
+      telemetryConsentUpdatedAt: user.telemetryConsentUpdatedAt ? user.telemetryConsentUpdatedAt.toISOString() : null,
       characters: characters.map(character => new UserCharacterInfo({
         id: character.id,
         lodestoneId: character.lodestoneId,
@@ -140,6 +148,14 @@ export class AuthImplService {
       this.USER_INFO_CACHE_SEC,
     );
     return result;
+  }
+
+  private getEffectiveTelemetryConsentStatus(user: User): TelemetryConsentStatus {
+    if (user.telemetryConsentVersion !== this.TELEMETRY_CONSENT_VERSION) {
+      return TelemetryConsentStatus.UNKNOWN;
+    }
+
+    return user.telemetryConsentStatus || TelemetryConsentStatus.UNKNOWN;
   }
 
   async notifyUserChanged(userId: number): Promise<void> {

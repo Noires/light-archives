@@ -105,7 +105,10 @@ import UserMenu from '../components/sidebar/UserMenu.vue';
 import InlineSvg from 'vue-inline-svg';
 import SiteSearchField from 'src/components/search/SiteSearchField.vue';
 import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
-import { notifySuccess } from 'src/common/notify';
+import { TelemetryConsentStatus } from '@app/shared/enums/telemetry-consent-status.enum';
+import { notifyError, notifySuccess } from 'src/common/notify';
+import { persistTelemetryConsent } from 'src/common/telemetry-consent-actions';
+import { isSentryConfigured } from 'src/common/sentry';
 
 @Options({
   components: {
@@ -139,6 +142,11 @@ export default class MainLayout extends Vue {
 
   leftDrawerOpen = false;
   rightDrawerOpen = false;
+  telemetryConsentDialogShown = false;
+
+  mounted() {
+    void this.promptTelemetryConsentIfRequired();
+  }
 
   toggleLeftDrawer() {
     this.leftDrawerOpen = !this.leftDrawerOpen;
@@ -172,6 +180,46 @@ export default class MainLayout extends Vue {
     return !path.startsWith('/calendar');
   }
 
+  async promptTelemetryConsentIfRequired() {
+    if (this.telemetryConsentDialogShown || !isSentryConfigured()) {
+      return;
+    }
+
+    if (!this.$store.getters.shouldPromptTelemetryConsent) {
+      return;
+    }
+
+    this.telemetryConsentDialogShown = true;
+    await this.openTelemetryConsentDialog(false);
+  }
+
+  async openTelemetryConsentDialog(settingsMode: boolean) {
+    const TelemetryConsentDialog = (await import('components/common/TelemetryConsentDialog.vue')).default;
+
+    this.$q.dialog({
+      component: TelemetryConsentDialog,
+      componentProps: {
+        settingsMode,
+      },
+    }).onOk((status: TelemetryConsentStatus) => {
+      void this.applyTelemetryConsent(status);
+    });
+  }
+
+  async applyTelemetryConsent(status: TelemetryConsentStatus) {
+    try {
+      await persistTelemetryConsent(this.$api, this.$store, status);
+
+      if (status === TelemetryConsentStatus.GRANTED) {
+        notifySuccess('Freiwillige Fehlerdiagnose wurde aktiviert.');
+      } else {
+        notifySuccess('Freiwillige Fehlerdiagnose bleibt deaktiviert.');
+      }
+    } catch (e) {
+      notifyError(e);
+      this.telemetryConsentDialogShown = false;
+    }
+  }
 }
 </script>
 
