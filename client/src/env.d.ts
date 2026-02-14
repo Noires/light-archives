@@ -6,5 +6,7 @@ declare namespace NodeJS {
     SENTRY_DSN: string | undefined;
     SENTRY_ENVIRONMENT: string | undefined;
     SENTRY_RELEASE: string | undefined;
+    SENTRY_REPLAY_SESSION_SAMPLE_RATE: string | undefined;
+    SENTRY_REPLAY_ON_ERROR_SAMPLE_RATE: string | undefined;
   }
 }

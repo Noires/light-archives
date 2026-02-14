@@ -1,4 +1,5 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Logger } from "@nestjs/common";
+import * as Sentry from '@sentry/nestjs';
 import { QueryFailedError } from "typeorm";
 import { isQueryFailedError } from "./common/db";
 
@@ -16,6 +17,12 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
 			});
 		} else {
 			this.log.error(e.message, e.stack);
+      Sentry.captureException(e, {
+        mechanism: {
+          handled: true,
+          type: 'app.chaosarchives.query_failed_filter',
+        },
+      });
 			
 			response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
 				statusCode: HttpStatus.INTERNAL_SERVER_ERROR,

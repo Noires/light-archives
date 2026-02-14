@@ -1,14 +1,16 @@
 import { AuthModule } from '@app/auth/auth.module';
 import { dbConfiguration, redisConfiguration } from '@app/configuration';
 import { Module } from '@nestjs/common';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { InternalApiModule } from './api/internal/internal-api.module';
 import { RppModule } from './api/rpp/rpp.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GlobalExceptionsFilter } from './global-exceptions.filter';
+import { SentryUserContextInterceptor } from './sentry-user-context.interceptor';
 import { UpdatesModule } from './websocket/updates/updates.module';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
 
@@ -17,6 +19,7 @@ import { RedisModule } from '@liaoliaots/nestjs-redis';
     TypeOrmModule.forRootAsync({ useFactory: () => dbConfiguration }),
     RedisModule.forRootAsync({ useFactory: () => ({ config: redisConfiguration }) }),
     EventEmitterModule.forRoot(),
+    SentryModule.forRoot(),
     AuthModule,
     InternalApiModule,
     RppModule,
@@ -26,8 +29,16 @@ import { RedisModule } from '@liaoliaots/nestjs-redis';
   providers: [
     AppService,
     {
+      provide: APP_INTERCEPTOR,
+      useClass: SentryUserContextInterceptor,
+    },
+    {
       provide: APP_FILTER,
       useClass: GlobalExceptionsFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter,
     }
   ],
 })

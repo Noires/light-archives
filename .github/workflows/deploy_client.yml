@@ -12,6 +12,8 @@ jobs:
       SENTRY_RELEASE: ${{ github.sha }}
       SENTRY_ENVIRONMENT: production
       SENTRY_DSN: ${{ secrets.SENTRY_DSN_CLIENT }}
+      SENTRY_REPLAY_SESSION_SAMPLE_RATE: '0'
+      SENTRY_REPLAY_ON_ERROR_SAMPLE_RATE: '1.0'
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
       SENTRY_PROJECT_CLIENT: ${{ secrets.SENTRY_PROJECT_CLIENT }}

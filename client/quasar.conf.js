@@ -62,6 +62,8 @@ module.exports = configure(function (ctx) {
         SENTRY_DSN: process.env.SENTRY_DSN,
         SENTRY_ENVIRONMENT: process.env.SENTRY_ENVIRONMENT,
         SENTRY_RELEASE: process.env.SENTRY_RELEASE,
+        SENTRY_REPLAY_SESSION_SAMPLE_RATE: process.env.SENTRY_REPLAY_SESSION_SAMPLE_RATE,
+        SENTRY_REPLAY_ON_ERROR_SAMPLE_RATE: process.env.SENTRY_REPLAY_ON_ERROR_SAMPLE_RATE,
       },
       vueRouterMode: 'history', // available values: 'hash', 'history'
 

@@ -39,6 +39,11 @@ services:
       - 8112
     environment:
       - NODE_ENV=${NODE_ENV:-production}
+      - NODE_OPTIONS=${NODE_OPTIONS:---enable-source-maps}
+      # Sentry
+      - SENTRY_DSN=${SENTRY_DSN_STEWARD:-}
+      - SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-production}
+      - SENTRY_TRACES_SAMPLE_RATE=${SENTRY_TRACES_SAMPLE_RATE_STEWARD:-0.02}
 
   chaosarchives:
     build: ./
@@ -55,6 +60,11 @@ services:
       - steward
     environment:
       - NODE_ENV=${NODE_ENV:-production}
+      - NODE_OPTIONS=${NODE_OPTIONS:---enable-source-maps}
+      # Sentry
+      - SENTRY_DSN=${SENTRY_DSN_CHAOSARCHIVES:-}
+      - SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-production}
+      - SENTRY_TRACES_SAMPLE_RATE=${SENTRY_TRACES_SAMPLE_RATE_CHAOSARCHIVES:-0.05}
       # Database settings
       - DB_LOGGING=${DB_LOGGING:-["error","warn"]}
       # Authentication

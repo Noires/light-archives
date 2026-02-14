@@ -1,5 +1,7 @@
 FROM node:20-alpine
 WORKDIR /usr/src/app
+ARG SENTRY_RELEASE=dev
+ENV SENTRY_RELEASE=$SENTRY_RELEASE
 
 RUN apk add --update --no-cache \
   shadow \

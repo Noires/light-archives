@@ -24,4 +24,8 @@ jobs:
           file: ./server/Dockerfile
           push: true
           platforms: linux/amd64
-          tags: noires/elpisgarten:latest
+          tags: |
+            noires/elpisgarten:latest
+            noires/elpisgarten:${{ github.sha }}
+          build-args: |
+            SENTRY_RELEASE=${{ github.sha }}

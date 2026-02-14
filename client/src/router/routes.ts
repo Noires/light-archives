@@ -59,6 +59,23 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
+    path: '/test-sentry',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/TestSentry.vue') }],
+    meta: {
+      title: 'Sentry Test'
+    },
+    beforeEnter: () => {
+      const store = useStore();
+      const role = store.getters.role;
+      if (role !== 'admin')
+      {
+        return false;
+      }
+    }
+  },
+
+  {
     path: '/create-location',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/EditLocation.vue') }],
