@@ -24,6 +24,7 @@
               v-model="story.type"
               label="type"
               :options="typeOptions"
+              class="page-edit-story__options-grid"
             />
           </div>
           <q-input
@@ -38,6 +39,7 @@
               :options="contentNoteOptions"
               type="checkbox"
               color="secondary"
+              class="page-edit-story__options-grid"
             />
           </div>
           <h6>Inhalt *</h6>
@@ -260,5 +262,22 @@ export default class PageEditStory extends Vue {
   text-transform: uppercase;
   font-weight: 700;
   color: rgba(35, 35, 35, 0.7);
+}
+
+.page-edit-story__options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 12px;
+  row-gap: 6px;
+}
+
+.page-edit-story__options-grid .q-option-group__option {
+  margin: 0;
+}
+
+@media screen and (max-width: $breakpoint-sm) {
+  .page-edit-story__options-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -26,6 +26,7 @@
                 :options="eventTypeOptions"
                 type="radio"
                 color="secondary"
+                class="page-edit-event__options-grid"
                 :rules="[
                   $rules.required('Dieses Feld ist erforderlich.'),
                 ]"
@@ -75,6 +76,7 @@
                 :options="contentNoteOptions"
                 type="checkbox"
                 color="secondary"
+                class="page-edit-event__options-grid"
               />
             </div>
           <template v-for="(location, index) in event.locations" :key="index">
@@ -750,7 +752,6 @@ type VenueOption = {
 
 <style lang="scss">
 .page-edit-event__form-controls {
-  max-width: 500px;
   flex-basis: 0;
   flex-grow: 1;
 }
@@ -781,6 +782,23 @@ type VenueOption = {
 
 .page-edit-event__adult-toggle .q-btn {
   flex: 1 1 0;
+}
+
+.page-edit-event__options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 12px;
+  row-gap: 6px;
+}
+
+.page-edit-event__options-grid .q-option-group__option {
+  margin: 0;
+}
+
+@media screen and (max-width: $breakpoint-sm) {
+  .page-edit-event__options-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .page-edit-event__button-bar {
