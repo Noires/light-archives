@@ -209,7 +209,7 @@
                           flat
                           color="secondary"
                           icon="launch"
-                          label="Link öffnen"
+                          :label="eventLinkLabel(event)"
                           type="a"
                           target="_blank"
                           :href="event.link"
@@ -338,7 +338,7 @@
                         flat
                         color="secondary"
                         icon="launch"
-                        label="Link öffnen"
+                        :label="eventLinkLabel(event)"
                         type="a"
                         target="_blank"
                         :href="event.link"
@@ -670,6 +670,11 @@ export default class PageEventCalendar extends Vue {
 
   eventIconUrl(event: EventSummaryDto) {
     return event.icon?.thumbUrl || event.icon?.url || '';
+  }
+
+  eventLinkLabel(event: EventSummaryDto): string {
+    const label = (event.linkText || '').trim();
+    return label || event.link;
   }
 
   isAdultEvent(event: EventSummaryDto) {

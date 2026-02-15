@@ -18,7 +18,7 @@
         Deine Mitgliedschaftsanfrage wurde abgelehnt.
       </section>
       <section v-else-if="community.canEdit" class="page-community__edit-bar">
-        <router-link :to="`/edit-community/${community.id}`">Community bearbeiten</router-link>
+        <q-btn flat color="secondary" label="Community bearbeiten" :to="`/edit-community/${community.id}`" />
         <q-btn flat color="negative" label="Community löschen" @click="onDeleteClick" />
       </section>
       <section
@@ -342,7 +342,7 @@ export default class PageCommunity extends Vue {
 
 .page-community__member-profession {
   color: rgba(35, 35, 35, 0.65);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .page-community__members-empty {

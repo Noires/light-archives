@@ -55,9 +55,9 @@
     </header>
 
     <section class="page-index__grid">
-      <section class="page-index__panel page-index__panel--wide">
+      <section id="neueste-aenderungen" class="page-index__panel page-index__panel--wide">
         <div class="page-index__panel-header">
-          <h5>News</h5>
+          <h5>Neueste Änderungen</h5>
           <span v-if="!content.newsUpToDate" class="page-index__panel-meta">Wird aktualisiert …</span>
         </div>
         <div class="page-index__panel-content page-index__panel-content--flush">

@@ -125,6 +125,7 @@ export class EventsService {
     event.details = html.sanitize(eventDto.details);
     event.oocDetails = html.sanitize(eventDto.oocDetails);
     event.link = eventDto.link; // TODO: Validate
+    event.linkText = eventDto.link ? (eventDto.linkText || '') : '';
     event.contact = eventDto.contact;
     event.recurring = eventDto.recurring;
     event.eventType = eventDto.eventType || EventType.GENERAL;
@@ -276,6 +277,7 @@ export class EventsService {
       location.address = dtoLocation.address;
       location.tags = dtoLocation.tags;
       location.link = dtoLocation.link;
+      location.linkText = dtoLocation.link ? (dtoLocation.linkText || '') : '';
 
       if (location.link && !isValidUrl(location.link)) {
         throw new BadRequestException(`Invalid location link: ${location.link}`);
@@ -496,6 +498,7 @@ export class EventsService {
       event.source = eventDto.source;
       event.eventType = EventType.GENERAL;
       event.externalSourceLink = eventDto.link;
+      event.linkText = '';
 
         const dtoLocations = eventDto.locations;
 
@@ -521,6 +524,7 @@ export class EventsService {
           location.address = locationDto.address;
           location.tags = locationDto.tags;
           location.link = locationDto.link;
+          location.linkText = '';
 
           if (location.link && !isValidUrl(location.link)) {
             throw new BadRequestException(`Invalid location link: ${location.link}`);
@@ -643,6 +647,7 @@ export class EventsService {
       startDateTime: event.startDateTime.getTime(),
       endDateTime: event.endDateTime ? event.endDateTime.getTime() : null,
       link: event.externalSourceLink || '',
+      linkText: event.linkText || '',
       source: event.source,
       eventType: event.eventType || EventType.GENERAL,
       recurring: event.recurring,
@@ -654,6 +659,7 @@ export class EventsService {
         server: location.server?.name || '',
         tags: location.tags,
         link: location.link,
+        linkText: location.linkText || '',
         venueId: location.venue?.id,
       })),
     };
@@ -685,6 +691,7 @@ export class EventsService {
       startDateTime: event.startDateTime.getTime(),
       endDateTime: event.endDateTime ? event.endDateTime.getTime() : null,
       link: event.externalSourceLink || event.link,
+      linkText: event.linkText || '',
       contact: event.contact,
       eventType: event.eventType || EventType.GENERAL,
       contentNotes: (event.contentNotes || []).map((note) => note.name),
@@ -720,6 +727,7 @@ export class EventsService {
         server: location.server?.name || '',
         tags: location.tags,
         link: location.link,
+        linkText: location.linkText || '',
         venueId: location.venue?.id,
       })),
     };

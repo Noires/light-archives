@@ -30,6 +30,12 @@ export class EventLocation extends BasicEntity {
   })
   link: string;
 
+  @Column({
+    nullable: false,
+    default: '',
+  })
+  linkText: string;
+
   @ManyToOne(() => Server, {
     nullable: false,
   })

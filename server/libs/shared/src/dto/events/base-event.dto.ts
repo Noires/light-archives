@@ -41,6 +41,10 @@ export abstract class BaseEventDto {
 	link: string;
 
 	@IsString()
+	@IsOptional()
+	linkText?: string;
+
+	@IsString()
 	contact: string;
 
 	@IsEnum(EventType)

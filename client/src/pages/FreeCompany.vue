@@ -244,7 +244,7 @@ export default class PageFreeCompany extends Vue {
 
 .page-free-company__member-profession {
   color: rgba(35, 35, 35, 0.65);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .page-free-company__members-empty {

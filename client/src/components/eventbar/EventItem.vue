@@ -28,7 +28,7 @@
             <q-btn
               v-if="event.link"
               class="event-item__open-link-button"
-              label="Link öffnen"
+              :label="eventLinkLabel"
               icon="launch"
               type="a"
               target="_blank"
@@ -136,6 +136,11 @@ export default class EventItem extends Vue.with(Props) {
 
   get eventIconUrl(): string {
     return this.event.icon?.thumbUrl || this.event.icon?.url || '';
+  }
+
+  get eventLinkLabel(): string {
+    const label = (this.event.linkText || '').trim();
+    return label || this.event.link;
   }
 }
 </script>

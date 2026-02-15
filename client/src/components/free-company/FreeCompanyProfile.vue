@@ -1,7 +1,7 @@
 <template>
   <div class="free-company-profile">
-    <p v-if="!preview && freeCompany.mine">
-      <router-link :to="editFCLink">Freie Gesellschaft bearbeiten</router-link>
+    <p v-if="!preview && freeCompany.mine" class="free-company-profile__edit">
+      <q-btn flat color="secondary" label="Freie Gesellschaft bearbeiten" :to="editFCLink" />
     </p>
     <banner-view :banner="freeCompany.banner" />
     <header class="free-company-profile__header">
@@ -130,5 +130,9 @@ export default class FreeCompanyProfile extends Vue.with(Props) {
 
 .free-company-profile__carrd-iframe {
   border: none;
+}
+
+.free-company-profile__edit {
+  margin-bottom: 16px;
 }
 </style>

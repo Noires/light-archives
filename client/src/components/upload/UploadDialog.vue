@@ -294,20 +294,28 @@ export default class UploadDialog extends Vue.with(Props) {
 
   get canGoNext() {
     const minAspectRatio = this.minAspectRatio ?? (this.banner ? MIN_BANNER_ASPECT_RATIO : null);
+    const convertedFile = this.fileModel.convertedFile;
+    const image = this.fileModel.image;
 
     switch (this.step) {
       case Step.SELECT_IMAGE:
-        return !!this.fileModel.image
-          && !!this.fileModel.convertedFile
-          && (
-            this.requiresBannerCropStep
-            || this.fileModel.convertedFile.size <= SharedConstants.MAX_UPLOAD_SIZE
-          )
-          && (
-            this.requiresBannerCropStep
-            || !minAspectRatio
-            || (this.fileModel.image.width / this.fileModel.image.height >= minAspectRatio)
-          );
+        if (!image) {
+          return false;
+        }
+
+        if (this.requiresBannerCropStep) {
+          return true;
+        }
+
+        if (!convertedFile || convertedFile.size > SharedConstants.MAX_UPLOAD_SIZE) {
+          return false;
+        }
+
+        if (minAspectRatio && image.width / image.height < minAspectRatio) {
+          return false;
+        }
+
+        return true;
       case Step.BANNER_CROP:
         return this.bannerCropModel.left !== -1;
       case Step.THUMBNAIL:
@@ -458,7 +466,7 @@ export default class UploadDialog extends Vue.with(Props) {
 
     if (this.bannerCroppedFile.size > SharedConstants.MAX_UPLOAD_SIZE) {
       throw new Error(
-        `The cropped banner is too large (${this.$display.formatFileSize(this.bannerCroppedFile.size)}). Maximum allowed size is ${this.$display.formatFileSize(SharedConstants.MAX_UPLOAD_SIZE)}.`,
+        `Der zugeschnittene Banner ist zu groß (${this.$display.formatFileSize(this.bannerCroppedFile.size)}). Maximum ist ${this.$display.formatFileSize(SharedConstants.MAX_UPLOAD_SIZE)}. Bitte wähle einen kleineren Ausschnitt oder nutze JPEG.`,
       );
     }
 

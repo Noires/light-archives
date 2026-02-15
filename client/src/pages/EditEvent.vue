@@ -114,6 +114,10 @@
                 </template>
               </q-input>
               <q-input
+                v-model="location.linkText"
+                label="Standort-Linktext (optional)"
+              />
+              <q-input
                 v-model="location.tags"
                 label="Standort Schlagworte"
               />
@@ -144,6 +148,10 @@
             :rules="[
               $rules.url('Bitte hinterlasse einen Link.'),
             ]"
+          />
+          <q-input
+            v-model="event.linkText"
+            label="Linktext (optional)"
           />
           <q-input
             v-model="event.contact"
@@ -353,6 +361,11 @@ export default class PageEditEvent extends Vue {
       this.eventBackup.contentNotes = this.eventBackup.contentNotes || [];
       this.eventBackup.eventType = this.eventBackup.eventType || EventType.GENERAL;
       this.eventBackup.discordBanner = this.eventBackup.discordBanner || null;
+      this.eventBackup.linkText = this.eventBackup.linkText || '';
+      this.eventBackup.locations = (this.eventBackup.locations || []).map((location) => new EventLocationDto({
+        ...location,
+        linkText: location.linkText || '',
+      }));
     } else {
       this.eventId = null;
       this.eventBackup = new EventEditDto({
@@ -363,6 +376,7 @@ export default class PageEditEvent extends Vue {
         details: '',
         oocDetails: '',
         link: '',
+        linkText: '',
         contact: '',
         recurring: false,
         eventType: EventType.GENERAL,
@@ -465,6 +479,7 @@ export default class PageEditEvent extends Vue {
       server: this.$store.getters.character!.server,
       tags: '',
       link: '',
+      linkText: '',
       venueId: undefined,
     });
   }

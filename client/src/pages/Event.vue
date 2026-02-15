@@ -1,7 +1,7 @@
 <template>
   <q-page class="page-event">
 		<section v-if="event.mine" class="edit-bar">
-			<router-link :to="`/edit-event/${eventId}`">Event bearbeiten</router-link>
+			<q-btn flat color="secondary" label="Event bearbeiten" :to="`/edit-event/${eventId}`" />
 			<q-btn flat color="negative" label="Event löschen" @click="onDeleteClick" />
 		</section>
 		<event-view v-if="event.title" :event="event" />

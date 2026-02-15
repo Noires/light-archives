@@ -10,6 +10,7 @@ export interface EventSummaryDto {
   startDateTime: number;
   endDateTime: number | null;
   link: string;
+  linkText?: string;
 	source: EventSource;
 	eventType: EventType;
   recurring: boolean;

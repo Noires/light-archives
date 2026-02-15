@@ -18,6 +18,14 @@
             </template>
           </div>
           <nav class="layout__nav-links gt-lg">
+            <router-link
+              class="layout__nav-link"
+              to="/"
+              active-class=""
+              exact-active-class="router-link-active"
+            >
+              Startseite
+            </router-link>
             <div
               v-for="group in navGroups"
               :key="group.key"
@@ -35,7 +43,13 @@
                 @focus="openMenu(group.key)"
                 @click="toggleMenu(group.key)"
               >
-                {{ group.label }}
+                <span>{{ group.label }}</span>
+                <q-badge
+                  v-if="showGroupNewBadge(group.key)"
+                  class="layout__nav-badge"
+                  color="positive"
+                  label="Neu"
+                />
                 <q-icon name="expand_more" size="16px" />
               </button>
               <q-menu
@@ -60,7 +74,15 @@
                     :to="link.to"
                   >
                     <q-item-section>
-                      <q-item-label>{{ link.label }}</q-item-label>
+                      <q-item-label class="layout__nav-menu-label">
+                        <span>{{ link.label }}</span>
+                        <q-badge
+                          v-if="showLinkNewBadge(link.to)"
+                          class="layout__nav-menu-badge"
+                          color="positive"
+                          label="Neu"
+                        />
+                      </q-item-label>
                     </q-item-section>
                   </q-item>
                 </q-list>
@@ -77,6 +99,15 @@
             aria-label="Menu"
           >
             <q-list>
+              <q-item clickable v-close-popup to="/">
+                <q-item-section avatar>
+                  <q-icon name="home" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>Startseite</q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-separator />
               <q-expansion-item
                 v-for="group in navGroups"
                 :key="group.key"
@@ -163,12 +194,15 @@ import UserMenu from '../components/sidebar/UserMenu.vue';
 import InlineSvg from 'vue-inline-svg';
 import SiteSearchField from 'src/components/search/SiteSearchField.vue';
 import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
+import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
+import { ChangeItemDto } from '@app/shared/dto/changes/change-item.dto';
 import { TelemetryConsentStatus } from '@app/shared/enums/telemetry-consent-status.enum';
+import { LocalStorage } from 'quasar';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import { persistTelemetryConsent } from 'src/common/telemetry-consent-actions';
 import { isSentryConfigured } from 'src/common/sentry';
 
-type NavGroupKey = 'roleplay' | 'places' | 'gallery' | 'info';
+type NavGroupKey = 'database' | 'roleplay' | 'media' | 'knowledge';
 
 interface NavLink {
   label: string;
@@ -183,6 +217,12 @@ interface NavGroup {
   matchPrefixes: string[];
 }
 
+interface ChangesApiClient {
+  changes: {
+    getChanges(filter?: { since?: number; offset?: number; limit?: number }): Promise<PagingResultDto<ChangeItemDto>>;
+  };
+}
+
 @Options({
   components: {
     CalendarSidebarWidget,
@@ -190,36 +230,45 @@ interface NavGroup {
     InlineSvg,
     SiteSearchField,
   },
+  watch: {
+    '$route.path': {
+      handler() {
+        void (this as MainLayout).onRoutePathChanged();
+      },
+    },
+  },
 })
 export default class MainLayout extends Vue {
   readonly DRAWER_BG = 'layout__drawer';
   readonly DRAWER_WIDTH = 250;
+  readonly CHANGES_LAST_VISIT_KEY = 'changes:last-visited-at';
 
   readonly navGroups: NavGroup[] = [
+    {
+      key: 'database',
+      label: 'Datenbank',
+      icon: 'storage',
+      links: [
+        { label: 'Charaktere', to: '/profiles' },
+        { label: 'Treffpunkte', to: '/venues' },
+        { label: 'Communities', to: '/communities' },
+        { label: 'Freie Gesellschaften', to: '/free-companies' },
+      ],
+      matchPrefixes: ['/profiles', '/venues', '/communities', '/free-companies'],
+    },
     {
       key: 'roleplay',
       label: 'Rollenspiel',
       icon: 'theater_comedy',
       links: [
-        { label: 'Charaktere', to: '/profiles' },
-        { label: 'Geschichten', to: '/stories' },
+        { label: 'Eventkalender', to: '/calendar' },
         { label: 'Anschlagbrett', to: '/noticeboard' },
+        { label: 'Geschichten', to: '/stories' },
       ],
-      matchPrefixes: ['/profiles', '/stories', '/story', '/noticeboard'],
+      matchPrefixes: ['/calendar', '/event', '/event-calendar', '/noticeboard', '/stories', '/story'],
     },
     {
-      key: 'places',
-      label: 'Orte & Gruppen',
-      icon: 'groups',
-      links: [
-        { label: 'Treffpunkte', to: '/venues' },
-        { label: 'Communities', to: '/communities' },
-        { label: 'Freie Gesellschaften', to: '/free-companies' },
-      ],
-      matchPrefixes: ['/venues', '/communities', '/free-companies'],
-    },
-    {
-      key: 'gallery',
+      key: 'media',
       label: 'Medien',
       icon: 'photo_library',
       links: [
@@ -229,31 +278,35 @@ export default class MainLayout extends Vue {
       matchPrefixes: ['/gallery'],
     },
     {
-      key: 'info',
+      key: 'knowledge',
       label: 'Wissenswertes',
       icon: 'info',
       links: [
-        { label: 'Über uns', to: '/about' },
-        { label: 'FAQ', to: '/faq' },
+        { label: 'Neueste Änderungen', to: '/changes' },
         { label: 'Regeln', to: '/rules' },
+        { label: 'FAQ', to: '/faq' },
+        { label: 'Anfängerguide', to: '/beginner-guide' },
+        { label: 'Über uns', to: '/about' },
       ],
-      matchPrefixes: ['/about', '/faq', '/rules'],
+      matchPrefixes: ['/changes', '/rules', '/faq', '/beginner-guide', '/about'],
     },
   ];
 
   leftDrawerOpen = false;
   rightDrawerOpen = false;
   telemetryConsentDialogShown = false;
+  hasNewChanges = false;
   menuState: Record<NavGroupKey, boolean> = {
+    database: false,
     roleplay: false,
-    places: false,
-    gallery: false,
-    info: false,
+    media: false,
+    knowledge: false,
   };
   private menuCloseTimers: Partial<Record<NavGroupKey, ReturnType<typeof setTimeout>>> = {};
 
   mounted() {
     void this.promptTelemetryConsentIfRequired();
+    void this.refreshChangesBadge();
   }
 
   toggleLeftDrawer() {
@@ -306,6 +359,54 @@ export default class MainLayout extends Vue {
     }
 
     return group.matchPrefixes.some(prefix => this.matchesRoutePrefix(path, prefix));
+  }
+
+  showGroupNewBadge(groupKey: NavGroupKey): boolean {
+    return groupKey === 'knowledge' && this.hasNewChanges && !this.isOnChangesPage;
+  }
+
+  showLinkNewBadge(linkTo: string): boolean {
+    return linkTo === '/changes' && this.hasNewChanges && !this.isOnChangesPage;
+  }
+
+  onRoutePathChanged() {
+    if (this.isOnChangesPage) {
+      this.hasNewChanges = false;
+      return;
+    }
+
+    void this.refreshChangesBadge();
+  }
+
+  async refreshChangesBadge() {
+    if (this.isOnChangesPage) {
+      this.hasNewChanges = false;
+      return;
+    }
+
+    const value = LocalStorage.getItem(this.CHANGES_LAST_VISIT_KEY);
+    const lastVisitedAt = typeof value === 'number' ? value : Number(value);
+
+    if (!Number.isFinite(lastVisitedAt) || lastVisitedAt <= 0) {
+      this.hasNewChanges = false;
+      return;
+    }
+
+    try {
+      const api = this.$api as ChangesApiClient;
+      const result = await api.changes.getChanges({
+        since: lastVisitedAt,
+        offset: 0,
+        limit: 1,
+      });
+      this.hasNewChanges = result.total > 0;
+    } catch (e) {
+      this.hasNewChanges = false;
+    }
+  }
+
+  get isOnChangesPage(): boolean {
+    return this.matchesRoutePrefix(this.$route.path, '/changes');
   }
 
   private matchesRoutePrefix(path: string, prefix: string) {
@@ -789,7 +890,7 @@ $color-dark: #1b1b1b;
   cursor: pointer;
 }
 
-.layout__nav-links > :first-child .layout__nav-dropdown-trigger {
+.layout__nav-links > :first-child {
   padding-left: 48px;
   margin-left: 0;
 }
@@ -835,6 +936,10 @@ $color-dark: #1b1b1b;
 .layout__nav-dropdown-trigger {
   border: 0;
   outline: 0;
+}
+
+.layout__nav-link,
+.layout__nav-dropdown-trigger {
   min-width: 176px;
 }
 
@@ -871,11 +976,33 @@ $color-dark: #1b1b1b;
 .layout__nav-menu-item {
   color: rgba(232, 212, 176, 0.9);
   min-height: 38px;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.07em;
   font-size: 0.74rem;
   font-weight: 600;
   text-transform: uppercase;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.layout__nav-badge {
+  margin: 0 8px 0 6px;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.layout__nav-menu-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.layout__nav-menu-badge {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .layout__nav-menu-item::before {

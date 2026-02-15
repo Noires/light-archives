@@ -60,6 +60,12 @@ export class Event extends BasicEntity {
     nullable: false,
     default: '',
   })
+  linkText: string;
+
+  @Column({
+    nullable: false,
+    default: '',
+  })
   contact: string;
 
   @Column({

@@ -1,7 +1,7 @@
 <template>
   <q-page class="page-image">
 		<section v-if="image.mine" class="edit-bar">
-			<router-link :to="`/edit-image/${image.id}`">Bild bearbeiten</router-link>
+			<q-btn flat color="secondary" label="Bild bearbeiten" :to="`/edit-image/${image.id}`" />
 			<q-btn flat color="negative" label="Bild löschen" @click="onDeleteClick" />
 		</section>
 		<h2 class="regular-header-font">{{image.title}}</h2>

@@ -13,7 +13,6 @@
           <span class="page-stories__hero-count-number">{{ pagination.rowsNumber }}</span>
           <span class="page-stories__hero-count-label">Geschichten</span>
         </div>
-        <div class="page-stories__hero-chip">Community · kuratiert</div>
       </div>
     </header>
     <section class="page-stories__content">
@@ -347,15 +346,6 @@ export default class PageStories extends Vue {
 .page-stories__hero-count-label {
   font-size: 0.85rem;
   color: rgba(35, 35, 35, 0.6);
-}
-
-.page-stories__hero-chip {
-  padding: 6px 12px;
-  border-radius: 0;
-  background: rgba(221, 180, 118, 0.2);
-  color: #6b4c21;
-  font-size: 0.8rem;
-  font-weight: 600;
 }
 
 .page-stories__content {

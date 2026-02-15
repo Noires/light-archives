@@ -2,7 +2,7 @@
   <q-page class="page-wiki">
     <template v-if="wikiPage.id">
       <section v-if="canEdit || canDelete" class="edit-bar">
-        <router-link v-if="canEdit" :to="`/edit-wiki-page/${wikiPage.id}`">Wikibeitrag bearbeiten</router-link>
+        <q-btn v-if="canEdit" flat color="secondary" label="Wikibeitrag bearbeiten" :to="`/edit-wiki-page/${wikiPage.id}`" />
         <q-btn v-if="canDelete" flat color="negative" label="Wikibeitrag löschen" @click="onDeleteClick" />
       </section>
       <wiki-page-view :wikiPage="wikiPage" />

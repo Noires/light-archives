@@ -20,6 +20,10 @@ export class EventLocationDto {
 	@IsString()
 	link: string;
 
+	@IsString()
+	@IsOptional()
+	linkText?: string;
+
   @IsInt()
   @IsOptional()
   venueId?: number;

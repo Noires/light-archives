@@ -2,7 +2,7 @@
   <q-page class="page-noticeboardItem">
 		<template v-if="noticeboardItem.id">
 			<section v-if="noticeboardItem.mine" class="edit-bar">
-				<router-link :to="`/edit-noticeboard-item/${noticeboardItem.id}`">Aushang bearbeiten</router-link>
+				<q-btn flat color="secondary" label="Aushang bearbeiten" :to="`/edit-noticeboard-item/${noticeboardItem.id}`" />
 				<q-btn flat color="negative" label="Aushang löschen" @click="onDeleteClick" />
 			</section>
 			<noticeboard-item-view :noticeboard-item="noticeboardItem" />

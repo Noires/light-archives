@@ -2,7 +2,7 @@
   <q-page class="page-story">
 		<template v-if="story.id">
 			<section v-if="story.mine" class="edit-bar">
-				<router-link :to="`/edit-story/${story.id}`">Geschichte bearbeiten</router-link>
+				<q-btn flat color="secondary" label="Geschichte bearbeiten" :to="`/edit-story/${story.id}`" />
 				<q-btn flat color="negative" label="Geschichte löschen" @click="onDeleteClick" />
 			</section>
 			<story-view :story="story" />

@@ -2,7 +2,7 @@
   <q-page class="page-venue">
 		<template v-if="venue.id">
 			<section v-if="venue.mine" class="edit-bar">
-				<router-link :to="`/edit-venue/${venue.id}`">Treffpunkt bearbeiten</router-link>
+				<q-btn flat color="secondary" label="Treffpunkt bearbeiten" :to="`/edit-venue/${venue.id}`" />
 				<q-btn flat color="negative" label="Treffpunkt löschen" @click="onDeleteClick" />
 			</section>
 			<venue-profile :venue="venue" :planned-events="plannedEvents" />

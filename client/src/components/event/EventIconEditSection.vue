@@ -2,7 +2,7 @@
   <section class="event-icon-edit-section">
     <h6>Icon</h6>
     <p class="text-caption">
-      Optionales Icon für den Kalender. Empfohlen: quadratisch (z.B. 32x32).
+      Optionales Icon für den Kalender. Empfohlen: quadratisch (z.B. 128x128), damit es in allen Ansichten scharf wirkt.
     </p>
     <q-responsive v-if="!modelValue" class="event-icon-edit-section__placeholder" :ratio="1">
       <div class="event-icon-edit-section__placeholder-content">

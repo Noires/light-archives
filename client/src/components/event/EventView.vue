@@ -61,7 +61,7 @@
         <div class="event-view__meta-body">
           <div class="event-view__meta-label">Link</div>
           <div class="event-view__meta-value">
-            <a :href="event.link" target="_blank" rel="noopener">Link oeffnen</a>
+            <a :href="event.link" target="_blank" rel="noopener">{{ linkLabel(event.link, event.linkText) }}</a>
           </div>
         </div>
       </div>
@@ -123,7 +123,7 @@
           </div>
           <div v-if="location.link" class="event-view__location-row">
             <q-icon name="link" />
-            <a :href="location.link" target="_blank" rel="noopener">{{ location.link }}</a>
+            <a :href="location.link" target="_blank" rel="noopener">{{ linkLabel(location.link, location.linkText) }}</a>
           </div>
         </div>
       </div>
@@ -171,7 +171,7 @@ class Props {
 })
 export default class EventView extends Vue.with(Props) {
   get eventIconUrl(): string {
-    return this.event.icon?.thumbUrl || this.event.icon?.url || '';
+    return this.event.icon?.url || this.event.icon?.thumbUrl || '';
   }
 
   get eventTypeLabel(): string {
@@ -235,6 +235,10 @@ export default class EventView extends Vue.with(Props) {
 
   locationTitle(location: EventLocationDto, index: number): string {
     return location.name || location.address || location.server || `Standort ${index + 1}`;
+  }
+
+  linkLabel(link: string, linkText?: string): string {
+    return (linkText || '').trim() || link;
   }
 
   private hasHtmlContent(content: string | null | undefined): boolean {

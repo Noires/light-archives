@@ -56,6 +56,24 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
+    path: '/changes',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/Changes.vue') }],
+    meta: {
+      title: 'Neueste Änderungen'
+    },
+  },
+
+  {
+    path: '/beginner-guide',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/BeginnerGuide.vue') }],
+    meta: {
+      title: 'Anfängerguide'
+    },
+  },
+
+  {
     path: '/test-editor',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/TestEditor.vue') }],

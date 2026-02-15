@@ -65,11 +65,19 @@
         </div>
         <div
           class="step-select-image__file-size"
-          :class="{ 'text-negative': exceedsMaxFileSize }"
+          :class="{ 'text-negative': exceedsMaxFileSize && !allowAspectRatioCrop }"
         >
-          <q-icon v-if="exceedsMaxFileSize" name="error" />
-          File size: {{ fileSize }} (maximum: {{ maxFileSize }})
+          <q-icon v-if="exceedsMaxFileSize && !allowAspectRatioCrop" name="error" />
+          <template v-if="allowAspectRatioCrop">
+            Originalgröße: {{ fileSize }} (finale Größe wird nach dem Zuschneiden berechnet)
+          </template>
+          <template v-else>
+            Dateigröße: {{ fileSize }} (Maximum: {{ maxFileSize }})
+          </template>
         </div>
+      </section>
+      <section v-if="allowAspectRatioCrop && exceedsMaxFileSize" class="text-caption">
+        Du kannst trotzdem fortfahren. Für Banner zählt die Größe nach dem Zuschnitt.
       </section>
       <section v-if="canChooseFormat" class="text-caption">
         PNG-Dateien sind größer, erhalten aber die ursprünglichen Pixel. JPEG-Dateien
@@ -211,6 +219,25 @@ export default class StepSelectImage extends Vue.with(Props) {
     image: HTMLImageElement,
     format: ImageFormat | null
   ): Promise<ConversionResult> {
+    if (this.allowAspectRatioCrop) {
+      const originalFormat =
+        file.type === 'image/png'
+          ? ImageFormat.PNG
+          : file.type === 'image/jpeg'
+            ? ImageFormat.JPEG
+            : null;
+      const newFormat =
+        format || (originalFormat === ImageFormat.JPEG ? ImageFormat.JPEG : ImageFormat.PNG);
+
+      return {
+        blob: file,
+        filename: file.name,
+        originalFormat,
+        newFormat,
+        hasTransparency: false,
+      };
+    }
+
     if (file.type === 'image/jpeg') {
       return {
         blob: file,

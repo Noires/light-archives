@@ -2,6 +2,7 @@ import { MainPageContentDto } from '@app/shared/dto/main-page/main-page-content.
 import { NewsDto } from '@app/shared/dto/news/news.dto';
 import APITransport from './api-transport';
 import CharactersAPI from './characters-api';
+import ChangesAPI from './changes-api';
 import CommunitiesAPI from './communities-api';
 import ContentNotesAPI from './content-notes-api';
 import EventsAPI from './events-api';
@@ -32,6 +33,7 @@ export default class API {
 
   readonly user = new UserAPI(this.transport);
   readonly characters = new CharactersAPI(this.transport);
+  readonly changes = new ChangesAPI(this.transport);
   readonly contentNotes = new ContentNotesAPI(this.transport);
   readonly communities = new CommunitiesAPI(this.transport);
   readonly events = new EventsAPI(this.transport);
