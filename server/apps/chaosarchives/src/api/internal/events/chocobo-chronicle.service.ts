@@ -43,7 +43,7 @@ export class ChocoboChronicleService {
 				link: event.url,
 				locations: this.parseLocations(event.description),
       contentNotes: [],
-			eventType: EventType.GENERAL,
+			eventType: EventType.RP,
 				source: EventSource.CHOCOBO_CHRONICLE,
 			})).filter(event => event.startDateTime >= today && this.isPublicEvent(event));
 	}

@@ -58,11 +58,32 @@
       <section id="neueste-aenderungen" class="page-index__panel page-index__panel--wide">
         <div class="page-index__panel-header">
           <h5>Neueste Änderungen</h5>
-          <span v-if="!content.newsUpToDate" class="page-index__panel-meta">Wird aktualisiert …</span>
+          <router-link class="page-index__panel-link" to="/changes">Komplette Liste</router-link>
         </div>
         <div class="page-index__panel-content page-index__panel-content--flush">
-          <news-timeline v-if="content.news.length" :news="content.news" />
-          <div v-else class="page-index__empty page-index__empty--padded">Noch keine News verfügbar.</div>
+          <q-list v-if="recentChanges.length" class="page-index__changes-list">
+            <q-item
+              v-for="entry in recentChanges"
+              :key="entry.id"
+              clickable
+              :to="entry.link"
+              class="page-index__changes-item"
+            >
+              <q-item-section>
+                <q-item-label class="page-index__changes-title">
+                  {{ entry.title }}
+                </q-item-label>
+                <q-item-label caption class="page-index__changes-meta">
+                  {{ changeAreaLabel(entry.area) }} · {{ changeTypeLabel(entry.type) }}
+                  <template v-if="entry.author"> · von {{ entry.author }}</template>
+                </q-item-label>
+              </q-item-section>
+              <q-item-section side class="page-index__changes-time">
+                {{ $display.relativeTime(entry.happenedAt) }}
+              </q-item-section>
+            </q-item>
+          </q-list>
+          <div v-else class="page-index__empty page-index__empty--padded">Noch keine Änderungen verfügbar.</div>
         </div>
       </section>
 
@@ -195,9 +216,11 @@
 </template>
 
 <script lang="ts">
+import { ChangeItemDto } from '@app/shared/dto/changes/change-item.dto';
 import { MainPageContentDto } from '@app/shared/dto/main-page/main-page-content.dto';
+import { ChangeArea } from '@app/shared/enums/change-area.enum';
+import { ChangeType } from '@app/shared/enums/change-type.enum';
 import ThumbGallery from 'components/images/ThumbGallery.vue';
-import NewsTimeline from 'components/mainpage/NewsTimeline.vue';
 import NoticeboardItemList from 'components/noticeboard/NoticeboardItemList.vue';
 import VenueList from 'components/venues/VenueList.vue';
 import { useApi } from 'src/boot/axios';
@@ -207,10 +230,22 @@ import FreeCompanyNameList from 'src/components/free-company/FreeCompanyNameList
 import { Options, Vue } from 'vue-class-component';
 
 const $api = useApi();
+const RECENT_CHANGES_LIMIT = 6;
 
-async function load(): Promise<MainPageContentDto> {
+async function load(): Promise<{ content: MainPageContentDto; recentChanges: ChangeItemDto[] }> {
   try {
-    return await $api.getMainPageContent();
+    const [content, recentChangesResult] = await Promise.all([
+      $api.getMainPageContent(),
+      $api.changes.getChanges({
+        offset: 0,
+        limit: RECENT_CHANGES_LIMIT,
+      }),
+    ]);
+
+    return {
+      content,
+      recentChanges: recentChangesResult.data,
+    };
   } catch (e) {
     console.log(e);
     notifyError('Hauptseite konnte nicht abgerufen werden');
@@ -221,7 +256,6 @@ async function load(): Promise<MainPageContentDto> {
 @Options({
   name: 'PageIndex',
   components: {
-    NewsTimeline,
     FreeCompanyNameList,
     NoticeboardItemList,
     VenueList,
@@ -229,8 +263,8 @@ async function load(): Promise<MainPageContentDto> {
     ThumbGallery,
   },
   async beforeRouteEnter(_, __, next) {
-    const content = await load();
-    next(vm => (vm as PageIndex).setContent(content));
+    const { content, recentChanges } = await load();
+    next(vm => (vm as PageIndex).setContent(content, recentChanges));
   }
 })
 export default class PageIndex extends Vue {
@@ -246,20 +280,13 @@ export default class PageIndex extends Vue {
     newScreenshots: [],
     newNoticeboardItems: [],
   };
+  recentChanges: ChangeItemDto[] = [];
 
   loaded = false;
 
-  setContent(content: MainPageContentDto) {
+  setContent(content: MainPageContentDto, recentChanges: ChangeItemDto[]) {
     this.content = content;
-
-    if (!this.content.newsUpToDate) {
-      // Update news later without blocking page load
-      void this.updateNews();
-    }
-  }
-
-  async updateNews() {
-    this.content.news = await this.$api.getUpdatedNews();
+    this.recentChanges = recentChanges;
   }
 
   get isLoggedIn() {
@@ -288,6 +315,25 @@ export default class PageIndex extends Vue {
 
   getProfileLink(profile: MainPageContentDto['newProfiles'][number]) {
     return `/${profile.server}/${profile.name.replace(/ /g, '_')}`;
+  }
+
+  changeAreaLabel(area: ChangeArea): string {
+    const labels: Record<ChangeArea, string> = {
+      [ChangeArea.PROFILE]: 'Profile',
+      [ChangeArea.VENUE]: 'Treffpunkte',
+      [ChangeArea.COMMUNITY]: 'Communities',
+      [ChangeArea.FREE_COMPANY]: 'Freie Gesellschaften',
+      [ChangeArea.STORY]: 'Geschichten',
+      [ChangeArea.NOTICEBOARD]: 'Anschlagbrett',
+      [ChangeArea.EVENT]: 'Events',
+      [ChangeArea.MEDIA]: 'Medien',
+    };
+
+    return labels[area];
+  }
+
+  changeTypeLabel(type: ChangeType): string {
+    return type === ChangeType.CREATED ? 'Neu' : 'Aktualisiert';
   }
 
   loginWithDiscord() {
@@ -542,6 +588,37 @@ export default class PageIndex extends Vue {
   transform: scale(1.05);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   z-index: 2;
+}
+
+.page-index__changes-list {
+  padding: 0;
+}
+
+.page-index__changes-item {
+  border-bottom: 1px solid rgba(221, 180, 118, 0.18);
+  min-height: 64px;
+}
+
+.page-index__changes-item:last-child {
+  border-bottom: 0;
+}
+
+.page-index__changes-title {
+  font-family: $header-font;
+  font-weight: 600;
+  color: #1f2c38;
+  margin-bottom: 2px;
+}
+
+.page-index__changes-meta {
+  color: rgba(35, 35, 35, 0.64);
+  font-size: 0.82rem;
+}
+
+.page-index__changes-time {
+  color: rgba(35, 35, 35, 0.58);
+  font-size: 0.8rem;
+  white-space: nowrap;
 }
 
 .page-index__stories-grid {

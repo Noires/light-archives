@@ -117,9 +117,9 @@ export class CrescentMoonPublishingService {
 					locations,
 					link: href,
 					startDateTime: date!.toMillis(),
-					endDateTime: null,
+          endDateTime: null,
           contentNotes: [],
-          eventType: EventType.GENERAL,
+          eventType: EventType.RP,
 					source: EventSource.CRESCENT_MOON_PUBLISHING,
 				};
 			} catch (e) {

@@ -535,7 +535,7 @@ export default class CalendarSidebarWidget extends Vue {
   }
 
   eventTypeLabel(event: EventSummaryDto): string {
-    return EventTypeLabels[event.eventType] || EventTypeLabels[EventType.GENERAL];
+    return EventTypeLabels[event.eventType] || EventTypeLabels[EventType.RP];
   }
 }
 </script>

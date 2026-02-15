@@ -128,7 +128,7 @@ export class EventsService {
     event.linkText = eventDto.link ? (eventDto.linkText || '') : '';
     event.contact = eventDto.contact;
     event.recurring = eventDto.recurring;
-    event.eventType = eventDto.eventType || EventType.GENERAL;
+    event.eventType = eventDto.eventType || EventType.RP;
     if (eventDto.contentNotes !== undefined) {
       event.contentNotes = eventDto.contentNotes
         .filter(note => note !== '')
@@ -496,7 +496,7 @@ export class EventsService {
       event.startDateTime = new Date(eventDto.startDateTime);
       event.endDateTime = eventDto.endDateTime ? new Date(eventDto.endDateTime) : null;
       event.source = eventDto.source;
-      event.eventType = EventType.GENERAL;
+      event.eventType = EventType.RP;
       event.externalSourceLink = eventDto.link;
       event.linkText = '';
 
@@ -649,7 +649,7 @@ export class EventsService {
       link: event.externalSourceLink || '',
       linkText: event.linkText || '',
       source: event.source,
-      eventType: event.eventType || EventType.GENERAL,
+      eventType: event.eventType || EventType.RP,
       recurring: event.recurring,
       contentNotes: (event.contentNotes || []).map((note) => note.name),
       locations: event.locations.map((location) => ({
@@ -693,7 +693,7 @@ export class EventsService {
       link: event.externalSourceLink || event.link,
       linkText: event.linkText || '',
       contact: event.contact,
-      eventType: event.eventType || EventType.GENERAL,
+      eventType: event.eventType || EventType.RP,
       contentNotes: (event.contentNotes || []).map((note) => note.name),
       banner: !banner
         ? null

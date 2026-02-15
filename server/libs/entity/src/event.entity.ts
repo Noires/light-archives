@@ -85,7 +85,7 @@ export class Event extends BasicEntity {
     type: 'enum',
     enum: EventType,
     nullable: false,
-    default: EventType.GENERAL,
+    default: EventType.RP,
   })
   eventType: EventType;
 

@@ -359,7 +359,7 @@ export default class PageEditEvent extends Vue {
 			this.eventId = content.eventId;
 			this.eventBackup = new EventEditDto(content.event);
       this.eventBackup.contentNotes = this.eventBackup.contentNotes || [];
-      this.eventBackup.eventType = this.eventBackup.eventType || EventType.GENERAL;
+      this.eventBackup.eventType = this.eventBackup.eventType || EventType.RP;
       this.eventBackup.discordBanner = this.eventBackup.discordBanner || null;
       this.eventBackup.linkText = this.eventBackup.linkText || '';
       this.eventBackup.locations = (this.eventBackup.locations || []).map((location) => new EventLocationDto({
@@ -379,7 +379,7 @@ export default class PageEditEvent extends Vue {
         linkText: '',
         contact: '',
         recurring: false,
-        eventType: EventType.GENERAL,
+        eventType: EventType.RP,
         banner: null,
         discordBanner: null,
         icon: null,

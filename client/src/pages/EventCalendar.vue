@@ -695,7 +695,7 @@ export default class PageEventCalendar extends Vue {
   }
 
   eventTypeLabel(event: EventSummaryDto): string {
-    return EventTypeLabels[event.eventType] || EventTypeLabels[EventType.GENERAL];
+    return EventTypeLabels[event.eventType] || EventTypeLabels[EventType.RP];
   }
 
   get year() {
