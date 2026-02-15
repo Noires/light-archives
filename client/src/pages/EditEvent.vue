@@ -19,16 +19,29 @@
                 $rules.required('Dieses Feld ist erforderlich.'),
               ]"
             />
-            <q-select
-              v-model="event.eventType"
-              label="Event-Typ *"
-              :options="eventTypeOptions"
-              emit-value
-              map-options
-              :rules="[
-                $rules.required('Dieses Feld ist erforderlich.'),
-              ]"
-            />
+            <div class="page-edit-event__select-group">
+              <div class="page-edit-event__select-title">Event-Typ *</div>
+              <q-option-group
+                v-model="event.eventType"
+                :options="eventTypeOptions"
+                type="radio"
+                color="secondary"
+                :rules="[
+                  $rules.required('Dieses Feld ist erforderlich.'),
+                ]"
+              />
+            </div>
+            <div class="page-edit-event__select-group">
+              <div class="page-edit-event__select-title">18+</div>
+              <q-btn-toggle
+                v-model="event.adultOnly"
+                :options="adultOnlyOptions"
+                no-caps
+                unelevated
+                toggle-color="secondary"
+                class="page-edit-event__adult-toggle"
+              />
+            </div>
             <q-date-time-picker
               v-if="startDateTimeVisible"
               label="Datum/Uhrzeit Beginn *"
@@ -55,17 +68,15 @@
               v-model="event.recurring"
               label="Dies ist ein wiederkehrendes Event."
             />
-            <h6>Inhaltswarnungen</h6>
-            <Multiselect
-              v-model="event.contentNotes"
-              :options="contentNoteOptions"
-              mode="tags"
-              :searchable="true"
-              :closeOnSelect="false"
-              valueProp="value"
-              track-by="label"
-              label="label"
-            />
+            <div class="page-edit-event__select-group">
+              <div class="page-edit-event__select-title">Inhaltswarnungen</div>
+              <q-option-group
+                v-model="event.contentNotes"
+                :options="contentNoteOptions"
+                type="checkbox"
+                color="secondary"
+              />
+            </div>
           <template v-for="(location, index) in event.locations" :key="index">
               <h6>Standort</h6>
               <q-select
@@ -209,7 +220,6 @@
 </template>
 
 <script lang="ts">
-import Multiselect from '@vueform/multiselect';
 import { EventAnnouncementDto } from '@app/shared/dto/events/event-announcement.dto';
 import { EventEditDto } from '@app/shared/dto/events/event-edit.dto';
 import { EventLocationDto } from '@app/shared/dto/events/event-location.dto';
@@ -284,7 +294,6 @@ async function load(params: RouteParams): Promise<{
     EventView,
     EventAnnouncementEditor,
     WorldSelect,
-    Multiselect,
   },
 	async beforeRouteEnter(to, _, next) {
 		const content = await load(to.params);
@@ -330,6 +339,10 @@ export default class PageEditEvent extends Vue {
   eventBackup = new EventEditDto();
   contentNoteOptions: { label: string; value: string }[] = [];
   readonly eventTypeOptions = EventTypeOptions;
+  readonly adultOnlyOptions = [
+    { label: 'Nein', value: false },
+    { label: 'Ja', value: true },
+  ];
   readonly minDiscordBannerAspectRatio = SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO;
   venueOptions: VenueOption[][] = [];
 
@@ -358,8 +371,7 @@ export default class PageEditEvent extends Vue {
 		if (content.event) {
 			this.eventId = content.eventId;
 			this.eventBackup = new EventEditDto(content.event);
-      this.eventBackup.contentNotes = this.eventBackup.contentNotes || [];
-      this.eventBackup.eventType = this.eventBackup.eventType || EventType.RP;
+      this.normalizeEvent(this.eventBackup);
       this.eventBackup.discordBanner = this.eventBackup.discordBanner || null;
       this.eventBackup.linkText = this.eventBackup.linkText || '';
       this.eventBackup.locations = (this.eventBackup.locations || []).map((location) => new EventLocationDto({
@@ -380,6 +392,7 @@ export default class PageEditEvent extends Vue {
         contact: '',
         recurring: false,
         eventType: EventType.RP,
+        adultOnly: false,
         banner: null,
         discordBanner: null,
         icon: null,
@@ -404,8 +417,19 @@ export default class PageEditEvent extends Vue {
 
     this.loaded = true;
     this.event = new EventEditDto(this.eventBackup);
+    this.normalizeEvent(this.event);
     this.startDateTime = this.fromMillis(this.event.startDateTime);
     this.endDateTime = this.fromMillis(this.event.endDateTime);
+  }
+
+  private normalizeEvent(target: EventEditDto) {
+    target.contentNotes = target.contentNotes || [];
+    if (target.eventType === EventType.ADULT) {
+      target.eventType = EventType.RP;
+      target.adultOnly = true;
+    }
+    target.eventType = target.eventType || EventType.RP;
+    target.adultOnly = target.adultOnly === true;
   }
 
   private fromMillis(value: number|null): string|null {
@@ -656,10 +680,12 @@ export default class PageEditEvent extends Vue {
         }
         const result = await this.$api.events.createEvent(this.event, this.selectedCharacterId);
         this.event = new EventEditDto(result);
+        this.normalizeEvent(this.event);
         this.eventId = result.id;
         void this.$router.replace(`/edit-event/${result.id}`);
       } else {
         this.event = new EventEditDto(await this.$api.events.updateEvent(this.eventId, this.event));
+        this.normalizeEvent(this.event);
       }
 
       this.eventBackup = new EventEditDto(this.event);
@@ -731,6 +757,30 @@ type VenueOption = {
 
 .page-edit-event__preview {
   margin-bottom: 24px;
+}
+
+.page-edit-event__select-group {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border: 1px solid rgba(221, 180, 118, 0.25);
+  background: rgba(249, 247, 242, 0.95);
+}
+
+.page-edit-event__select-title {
+  margin-bottom: 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: rgba(35, 35, 35, 0.7);
+}
+
+.page-edit-event__adult-toggle {
+  width: 100%;
+}
+
+.page-edit-event__adult-toggle .q-btn {
+  flex: 1 1 0;
 }
 
 .page-edit-event__button-bar {

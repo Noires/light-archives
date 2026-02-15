@@ -128,7 +128,9 @@ export class EventsService {
     event.linkText = eventDto.link ? (eventDto.linkText || '') : '';
     event.contact = eventDto.contact;
     event.recurring = eventDto.recurring;
-    event.eventType = eventDto.eventType || EventType.RP;
+    const normalizedEventType = this.normalizeEventType(eventDto.eventType);
+    event.eventType = normalizedEventType;
+    event.adultOnly = eventDto.adultOnly ?? (this.isLegacyAdultType(eventDto.eventType) || event.adultOnly || false);
     if (eventDto.contentNotes !== undefined) {
       event.contentNotes = eventDto.contentNotes
         .filter(note => note !== '')
@@ -497,6 +499,7 @@ export class EventsService {
       event.endDateTime = eventDto.endDateTime ? new Date(eventDto.endDateTime) : null;
       event.source = eventDto.source;
       event.eventType = EventType.RP;
+      event.adultOnly = false;
       event.externalSourceLink = eventDto.link;
       event.linkText = '';
 
@@ -625,8 +628,25 @@ export class EventsService {
     return Promise.all(events.map((event) => this.toEventSummaryDto(event)));
   }
 
+  private normalizeEventType(eventType?: EventType | null): EventType {
+    if (!eventType || this.isLegacyAdultType(eventType)) {
+      return EventType.RP;
+    }
+    return eventType;
+  }
+
+  private isLegacyAdultType(eventType?: EventType | null): boolean {
+    return eventType === EventType.ADULT;
+  }
+
+  private resolveAdultOnly(event: Event): boolean {
+    return event.adultOnly || this.isLegacyAdultType(event.eventType);
+  }
+
   private async toEventSummaryDto(event: Event): Promise<EventSummaryDto> {
     const icon = await event.icon;
+    const eventType = this.normalizeEventType(event.eventType);
+    const adultOnly = this.resolveAdultOnly(event);
 
     if (icon) {
       await this.imagesService.ensureIconThumb(icon);
@@ -649,7 +669,8 @@ export class EventsService {
       link: event.externalSourceLink || '',
       linkText: event.linkText || '',
       source: event.source,
-      eventType: event.eventType || EventType.RP,
+      eventType,
+      adultOnly,
       recurring: event.recurring,
       contentNotes: (event.contentNotes || []).map((note) => note.name),
       locations: event.locations.map((location) => ({
@@ -669,6 +690,8 @@ export class EventsService {
     const banner = await event.banner;
     const discordBanner = await event.discordBanner;
     const icon = await event.icon;
+    const eventType = this.normalizeEventType(event.eventType);
+    const adultOnly = this.resolveAdultOnly(event);
     let announcements: EventAnnouncement[] = [];
     let images: ImageSummaryDto[] = [];
 
@@ -693,7 +716,8 @@ export class EventsService {
       link: event.externalSourceLink || event.link,
       linkText: event.linkText || '',
       contact: event.contact,
-      eventType: event.eventType || EventType.RP,
+      eventType,
+      adultOnly,
       contentNotes: (event.contentNotes || []).map((note) => note.name),
       banner: !banner
         ? null

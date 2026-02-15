@@ -51,6 +51,10 @@ export abstract class BaseEventDto {
 	@IsOptional()
 	eventType: EventType;
 
+	@IsBoolean()
+	@IsOptional()
+	adultOnly?: boolean;
+
 	@IsString({ each: true })
 	@IsOptional()
 	contentNotes: string[];

@@ -93,6 +93,12 @@ export class Event extends BasicEntity {
     nullable: false,
     default: false,
   })
+  adultOnly: boolean;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
   hidden: boolean;
 
   @Column({

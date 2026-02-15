@@ -18,29 +18,28 @@
               $rules.required('Dieses Feld ist erforderlich.'),
             ]"
           />
-          <div class="page-edit-story__type-label"><label>Art der Geschichte:</label></div>
-          <q-option-group
-            v-model="story.type"
-            label="type"
-            :options="typeOptions"
-          />
+          <div class="page-edit-story__select-group">
+            <div class="page-edit-story__select-title">Art der Geschichte</div>
+            <q-option-group
+              v-model="story.type"
+              label="type"
+              :options="typeOptions"
+            />
+          </div>
           <q-input
             :model-value="tags"
             @update:model-value="onTagsChanged"
             label="Schlagworte (mit Komma getrennt)"
           />
-          <h6>Inhaltswarnungen</h6>
-          <Multiselect
-            v-model="story.contentNotes"
-            :options="contentNoteOptions"
-            mode="tags"
-            :searchable="true"
-            :closeOnSelect="false"
-            valueProp="value"
-            track-by="label"
-            label="label"
-            class="page-edit-story__content-notes"
-          />
+          <div class="page-edit-story__select-group">
+            <div class="page-edit-story__select-title">Inhaltswarnungen</div>
+            <q-option-group
+              v-model="story.contentNotes"
+              :options="contentNoteOptions"
+              type="checkbox"
+              color="secondary"
+            />
+          </div>
           <h6>Inhalt *</h6>
           <html-editor v-model="story.content" />
         </template>
@@ -87,8 +86,6 @@
 </template>
 
 <script lang="ts">
-
-import Multiselect from '@vueform/multiselect'
 import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import { StoryType } from '@app/shared/enums/story-type.enum';
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
@@ -105,7 +102,6 @@ import { RouteParams } from 'vue-router';
     CharacterSelector,
     HtmlEditor,
     StoryView,
-    Multiselect
   },
   beforeRouteEnter(to, _, next) {
     next((vm) => (vm as PageEditStory).load(to.params));
@@ -139,7 +135,7 @@ export default class PageEditStory extends Vue {
   private async load(params: RouteParams) {
     const contentNotes = await this.$api.contentNotes.getContentNotes();
     this.contentNoteOptions = contentNotes.map((contentNote) => ({
-      label: (ContentNoteTexts as {[key:string]: string})[contentNote.name],
+      label: (ContentNoteTexts as {[key:string]: string})[contentNote.name] || contentNote.name,
       value: contentNote.name
     }));
 
@@ -227,8 +223,6 @@ export default class PageEditStory extends Vue {
 }
 </script>
 
-<style src="@vueform/multiselect/themes/default.css"></style>
-
 <style lang="scss">
 .page-edit-story__form-controls {
   max-width: 500px;
@@ -251,11 +245,20 @@ export default class PageEditStory extends Vue {
   font-family: $header-font;
 }
 
-.page-edit-story__type-label {
+.page-edit-story__select-group {
   margin-top: 12px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(221, 180, 118, 0.25);
+  background: rgba(249, 247, 242, 0.95);
 }
 
-.page-edit-story__content-notes {
+.page-edit-story__select-title {
   margin-bottom: 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: rgba(35, 35, 35, 0.7);
 }
 </style>

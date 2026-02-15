@@ -13,6 +13,7 @@ export interface EventSummaryDto {
   linkText?: string;
 	source: EventSource;
 	eventType: EventType;
+  adultOnly?: boolean;
   recurring: boolean;
   locations: EventLocationDto[];
   contentNotes: string[];
