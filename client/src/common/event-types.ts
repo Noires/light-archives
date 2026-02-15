@@ -1,49 +1,70 @@
 import { EventType } from '@app/shared/enums/event-type.enum';
 
-export const EventTypeLabels: Record<EventType, string> = {
-  [EventType.GENERAL]: 'Offenes Rollenspiel',
-  [EventType.TAVERN]: 'Taverne / Kneipe',
-  [EventType.BAR_LOUNGE]: 'Bar / Lounge',
-  [EventType.CLUB]: 'Club / Tanzlokal',
-  [EventType.RESTAURANT_GASTHAUS]: 'Restaurant / Gasthaus',
-  [EventType.TEAHOUSE]: 'Teehaus',
-  [EventType.HEALERHOUSE]: 'Heilerhaus',
-  [EventType.COMBAT_ARENA]: 'Kampfarena',
-  [EventType.SALES]: 'Verkauf',
-  [EventType.LIBRARY]: 'Bibliothek',
-  [EventType.GALLERY_MUSEUM]: 'Galerie / Museum',
-  [EventType.BATHHOUSE]: 'Badehaus',
-  [EventType.MARKET]: 'Markt',
-  [EventType.ADVENTURERS_GUILD]: 'Abenteurergilde',
-  [EventType.EDUCATION_UNIVERSITY]: 'Ausbildung / Universität',
-  [EventType.RP]: 'Offenes Rollenspiel',
-  [EventType.ADULT]: '18+',
-  [EventType.OTHER]: 'Sonstiges',
+const EventTypeValue = {
+  GENERAL: 'GENERAL' as EventType,
+  TAVERN: 'TAVERN' as EventType,
+  BAR_LOUNGE: 'BAR_LOUNGE' as EventType,
+  CLUB: 'CLUB' as EventType,
+  RESTAURANT_GASTHAUS: 'RESTAURANT_GASTHAUS' as EventType,
+  TEAHOUSE: 'TEAHOUSE' as EventType,
+  HEALERHOUSE: 'HEALERHOUSE' as EventType,
+  COMBAT_ARENA: 'COMBAT_ARENA' as EventType,
+  SALES: 'SALES' as EventType,
+  LIBRARY: 'LIBRARY' as EventType,
+  GALLERY_MUSEUM: 'GALLERY_MUSEUM' as EventType,
+  BATHHOUSE: 'BATHHOUSE' as EventType,
+  MARKET: 'MARKET' as EventType,
+  ADVENTURERS_GUILD: 'ADVENTURERS_GUILD' as EventType,
+  EDUCATION_UNIVERSITY: 'EDUCATION_UNIVERSITY' as EventType,
+  RP: 'RP' as EventType,
+  ADULT: 'ADULT' as EventType,
+  OTHER: 'OTHER' as EventType,
+} as const;
+
+export const EventTypeLabels: Record<string, string> = {
+  [EventTypeValue.GENERAL]: 'Offenes Rollenspiel',
+  [EventTypeValue.TAVERN]: 'Taverne / Kneipe',
+  [EventTypeValue.BAR_LOUNGE]: 'Bar / Lounge',
+  [EventTypeValue.CLUB]: 'Club / Tanzlokal',
+  [EventTypeValue.RESTAURANT_GASTHAUS]: 'Restaurant / Gasthaus',
+  [EventTypeValue.TEAHOUSE]: 'Teehaus',
+  [EventTypeValue.HEALERHOUSE]: 'Heilerhaus',
+  [EventTypeValue.COMBAT_ARENA]: 'Kampfarena',
+  [EventTypeValue.SALES]: 'Verkauf',
+  [EventTypeValue.LIBRARY]: 'Bibliothek',
+  [EventTypeValue.GALLERY_MUSEUM]: 'Galerie / Museum',
+  [EventTypeValue.BATHHOUSE]: 'Badehaus',
+  [EventTypeValue.MARKET]: 'Markt',
+  [EventTypeValue.ADVENTURERS_GUILD]: 'Abenteurergilde',
+  [EventTypeValue.EDUCATION_UNIVERSITY]: 'Ausbildung / Universität',
+  [EventTypeValue.RP]: 'Offenes Rollenspiel',
+  [EventTypeValue.ADULT]: '18+',
+  [EventTypeValue.OTHER]: 'Sonstiges',
 };
 
 export const EventTypeOptions = [
-  { label: EventTypeLabels[EventType.TAVERN], value: EventType.TAVERN },
-  { label: EventTypeLabels[EventType.BAR_LOUNGE], value: EventType.BAR_LOUNGE },
-  { label: EventTypeLabels[EventType.CLUB], value: EventType.CLUB },
-  { label: EventTypeLabels[EventType.RESTAURANT_GASTHAUS], value: EventType.RESTAURANT_GASTHAUS },
-  { label: EventTypeLabels[EventType.TEAHOUSE], value: EventType.TEAHOUSE },
-  { label: EventTypeLabels[EventType.HEALERHOUSE], value: EventType.HEALERHOUSE },
-  { label: EventTypeLabels[EventType.COMBAT_ARENA], value: EventType.COMBAT_ARENA },
-  { label: EventTypeLabels[EventType.SALES], value: EventType.SALES },
-  { label: EventTypeLabels[EventType.LIBRARY], value: EventType.LIBRARY },
-  { label: EventTypeLabels[EventType.GALLERY_MUSEUM], value: EventType.GALLERY_MUSEUM },
-  { label: EventTypeLabels[EventType.BATHHOUSE], value: EventType.BATHHOUSE },
-  { label: EventTypeLabels[EventType.MARKET], value: EventType.MARKET },
-  { label: EventTypeLabels[EventType.ADVENTURERS_GUILD], value: EventType.ADVENTURERS_GUILD },
-  { label: EventTypeLabels[EventType.EDUCATION_UNIVERSITY], value: EventType.EDUCATION_UNIVERSITY },
-  { label: EventTypeLabels[EventType.RP], value: EventType.RP },
-  { label: EventTypeLabels[EventType.OTHER], value: EventType.OTHER },
+  { label: EventTypeLabels[EventTypeValue.TAVERN], value: EventTypeValue.TAVERN },
+  { label: EventTypeLabels[EventTypeValue.BAR_LOUNGE], value: EventTypeValue.BAR_LOUNGE },
+  { label: EventTypeLabels[EventTypeValue.CLUB], value: EventTypeValue.CLUB },
+  { label: EventTypeLabels[EventTypeValue.RESTAURANT_GASTHAUS], value: EventTypeValue.RESTAURANT_GASTHAUS },
+  { label: EventTypeLabels[EventTypeValue.TEAHOUSE], value: EventTypeValue.TEAHOUSE },
+  { label: EventTypeLabels[EventTypeValue.HEALERHOUSE], value: EventTypeValue.HEALERHOUSE },
+  { label: EventTypeLabels[EventTypeValue.COMBAT_ARENA], value: EventTypeValue.COMBAT_ARENA },
+  { label: EventTypeLabels[EventTypeValue.SALES], value: EventTypeValue.SALES },
+  { label: EventTypeLabels[EventTypeValue.LIBRARY], value: EventTypeValue.LIBRARY },
+  { label: EventTypeLabels[EventTypeValue.GALLERY_MUSEUM], value: EventTypeValue.GALLERY_MUSEUM },
+  { label: EventTypeLabels[EventTypeValue.BATHHOUSE], value: EventTypeValue.BATHHOUSE },
+  { label: EventTypeLabels[EventTypeValue.MARKET], value: EventTypeValue.MARKET },
+  { label: EventTypeLabels[EventTypeValue.ADVENTURERS_GUILD], value: EventTypeValue.ADVENTURERS_GUILD },
+  { label: EventTypeLabels[EventTypeValue.EDUCATION_UNIVERSITY], value: EventTypeValue.EDUCATION_UNIVERSITY },
+  { label: EventTypeLabels[EventTypeValue.RP], value: EventTypeValue.RP },
+  { label: EventTypeLabels[EventTypeValue.OTHER], value: EventTypeValue.OTHER },
 ];
 
 export function getEventTypeLabel(type?: EventType | null): string {
   if (!type) {
-    return EventTypeLabels[EventType.RP];
+    return EventTypeLabels[EventTypeValue.RP];
   }
 
-  return EventTypeLabels[type] || EventTypeLabels[EventType.RP];
+  return EventTypeLabels[type] || EventTypeLabels[EventTypeValue.RP];
 }

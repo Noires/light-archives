@@ -217,6 +217,7 @@
 
 <script lang="ts">
 import { ChangeItemDto } from '@app/shared/dto/changes/change-item.dto';
+import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { MainPageContentDto } from '@app/shared/dto/main-page/main-page-content.dto';
 import { ChangeArea } from '@app/shared/enums/change-area.enum';
 import { ChangeType } from '@app/shared/enums/change-type.enum';
@@ -232,11 +233,19 @@ import { Options, Vue } from 'vue-class-component';
 const $api = useApi();
 const RECENT_CHANGES_LIMIT = 6;
 
+interface MainPageChangesApiClient {
+  getMainPageContent(): Promise<MainPageContentDto>;
+  changes: {
+    getChanges(filter?: { offset?: number; limit?: number }): Promise<PagingResultDto<ChangeItemDto>>;
+  };
+}
+
 async function load(): Promise<{ content: MainPageContentDto; recentChanges: ChangeItemDto[] }> {
   try {
-    const [content, recentChangesResult] = await Promise.all([
-      $api.getMainPageContent(),
-      $api.changes.getChanges({
+    const api = $api as MainPageChangesApiClient;
+    const [content, recentChangesResult]: [MainPageContentDto, PagingResultDto<ChangeItemDto>] = await Promise.all([
+      api.getMainPageContent(),
+      api.changes.getChanges({
         offset: 0,
         limit: RECENT_CHANGES_LIMIT,
       }),
