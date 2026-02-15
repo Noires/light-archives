@@ -26,6 +26,7 @@ import { firstValueFrom } from 'rxjs';
 import { Connection, EntityManager, In, IsNull, MoreThanOrEqual, Not, Repository } from 'typeorm';
 import { getVerifiedCharacter } from '../../../common/api-checks';
 import { Contains } from '../../../common/db';
+import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import utils from '../../../common/utils';
 import { ImagesService } from '../images/images.service';
 import { ChocoboChronicleService } from './chocobo-chronicle.service';
@@ -151,7 +152,14 @@ export class EventsService {
       }
 
       if (banner.width / banner.height < SharedConstants.MIN_BANNER_ASPECT_RATIO) {
-        throw new BadRequestException('Banner is too tall for its width');
+        throw new BadRequestException(
+          getBannerAspectRatioErrorMessage(
+            'Banner',
+            banner.width,
+            banner.height,
+            SharedConstants.MIN_BANNER_ASPECT_RATIO,
+          ),
+        );
       }
 
       event.banner = Promise.resolve(banner);
@@ -199,7 +207,14 @@ export class EventsService {
       }
 
       if (discordBanner.width / discordBanner.height < SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO) {
-        throw new BadRequestException('Discord banner is too tall for its width');
+        throw new BadRequestException(
+          getBannerAspectRatioErrorMessage(
+            'Discord banner',
+            discordBanner.width,
+            discordBanner.height,
+            SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO,
+          ),
+        );
       }
 
       event.discordBanner = Promise.resolve(discordBanner);

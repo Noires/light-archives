@@ -16,6 +16,7 @@ import crypto from 'crypto';
 import { DateTime } from 'luxon';
 import { Connection, EntityManager, FindOneOptions, IsNull, Not, Repository } from 'typeorm';
 import { assertUserCharacterId, checkCarrdProfile, getVerifiedCharacter } from '../../../common/api-checks';
+import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import { ImagesService } from '../images/images.service';
 
 @Injectable()
@@ -308,7 +309,14 @@ export class CommunitiesService {
       }
 
       if (banner.width / banner.height < SharedConstants.MIN_BANNER_ASPECT_RATIO) {
-        throw new BadRequestException('Banner is too tall for its width');
+        throw new BadRequestException(
+          getBannerAspectRatioErrorMessage(
+            'Banner',
+            banner.width,
+            banner.height,
+            SharedConstants.MIN_BANNER_ASPECT_RATIO,
+          ),
+        );
       }
 
       community.banner = Promise.resolve(banner);

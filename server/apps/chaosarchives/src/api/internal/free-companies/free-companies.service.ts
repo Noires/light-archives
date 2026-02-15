@@ -10,6 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime } from 'luxon';
 import { Connection, IsNull, Not, Repository } from 'typeorm';
 import { checkCarrdProfile } from '../../../common/api-checks';
+import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import { ImagesService } from '../images/images.service';
 import { LodestoneService } from '../lodestone/lodestone.service';
 
@@ -269,7 +270,14 @@ export class FreeCompaniesService {
         }
 
         if (banner.width / banner.height < SharedConstants.MIN_BANNER_ASPECT_RATIO) {
-          throw new BadRequestException('Banner is too tall for its width');
+          throw new BadRequestException(
+            getBannerAspectRatioErrorMessage(
+              'Banner',
+              banner.width,
+              banner.height,
+              SharedConstants.MIN_BANNER_ASPECT_RATIO,
+            ),
+          );
         }
 
         fc.banner = Promise.resolve(banner);

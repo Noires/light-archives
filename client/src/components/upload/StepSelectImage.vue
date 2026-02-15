@@ -18,8 +18,8 @@
       </template>
     </q-file>
     <section v-if="!modelValue.file" class="text-caption">
-			Du kannst deine Bilddatei auch per Drag & Drop hier hochladen.
-		</section>
+      Du kannst deine Bilddatei auch per Drag & Drop hier hochladen.
+    </section>
     <template v-if="modelValue.image">
       <h6>Vorschau</h6>
       <img :src="modelValue.image.src" />
@@ -31,16 +31,19 @@
       Keine Bilddatei.
     </q-banner>
     <q-banner
-      v-if="modelValue.image && !isValidAspectRatio"
+      v-if="modelValue.image && !isValidAspectRatio && !allowAspectRatioCrop"
       class="step-select-image__not-image bg-negative text-white"
     >
       Banner müssen ein Seitenverhältnis von mindestens {{ aspectRatioHint }} haben.
     </q-banner>
+    <q-banner
+      v-if="modelValue.image && !isValidAspectRatio && allowAspectRatioCrop"
+      class="step-select-image__not-image bg-info text-black"
+    >
+      Das Bild wird im nächsten Schritt auf {{ aspectRatioHint }} zugeschnitten.
+    </q-banner>
     <template v-if="modelValue.file && modelValue.image">
-      <section
-        class="step-select-image__conversion"
-        v-if="modelValue.file && modelValue.image"
-      >
+      <section class="step-select-image__conversion">
         <div
           class="step-select-image__conversion-switches"
           v-if="canChooseFormat"
@@ -89,7 +92,7 @@ interface ConversionResult {
   filename: string;
   originalFormat: ImageFormat | null;
   newFormat: ImageFormat;
-	hasTransparency: boolean;
+  hasTransparency: boolean;
 }
 
 class Props {
@@ -101,16 +104,20 @@ class Props {
       convertedFile: null,
       originalFormat: null,
       format: null,
-			hasTransparency: false,
+      hasTransparency: false,
     },
   });
 
   banner = prop<boolean>({
-		default: false
-	});
+    default: false,
+  });
 
   minAspectRatio = prop<number | null>({
     default: null,
+  });
+
+  allowAspectRatioCrop = prop<boolean>({
+    default: false,
   });
 }
 
@@ -157,7 +164,7 @@ export default class StepSelectImage extends Vue.with(Props) {
       let originalFormat: ImageFormat | null = null;
       let newFormat: ImageFormat | null = null;
       let filename: string | null = null;
-			let hasTransparency = false;
+      let hasTransparencyValue = false;
 
       if (file !== null && image !== null) {
         const result = await this.convertImage(file, image, format || null);
@@ -165,7 +172,7 @@ export default class StepSelectImage extends Vue.with(Props) {
         originalFormat = result.originalFormat;
         newFormat = result.newFormat;
         filename = result.filename;
-				hasTransparency = result.hasTransparency;
+        hasTransparencyValue = result.hasTransparency;
       }
 
       this.$emit('update:model-value', {
@@ -175,7 +182,7 @@ export default class StepSelectImage extends Vue.with(Props) {
         originalFormat,
         format: newFormat,
         image,
-				hasTransparency,
+        hasTransparency: hasTransparencyValue,
       });
     } catch (e) {
       console.log(e);
@@ -186,6 +193,7 @@ export default class StepSelectImage extends Vue.with(Props) {
         convertedFile: null,
         originalFormat: null,
         format: null,
+        hasTransparency: false,
       });
     }
   }
@@ -204,13 +212,12 @@ export default class StepSelectImage extends Vue.with(Props) {
     format: ImageFormat | null
   ): Promise<ConversionResult> {
     if (file.type === 'image/jpeg') {
-      // We don't need to convert
       return {
         blob: file,
         filename: file.name,
         originalFormat: ImageFormat.JPEG,
         newFormat: ImageFormat.JPEG,
-				hasTransparency: false
+        hasTransparency: false,
       };
     }
 
@@ -219,20 +226,19 @@ export default class StepSelectImage extends Vue.with(Props) {
     if (file.type === 'image/png') {
       originalFormat = ImageFormat.PNG;
 
-      if (format === ImageFormat.PNG || !format === null) {
+      if (format === ImageFormat.PNG || !format) {
         return {
           blob: file,
           filename: file.name,
           originalFormat: ImageFormat.PNG,
           newFormat: ImageFormat.PNG,
-					hasTransparency: hasTransparency(image)
+          hasTransparency: hasTransparency(image),
         };
       }
     }
 
-    // We need to convert
     const newFormat = format || ImageFormat.PNG;
-    let result = await convertImageElementForUpload(
+    const result = await convertImageElementForUpload(
       image,
       file.name,
       newFormat
@@ -243,7 +249,7 @@ export default class StepSelectImage extends Vue.with(Props) {
       filename: result.filename,
       originalFormat,
       newFormat,
-			hasTransparency: result.hasTransparency
+      hasTransparency: result.hasTransparency,
     };
   }
 
@@ -306,7 +312,7 @@ export default class StepSelectImage extends Vue.with(Props) {
 }
 
 .step-select-image__not-image {
-	margin-top: 8px;
+  margin-top: 8px;
   margin-bottom: 8px;
 }
 

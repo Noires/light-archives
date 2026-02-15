@@ -136,7 +136,7 @@
             title="Discord-Banner"
             :ratio="5 / 2"
             :min-aspect-ratio="minDiscordBannerAspectRatio"
-            hint="Discord-Banner sollten ein Seitenverhältnis von 5:2 haben (z. B. 800x320)."
+            hint="Mindestens 5:2 (Breite:Höhe), empfohlen 1500x600. Formate: JPG/PNG, max. 1 MiB. Beim Hochladen kannst du den Ausschnitt zuschneiden."
           />
           <q-input
             v-model="event.link"

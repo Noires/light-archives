@@ -14,6 +14,7 @@ import { DateTime } from 'luxon';
 import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
 import { checkCarrdProfile, getVerifiedCharacter } from '../../../common/api-checks';
 import { Contains } from '../../../common/db';
+import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import { ImagesService } from '../images/images.service';
 
 @Injectable()
@@ -309,7 +310,14 @@ export class VenuesService {
 			}
 
 			if (banner.width / banner.height < SharedConstants.MIN_BANNER_ASPECT_RATIO) {
-				throw new BadRequestException('Banner is too tall for its width');
+				throw new BadRequestException(
+					getBannerAspectRatioErrorMessage(
+						'Banner',
+						banner.width,
+						banner.height,
+						SharedConstants.MIN_BANNER_ASPECT_RATIO,
+					),
+				);
 			}
 
 			venue.banner = Promise.resolve(banner);

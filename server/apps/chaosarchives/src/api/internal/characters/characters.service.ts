@@ -24,6 +24,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
 import { checkCarrdProfile } from '../../../common/api-checks';
 import { andWhereExists, escapeForLike, isQueryFailedError } from '../../../common/db';
+import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import { ImagesService } from '../images/images.service';
 import { getTribeByName } from '@app/shared/enums/tribe.enum';
 import { LodestoneService } from '../lodestone/lodestone.service';
@@ -364,7 +365,14 @@ export class CharactersService {
         }
 
         if (banner.width / banner.height < SharedConstants.MIN_BANNER_ASPECT_RATIO) {
-          throw new BadRequestException('Banner is too tall for its width');
+          throw new BadRequestException(
+            getBannerAspectRatioErrorMessage(
+              'Banner',
+              banner.width,
+              banner.height,
+              SharedConstants.MIN_BANNER_ASPECT_RATIO,
+            ),
+          );
         }
 
         character.banner = Promise.resolve(banner);

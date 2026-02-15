@@ -1,29 +1,29 @@
 <template>
-	<section class="banner-edit-section">
-		<h6>{{ title }}</h6>
-		<p class="text-caption">{{ hint }}</p>
-		<q-responsive v-if="!modelValue" class="banner-edit-section__placeholder" :ratio="ratio">
-			<div>Kein Banner</div>
-		</q-responsive>
-		<q-img
-			v-else
-			class="banner-edit-section__banner"
-			:src="modelValue.url"
-			:initial-ratio="modelValue.width / modelValue.height"
-		/>
-		<div class="text-right">
-			<q-btn
-				v-if="modelValue"
-				flat
-				label="Entfernen"
-				icon="remove"
-				color="negative"
-				@click="onBannerRemoveClick"
-			/>&nbsp;
-			<q-btn flat label="Auswählen" icon="collections" color="secondary" @click="onBannerSelectClick" />&nbsp;
-			<q-btn flat label="Hochladen" icon="upload" color="secondary" @click="onBannerUploadClick" />
-		</div>
-	</section>
+  <section class="banner-edit-section">
+    <h6>{{ title }}</h6>
+    <p class="text-caption">{{ effectiveHint }}</p>
+    <q-responsive v-if="!modelValue" class="banner-edit-section__placeholder" :ratio="ratio">
+      <div>Kein Banner</div>
+    </q-responsive>
+    <q-img
+      v-else
+      class="banner-edit-section__banner"
+      :src="modelValue.url"
+      :initial-ratio="modelValue.width / modelValue.height"
+    />
+    <div class="text-right">
+      <q-btn
+        v-if="modelValue"
+        flat
+        label="Entfernen"
+        icon="remove"
+        color="negative"
+        @click="onBannerRemoveClick"
+      />&nbsp;
+      <q-btn flat label="Auswählen" icon="collections" color="secondary" @click="onBannerSelectClick" />&nbsp;
+      <q-btn flat label="Hochladen" icon="upload" color="secondary" @click="onBannerUploadClick" />
+    </div>
+  </section>
 </template>
 
 <script lang="ts">
@@ -33,32 +33,76 @@ import SharedConstants from '@app/shared/SharedConstants';
 import { Options, prop, Vue } from 'vue-class-component';
 
 class Props {
-	modelValue = prop<BannerDto>({
-		required: false
-	});
+  modelValue = prop<BannerDto>({
+    required: false,
+  });
 
-	title = prop<string>({
-		default: 'Banner',
-	});
+  title = prop<string>({
+    default: 'Banner',
+  });
 
-	hint = prop<string>({
-		default: 'Banner müssen ein Seitenverhältnis von 4:1 Breite:Höhe haben. Beispielsweise ist 500x100 und 400x100 in Ordnung, aber 300x100 nicht.',
-	});
+  hint = prop<string>({
+    default: '',
+  });
 
-	ratio = prop<number>({
-		default: 4 / 1,
-	});
+  ratio = prop<number>({
+    default: 4 / 1,
+  });
 
-	minAspectRatio = prop<number>({
-		default: SharedConstants.MIN_BANNER_ASPECT_RATIO,
-	});
+  minAspectRatio = prop<number>({
+    default: SharedConstants.MIN_BANNER_ASPECT_RATIO,
+  });
 }
 
 @Options({
-	emits: [ 'update:model-value' ]
+  emits: ['update:model-value'],
 })
 export default class BannerEditSection extends Vue.with(Props) {
-	async onBannerSelectClick() {
+  get effectiveHint() {
+    if (this.hint) {
+      return this.hint;
+    }
+
+    return `Mindestens ${this.aspectRatioHint} (Breite:Höhe), empfohlen ${this.recommendedSize}. Formate: JPG/PNG, max. ${this.maxUploadSizeMiB} MiB. Beim Hochladen kannst du den Banner-Ausschnitt zuschneiden.`;
+  }
+
+  get aspectRatioHint() {
+    if (this.minAspectRatio === SharedConstants.MIN_BANNER_ASPECT_RATIO) {
+      return '4:1';
+    }
+
+    if (this.minAspectRatio === SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO) {
+      return '5:2';
+    }
+
+    return `${this.minAspectRatio.toFixed(2)}:1`;
+  }
+
+  get recommendedSize() {
+    if (this.minAspectRatio === SharedConstants.MIN_BANNER_ASPECT_RATIO) {
+      return `${SharedConstants.RECOMMENDED_BANNER_WIDTH}x${SharedConstants.RECOMMENDED_BANNER_HEIGHT}`;
+    }
+
+    if (this.minAspectRatio === SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO) {
+      return `${SharedConstants.RECOMMENDED_DISCORD_BANNER_WIDTH}x${SharedConstants.RECOMMENDED_DISCORD_BANNER_HEIGHT}`;
+    }
+
+    const width = SharedConstants.RECOMMENDED_BANNER_WIDTH;
+    const height = Math.round(width / this.minAspectRatio);
+    return `${width}x${height}`;
+  }
+
+  get maxUploadSizeMiB() {
+    const value = SharedConstants.MAX_UPLOAD_SIZE / (1024 * 1024);
+
+    if (Number.isInteger(value)) {
+      return value.toString();
+    }
+
+    return value.toFixed(1);
+  }
+
+  async onBannerSelectClick() {
     const GalleryDialog = (await import('components/common/GalleryDialog.vue')).default;
 
     this.$q
@@ -104,9 +148,9 @@ export default class BannerEditSection extends Vue.with(Props) {
     this.setModel(null);
   }
 
-	private setModel(model: BannerDto|null) {
-		this.$emit('update:model-value', model);
-	}
+  private setModel(model: BannerDto | null) {
+    this.$emit('update:model-value', model);
+  }
 }
 </script>
 

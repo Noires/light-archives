@@ -33,6 +33,13 @@ export interface ImageConversionResult {
   hasTransparency: boolean;
 }
 
+export interface ImageCropArea {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
 export async function convertImageElementForUpload(
   image: HTMLImageElement,
   filename: string,
@@ -62,6 +69,53 @@ export async function convertImageElementForUpload(
   });
 }
 
+export async function cropImageElementForUpload(
+  image: HTMLImageElement,
+  filename: string,
+  format: ImageFormat,
+  cropArea: ImageCropArea,
+  outputWidth?: number
+): Promise<ImageConversionResult> {
+  const sourceWidth = Math.round(cropArea.width);
+  const sourceHeight = Math.round(cropArea.height);
+  const targetWidth = Math.max(1, Math.round(outputWidth || sourceWidth));
+  const targetHeight = Math.max(1, Math.round((targetWidth * sourceHeight) / sourceWidth));
+  const g = createCanvasWithSize(targetWidth, targetHeight);
+
+  g.drawImage(
+    image,
+    Math.round(cropArea.left),
+    Math.round(cropArea.top),
+    sourceWidth,
+    sourceHeight,
+    0,
+    0,
+    targetWidth,
+    targetHeight
+  );
+
+  return new Promise((resolve, reject) => {
+    const newFilename = replaceExtension(
+      filename,
+      format == ImageFormat.PNG ? 'png' : 'jpg'
+    );
+    g.canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve({
+            blob,
+            filename: newFilename,
+            hasTransparency: checkTransparency(g),
+          });
+        } else {
+          reject(new Error('Cannot crop image'));
+        }
+      },
+      format == ImageFormat.PNG ? 'image/png' : 'image/jpeg'
+    );
+  });
+}
+
 export function hasTransparency(image: HTMLImageElement): boolean {
   return checkTransparency(createCanvas(image));
 }
@@ -69,9 +123,15 @@ export function hasTransparency(image: HTMLImageElement): boolean {
 // Auxiliary functions
 
 function createCanvas(image: HTMLImageElement): CanvasRenderingContext2D {
+  const g = createCanvasWithSize(image.width, image.height);
+  g.drawImage(image, 0, 0);
+  return g;
+}
+
+function createCanvasWithSize(width: number, height: number): CanvasRenderingContext2D {
   const canvas = document.createElement('canvas');
-  canvas.width = image.width;
-  canvas.height = image.height;
+  canvas.width = width;
+  canvas.height = height;
 
   const g = canvas.getContext('2d');
 
@@ -80,7 +140,6 @@ function createCanvas(image: HTMLImageElement): CanvasRenderingContext2D {
     throw new Error('Your browser is ancient');
   }
 
-  g.drawImage(image, 0, 0);
   return g;
 }
 
