@@ -1,25 +1,14 @@
 <template>
   <div class="step-banner-crop">
-    <div class="step-banner-crop__col">
-      <section class="step-banner-crop__description">
-        <h6>Banner zuschneiden</h6>
-        <div class="step-banner-crop__label">
-          Wähle den Ausschnitt im Verhältnis {{ aspectRatioHint }}.
-        </div>
-      </section>
-      <section style="display: inline-block"><img ref="cropper" :src="image.src" /></section>
-    </div>
-    <div class="step-banner-crop__col">
-      <section class="step-banner-crop__description">
-        <h6>Live-Vorschau</h6>
-        <div class="step-banner-crop__label">
-          Ausgabe: {{ outputWidth }}x{{ outputHeight }} ({{ aspectRatioHint }})
-        </div>
-      </section>
-      <section class="step-banner-crop__preview">
-        <img v-if="previewUrl" :key="previewRevision" :src="previewUrl" alt="Banner preview" />
-      </section>
-    </div>
+    <section class="step-banner-crop__description">
+      <h6>Banner zuschneiden</h6>
+      <div class="step-banner-crop__label">
+        Wähle den Ausschnitt im Verhältnis {{ aspectRatioHint }}. Ausgabe: {{ outputWidth }}x{{ outputHeight }}.
+      </div>
+    </section>
+    <section class="step-banner-crop__image">
+      <img ref="cropper" :src="image.src" />
+    </section>
   </div>
 </template>
 
@@ -52,10 +41,6 @@ class Props {
 })
 export default class StepBannerCrop extends Vue.with(Props) {
   private cropper: Cropper | null = null;
-  private previewFrameId: number | null = null;
-
-  previewUrl = '';
-  previewRevision = 0;
 
   get outputHeight() {
     return Math.round(this.outputWidth / this.aspectRatio);
@@ -88,8 +73,6 @@ export default class StepBannerCrop extends Vue.with(Props) {
             height: this.modelValue.height,
           });
         }
-
-        this.schedulePreviewUpdate();
       },
       crop: event => {
         const { x, y, width, height } = event.detail;
@@ -99,86 +82,39 @@ export default class StepBannerCrop extends Vue.with(Props) {
           width: Math.round(width),
           height: Math.round(height),
         });
-        this.schedulePreviewUpdate();
       },
-      cropmove: () => this.schedulePreviewUpdate(),
-      cropend: () => this.schedulePreviewUpdate(),
     });
   }
 
   unmounted() {
-    if (this.previewFrameId !== null) {
-      cancelAnimationFrame(this.previewFrameId);
-      this.previewFrameId = null;
-    }
-
     if (this.cropper) {
       this.cropper.destroy();
       this.cropper = null;
     }
-  }
-
-  private schedulePreviewUpdate() {
-    if (this.previewFrameId !== null) {
-      cancelAnimationFrame(this.previewFrameId);
-    }
-
-    this.previewFrameId = requestAnimationFrame(() => {
-      this.previewFrameId = null;
-      this.updatePreview();
-    });
-  }
-
-  private updatePreview() {
-    if (!this.cropper) {
-      return;
-    }
-
-    const canvas = this.cropper.getCroppedCanvas({
-      width: this.outputWidth,
-      height: this.outputHeight,
-    });
-
-    if (!canvas) {
-      return;
-    }
-
-    this.previewUrl = canvas.toDataURL('image/jpeg', 0.9);
-    this.previewRevision += 1;
   }
 }
 </script>
 
 <style lang="scss">
 .step-banner-crop {
-  display: flex;
+  width: 100%;
 }
 
 .step-banner-crop img {
-  max-height: 50vh;
+  display: block;
+  max-height: 62vh;
   max-width: 100%;
 }
 
-.step-banner-crop__col {
-  padding-left: 8px;
-  padding-right: 8px;
-  display: flex;
-  flex-direction: column;
-  width: 50%;
-}
-
 .step-banner-crop__description {
-  flex-basis: 0;
-  flex-grow: 1;
+  margin-bottom: 10px;
 }
 
 .step-banner-crop__label {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
-.step-banner-crop__preview {
+.step-banner-crop__image {
   width: 100%;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  background: #111;
 }
 </style>
