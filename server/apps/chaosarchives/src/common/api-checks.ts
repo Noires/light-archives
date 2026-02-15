@@ -56,7 +56,7 @@ export async function getVerifiedCharacter(
 			verifiedAt: Not(IsNull()),
 			user: { id: user.id },
 		},
-		relations: ['server'],
+		relations: ['server', 'user'],
 	});
 
 	if (!character) {

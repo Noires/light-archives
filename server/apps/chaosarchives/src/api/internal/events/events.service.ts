@@ -663,7 +663,7 @@ export class EventsService {
 
     const properties = {
       title: event.title,
-      mine: !!event.owner && event.owner.user.id === user?.id,
+      mine: event.owner?.user?.id === user?.id,
       details: event.details,
       recurring: event.recurring,
       oocDetails: event.oocDetails,
@@ -702,7 +702,7 @@ export class EventsService {
         id: location.id,
         name: location.name,
         address: location.address,
-        server: location.server.name,
+        server: location.server?.name || '',
         tags: location.tags,
         link: location.link,
         venueId: location.venue?.id,
