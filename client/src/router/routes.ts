@@ -47,6 +47,15 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
+    path: '/faq',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/Faq.vue') }],
+    meta: {
+      title: 'FAQ'
+    },
+  },
+
+  {
     path: '/test-editor',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/TestEditor.vue') }],

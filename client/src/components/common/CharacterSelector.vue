@@ -87,7 +87,7 @@ export default class CharacterSelector extends Vue.with(Props) {
 
   getAvatarUrl(character: SessionCharacterDto): string {
     // Use Lodestone avatar URL if available, otherwise use a default avatar
-    return character.avatar || `https://img.finalfantasyxiv.com/lds/pc/global/images/common/common_defaultthumb.png`;
+    return character.avatar || 'https://img.finalfantasyxiv.com/lds/pc/global/images/common/common_defaultthumb.png';
   }
 }
 </script>

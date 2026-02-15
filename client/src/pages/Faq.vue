@@ -1,31 +1,31 @@
 <template>
-  <q-page class="page-rules">
-    <header class="page-rules__hero">
-      <span class="page-rules__eyebrow">Wissenswertes</span>
-      <h2>Regelwerk</h2>
+  <q-page class="page-faq">
+    <header class="page-faq__hero">
+      <span class="page-faq__eyebrow">Wissenswertes</span>
+      <h2>Häufige Fragen</h2>
       <p>
-        Diese Regeln sorgen für ein respektvolles, sicheres und rollenspielnahes Miteinander auf Elpisgarten.
-        Lies dir die Punkte bitte sorgfältig durch.
+        Hier findest du schnelle Antworten zu Konto, Upload, Inhalten und Datenschutz.
+        Wenn etwas fehlt, schau zusätzlich im <router-link to="/rules">Regelwerk</router-link> vorbei.
       </p>
     </header>
 
-    <section class="page-rules__content">
-      <div class="page-rules__markdown" v-html="rules"></div>
+    <section class="page-faq__content">
+      <div class="page-faq__markdown" v-html="faq"></div>
     </section>
   </q-page>
 </template>
 
 <script lang="ts">
 import { Vue } from 'vue-class-component';
-import rules from 'src/markdown/rules.md';
+import faq from 'src/markdown/faq.md';
 
-export default class PageRules extends Vue {
-  readonly rules = rules;
+export default class PageFaq extends Vue {
+  readonly faq = faq;
 }
 </script>
 
 <style lang="scss">
-.page-rules {
+.page-faq {
   position: relative;
   padding: 28px 18px 42px;
   background: linear-gradient(180deg, #f8f4ee 0%, #ffffff 45%, #f2ede4 100%);
@@ -33,7 +33,7 @@ export default class PageRules extends Vue {
   overflow: hidden;
 }
 
-.page-rules::before {
+.page-faq::before {
   content: '';
   position: absolute;
   inset: -120px 0 auto;
@@ -44,13 +44,13 @@ export default class PageRules extends Vue {
   pointer-events: none;
 }
 
-.page-rules h2 {
+.page-faq h2 {
   margin: 0;
   font-family: $header-font;
   letter-spacing: 0.02em;
 }
 
-.page-rules__hero {
+.page-faq__hero {
   position: relative;
   z-index: 1;
   display: grid;
@@ -63,16 +63,16 @@ export default class PageRules extends Vue {
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
 }
 
-.page-rules__hero h2 {
+.page-faq__hero h2 {
   margin-bottom: 0;
 }
 
-.page-rules__hero p {
+.page-faq__hero p {
   margin: 0;
   color: rgba(35, 35, 35, 0.72);
 }
 
-.page-rules__eyebrow {
+.page-faq__eyebrow {
   font-size: 0.75rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -80,7 +80,7 @@ export default class PageRules extends Vue {
   font-weight: 600;
 }
 
-.page-rules__content {
+.page-faq__content {
   position: relative;
   z-index: 1;
   padding: 16px 18px 18px;
@@ -90,52 +90,66 @@ export default class PageRules extends Vue {
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
 }
 
-.page-rules__markdown h4 {
+.page-faq__markdown h3 {
   font-size: 1.32rem;
   margin-top: 1.55em;
-  margin-bottom: 0.45em;
+  margin-bottom: 0.5em;
   padding-top: 0.6em;
   border-top: 1px solid rgba(221, 180, 118, 0.35);
 }
 
-.page-rules__markdown h4:first-of-type {
+.page-faq__markdown h3:first-child {
   margin-top: 0;
   padding-top: 0;
   border-top: 0;
 }
 
-.page-rules__markdown p {
-  margin-top: 0.35em;
+.page-faq__markdown h4 {
+  margin-top: 1.1em;
+  margin-bottom: 0.35em;
+  padding: 8px 12px;
+  border-left: 3px solid rgba(221, 180, 118, 0.75);
+  background: linear-gradient(90deg, rgba(221, 180, 118, 0.2), rgba(221, 180, 118, 0.05));
+  font-family: $header-font;
+  font-size: 1.02rem;
+  line-height: 1.35;
+  color: #1f2c38;
+}
+
+.page-faq__markdown h3 + h4 {
+  margin-top: 0.75em;
+}
+
+.page-faq__markdown h4 + p {
+  margin-top: 0.45em;
+}
+
+.page-faq__markdown p {
+  margin-top: 0.3em;
   margin-bottom: 0.9em;
 }
 
-.page-rules__markdown ul {
-  margin-bottom: 1em;
-}
-
-.page-rules__markdown hr {
-  border: 0;
-  border-top: 1px solid rgba(221, 180, 118, 0.4);
-  margin: 24px 0 16px;
-}
-
-.page-rules__markdown dfn {
-  font-style: normal;
-  font-weight: 600;
-  color: #604722;
+.page-faq__markdown ul,
+.page-faq__markdown ol {
+  margin-bottom: 0.9em;
 }
 
 @media (max-width: 700px) {
-  .page-rules {
+  .page-faq {
     padding: 20px 14px 36px;
   }
 
-  .page-rules__hero {
+  .page-faq__hero {
     padding: 16px;
   }
 
-  .page-rules__content {
+  .page-faq__content {
     padding: 12px 14px 14px;
+  }
+
+  .page-faq__markdown h4 {
+    font-size: 0.96rem;
+    padding: 7px 10px;
   }
 }
 </style>

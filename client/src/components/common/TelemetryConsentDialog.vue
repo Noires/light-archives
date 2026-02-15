@@ -30,8 +30,19 @@
         <q-btn flat color="secondary" label="Datenschutzerklaerung" @click="onOpenPrivacyClick" />
         <div class="telemetry-consent-dialog__actions">
           <q-btn v-if="settingsMode" flat color="secondary" label="Schliessen" @click="onCloseClick" />
-          <q-btn flat color="negative" label="Ablehnen" @click="onDeclineClick" />
-          <q-btn color="primary" label="Fehlerdiagnose erlauben" @click="onAllowClick" />
+          <q-btn
+            flat
+            color="negative"
+            label="Ablehnen"
+            :disable="declineDisabled"
+            @click="onDeclineClick"
+          />
+          <q-btn
+            color="primary"
+            label="Fehlerdiagnose erlauben"
+            :disable="allowDisabled"
+            @click="onAllowClick"
+          />
         </div>
       </q-card-actions>
     </q-card>
@@ -90,6 +101,18 @@ export default class TelemetryConsentDialog extends Vue.with(Props) {
 
   get title() {
     return this.settingsMode ? 'Fehlerdiagnose-Einstellungen' : 'Freiwillige Fehlerdiagnose';
+  }
+
+  get currentConsentStatus(): TelemetryConsentStatus {
+    return this.$store.getters.telemetryConsentStatus;
+  }
+
+  get declineDisabled() {
+    return this.settingsMode && this.currentConsentStatus === TelemetryConsentStatus.DENIED;
+  }
+
+  get allowDisabled() {
+    return this.settingsMode && this.currentConsentStatus === TelemetryConsentStatus.GRANTED;
   }
 }
 </script>

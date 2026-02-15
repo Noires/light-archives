@@ -204,68 +204,6 @@ export async function fetchWikiPage(pageName: string, options: { includeCss?: bo
 }
 
 /**
- * Fetches CSS styles from the wiki page
- */
-async function fetchWikiCss(pageName: string): Promise<string> {
-  // Fetch the actual HTML page to get CSS links
-  const pageUrl = `https://${ALLOWED_DOMAIN}/de/wiki/${encodeURIComponent(pageName)}`;
-  console.log('Fetching wiki page HTML from:', pageUrl);
-
-  const response = await fetch(pageUrl);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch page: ${response.status}`);
-  }
-
-  const html = await response.text();
-  console.log('Wiki page HTML fetched, length:', html.length);
-
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-
-  // Extract CSS link URLs
-  const cssUrls: string[] = [];
-  const linkElements = doc.querySelectorAll('link[rel="stylesheet"]');
-  console.log('Found stylesheet links:', linkElements.length);
-
-  linkElements.forEach(link => {
-    const href = link.getAttribute('href');
-    if (href) {
-      // Convert relative URLs to absolute
-      const absoluteUrl = href.startsWith('http') ? href : `https:${href}`;
-      // Only include Fandom CDN CSS (safe and relevant)
-      if (absoluteUrl.includes('fandom') || absoluteUrl.includes('wikia')) {
-        cssUrls.push(absoluteUrl);
-      }
-    }
-  });
-
-  console.log('Filtered CSS URLs (Fandom/Wikia only):', cssUrls.length);
-  console.log('CSS URLs:', cssUrls.slice(0, 3));
-
-  // Fetch and combine CSS files
-  const cssPromises = cssUrls.slice(0, 10).map(async url => {
-    try {
-      console.log('Fetching CSS from:', url);
-      const cssResponse = await fetch(url);
-      if (cssResponse.ok) {
-        const cssText = await cssResponse.text();
-        console.log(`CSS fetched from ${url}, length:`, cssText.length);
-        return cssText;
-      }
-    } catch (e) {
-      console.warn(`Failed to fetch CSS from ${url}:`, e);
-    }
-    return '';
-  });
-
-  const cssContents = await Promise.all(cssPromises);
-  const combinedCss = cssContents.filter(css => css).join('\n\n');
-  console.log('Combined CSS length:', combinedCss.length);
-  return combinedCss;
-}
-
-/**
  * Applies CSS styles as inline styles to HTML elements
  * Creates a temporary hidden iframe to compute styles and extract them
  */
@@ -401,7 +339,7 @@ function extractMainContent(html: string): string {
   const allElements = content.querySelectorAll('*');
   let cleanupCount = 0;
 
-  allElements.forEach((el, index) => {
+  allElements.forEach(el => {
     // Get a copy of attributes to avoid modifying while iterating
     const attrs = Array.from(el.attributes);
 
@@ -580,7 +518,7 @@ function extractMainContent(html: string): string {
     });
 
     result = finalDoc.body.innerHTML;
-    console.log(`Final aggressive sanitization completed`);
+    console.log('Final aggressive sanitization completed');
   } catch (e) {
     console.error('Error in final aggressive sanitization:', e);
     // Continue with original result if sanitization fails
@@ -588,56 +526,6 @@ function extractMainContent(html: string): string {
 
   console.log(`extractMainContent completed, output length: ${result.length}`);
   return result;
-}
-
-/**
- * Converts Fandom tabber structure to collapsible sections
- * Uses the existing hide-details pattern that's already supported by the sanitizer
- */
-function convertTabbersToCollapsible(doc: Document): void {
-  const tabbers = doc.querySelectorAll('.tabber, .wds-tabber');
-
-  tabbers.forEach(tabber => {
-    // Find all tabs and their content
-    const tabs = Array.from(tabber.querySelectorAll('.wds-tabs__tab'));
-    const contents = Array.from(tabber.querySelectorAll('.wds-tab__content'));
-
-    if (tabs.length === 0 || contents.length === 0) return;
-
-    // Create container for converted tabs
-    const container = doc.createElement('div');
-    container.className = 'imported-tabs';
-
-    // Convert each tab to a hide-details section
-    tabs.forEach((tab, index) => {
-      const labelEl = tab.querySelector('.wds-tabs__tab-label, a');
-      const label = labelEl?.textContent?.trim() || `Tab ${index + 1}`;
-      const content = contents[index];
-
-      if (content) {
-        // Create section with hide-details pattern (used by TinyMCE editor)
-        const section = doc.createElement('section');
-        section.className = 'hide-details hide-details_visible';
-
-        // Title
-        const titleDiv = doc.createElement('div');
-        titleDiv.className = 'hide-details__title';
-        titleDiv.textContent = label;
-        section.appendChild(titleDiv);
-
-        // Content
-        const contentDiv = doc.createElement('div');
-        contentDiv.className = 'hide-details__content';
-        contentDiv.innerHTML = content.innerHTML;
-        section.appendChild(contentDiv);
-
-        container.appendChild(section);
-      }
-    });
-
-    // Replace tabber with converted structure
-    tabber.replaceWith(container);
-  });
 }
 
 /**

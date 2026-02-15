@@ -18,7 +18,54 @@
             </template>
           </div>
           <nav class="layout__nav-links gt-lg">
-            <router-link v-for="link in siteLinks" :key="link.label" :to="link.to">{{ link.label }}</router-link>
+            <div
+              v-for="group in navGroups"
+              :key="group.key"
+              class="layout__nav-dropdown"
+              @mouseenter="openMenu(group.key)"
+              @mouseleave="scheduleMenuClose(group.key)"
+            >
+              <button
+                type="button"
+                class="layout__nav-dropdown-trigger"
+                :class="{
+                  'layout__nav-dropdown-trigger_active': isGroupRouteActive(group.key),
+                  'layout__nav-dropdown-trigger_open': menuState[group.key],
+                }"
+                @focus="openMenu(group.key)"
+                @click="toggleMenu(group.key)"
+              >
+                {{ group.label }}
+                <q-icon name="expand_more" size="16px" />
+              </button>
+              <q-menu
+                v-model="menuState[group.key]"
+                anchor="bottom left"
+                self="top left"
+                fit
+                :offset="[0, 4]"
+                content-class="layout__nav-menu"
+                transition-show="jump-down"
+                transition-hide="jump-up"
+                @mouseenter="openMenu(group.key)"
+                @mouseleave="scheduleMenuClose(group.key)"
+              >
+                <q-list dense>
+                  <q-item
+                    v-for="link in group.links"
+                    :key="link.label"
+                    class="layout__nav-menu-item"
+                    clickable
+                    v-close-popup
+                    :to="link.to"
+                  >
+                    <q-item-section>
+                      <q-item-label>{{ link.label }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </div>
           </nav>
           <q-btn-dropdown
             class="layout__toolbar-button-more lt-xl"
@@ -30,11 +77,22 @@
             aria-label="Menu"
           >
             <q-list>
-              <q-item v-for="link in siteLinks" clickable v-close-popup :key="link.label" :to="link.to">
-                <q-item-section>
-                  <q-item-label>{{ link.label }}</q-item-label>
-                </q-item-section>
-              </q-item>
+              <q-expansion-item
+                v-for="group in navGroups"
+                :key="group.key"
+                dense
+                dense-toggle
+                :icon="group.icon"
+                :label="group.label"
+              >
+                <q-list dense>
+                  <q-item v-for="link in group.links" clickable v-close-popup :key="link.label" :to="link.to">
+                    <q-item-section>
+                      <q-item-label>{{ link.label }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-expansion-item>
             </q-list>
           </q-btn-dropdown>
         </div>
@@ -110,6 +168,21 @@ import { notifyError, notifySuccess } from 'src/common/notify';
 import { persistTelemetryConsent } from 'src/common/telemetry-consent-actions';
 import { isSentryConfigured } from 'src/common/sentry';
 
+type NavGroupKey = 'roleplay' | 'places' | 'gallery' | 'info';
+
+interface NavLink {
+  label: string;
+  to: string;
+}
+
+interface NavGroup {
+  key: NavGroupKey;
+  label: string;
+  icon: string;
+  links: NavLink[];
+  matchPrefixes: string[];
+}
+
 @Options({
   components: {
     CalendarSidebarWidget,
@@ -122,27 +195,62 @@ export default class MainLayout extends Vue {
   readonly DRAWER_BG = 'layout__drawer';
   readonly DRAWER_WIDTH = 250;
 
-  readonly navbarLinks = [
-    { label: 'Über uns', to: '/about' },
-    { label: 'Regeln', to: '/rules' },
-    { label: 'Wiki', to: '/wiki/Chaos_Archives_Wiki' },
-    { label: 'Kontakt', to: '/contact' },
-  ];
-
-  readonly siteLinks = [
-    { label: 'Charaktere', to: '/profiles' },
-    { label: 'Treffpunkte', to: '/venues' },
-    { label: 'Anschlagbrett', to: '/noticeboard' },
-    { label: 'Communities', to: '/communities' },
-    { label: 'Freie Gesellschaften', to: '/free-companies' },
-    { label: 'Screenshots', to: '/gallery/screenshot' },
-    { label: 'Kunstwerke', to: '/gallery/artwork' },
-    { label: 'Geschichten', to: '/stories' },
+  readonly navGroups: NavGroup[] = [
+    {
+      key: 'roleplay',
+      label: 'Rollenspiel',
+      icon: 'theater_comedy',
+      links: [
+        { label: 'Charaktere', to: '/profiles' },
+        { label: 'Geschichten', to: '/stories' },
+        { label: 'Anschlagbrett', to: '/noticeboard' },
+      ],
+      matchPrefixes: ['/profiles', '/stories', '/story', '/noticeboard'],
+    },
+    {
+      key: 'places',
+      label: 'Orte & Gruppen',
+      icon: 'groups',
+      links: [
+        { label: 'Treffpunkte', to: '/venues' },
+        { label: 'Communities', to: '/communities' },
+        { label: 'Freie Gesellschaften', to: '/free-companies' },
+      ],
+      matchPrefixes: ['/venues', '/communities', '/free-companies'],
+    },
+    {
+      key: 'gallery',
+      label: 'Medien',
+      icon: 'photo_library',
+      links: [
+        { label: 'Screenshots', to: '/gallery/screenshot' },
+        { label: 'Kunstwerke', to: '/gallery/artwork' },
+      ],
+      matchPrefixes: ['/gallery'],
+    },
+    {
+      key: 'info',
+      label: 'Wissenswertes',
+      icon: 'info',
+      links: [
+        { label: 'Über uns', to: '/about' },
+        { label: 'FAQ', to: '/faq' },
+        { label: 'Regeln', to: '/rules' },
+      ],
+      matchPrefixes: ['/about', '/faq', '/rules'],
+    },
   ];
 
   leftDrawerOpen = false;
   rightDrawerOpen = false;
   telemetryConsentDialogShown = false;
+  menuState: Record<NavGroupKey, boolean> = {
+    roleplay: false,
+    places: false,
+    gallery: false,
+    info: false,
+  };
+  private menuCloseTimers: Partial<Record<NavGroupKey, ReturnType<typeof setTimeout>>> = {};
 
   mounted() {
     void this.promptTelemetryConsentIfRequired();
@@ -150,6 +258,62 @@ export default class MainLayout extends Vue {
 
   toggleLeftDrawer() {
     this.leftDrawerOpen = !this.leftDrawerOpen;
+  }
+
+  toggleMenu(groupKey: NavGroupKey) {
+    if (this.menuState[groupKey]) {
+      this.menuState[groupKey] = false;
+      this.clearMenuCloseTimer(groupKey);
+      return;
+    }
+
+    this.openMenu(groupKey);
+  }
+
+  openMenu(groupKey: NavGroupKey) {
+    this.clearMenuCloseTimer(groupKey);
+    this.menuState[groupKey] = true;
+  }
+
+  scheduleMenuClose(groupKey: NavGroupKey) {
+    this.clearMenuCloseTimer(groupKey);
+    this.menuCloseTimers[groupKey] = setTimeout(() => {
+      this.menuState[groupKey] = false;
+      this.menuCloseTimers[groupKey] = undefined;
+    }, 120);
+  }
+
+  clearMenuCloseTimer(groupKey: NavGroupKey) {
+    const timer = this.menuCloseTimers[groupKey];
+    if (timer) {
+      clearTimeout(timer);
+      this.menuCloseTimers[groupKey] = undefined;
+    }
+  }
+
+  clearAllMenuCloseTimers() {
+    for (const group of this.navGroups) {
+      this.clearMenuCloseTimer(group.key);
+    }
+  }
+
+  isGroupRouteActive(groupKey: NavGroupKey) {
+    const path = this.$route.path;
+    const group = this.navGroups.find(entry => entry.key === groupKey);
+
+    if (!group) {
+      return false;
+    }
+
+    return group.matchPrefixes.some(prefix => this.matchesRoutePrefix(path, prefix));
+  }
+
+  private matchesRoutePrefix(path: string, prefix: string) {
+    if (prefix.endsWith('/')) {
+      return path.startsWith(prefix);
+    }
+
+    return path === prefix || path.startsWith(`${prefix}/`);
   }
 
   async switchCharacter() {
@@ -219,6 +383,10 @@ export default class MainLayout extends Vue {
       notifyError(e);
       this.telemetryConsentDialogShown = false;
     }
+  }
+
+  unmounted() {
+    this.clearAllMenuCloseTimers();
   }
 }
 </script>
@@ -595,7 +763,8 @@ $color-dark: #1b1b1b;
   animation-delay: 0.1s;
 }
 
-.layout__nav-links a {
+.layout__nav-links a,
+.layout__nav-dropdown-trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -617,14 +786,16 @@ $color-dark: #1b1b1b;
   z-index: 0;
   overflow: hidden;
   border-bottom: 3px solid transparent;
+  cursor: pointer;
 }
 
-.layout__nav-links a:first-child {
+.layout__nav-links > :first-child .layout__nav-dropdown-trigger {
   padding-left: 48px;
   margin-left: 0;
 }
 
-.layout__nav-links a::after {
+.layout__nav-links a::after,
+.layout__nav-dropdown-trigger::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -636,19 +807,96 @@ $color-dark: #1b1b1b;
   transition: width 0.3s ease;
 }
 
-.layout__nav-links a:hover {
+.layout__nav-links a:hover,
+.layout__nav-dropdown-trigger:hover {
   color: #ffffff;
   background: rgba(221, 180, 118, 0.08);
 }
 
-.layout__nav-links a:hover::after {
+.layout__nav-links a:hover::after,
+.layout__nav-dropdown-trigger:hover::after {
   width: 100%;
 }
 
-.layout__nav-links .router-link-active {
+.layout__nav-links .router-link-active,
+.layout__nav-dropdown-trigger_active {
   color: #ffffff;
   background: rgba(221, 180, 118, 0.12);
   border-bottom-color: rgba(221, 180, 118, 0.8);
+}
+
+.layout__nav-dropdown {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+}
+
+.layout__nav-dropdown-trigger {
+  border: 0;
+  outline: 0;
+  min-width: 176px;
+}
+
+.layout__nav-dropdown-trigger .q-icon {
+  margin-left: 6px;
+  transition: transform 0.2s ease;
+}
+
+.layout__nav-dropdown-trigger_open {
+  color: #ffffff;
+  background: rgba(221, 180, 118, 0.14);
+}
+
+.layout__nav-dropdown-trigger_open .q-icon {
+  transform: rotate(180deg);
+}
+
+.layout__nav-menu {
+  min-width: 300px;
+  border: 1px solid rgba(221, 180, 118, 0.28);
+  border-top: 2px solid rgba(221, 180, 118, 0.7);
+  border-radius: 0;
+  background:
+    linear-gradient(180deg, rgba(39, 33, 24, 0.98) 0%, rgba(19, 16, 12, 0.98) 100%);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.layout__nav-menu .q-list {
+  padding: 8px 0;
+}
+
+.layout__nav-menu-item {
+  color: rgba(232, 212, 176, 0.9);
+  min-height: 38px;
+  letter-spacing: 0.03em;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.layout__nav-menu-item::before {
+  content: '';
+  width: 3px;
+  height: 0;
+  margin-right: 10px;
+  border-radius: 99px;
+  background: rgba(221, 180, 118, 0.9);
+  transition: height 0.2s ease;
+}
+
+.layout__nav-menu-item:hover,
+.layout__nav-menu .q-router-link--active {
+  color: #ffffff;
+  background: rgba(221, 180, 118, 0.12);
+}
+
+.layout__nav-menu-item:hover::before,
+.layout__nav-menu .q-router-link--active::before {
+  height: 20px;
 }
 
 .layout__toolbar-button-more {
@@ -955,3 +1203,4 @@ $color-dark: #1b1b1b;
   }
 }
 </style>
+
