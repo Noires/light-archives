@@ -194,6 +194,7 @@
                             flat
                             color="secondary"
                             icon="launch"
+                            class="calendar-widget__event-link-btn"
                             :label="eventLinkLabel(event)"
                             type="a"
                             target="_blank"
@@ -541,11 +542,20 @@ export default class CalendarSidebarWidget extends Vue {
 </script>
 
 <style lang="scss">
+.calendar-widget {
+  height: 100%;
+  min-height: 0;
+}
+
 .calendar-widget__card {
   border-radius: 2px;
   border: 1px solid rgba(221, 180, 118, 0.25);
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border-radius: 30px;
 }
@@ -606,13 +616,19 @@ export default class CalendarSidebarWidget extends Vue {
 }
 
 .calendar-widget__body {
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 16px 18px 18px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .calendar-widget .q-date {
   border-radius: 0;
   box-shadow: none;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .calendar-widget .q-date__header {
@@ -915,6 +931,23 @@ export default class CalendarSidebarWidget extends Vue {
   display: flex;
   justify-content: flex-end;
   margin-top: 6px;
+  min-width: 0;
+}
+
+.calendar-widget__event-link-btn {
+  max-width: 100%;
+}
+
+.calendar-widget__event-link-btn .q-btn__content {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.calendar-widget__event-link-btn .block {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media screen and (max-width: $breakpoint-sm) {

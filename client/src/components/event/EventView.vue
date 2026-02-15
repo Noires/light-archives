@@ -171,7 +171,7 @@ class Props {
 })
 export default class EventView extends Vue.with(Props) {
   get eventIconUrl(): string {
-    return this.event.icon?.url || this.event.icon?.thumbUrl || '';
+    return this.event.icon?.thumbUrl || this.event.icon?.url || '';
   }
 
   get eventTypeLabel(): string {

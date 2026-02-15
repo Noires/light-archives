@@ -44,12 +44,6 @@
                 @click="toggleMenu(group.key)"
               >
                 <span>{{ group.label }}</span>
-                <q-badge
-                  v-if="showGroupNewBadge(group.key)"
-                  class="layout__nav-badge"
-                  color="positive"
-                  label="Neu"
-                />
                 <q-icon name="expand_more" size="16px" />
               </button>
               <q-menu
@@ -76,12 +70,6 @@
                     <q-item-section>
                       <q-item-label class="layout__nav-menu-label">
                         <span>{{ link.label }}</span>
-                        <q-badge
-                          v-if="showLinkNewBadge(link.to)"
-                          class="layout__nav-menu-badge"
-                          color="positive"
-                          label="Neu"
-                        />
                       </q-item-label>
                     </q-item-section>
                   </q-item>
@@ -194,10 +182,7 @@ import UserMenu from '../components/sidebar/UserMenu.vue';
 import InlineSvg from 'vue-inline-svg';
 import SiteSearchField from 'src/components/search/SiteSearchField.vue';
 import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
-import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
-import { ChangeItemDto } from '@app/shared/dto/changes/change-item.dto';
 import { TelemetryConsentStatus } from '@app/shared/enums/telemetry-consent-status.enum';
-import { LocalStorage } from 'quasar';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import { persistTelemetryConsent } from 'src/common/telemetry-consent-actions';
 import { isSentryConfigured } from 'src/common/sentry';
@@ -217,12 +202,6 @@ interface NavGroup {
   matchPrefixes: string[];
 }
 
-interface ChangesApiClient {
-  changes: {
-    getChanges(filter?: { since?: number; offset?: number; limit?: number }): Promise<PagingResultDto<ChangeItemDto>>;
-  };
-}
-
 @Options({
   components: {
     CalendarSidebarWidget,
@@ -230,18 +209,10 @@ interface ChangesApiClient {
     InlineSvg,
     SiteSearchField,
   },
-  watch: {
-    '$route.path': {
-      handler() {
-        void (this as MainLayout).onRoutePathChanged();
-      },
-    },
-  },
 })
 export default class MainLayout extends Vue {
   readonly DRAWER_BG = 'layout__drawer';
   readonly DRAWER_WIDTH = 250;
-  readonly CHANGES_LAST_VISIT_KEY = 'changes:last-visited-at';
 
   readonly navGroups: NavGroup[] = [
     {
@@ -295,7 +266,6 @@ export default class MainLayout extends Vue {
   leftDrawerOpen = false;
   rightDrawerOpen = false;
   telemetryConsentDialogShown = false;
-  hasNewChanges = false;
   menuState: Record<NavGroupKey, boolean> = {
     database: false,
     roleplay: false,
@@ -306,7 +276,6 @@ export default class MainLayout extends Vue {
 
   mounted() {
     void this.promptTelemetryConsentIfRequired();
-    void this.refreshChangesBadge();
   }
 
   toggleLeftDrawer() {
@@ -359,54 +328,6 @@ export default class MainLayout extends Vue {
     }
 
     return group.matchPrefixes.some(prefix => this.matchesRoutePrefix(path, prefix));
-  }
-
-  showGroupNewBadge(groupKey: NavGroupKey): boolean {
-    return groupKey === 'knowledge' && this.hasNewChanges && !this.isOnChangesPage;
-  }
-
-  showLinkNewBadge(linkTo: string): boolean {
-    return linkTo === '/changes' && this.hasNewChanges && !this.isOnChangesPage;
-  }
-
-  onRoutePathChanged() {
-    if (this.isOnChangesPage) {
-      this.hasNewChanges = false;
-      return;
-    }
-
-    void this.refreshChangesBadge();
-  }
-
-  async refreshChangesBadge() {
-    if (this.isOnChangesPage) {
-      this.hasNewChanges = false;
-      return;
-    }
-
-    const value = LocalStorage.getItem(this.CHANGES_LAST_VISIT_KEY);
-    const lastVisitedAt = typeof value === 'number' ? value : Number(value);
-
-    if (!Number.isFinite(lastVisitedAt) || lastVisitedAt <= 0) {
-      this.hasNewChanges = false;
-      return;
-    }
-
-    try {
-      const api = this.$api as ChangesApiClient;
-      const result = await api.changes.getChanges({
-        since: lastVisitedAt,
-        offset: 0,
-        limit: 1,
-      });
-      this.hasNewChanges = result.total > 0;
-    } catch (e) {
-      this.hasNewChanges = false;
-    }
-  }
-
-  get isOnChangesPage(): boolean {
-    return this.matchesRoutePrefix(this.$route.path, '/changes');
   }
 
   private matchesRoutePrefix(path: string, prefix: string) {
@@ -1162,10 +1083,13 @@ $color-dark: #1b1b1b;
 }
 
 .layout__calendar-outer {
+  --calendar-sticky-top: 180px;
   grid-column: 3;
   position: sticky;
-  top: 180px;
+  top: var(--calendar-sticky-top);
   width: 100%;
+  max-height: calc(100vh - var(--calendar-sticky-top) - 16px);
+  overflow: hidden;
   z-index: 5;
   align-self: start;
 }
@@ -1326,6 +1250,8 @@ $color-dark: #1b1b1b;
     grid-column: 1;
     position: static;
     width: auto;
+    max-height: none;
+    overflow: visible;
     margin: 0 24px 24px;
   }
 }
