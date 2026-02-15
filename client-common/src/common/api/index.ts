@@ -15,6 +15,7 @@ import SearchAPI from './search-api';
 import ServersAPI from './servers-api';
 import StatisticsAPI from './statistics-api';
 import StoriesAPI from './stories-api';
+import SupportAPI from './support-api';
 import UserAPI from './user-api';
 import VenuesAPI from './venues-api';
 import ViolationsAPI from './violations-api';
@@ -45,6 +46,7 @@ export default class API {
   readonly servers = new ServersAPI(this.transport);
   readonly statistics = new StatisticsAPI(this.transport);
   readonly stories = new StoriesAPI(this.transport);
+  readonly support = new SupportAPI(this.transport);
   readonly venues = new VenuesAPI(this.transport);
   readonly violations = new ViolationsAPI(this.transport);
   readonly weather = new WeatherAPI(this.transport);

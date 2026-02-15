@@ -16,6 +16,7 @@ import { SearchModule } from './search/search.module';
 import { ServersModule } from "./servers/servers.module";
 import { StatisticsModule } from "./statistics/statistics.module";
 import { StoriesModule } from './stories/stories.module';
+import { SupportModule } from './support/support.module';
 import { UserModule } from './user/user.module';
 import { VenuesModule } from './venues/venues.module';
 import { ViolationsModule } from './violations/violations.module';
@@ -31,6 +32,7 @@ const controllerModules = [
 	CarrdModule,
   ContentNotesModule,
 	StoriesModule,
+	SupportModule,
 	ImagesModule,
 	NewsModule,
 	NoticeboardModule,

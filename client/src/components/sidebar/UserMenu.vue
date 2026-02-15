@@ -179,6 +179,26 @@
             <q-item-label>Meine Inhalte</q-item-label>
           </q-item-section>
         </q-item>
+        <q-separator dark />
+        <q-item
+          clickable
+          v-ripple
+          to="/support/tickets"
+        >
+          <q-item-section>
+            <q-item-label>Support-Tickets</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item
+          v-if="canAccessSupportQueue"
+          clickable
+          v-ripple
+          to="/support/queue"
+        >
+          <q-item-section>
+            <q-item-label>Support-Queue</q-item-label>
+          </q-item-section>
+        </q-item>
       </template>
       <q-separator dark />
       <q-item v-if="sentryConfigured" clickable v-ripple @click="openTelemetryConsentSettings">
@@ -199,7 +219,7 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component';
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
-import { Role } from '@app/shared/enums/role.enum';
+import { Role, roleImplies } from '@app/shared/enums/role.enum';
 import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
 import { TelemetryConsentStatus } from '@app/shared/enums/telemetry-consent-status.enum';
 import { notifyError, notifySuccess } from 'src/common/notify';
@@ -212,6 +232,12 @@ import { isSentryConfigured } from 'src/common/sentry';
 export default class UserMenu extends Vue {
   readonly Role = Role;
   readonly sentryConfigured = isSentryConfigured();
+
+  get canAccessSupportQueue(): boolean {
+    const role = this.$store.getters.role;
+    return !!role && roleImplies(role, Role.MODERATOR);
+  }
+
   get myProfileLink() {
 		const server = this.$store.getters.character?.server || '';
 		const character = this.$store.getters.character?.name.replace(/ /g, '_') || '';

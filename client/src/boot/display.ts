@@ -3,6 +3,10 @@ import { ImageCategory } from '@app/shared/enums/image-category.enum';
 import { noticeboardLocations } from '@app/shared/enums/noticeboard-location.enum';
 import { PageType } from '@app/shared/enums/page-type.enum';
 import { races } from '@app/shared/enums/race.enum';
+import { SupportLevel } from '@app/shared/enums/support-level.enum';
+import { SupportTicketCategory } from '@app/shared/enums/support-ticket-category.enum';
+import { SupportTicketPriority } from '@app/shared/enums/support-ticket-priority.enum';
+import { SupportTicketStatus } from '@app/shared/enums/support-ticket-status.enum';
 import { StoryType } from '@app/shared/enums/story-type.enum';
 import { tribes } from '@app/shared/enums/tribe.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
@@ -78,6 +82,31 @@ class Display {
 		[PageType.NOTICEBOARD_ITEM]: 'Aushänge',
 		[PageType.WIKI_PAGE]: 'Wikibeiträge',
 		[PageType.IMAGE]: 'Bilder',
+	};
+
+	readonly supportTicketCategories: { [k: string]: string } = {
+		[SupportTicketCategory.GENERAL]: 'Allgemein',
+		[SupportTicketCategory.ACCOUNT]: 'Account',
+		[SupportTicketCategory.TECHNICAL]: 'Technik',
+		[SupportTicketCategory.CONTENT]: 'Inhalt',
+		[SupportTicketCategory.MODERATION]: 'Moderation',
+	};
+
+	readonly supportTicketPriorities: { [k: string]: string } = {
+		[SupportTicketPriority.LOW]: 'Niedrig',
+		[SupportTicketPriority.MEDIUM]: 'Mittel',
+		[SupportTicketPriority.HIGH]: 'Hoch',
+	};
+
+	readonly supportTicketStatuses: { [k: string]: string } = {
+		[SupportTicketStatus.WAITING_FOR_SUPPORT]: 'Wartet auf Support',
+		[SupportTicketStatus.WAITING_FOR_USER]: 'Wartet auf Nutzer',
+		[SupportTicketStatus.CLOSED]: 'Geschlossen',
+	};
+
+	readonly supportLevels: { [k: string]: string } = {
+		[SupportLevel.L1]: 'L1',
+		[SupportLevel.L2]: 'L2',
 	};
 
 	relativeTime(timestamp: number) {

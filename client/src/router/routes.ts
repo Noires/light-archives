@@ -1,5 +1,11 @@
 import { useStore } from 'src/store';
+import { Role, roleImplies } from '@app/shared/enums/role.enum';
 import { RouteLocationNormalized, RouteRecordRaw } from 'vue-router';
+
+function hasRequiredRole(requiredRole: Role): boolean {
+  const role = useStore().getters.role;
+  return !!role && roleImplies(role, requiredRole);
+}
 
 const routes: RouteRecordRaw[] = [
   {
@@ -129,6 +135,53 @@ const routes: RouteRecordRaw[] = [
     meta: {
       title: 'Account verifizieren'
     },
+  },
+
+  // Support
+  {
+    path: '/support/tickets',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/SupportTickets.vue') }],
+    meta: {
+      title: 'Support-Tickets'
+    },
+    beforeEnter: () => hasRequiredRole(Role.USER),
+  },
+  {
+    path: '/support/tickets/new',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/NewSupportTicket.vue') }],
+    meta: {
+      title: 'Neues Support-Ticket'
+    },
+    beforeEnter: () => hasRequiredRole(Role.USER),
+  },
+  {
+    path: '/support/tickets/:id',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/SupportTicket.vue') }],
+    meta: {
+      title: 'Support-Ticket'
+    },
+    beforeEnter: () => hasRequiredRole(Role.USER),
+  },
+  {
+    path: '/support/queue',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/SupportQueue.vue') }],
+    meta: {
+      title: 'Support-Queue'
+    },
+    beforeEnter: () => hasRequiredRole(Role.MODERATOR),
+  },
+  {
+    path: '/support/queue/:id',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/SupportTicketAdmin.vue') }],
+    meta: {
+      title: 'Support-Ticket'
+    },
+    beforeEnter: () => hasRequiredRole(Role.MODERATOR),
   },
 
   // User actions
