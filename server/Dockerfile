@@ -5,6 +5,7 @@ ENV SENTRY_RELEASE=$SENTRY_RELEASE
 
 RUN apk add --update --no-cache \
   shadow \
+  python3 \
   make \
   g++ \
   automake \
@@ -12,6 +13,8 @@ RUN apk add --update --no-cache \
   libtool \
   nasm \
   libjpeg-turbo-dev
+ENV PYTHON=/usr/bin/python3
+ENV npm_config_python=/usr/bin/python3
 RUN npm install jpegtran-bin
 RUN npm install -g @nestjs/cli && rm -rf /root/npm/_cacache
 COPY package.json yarn.lock ./
