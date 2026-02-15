@@ -545,10 +545,11 @@ export default class CalendarSidebarWidget extends Vue {
 .calendar-widget {
   height: 100%;
   min-height: 0;
+  border-radius: 30px;
+  overflow: hidden;
 }
 
 .calendar-widget__card {
-  border-radius: 2px;
   border: 1px solid rgba(221, 180, 118, 0.25);
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -558,6 +559,7 @@ export default class CalendarSidebarWidget extends Vue {
   flex-direction: column;
   overflow: hidden;
   border-radius: 30px;
+  background-clip: padding-box;
 }
 
 .calendar-widget__header {
@@ -621,6 +623,7 @@ export default class CalendarSidebarWidget extends Vue {
   padding: 16px 18px 18px;
   overflow-y: auto;
   overflow-x: hidden;
+  border-radius: 0 0 30px 30px;
 }
 
 .calendar-widget .q-date {
