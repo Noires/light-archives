@@ -105,8 +105,8 @@ class Display {
 	};
 
 	readonly supportLevels: { [k: string]: string } = {
-		[SupportLevel.L1]: 'L1',
-		[SupportLevel.L2]: 'L2',
+		[SupportLevel.L1]: '1st Level Support (L1)',
+		[SupportLevel.L2]: '2nd Level Support (L2)',
 	};
 
 	relativeTime(timestamp: number) {

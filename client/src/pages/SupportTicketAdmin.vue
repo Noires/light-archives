@@ -1,79 +1,76 @@
 ﻿<template>
-  <q-page class="page-support-ticket-admin q-pa-md">
-    <div class="layout-container" v-if="ticket">
-      <div class="row items-start justify-between q-mb-md q-gutter-sm">
-        <div>
-          <h2 class="q-my-none">Support Ticket #{{ ticket.ticketNumber }}</h2>
-          <div class="text-caption">User #{{ ticket.ownerUserId }}</div>
-          <div v-if="ticket.assigneeUserId" class="text-caption">Zugewiesen an Support #{{ ticket.assigneeUserId }}</div>
-        </div>
-        <q-btn flat label="Zur Queue" to="/support/queue" />
+  <q-page class="page-support-ticket-admin" v-if="ticket">
+    <header class="page-support-ticket-admin__hero">
+      <div class="page-support-ticket-admin__hero-text">
+        <span class="page-support-ticket-admin__eyebrow">Support Queue</span>
+        <h2>Ticket #{{ ticket.ticketNumber }} · {{ ticket.subject }}</h2>
+        <p class="page-support-ticket-admin__lead">
+          User #{{ ticket.ownerUserId }} · {{ $display.supportTicketCategories[ticket.category] }}
+        </p>
       </div>
-
-      <div class="row q-col-gutter-sm q-mb-md">
-        <div class="col-12 col-md-3">
-          <q-select v-model="status" outlined dense emit-value map-options :options="statusOptions" label="Status" />
-        </div>
-        <div class="col-12 col-md-3">
-          <q-select v-model="priority" outlined dense emit-value map-options :options="priorityOptions" label="Priorität" />
-        </div>
-        <div class="col-12 col-md-3">
-          <q-select v-model="category" outlined dense emit-value map-options :options="categoryOptions" label="Kategorie" />
-        </div>
-        <div class="col-12 col-md-3">
-          <q-select v-model="supportLevel" outlined dense emit-value map-options :options="supportLevelOptions" label="Support-Level" />
-        </div>
-        <div class="col-12 col-md-3">
-          <q-input
-            v-model.trim="assigneeUserIdInput"
-            outlined
-            dense
-            label="Assignee User ID"
-            clearable
-            inputmode="numeric"
-          >
-            <template v-slot:append>
-              <q-btn
-                v-if="currentUserId"
-                flat
-                round
-                dense
-                icon="person"
-                @click="assignToMe"
-              >
-                <q-tooltip>Mir zuweisen</q-tooltip>
-              </q-btn>
-            </template>
-          </q-input>
+      <div class="page-support-ticket-admin__hero-meta">
+        <q-chip dense square :color="statusColor(ticket.status)" text-color="white">
+          {{ $display.supportTicketStatuses[ticket.status] }}
+        </q-chip>
+        <span class="page-support-ticket-admin__meta-line">Assignee: {{ ticket.assigneeUserId ? `Support #${ticket.assigneeUserId}` : 'Unassigned' }}</span>
+        <div class="page-support-ticket-admin__hero-actions">
+          <q-btn color="primary" label="Ticket aktualisieren" @click="updateTicket" :loading="saving" />
+          <q-btn v-if="ticket.status !== SupportTicketStatus.CLOSED" flat color="negative" label="Schließen" @click="closeTicket" />
+          <q-btn v-else flat color="primary" label="Wieder öffnen" @click="reopenTicket" />
+          <q-btn flat label="Zur Queue" to="/support/queue" />
         </div>
       </div>
+    </header>
 
-      <div class="row q-gutter-sm q-mb-md">
-        <q-btn color="primary" label="Ticket aktualisieren" @click="updateTicket" :loading="saving" />
-        <q-btn v-if="ticket.status !== SupportTicketStatus.CLOSED" flat color="negative" label="Schließen" @click="closeTicket" />
-        <q-btn v-else flat color="primary" label="Wieder öffnen" @click="reopenTicket" />
-      </div>
+    <section class="page-support-ticket-admin__content">
+      <q-card flat class="page-support-ticket-admin__controls">
+        <q-card-section>
+          <div class="page-support-ticket-admin__section-title">Ticket-Steuerung</div>
+          <div class="page-support-ticket-admin__control-grid">
+            <q-select v-model="status" outlined dense emit-value map-options :options="statusOptions" label="Status" />
+            <q-select v-model="priority" outlined dense emit-value map-options :options="priorityOptions" label="Priorität" />
+            <q-select v-model="category" outlined dense emit-value map-options :options="categoryOptions" label="Kategorie" />
+            <q-select v-model="supportLevel" outlined dense emit-value map-options :options="supportLevelOptions" label="Support-Level" />
+            <q-input
+              v-model.trim="assigneeUserIdInput"
+              outlined
+              dense
+              label="Assignee User ID"
+              clearable
+              inputmode="numeric"
+            >
+              <template v-slot:append>
+                <q-btn v-if="currentUserId" flat round dense icon="person" @click="assignToMe">
+                  <q-tooltip>Mir zuweisen</q-tooltip>
+                </q-btn>
+              </template>
+            </q-input>
+          </div>
+        </q-card-section>
+      </q-card>
 
-      <q-list bordered separator class="q-mb-md">
-        <q-item
+      <div class="page-support-ticket-admin__messages-shell">
+        <div v-if="ticket.messages.length === 0" class="page-support-ticket-admin__empty">Noch keine Nachrichten.</div>
+        <q-chat-message
           v-for="message in ticket.messages"
           :key="message.id"
-          :class="{ 'bg-blue-1': message.isInternal }"
+          :name="message.senderLabel"
+          :text="[message.body]"
+          :stamp="$display.formatDateTimeLocal(message.createdAt)"
+          :sent="message.kind === SupportMessageKind.SUPPORT"
+          :bg-color="messageBgColor(message.kind, message.isInternal)"
+          :text-color="messageTextColor(message.kind, message.isInternal)"
+          class="page-support-ticket-admin__chat-message"
         >
-          <q-item-section>
-            <q-item-label>
-              <strong>{{ message.senderLabel }}</strong>
-              <span v-if="message.isInternal" class="text-caption q-ml-xs">(intern)</span>
-              <span class="text-caption q-ml-sm">{{ $display.formatDateTimeLocal(message.createdAt) }}</span>
-            </q-item-label>
-            <q-item-label caption class="text-body2" style="white-space: pre-wrap;">{{ message.body }}</q-item-label>
-          </q-item-section>
-        </q-item>
-      </q-list>
+          <template v-if="message.isInternal" v-slot:name>
+            {{ message.senderLabel }} (intern)
+          </template>
+        </q-chat-message>
+      </div>
 
-      <q-card v-if="ticket.status !== SupportTicketStatus.CLOSED" flat bordered class="q-mb-md">
+      <q-card v-if="ticket.status !== SupportTicketStatus.CLOSED" flat class="page-support-ticket-admin__reply-card">
         <q-card-section>
-          <div class="text-subtitle1 q-mb-sm">Öffentliche Antwort</div>
+          <div class="page-support-ticket-admin__section-title">Öffentliche Antwort</div>
           <q-select
             v-model="quickReply"
             dense
@@ -90,29 +87,38 @@
         </q-card-section>
       </q-card>
 
-      <q-banner v-else class="bg-grey-2 text-dark q-mb-md">
+      <q-banner v-else class="page-support-ticket-admin__closed-banner">
         Dieses Ticket ist geschlossen. Öffne es zuerst wieder, um öffentlich zu antworten.
       </q-banner>
 
-      <q-card flat bordered>
+      <q-card flat class="page-support-ticket-admin__note-card">
         <q-card-section>
-          <div class="text-subtitle1 q-mb-sm">Interne Notiz</div>
+          <div class="page-support-ticket-admin__section-title">Interne Notiz</div>
           <q-input v-model="internalNote" type="textarea" autogrow outlined label="Notiz" />
           <q-btn class="q-mt-sm" color="secondary" label="Notiz speichern" @click="sendInternalNote" :loading="sendingNote" />
         </q-card-section>
       </q-card>
-    </div>
+    </section>
   </q-page>
 </template>
 
 <script lang="ts">
 import { SupportTicketDetailDto } from '@app/shared/dto/support/support-ticket-detail.dto';
 import { SupportLevel } from '@app/shared/enums/support-level.enum';
+import { SupportMessageKind } from '@app/shared/enums/support-message-kind.enum';
 import { SupportTicketCategory } from '@app/shared/enums/support-ticket-category.enum';
 import { SupportTicketPriority } from '@app/shared/enums/support-ticket-priority.enum';
 import { SupportTicketStatus } from '@app/shared/enums/support-ticket-status.enum';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import { Options, Vue } from 'vue-class-component';
+
+type QuickReplyKey = 'ack' | 'clarification' | 'closure';
+
+const quickReplyTemplates: Record<QuickReplyKey, string> = {
+  ack: 'Vielen Dank für deine Nachricht. Wir haben dein Anliegen erhalten und prüfen es.',
+  clarification: 'Danke für dein Ticket. Kannst du bitte noch weitere Details oder Screenshots teilen?',
+  closure: 'Wir haben dein Anliegen abgeschlossen. Wenn noch etwas offen ist, öffne das Ticket bitte erneut.',
+};
 
 @Options({
   name: 'PageSupportTicketAdmin',
@@ -127,6 +133,7 @@ import { Options, Vue } from 'vue-class-component';
 })
 export default class PageSupportTicketAdmin extends Vue {
   readonly SupportTicketStatus = SupportTicketStatus;
+  readonly SupportMessageKind = SupportMessageKind;
 
   ticket: SupportTicketDetailDto | null = null;
 
@@ -138,7 +145,7 @@ export default class PageSupportTicketAdmin extends Vue {
 
   publicReply = '';
   internalNote = '';
-  quickReply: string | null = null;
+  quickReply: QuickReplyKey | null = null;
 
   sendingReply = false;
   sendingNote = false;
@@ -181,10 +188,50 @@ export default class PageSupportTicketAdmin extends Vue {
   get quickReplyOptions() {
     return [
       { label: '(Kein Template)', value: null },
-      { label: 'Empfang bestätigt', value: 'Vielen Dank für deine Nachricht. Wir haben dein Anliegen erhalten und prüfen es.' },
-      { label: 'Rückfrage', value: 'Danke für dein Ticket. Kannst du bitte noch weitere Details oder Screenshots teilen?' },
-      { label: 'Abschluss', value: 'Wir haben dein Anliegen abgeschlossen. Wenn noch etwas offen ist, öffne das Ticket bitte erneut.' },
+      { label: 'Empfang bestätigt', value: 'ack' },
+      { label: 'Rückfrage', value: 'clarification' },
+      { label: 'Abschluss', value: 'closure' },
     ];
+  }
+
+  statusColor(status: SupportTicketStatus): string {
+    if (status === SupportTicketStatus.CLOSED) {
+      return 'grey-7';
+    }
+
+    if (status === SupportTicketStatus.WAITING_FOR_SUPPORT) {
+      return 'orange-8';
+    }
+
+    return 'primary';
+  }
+
+  messageBgColor(kind: SupportMessageKind, isInternal: boolean): string {
+    if (isInternal) {
+      return 'teal-1';
+    }
+
+    if (kind === SupportMessageKind.SUPPORT) {
+      return 'primary';
+    }
+
+    if (kind === SupportMessageKind.SYSTEM) {
+      return 'grey-5';
+    }
+
+    return 'grey-3';
+  }
+
+  messageTextColor(kind: SupportMessageKind, isInternal: boolean): string {
+    if (isInternal) {
+      return 'dark';
+    }
+
+    if (kind === SupportMessageKind.SUPPORT || kind === SupportMessageKind.SYSTEM) {
+      return 'white';
+    }
+
+    return 'dark';
   }
 
   async load(id: number): Promise<void> {
@@ -214,7 +261,7 @@ export default class PageSupportTicketAdmin extends Vue {
 
   applyQuickReply(): void {
     if (this.quickReply) {
-      this.publicReply = this.quickReply;
+      this.publicReply = quickReplyTemplates[this.quickReply];
     }
   }
 
@@ -251,9 +298,18 @@ export default class PageSupportTicketAdmin extends Vue {
       return;
     }
 
+    const selectedQuickReply = this.quickReply;
+
     try {
       this.sendingReply = true;
       await this.$api.support.addSupportMessage(this.ticket.id, { message: this.publicReply.trim() });
+
+      if (selectedQuickReply === 'ack') {
+        await this.$api.support.updateTicket(this.ticket.id, {
+          status: SupportTicketStatus.WAITING_FOR_SUPPORT,
+        });
+      }
+
       this.publicReply = '';
       this.quickReply = null;
       await this.load(this.ticket.id);
@@ -311,3 +367,162 @@ export default class PageSupportTicketAdmin extends Vue {
 }
 </script>
 
+<style lang="scss">
+.page-support-ticket-admin {
+  position: relative;
+  padding: 28px 18px 42px;
+  background: linear-gradient(180deg, #f8f4ee 0%, #ffffff 45%, #f2ede4 100%);
+  border-radius: 30px;
+  overflow: hidden;
+}
+
+.page-support-ticket-admin::before {
+  content: '';
+  position: absolute;
+  inset: -120px 0 auto;
+  height: 260px;
+  background: radial-gradient(circle at 20% 30%, rgba(221, 180, 118, 0.18), transparent 55%),
+    radial-gradient(circle at 80% 0%, rgba(15, 76, 104, 0.12), transparent 50%);
+  pointer-events: none;
+}
+
+.page-support-ticket-admin h2 {
+  margin: 0;
+  font-family: $header-font;
+}
+
+.page-support-ticket-admin__hero {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  padding: 22px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(221, 180, 118, 0.25);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+}
+
+.page-support-ticket-admin__hero-text {
+  display: grid;
+  gap: 8px;
+}
+
+.page-support-ticket-admin__eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(139, 103, 58, 0.9);
+  font-weight: 600;
+}
+
+.page-support-ticket-admin__lead {
+  margin: 0;
+  color: rgba(35, 35, 35, 0.7);
+}
+
+.page-support-ticket-admin__hero-meta {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.page-support-ticket-admin__meta-line {
+  font-size: 0.85rem;
+  color: rgba(35, 35, 35, 0.7);
+}
+
+.page-support-ticket-admin__hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.page-support-ticket-admin__content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 14px;
+}
+
+.page-support-ticket-admin__controls,
+.page-support-ticket-admin__messages-shell,
+.page-support-ticket-admin__reply-card,
+.page-support-ticket-admin__note-card,
+.page-support-ticket-admin__closed-banner {
+  border: 1px solid rgba(221, 180, 118, 0.25);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+}
+
+.page-support-ticket-admin__section-title {
+  font-family: $header-font;
+  font-size: 1.05rem;
+  color: #20323d;
+  margin-bottom: 12px;
+}
+
+.page-support-ticket-admin__control-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.page-support-ticket-admin__messages-shell {
+  padding: 14px;
+  min-height: 220px;
+}
+
+.page-support-ticket-admin__chat-message {
+  margin-bottom: 8px;
+}
+
+.page-support-ticket-admin__chat-message:last-child {
+  margin-bottom: 0;
+}
+
+.page-support-ticket-admin__empty {
+  color: rgba(35, 35, 35, 0.6);
+  text-align: center;
+  padding: 22px 8px;
+}
+
+@media screen and (max-width: 1200px) {
+  .page-support-ticket-admin__control-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media screen and (max-width: 1100px) {
+  .page-support-ticket-admin__hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .page-support-ticket-admin__hero-meta {
+    width: 100%;
+    justify-items: start;
+  }
+
+  .page-support-ticket-admin__hero-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media screen and (max-width: $breakpoint-sm) {
+  .page-support-ticket-admin {
+    padding: 20px 14px 36px;
+  }
+
+  .page-support-ticket-admin__hero {
+    padding: 16px;
+  }
+
+  .page-support-ticket-admin__control-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+</style>

@@ -12,6 +12,7 @@ import { SupportTicketListFilterDto } from '@app/shared/dto/support/support-tick
 import { SupportTicketMessageDto } from '@app/shared/dto/support/support-ticket-message.dto';
 import { SupportTicketSummaryDto } from '@app/shared/dto/support/support-ticket-summary.dto';
 import { UpdateSupportTicketDto } from '@app/shared/dto/support/update-support-ticket.dto';
+import SharedConstants from '@app/shared/SharedConstants';
 import { roleImplies, Role } from '@app/shared/enums/role.enum';
 import { SupportLevel } from '@app/shared/enums/support-level.enum';
 import { SupportMessageKind } from '@app/shared/enums/support-message-kind.enum';
@@ -55,6 +56,24 @@ export class SupportService {
     user: UserInfo,
   ): Promise<IdWrapper> {
     const created = await this.connection.transaction(async (em) => {
+      await em.getRepository(User)
+        .createQueryBuilder('user')
+        .setLock('pessimistic_write')
+        .where('user.id = :userId', { userId: user.id })
+        .getOne();
+
+      const openTicketCount = await em.getRepository(SupportTicket)
+        .createQueryBuilder('ticket')
+        .where('ticket.ownerUserId = :ownerUserId', { ownerUserId: user.id })
+        .andWhere('ticket.status <> :closedStatus', { closedStatus: SupportTicketStatus.CLOSED })
+        .getCount();
+
+      if (openTicketCount >= SharedConstants.MAX_OPEN_SUPPORT_TICKETS_PER_USER) {
+        throw new BadRequestException(
+          `You can only have ${SharedConstants.MAX_OPEN_SUPPORT_TICKETS_PER_USER} open support tickets at the same time.`,
+        );
+      }
+
       const now = new Date();
       const priority = request.priority || SupportTicketPriority.MEDIUM;
       const ticketRepo = em.getRepository(SupportTicket);
@@ -215,7 +234,9 @@ export class SupportService {
         throw new NotFoundException('Ticket not found');
       }
 
-      await this.reopenTicket(em, ticket, user.id, SupportTicketStatus.WAITING_FOR_SUPPORT);
+      if (ticket.status === SupportTicketStatus.CLOSED) {
+        throw new BadRequestException('Closed tickets cannot be reopened by users. Please create a new ticket.');
+      }
     });
   }
 
@@ -442,6 +463,7 @@ export class SupportService {
     );
 
     await this.createTicketEvent(em, ticket.id, SupportTicketEventType.CLOSED, actorUserId, null);
+    await em.getRepository(SupportTicket).save(ticket);
   }
 
   private async reopenTicket(
@@ -479,6 +501,7 @@ export class SupportService {
     await this.createTicketEvent(em, ticket.id, SupportTicketEventType.REOPENED, actorUserId, {
       toStatus: reopenedStatus,
     });
+    await em.getRepository(SupportTicket).save(ticket);
   }
 
   private createSupportQueueQuery(filter: SupportQueueFilterDto): SelectQueryBuilder<SupportTicket> {
