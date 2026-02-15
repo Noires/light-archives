@@ -8,10 +8,16 @@
       @dragover.capture="onDragOver"
       @drop.capture="onDrop"
     >
-      <q-stepper class="upload-dialog__stepper" v-model="step" color="primary" animated>
+      <q-stepper
+        class="upload-dialog__stepper"
+        v-model="step"
+        color="primary"
+        animated
+        :contracted="$q.screen.lt.lg"
+      >
         <q-step
           :name="Step.SELECT_IMAGE"
-          title="Bild auswählen"
+          title="Hochladen"
           icon="folder_open"
           active-icon="folder_open"
           :done="step !== Step.SELECT_IMAGE"
@@ -27,7 +33,7 @@
         <q-step
           v-if="requiresBannerCropStep"
           :name="Step.BANNER_CROP"
-          title="Banner zuschneiden"
+          title="Zuschneiden"
           icon="crop"
           active-icon="crop"
           :done="step === Step.THUMBNAIL || step === Step.IMAGE_DETAILS"
@@ -42,7 +48,7 @@
         </q-step>
         <q-step
           :name="Step.THUMBNAIL"
-          title="Thumbnail anpassen"
+          title="Thumbnail"
           icon="image"
           active-icon="image"
           :done="step === Step.IMAGE_DETAILS"
@@ -53,7 +59,7 @@
             v-model="thumbModel"
           />
         </q-step>
-        <q-step :name="Step.IMAGE_DETAILS" title="Details ausfüllen" icon="edit" active-icon="edit">
+        <q-step :name="Step.IMAGE_DETAILS" title="Details" icon="edit" active-icon="edit">
           <step-image-details v-model="detailsModel" />
         </q-step>
       </q-stepper>

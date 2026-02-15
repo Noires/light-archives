@@ -17,7 +17,7 @@
         </div>
       </section>
       <section class="step-banner-crop__preview">
-        <img v-if="previewUrl" :src="previewUrl" alt="Banner preview" />
+        <img v-if="previewUrl" :key="previewRevision" :src="previewUrl" alt="Banner preview" />
       </section>
     </div>
   </div>
@@ -52,8 +52,10 @@ class Props {
 })
 export default class StepBannerCrop extends Vue.with(Props) {
   private cropper: Cropper | null = null;
+  private previewFrameId: number | null = null;
 
   previewUrl = '';
+  previewRevision = 0;
 
   get outputHeight() {
     return Math.round(this.outputWidth / this.aspectRatio);
@@ -85,9 +87,9 @@ export default class StepBannerCrop extends Vue.with(Props) {
             width: this.modelValue.width,
             height: this.modelValue.height,
           });
-        } else {
-          this.updatePreview();
         }
+
+        this.schedulePreviewUpdate();
       },
       crop: event => {
         const { x, y, width, height } = event.detail;
@@ -97,16 +99,34 @@ export default class StepBannerCrop extends Vue.with(Props) {
           width: Math.round(width),
           height: Math.round(height),
         });
-        this.updatePreview();
+        this.schedulePreviewUpdate();
       },
+      cropmove: () => this.schedulePreviewUpdate(),
+      cropend: () => this.schedulePreviewUpdate(),
     });
   }
 
   unmounted() {
+    if (this.previewFrameId !== null) {
+      cancelAnimationFrame(this.previewFrameId);
+      this.previewFrameId = null;
+    }
+
     if (this.cropper) {
       this.cropper.destroy();
       this.cropper = null;
     }
+  }
+
+  private schedulePreviewUpdate() {
+    if (this.previewFrameId !== null) {
+      cancelAnimationFrame(this.previewFrameId);
+    }
+
+    this.previewFrameId = requestAnimationFrame(() => {
+      this.previewFrameId = null;
+      this.updatePreview();
+    });
   }
 
   private updatePreview() {
@@ -119,7 +139,12 @@ export default class StepBannerCrop extends Vue.with(Props) {
       height: this.outputHeight,
     });
 
+    if (!canvas) {
+      return;
+    }
+
     this.previewUrl = canvas.toDataURL('image/jpeg', 0.9);
+    this.previewRevision += 1;
   }
 }
 </script>
