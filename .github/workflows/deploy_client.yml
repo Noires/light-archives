@@ -17,6 +17,7 @@ jobs:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
       SENTRY_PROJECT_CLIENT: ${{ secrets.SENTRY_PROJECT_CLIENT }}
+      npm_config_build_from_source: 'false'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,6 +26,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.17.0
+      - name: Install native build deps (sharp/node-gyp)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 make g++ pkg-config libvips-dev
       - name: Yarn Setup
         # You may pin to the exact commit or the version.
         # uses: DerYeger/yarn-setup-action@f55be5383ea94f5eb25b20aee609af4603a68dde
