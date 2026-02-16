@@ -165,9 +165,9 @@
     <q-footer elevated>
       <q-toolbar class="layout__toolbar__footer">
         <div class="layout__footer text-body justify-center text-center">
-          Final Fantasy XIV © 2010&ndash;2023 Square Enix Co., Ltd. Alle Rechte vorbehalten. Elpisgarten ist eine
+          Final Fantasy XIV © 2010&ndash;2026 Square Enix Co., Ltd. Alle Rechte vorbehalten. Elpisgarten ist eine
           Fanseite und steht nicht mit Square Enix in Verbindung.<br />
-          Alle Rechte der Texte und Bilder © 2022–2023 liegen bei ihren jeweiligen Eigentümern.
+          Alle Rechte der Texte und Bilder © 2021–2026 liegen bei ihren jeweiligen Eigentümern.
           <router-link to="/privacy-statement">(Datenschutzerklärung)</router-link>
         </div>
       </q-toolbar>
