@@ -27,7 +27,7 @@
       </q-card-section>
 
       <q-card-actions align="between">
-        <q-btn flat color="secondary" label="Datenschutzerklaerung" @click="onOpenPrivacyClick" />
+        <q-btn flat color="secondary" label="Datenschutzerklärung" @click="onOpenPrivacyClick" />
         <div class="telemetry-consent-dialog__actions">
           <q-btn v-if="settingsMode" flat color="secondary" label="Schliessen" @click="onCloseClick" />
           <q-btn
