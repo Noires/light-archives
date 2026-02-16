@@ -23,7 +23,13 @@
 
       <article class="page-about__panel">
         <h3>Credits</h3>
-        <p>Dieser Bereich ist aktuell in Bearbeitung.</p>
+        <p>
+          Wir dürfen die Codebasis von
+          <a href="https://chaosarchives.org/" target="_blank" rel="noopener noreferrer">
+            Chaos Archives
+          </a>
+          mit freundlicher Erlaubnis nutzen. Ein besonderer Dank geht an die Entwicklerin Maia Everett.
+        </p>
       </article>
 
       <article class="page-about__panel">
