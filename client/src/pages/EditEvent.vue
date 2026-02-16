@@ -33,15 +33,8 @@
               />
             </div>
             <div class="page-edit-event__select-group">
-              <div class="page-edit-event__select-title">18+</div>
-              <q-btn-toggle
-                v-model="event.adultOnly"
-                :options="adultOnlyOptions"
-                no-caps
-                unelevated
-                toggle-color="secondary"
-                class="page-edit-event__adult-toggle"
-              />
+              <div class="page-edit-event__select-title">Nicht jugendfrei (18+)</div>
+              <adult-only-selector v-model="event.adultOnly" />
             </div>
             <q-date-time-picker
               v-if="startDateTimeVisible"
@@ -245,6 +238,7 @@ import CharacterSelector from 'src/components/common/CharacterSelector.vue';
 import EventIconEditSection from 'src/components/event/EventIconEditSection.vue';
 import WorldSelect from 'src/components/common/WorldSelect.vue';
 import EventView from 'src/components/event/EventView.vue';
+import AdultOnlySelector from 'src/components/event/AdultOnlySelector.vue';
 import { useRouter } from 'src/router';
 import { useStore } from 'src/store';
 import { Options, Vue } from 'vue-class-component';
@@ -296,6 +290,7 @@ async function load(params: RouteParams): Promise<{
     EventView,
     EventAnnouncementEditor,
     WorldSelect,
+    AdultOnlySelector,
   },
 	async beforeRouteEnter(to, _, next) {
 		const content = await load(to.params);
@@ -341,10 +336,6 @@ export default class PageEditEvent extends Vue {
   eventBackup = new EventEditDto();
   contentNoteOptions: { label: string; value: string }[] = [];
   readonly eventTypeOptions = EventTypeOptions;
-  readonly adultOnlyOptions = [
-    { label: 'Nein', value: false },
-    { label: 'Ja', value: true },
-  ];
   readonly minDiscordBannerAspectRatio = SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO;
   venueOptions: VenueOption[][] = [];
 
@@ -774,14 +765,6 @@ type VenueOption = {
   text-transform: uppercase;
   font-weight: 700;
   color: rgba(35, 35, 35, 0.7);
-}
-
-.page-edit-event__adult-toggle {
-  width: 100%;
-}
-
-.page-edit-event__adult-toggle .q-btn {
-  flex: 1 1 0;
 }
 
 .page-edit-event__options-grid {
