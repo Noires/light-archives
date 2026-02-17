@@ -2,7 +2,8 @@
   <section class="event-icon-edit-section">
     <h6>Icon</h6>
     <p class="text-caption">
-      Optionales Icon für den Kalender. Empfohlen: quadratisch (z.B. 128x128), damit es in allen Ansichten scharf wirkt.
+      Optionales Event-Icon. Es wird in der Eventansicht auf ca. 50x50 und in Kalenderlisten kleiner dargestellt.
+      Empfohlen: quadratisch (z.B. 128x128 oder groesser) mit klarem Motiv.
     </p>
     <q-responsive v-if="!modelValue" class="event-icon-edit-section__placeholder" :ratio="1">
       <div class="event-icon-edit-section__placeholder-content">
@@ -48,7 +49,7 @@ class Props {
 })
 export default class EventIconEditSection extends Vue.with(Props) {
   get iconUrl() {
-    return this.modelValue?.thumbUrl || this.modelValue?.url || '';
+    return this.modelValue?.previewUrl || this.modelValue?.thumbUrl || this.modelValue?.url || '';
   }
 
   async onIconSelectClick() {
@@ -57,6 +58,9 @@ export default class EventIconEditSection extends Vue.with(Props) {
     this.$q
       .dialog({
         component: GalleryDialog,
+        componentProps: {
+          mode: 'event-icon',
+        },
       })
       .onOk((image: ImageSummaryDto) => {
         this.setModel(this.toIconDto(image));
@@ -69,6 +73,9 @@ export default class EventIconEditSection extends Vue.with(Props) {
     this.$q
       .dialog({
         component: UploadDialog,
+        componentProps: {
+          mode: 'event-icon',
+        },
       })
       .onOk((image: ImageSummaryDto) => {
         this.setModel(this.toIconDto(image));
@@ -82,6 +89,7 @@ export default class EventIconEditSection extends Vue.with(Props) {
   private toIconDto(image: ImageSummaryDto) {
     return new EventIconDto({
       id: image.id,
+      previewUrl: image.thumbUrl,
       url: image.url,
       thumbUrl: image.thumbUrl,
       width: image.width,
@@ -99,7 +107,7 @@ export default class EventIconEditSection extends Vue.with(Props) {
 .event-icon-edit-section__image {
   margin-bottom: 16px;
   border-radius: 12px;
-  width: 32px;
+  width: 50px;
   max-width: 100%;
 }
 
@@ -108,7 +116,7 @@ export default class EventIconEditSection extends Vue.with(Props) {
   background: #f0f2f6;
   border-radius: 12px;
   color: #6a7a8c;
-  width: 32px;
+  width: 50px;
   max-width: 100%;
 }
 

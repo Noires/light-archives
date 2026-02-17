@@ -2,6 +2,10 @@
 	<q-dialog ref="dialog" no-backdrop-dismiss @hide="onDialogHide">
     <q-card class="gallery-dialog">
 			<h5>Bild auswählen</h5>
+      <p v-if="isEventIconMode" class="text-caption">
+        Bestehende Bilder nutzen ihren bereits gespeicherten Thumbnail-Ausschnitt.
+        Falls der Fokus fuer das Event-Icon nicht passt, lade das Bild neu hoch und waehle den Ausschnitt im 50x50-Preview-Schritt.
+      </p>
 			<section class="gallery-dialog__image-list">
 				<thumb-gallery :images="images" :links="false" @select="onImageSelect" />
 			</section>
@@ -32,6 +36,10 @@ class Props {
   minAspectRatio = prop<number | null>({
     default: null,
   });
+
+  mode = prop<string>({
+    default: 'default',
+  });
 }
 
 @Options({
@@ -42,6 +50,10 @@ class Props {
 })
 export default class ConfirmImageDeleteDialog extends Vue.with(Props) {
 	images: ImageSummaryDto[] = [];
+
+  get isEventIconMode() {
+    return this.mode === 'event-icon';
+  }
 
 	async created() {
 		const characterId = this.$store.getters.characterId;
@@ -91,6 +103,7 @@ export default class ConfirmImageDeleteDialog extends Vue.with(Props) {
 			componentProps: {
 				banner: this.banner,
         minAspectRatio: this.minAspectRatio,
+        mode: this.mode,
 			}
     }).onOk((image: ImageSummaryDto) => {
       this.onImageSelect(image);

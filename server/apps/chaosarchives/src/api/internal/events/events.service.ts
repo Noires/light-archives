@@ -659,6 +659,7 @@ export class EventsService {
         ? null
         : new EventIconDto({
             id: icon.id,
+            previewUrl: this.imagesService.getThumbUrl(icon),
             url: this.imagesService.getUrl(icon),
             thumbUrl: this.imagesService.getIconUrl(icon),
             width: icon.width,
@@ -739,6 +740,7 @@ export class EventsService {
         ? null
         : new EventIconDto({
             id: icon.id,
+            previewUrl: this.imagesService.getThumbUrl(icon),
             url: this.imagesService.getUrl(icon),
             thumbUrl: this.imagesService.getIconUrl(icon),
             width: icon.width,

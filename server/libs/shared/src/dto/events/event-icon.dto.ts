@@ -6,6 +6,10 @@ export class EventIconDto {
 
   @IsString()
   @IsOptional()
+  previewUrl: string;
+
+  @IsString()
+  @IsOptional()
   url: string;
 
   @IsString()

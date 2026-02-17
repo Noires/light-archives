@@ -171,7 +171,7 @@ class Props {
 })
 export default class EventView extends Vue.with(Props) {
   get eventIconUrl(): string {
-    return this.event.icon?.thumbUrl || this.event.icon?.url || '';
+    return this.event.icon?.previewUrl || this.event.icon?.url || this.event.icon?.thumbUrl || '';
   }
 
   get eventTypeLabel(): string {
@@ -271,8 +271,8 @@ export default class EventView extends Vue.with(Props) {
 }
 
 .event-view__icon {
-  width: 52px;
-  height: 52px;
+  width: 50px;
+  height: 50px;
   border-radius: 12px;
   background: rgba(221, 180, 118, 0.18);
   border: 1px solid rgba(221, 180, 118, 0.35);
@@ -290,8 +290,8 @@ export default class EventView extends Vue.with(Props) {
 }
 
 .event-view__icon-img {
-  width: 52px;
-  height: 52px;
+  width: 50px;
+  height: 50px;
 }
 
 .event-view__title {

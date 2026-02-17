@@ -23,7 +23,8 @@
           :done="step !== Step.SELECT_IMAGE"
         >
           <step-select-image
-            :banner="banner"
+            :banner="requiresBannerCropStep"
+            :mode="flowMode"
             :min-aspect-ratio="minAspectRatio"
             :allow-aspect-ratio-crop="requiresBannerCropStep"
             :model-value="fileModel"
@@ -56,6 +57,7 @@
           <step-thumbnail
             v-if="thumbnailSourceImage"
             :image="thumbnailSourceImage"
+            :mode="flowMode"
             v-model="thumbModel"
           />
         </q-step>
@@ -128,6 +130,8 @@ enum Step {
   IMAGE_DETAILS = 'IMAGE_DETAILS',
 }
 
+type UploadFlowMode = 'default' | 'banner' | 'event-icon';
+
 interface DialogRef {
   show(): void;
   hide(): void;
@@ -140,6 +144,10 @@ class Props {
 
   minAspectRatio = prop<number | null>({
     default: null,
+  });
+
+  mode = prop<string>({
+    default: 'default',
   });
 }
 
@@ -254,12 +262,24 @@ export default class UploadDialog extends Vue.with(Props) {
     return this.step !== Step.SELECT_IMAGE;
   }
 
+  get flowMode(): UploadFlowMode {
+    if (this.banner || this.mode === 'banner') {
+      return 'banner';
+    }
+
+    if (this.mode === 'event-icon') {
+      return 'event-icon';
+    }
+
+    return 'default';
+  }
+
   get bannerAspectRatio() {
     return this.minAspectRatio ?? MIN_BANNER_ASPECT_RATIO;
   }
 
   get requiresBannerCropStep() {
-    return this.banner;
+    return this.flowMode === 'banner';
   }
 
   get bannerOutputWidth() {
@@ -293,7 +313,7 @@ export default class UploadDialog extends Vue.with(Props) {
   }
 
   get canGoNext() {
-    const minAspectRatio = this.minAspectRatio ?? (this.banner ? MIN_BANNER_ASPECT_RATIO : null);
+    const minAspectRatio = this.minAspectRatio ?? (this.requiresBannerCropStep ? MIN_BANNER_ASPECT_RATIO : null);
     const convertedFile = this.fileModel.convertedFile;
     const image = this.fileModel.image;
 

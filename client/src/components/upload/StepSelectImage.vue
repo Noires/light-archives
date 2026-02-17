@@ -17,6 +17,13 @@
         />
       </template>
     </q-file>
+    <q-banner
+      v-if="isEventIconMode"
+      class="step-select-image__mode-hint bg-info text-black"
+    >
+      Event-Icon-Modus: Das Icon wird in der Eventansicht auf ca. 50x50 dargestellt.
+      Waehle im naechsten Schritt einen klaren quadratischen Ausschnitt.
+    </q-banner>
     <section v-if="!modelValue.file" class="text-caption">
       Du kannst deine Bilddatei auch per Drag & Drop hier hochladen.
     </section>
@@ -126,6 +133,10 @@ class Props {
 
   allowAspectRatioCrop = prop<boolean>({
     default: false,
+  });
+
+  mode = prop<string>({
+    default: 'default',
   });
 }
 
@@ -330,12 +341,21 @@ export default class StepSelectImage extends Vue.with(Props) {
 
     return `${minAspectRatio.toFixed(2)}:1`;
   }
+
+  get isEventIconMode() {
+    return this.mode === 'event-icon';
+  }
 }
 </script>
 
 <style lang="scss">
 .step-select-image img {
   max-height: 50vh;
+}
+
+.step-select-image__mode-hint {
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
 .step-select-image__not-image {
