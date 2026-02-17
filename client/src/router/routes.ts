@@ -143,6 +143,15 @@ const routes: RouteRecordRaw[] = [
       title: 'Datenschutzerklärung'
     },
   },
+  {
+    path: '/impressum',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/Impressum.vue') }],
+    meta: {
+      title: 'Impressum'
+    },
+  },
+
 
   // User actions
 
