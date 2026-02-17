@@ -550,18 +550,39 @@ export default class PageEditEvent extends Vue {
 
     try {
       const venue = await this.$api.venues.getVenue(venueId);
-      this.applyVenueTemplate(venue);
+      const updatedLocation = this.event.locations[index];
+      if (!updatedLocation || updatedLocation.venueId !== venueId) {
+        return;
+      }
 
-      if (!option) {
-        const summary = this.toVenueSummary(venue);
+      this.applyVenueTemplate(venue);
+      const summary = this.toVenueSummary(venue);
+
+      if (option) {
+        const options = this.venueOptions[index] || [];
+        this.venueOptions.splice(
+          index,
+          1,
+          options.map((candidate) =>
+            candidate.value === venueId
+              ? {
+                  ...candidate,
+                  label: `${summary.name} (${summary.server})`,
+                  venue: summary,
+                }
+              : candidate,
+          ),
+        );
+      } else {
         const seededOption = {
           label: `${summary.name} (${summary.server})`,
           value: summary.id,
           venue: summary,
         };
         this.venueOptions.splice(index, 1, [seededOption]);
-        this.applyVenueToLocation(location, summary);
       }
+
+      this.applyVenueToLocation(updatedLocation, summary);
     } catch (e) {
       notifyError(e);
     }
@@ -578,6 +599,16 @@ export default class PageEditEvent extends Vue {
           venue: summary,
         },
       ]);
+
+      const backupLocation = this.eventBackup.locations[index];
+      if (backupLocation && backupLocation.venueId === venueId) {
+        this.applyVenueToLocation(backupLocation, summary);
+      }
+
+      const currentLocation = this.event.locations[index];
+      if (currentLocation && currentLocation.venueId === venueId) {
+        this.applyVenueToLocation(currentLocation, summary);
+      }
     } catch (e) {
       notifyError(e);
     }

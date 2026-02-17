@@ -132,20 +132,53 @@
                         <q-icon v-else name="event" />
                       </div>
                       <div class="calendar-widget__event-summary-text">
-                        <div class="calendar-widget__event-time">
-                          <span>{{ formatTimeRange(event) }}</span>
+                        <div class="calendar-widget__event-title-line">
+                          <div class="calendar-widget__event-title">
+                            {{ event.title }}
+                          </div>
+                          <div class="calendar-widget__event-indicators">
+                            <q-icon
+                              v-if="hasEventWarnings(event)"
+                              name="priority_high"
+                              class="calendar-widget__event-warning-indicator"
+                              size="13px"
+                            />
+                            <span
+                              v-if="isAdultEvent(event)"
+                              class="calendar-widget__event-badge"
+                            >
+                              18+
+                            </span>
+                          </div>
+                        </div>
+                        <div
+                          v-if="summaryLocationText(event) || summaryServerText(event)"
+                          class="calendar-widget__event-location-line"
+                        >
+                          <q-icon name="place" />
+                          <span class="calendar-widget__event-location-text">
+                            {{ summaryLocationText(event) || summaryServerText(event) }}
+                          </span>
                           <span
-                            v-if="isAdultEvent(event)"
-                            class="calendar-widget__event-badge"
+                            v-if="summaryLocationText(event) && summaryServerText(event)"
+                            class="calendar-widget__event-server-chip"
                           >
-                            18+
+                            {{ summaryServerText(event) }}
                           </span>
                         </div>
-                        <div class="calendar-widget__event-title">
-                          {{ event.title }}
+                        <div class="calendar-widget__event-meta-line">
+                          <span class="calendar-widget__event-meta-item calendar-widget__event-meta-item--time">
+                            <q-icon name="schedule" />
+                            <span>{{ formatTimeRange(event) }}</span>
+                          </span>
+                          <span class="calendar-widget__event-meta-item calendar-widget__event-meta-item--type">
+                            <q-icon name="store" />
+                            <span>{{ summaryLocationType(event) }}</span>
+                          </span>
                         </div>
                       </div>
                       <q-btn
+                        class="calendar-widget__event-toggle-btn"
                         flat
                         round
                         dense
@@ -506,7 +539,42 @@ export default class CalendarSidebarWidget extends Vue {
       return '';
     }
     const location = event.locations[0];
-    return location.name || location.address || location.server || '';
+    if (location.name) {
+      return location.name;
+    }
+    if (location.address) {
+      return this.normalizeLegacyVenueAddress(location.address);
+    }
+    return location.server || '';
+  }
+
+  summaryLocationText(event: EventSummaryDto) {
+    if (!event.locations || event.locations.length === 0) {
+      return '';
+    }
+
+    const location = event.locations[0];
+    if (location.address) {
+      return this.normalizeLegacyVenueAddress(location.address);
+    }
+    return location.name || '';
+  }
+
+  summaryServerText(event: EventSummaryDto) {
+    if (!event.locations || event.locations.length === 0) {
+      return '';
+    }
+
+    const location = event.locations[0];
+    return location.server || '';
+  }
+
+  private normalizeLegacyVenueAddress(address: string): string {
+    return address
+      .replace(/\bWard\b/gi, 'Bezirk')
+      .replace(/\bplot\b/gi, 'Grundstueck')
+      .replace(/\bapartment\b/gi, 'Wohnung')
+      .replace(/\(subdivision\)/gi, '(Erweiterung)');
   }
 
   eventIconUrl(event: EventSummaryDto) {
@@ -535,8 +603,23 @@ export default class CalendarSidebarWidget extends Vue {
     return notes.map((note) => (ContentNoteTexts as { [key: string]: string })[note] || note);
   }
 
+  hasEventWarnings(event: EventSummaryDto): boolean {
+    return this.eventWarnings(event).length > 0;
+  }
+
   eventTypeLabel(event: EventSummaryDto): string {
     return EventTypeLabels[event.eventType] || EventTypeLabels[EventType.RP];
+  }
+
+  summaryLocationType(event: EventSummaryDto): string {
+    if (event.locations && event.locations.length > 0) {
+      const tags = (event.locations[0].tags || '').trim();
+      if (tags.length > 0) {
+        return tags;
+      }
+    }
+
+    return this.eventTypeLabel(event);
   }
 }
 </script>
@@ -726,17 +809,17 @@ export default class CalendarSidebarWidget extends Vue {
 
 .calendar-widget__list {
   display: grid;
-  gap: 16px;
+  gap: 10px;
 }
 
 .calendar-widget__list-group {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .calendar-widget__list-cards {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .calendar-widget__date-header {
@@ -744,11 +827,11 @@ export default class CalendarSidebarWidget extends Vue {
   align-items: baseline;
   gap: 8px;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   color: #1f2c38;
   border-bottom: 1px solid rgba(221, 180, 118, 0.2);
-  padding-bottom: 6px;
-  margin-bottom: 12px;
+  padding-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .calendar-widget__date-divider {
@@ -764,14 +847,15 @@ export default class CalendarSidebarWidget extends Vue {
 .calendar-widget__event-card {
   background: #ffffff;
   border: 1px solid rgba(221, 180, 118, 0.2);
-  border-radius: 0;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  overflow: hidden;
 }
 
 .calendar-widget__event-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.12);
   border-color: rgba(221, 180, 118, 0.4);
 }
 
@@ -789,12 +873,12 @@ export default class CalendarSidebarWidget extends Vue {
 }
 
 .calendar-widget__event-icon {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 0;
   background: rgba(221, 180, 118, 0.12);
   border: 1px solid rgba(221, 180, 118, 0.2);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -804,12 +888,13 @@ export default class CalendarSidebarWidget extends Vue {
 
 .calendar-widget__event-icon .q-icon {
   color: #ddb476;
+  font-size: 16px;
 }
 
 .calendar-widget__event-icon-img {
   border-radius: 0;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
 }
 
 .calendar-widget__event-content {
@@ -818,10 +903,11 @@ export default class CalendarSidebarWidget extends Vue {
 }
 
 .calendar-widget__event-summary {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 24px;
+  align-items: start;
+  column-gap: 8px;
+  padding: 8px 10px;
   cursor: pointer;
   transition: background 0.2s ease, box-shadow 0.2s ease;
 }
@@ -835,77 +921,195 @@ export default class CalendarSidebarWidget extends Vue {
   box-shadow: inset 0 0 0 1px rgba(221, 180, 118, 0.25);
 }
 
+.calendar-widget__event-summary > .q-btn {
+  margin-top: 0;
+  align-self: flex-start;
+}
+
+.calendar-widget__event-toggle-btn {
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  min-height: 24px;
+  margin-top: 1px;
+}
+
 .calendar-widget__event-summary-text {
-  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.calendar-widget__event-title-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: flex-start;
+  column-gap: 4px;
   min-width: 0;
 }
 
-.calendar-widget__event-time {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #2d2d2d;
-  letter-spacing: 0.02em;
-  margin-bottom: 4px;
-  line-height: 1.2;
-}
-
 .calendar-widget__event-title {
-  font-weight: 500;
-  color: #555;
-  line-height: 1.3;
-  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1f2c38;
+  line-height: 1.2;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
-.calendar-widget__event-summary .calendar-widget__event-title {
-  margin-bottom: 0;
+.calendar-widget__event-indicators {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+.calendar-widget__event-warning-indicator {
+  color: #d56868;
+  font-size: 13px;
+}
+
+.calendar-widget__event-location-line {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  align-items: flex-start;
+  column-gap: 4px;
+  color: rgba(35, 35, 35, 0.75);
+  min-width: 0;
+  line-height: 1.2;
+  font-size: 0.78rem;
+}
+
+.calendar-widget__event-location-line .q-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.calendar-widget__event-location-text {
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.calendar-widget__event-server-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(31, 77, 100, 0.15);
+  color: #1f4d64;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 1px;
+}
+
+.calendar-widget__event-meta-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  row-gap: 4px;
+  min-width: 0;
+  margin-top: 1px;
+}
+
+.calendar-widget__event-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.73rem;
+  color: #43505a;
+  min-width: 0;
+  max-width: 100%;
+  width: fit-content;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(31, 77, 100, 0.08);
+}
+
+.calendar-widget__event-meta-item .q-icon {
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.calendar-widget__event-meta-item--time {
+  white-space: nowrap;
+}
+
+.calendar-widget__event-meta-item--type {
+  min-width: 0;
+}
+
+.calendar-widget__event-meta-item--type > span {
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .calendar-widget__event-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 6px;
+  padding: 1px 5px;
   border-radius: 0;
   background: rgba(204, 74, 74, 0.15);
   color: #b33a3a;
-  font-size: 0.7rem;
+  font-size: 0.64rem;
   font-weight: 700;
   text-transform: uppercase;
+  line-height: 1.2;
 }
 
 .calendar-widget__event-meta {
   display: grid;
-  gap: 4px;
-  font-size: 0.85rem;
+  gap: 3px;
+  font-size: 0.8rem;
   color: #555;
 }
 
 .calendar-widget__event-row {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   align-items: center;
+  line-height: 1.2;
 }
 
 .calendar-widget__event-row i {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .calendar-widget__event-details {
-  padding: 0 12px 12px;
+  padding: 0 10px 10px;
 }
 
 .calendar-widget__event-warnings {
-  margin-top: 10px;
+  margin-top: 8px;
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .calendar-widget__event-warnings-title {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: rgba(35, 35, 35, 0.65);
   font-weight: 600;
 }
@@ -913,27 +1117,27 @@ export default class CalendarSidebarWidget extends Vue {
 .calendar-widget__event-warnings-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
 }
 
 .calendar-widget__event-warning {
-  padding: 2px 8px;
+  padding: 1px 6px;
   border-radius: 999px;
   background: rgba(221, 180, 118, 0.22);
   color: #6b4c21;
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   font-weight: 600;
 }
 
 .calendar-widget__event-warnings-empty {
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   color: rgba(35, 35, 35, 0.6);
 }
 
 .calendar-widget__event-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 6px;
+  margin-top: 4px;
   min-width: 0;
 }
 

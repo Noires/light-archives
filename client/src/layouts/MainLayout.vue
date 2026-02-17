@@ -169,6 +169,7 @@
           Fanseite und steht nicht mit Square Enix in Verbindung.<br />
           Alle Rechte der Texte und Bilder © 2021–2026 liegen bei ihren jeweiligen Eigentümern.
           <router-link to="/privacy-statement">(Datenschutzerklärung)</router-link>
+          <router-link to="/impressum">(Impressum)</router-link>
         </div>
       </q-toolbar>
     </q-footer>
@@ -1256,4 +1257,3 @@ $color-dark: #1b1b1b;
   }
 }
 </style>
-

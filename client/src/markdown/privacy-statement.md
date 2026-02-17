@@ -1,45 +1,114 @@
-Wir auf <strong>Elpisgarten</strong> schätzen deine Privatsphäre als Rollenspieler und Ersteller von Inhalten. Zu deinem Schutz haben wir mehrere Schritte unternommen; wir fragen nur nach dem absoluten Minimum an notwendigen persönlichen Informationen und nutzen keine Dienste von Dritten, die dich verfolgen könnten.
+Diese Datenschutzerklaerung informiert dich gemaess Art. 13 DSGVO ueber die Verarbeitung personenbezogener Daten auf <strong>Elpisgarten</strong>.
 
-### Persönliche Daten
+### 1) Verantwortlicher
 
-Während der Anmeldung wirst du nur nach deiner E-Mail-Adresse und deinem Passwort gefragt.
+Verantwortlich fuer die Datenverarbeitung auf dieser Website ist:
 
-Dein Passwort wird nicht direkt auf unserem Server gespeichert; standardmäßig speichern wir zur Überprüfung deines Passworts beim Einloggen einen davon abgeleiteten, teilweise zufälligen Wert ('Salted Hash'). Selbst der Serveradministrator ist nicht dazu in der Lage, dein ursprüngliches Passwort wiederherzustellen. Wie es bei modernen Webseiten üblich ist, werden alle von deinem Browser übermittelten Daten über eine verschlüsselte Verbindung (HTTPS) übertragen und können von niemandem ausser dem <strong>Elpisgarten</strong>-Server selbst ausgelesen werden.
+* <strong>Elpisgarten</strong> (privates Fanprojekt)
+* Kontakt per E-Mail: <a href="mailto:admin@chaosarchives.org">admin@chaosarchives.org</a>
+* Weitere Kontaktdaten: siehe <a href="/contact">Kontaktseite</a>
+* Impressum/Anbieterkennzeichnung: <a href="/impressum">Impressum</a>
 
-Wir werden dich niemals über E-Mail oder auf Discord nach deinem Passwort fragen. Solltest du jemals eine E-Mail oder Direktnachricht erhalten, in der man dich um die Herausgabe deines Passworts bittet, solltest du dich umgehend <router-link to="/contact">bei uns melden</router-link>, damit wir der Sache auf den Grund gehen können.
+<strong>Wichtig:</strong> Fuer eine vollstaendige rechtliche Anbieterkennzeichnung muss im Impressum eine ladungsfaehige Postanschrift hinterlegt sein.
 
-Deine E-Mail-Adresse wird nur gespeichert, um dir wichtige Nachrichten des <strong>Elpisgarten</strong>-Servers zukommen zu lassen, wie etwa zur Wiederherstellung deines Passworts.
+### 2) Zwecke und Rechtsgrundlagen der Verarbeitung
 
-Keine deiner persönlichen Daten werden algorithmisch analysiert oder an Dritte weitergegeben.
+#### a) Bereitstellung und technischer Betrieb der Website
 
-### Anonymität
+Beim Aufruf der Website werden technisch notwendige Daten verarbeitet, insbesondere:
 
-Andere Nutzer können deine E-Mail-Adresse <strong>nicht</strong> sehen, nur deinen Charakternamen. Darüber hinaus sind andere Nutzer nicht dazu in der Lage, deine Charaktere miteinander in Verbindung zu bringen, sofern du mehrere Charaktere auf demselben <strong>Elpisgarten</strong>-Account registriert hast; es ist nur möglich, Charaktere und die damit verbundenen Inhalte zu sehen.
+* IP-Adresse
+* Datum/Uhrzeit des Zugriffs
+* aufgerufene URL
+* Browser-/Betriebssysteminformationen
+* HTTP-Statuscodes
 
-### Cookies
+<strong>Zweck:</strong> Stabiler Betrieb, IT-Sicherheit, Fehleranalyse, Missbrauchserkennung.  
+<strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an sicherem Betrieb).
 
-Die einzigen personenbezogenen Daten, welche die <strong>Elpisgarten</strong>-Webseite in deinem Browser speichert, sind eine wesentliche, anonyme Sitzungserkennung, damit du zwischen den Aktualisierungen des Browsers eingeloggt bleibst. Diese werden ausschließlich auf der Client-Seite gespeichert; der Server führt weder eine Liste aktiver Nutzeranmeldungen noch speichert er einen Verlauf früherer Nutzeranmeldungen.
+#### b) Nutzerkonto, Anmeldung, Sitzungsverwaltung
 
-Sitzungskennungen laufen nach dreissig (30) Tagen ab; danach musst du dich erneut anmelden.
+Bei Registrierung/Anmeldung verarbeiten wir insbesondere:
 
-<strong>Elpisgarten</strong> enthält keine Werbung und installiert keine Cookies von Dritten zu Marketingzwecken.
+* E-Mail-Adresse
+* Passwort (als Hash, nicht im Klartext)
+* Discord-ID (bei Discord-Login)
+* Rollen-/Accountstatus
 
-### Freiwillige Fehlerdiagnose (Sentry)
+Zur angemeldeten Nutzung werden Authentifizierungsdaten auf deinem Endgeraet gespeichert (z. B. Access-/Refresh-Token in Browser-Speicher).
 
-Um technische Fehler schneller zu beheben, kann optional eine Fehlerdiagnose über den Dienst <strong>Sentry</strong> aktiviert werden.
+<strong>Zweck:</strong> Kontoverwaltung, Authentifizierung, Nutzung geschuetzter Funktionen.  
+<strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. b DSGVO (Vertrag/Nutzungsverhaeltnis), fuer Sicherheitsaspekte zusaetzlich Art. 6 Abs. 1 lit. f DSGVO.
 
-Diese Diagnose ist standardmäßig deaktiviert und wird nur nach ausdrücklicher Zustimmung eingeschaltet. Du kannst die Einstellung jederzeit über "Datenschutz &amp; Fehlerdiagnose" wieder deaktivieren.
+#### c) Inhalte, die du selbst einstellst
 
-Bei aktivierter Diagnose werden ausschließlich technische Fehlermeldungen (z. B. Stacktraces, Browsertyp und betroffene Seite ohne Query-Parameter) übertragen. Zugangstoken, E-Mail-Adressen und Cookies werden dabei nicht gesendet.
+Wenn du Inhalte einstellst (z. B. Profile, Events, Bilder, Storys), werden die von dir uebermittelten Daten verarbeitet und gespeichert.
 
-### Serverprotokolle
+<strong>Zweck:</strong> Bereitstellung der von dir gewuenschten Community-Funktionen.  
+<strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. b DSGVO.
 
-Wie die meisten Webseiten führen wir zur schnellen Behebung möglicher technischer Probleme Zugriffsprotokolle des Webservers, die nur vom Serveradministrator eingesehen werden können. Jeder Protokolleintrag enthält die folgenden Informationen:
+#### d) Freiwillige Fehlerdiagnose (Sentry)
 
-* Deine IP-Adresse
-* Name und Version deines Webbrowsers, sowie Typ deines Betriebssystems
-* Die Adresse der angeforderten Seite
-* Zeitpunkt des Zugriffs
-* Der Antwortcode des Servers (Erfolg oder Fehler)
+Optional kann eine Fehlerdiagnose ueber <strong>Sentry</strong> aktiviert werden. Sie ist standardmaessig deaktiviert und wird erst nach ausdruecklicher Einwilligung eingeschaltet.
 
-Diese Protokolleinträge werden nach vierzehn (14) Tagen automatisch gelöscht. Keine Information zu Useraktivitäten wird permanent gespeichert oder algorithmisch ausgewertet.
+<strong>Zweck:</strong> Schnellere technische Fehlerbehebung.  
+<strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. a DSGVO (Einwilligung).
+
+Bei aktiver Fehlerdiagnose werden technische Ereignisdaten verarbeitet (z. B. Stacktraces, Browser-/Geraetekontext, Route ohne Query-Parameter). Zugangstoken, E-Mail-Adressen und Cookies sollen nicht uebertragen werden.
+
+### 3) Empfaenger oder Kategorien von Empfaengern
+
+Empfaenger deiner Daten koennen sein:
+
+* technische Hosting-/Infrastruktur-Dienstleister (als Auftragsverarbeiter)
+* Fehlerdiagnose-Dienst Sentry (nur bei aktivierter Einwilligung)
+* intern nur berechtigte Personen mit Admin-/Moderationsaufgaben, soweit erforderlich
+
+### 4) Drittlanduebermittlungen
+
+Sofern Sentry aktiviert wird, koennen Daten in Drittlaender (insbesondere USA) uebermittelt werden. In diesem Fall erfolgt die Uebermittlung auf Grundlage der von Sentry bereitgestellten geeigneten Garantien (z. B. EU-Standardvertragsklauseln), soweit einschlaegig.
+
+### 5) Speicherdauer
+
+Soweit keine speziellere Aufbewahrungspflicht gilt, speichern wir Daten nur so lange, wie es fuer den jeweiligen Zweck erforderlich ist:
+
+* Server-Logs: derzeit bis zu 14 Tage
+* lokale Sitzungsdaten im Browser: derzeit bis zu 30 Tage (bzw. bis zur Loeschung durch dich)
+* Account-/Profildaten: bis zur Loeschung des Kontos bzw. soweit fuer den Betrieb erforderlich
+* Einwilligungsstatus zur Fehlerdiagnose: bis Aenderung/Widerruf und darueber hinaus nur soweit fuer Nachweiszwecke erforderlich
+
+### 6) Pflicht zur Bereitstellung von Daten
+
+Die Bereitstellung bestimmter Daten (z. B. Login-/Accountdaten) ist fuer die Nutzung geschuetzter Funktionen erforderlich. Ohne diese Daten kann kein Nutzerkonto bereitgestellt werden.
+
+### 7) Keine automatisierte Entscheidungsfindung
+
+Es findet keine ausschliesslich automatisierte Entscheidungsfindung einschliesslich Profiling im Sinne von Art. 22 DSGVO statt.
+
+### 8) Deine Rechte nach DSGVO
+
+Du hast nach den gesetzlichen Voraussetzungen insbesondere folgende Rechte:
+
+* Auskunft (Art. 15 DSGVO)
+* Berichtigung (Art. 16 DSGVO)
+* Loeschung (Art. 17 DSGVO)
+* Einschraenkung der Verarbeitung (Art. 18 DSGVO)
+* Datenuebertragbarkeit (Art. 20 DSGVO)
+* Widerspruch gegen Verarbeitungen auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO (Art. 21 DSGVO)
+
+### 9) Widerruf einer Einwilligung
+
+Eine erteilte Einwilligung (z. B. zur freiwilligen Fehlerdiagnose) kannst du jederzeit mit Wirkung fuer die Zukunft widerrufen, ohne dass die Rechtmaessigkeit der bis zum Widerruf erfolgten Verarbeitung beruehrt wird.
+
+### 10) Beschwerderecht bei einer Aufsichtsbehoerde
+
+Du hast das Recht, dich bei einer Datenschutz-Aufsichtsbehoerde zu beschweren, insbesondere in dem Mitgliedstaat deines gewoehnlichen Aufenthalts, deines Arbeitsplatzes oder des Orts des mutmasslichen Verstosses.
+
+### 11) Hinweis zu Cookies und Browser-Speicher
+
+Wir verwenden technisch notwendige Speichermechanismen fuer Login-/Sitzungsfunktionen. Dazu koennen Cookies und/oder lokaler Browser-Speicher gehoeren. Marketing- oder Tracking-Cookies von Drittanbietern setzen wir nicht standardmaessig ein.
+
+### 12) Stand und Aenderungen
+
+Stand dieser Datenschutzerklaerung: <strong>17.02.2026</strong>  
+Wir behalten uns vor, diese Datenschutzerklaerung anzupassen, wenn sich Funktionen, Rechtslage oder Datenverarbeitungen aendern.

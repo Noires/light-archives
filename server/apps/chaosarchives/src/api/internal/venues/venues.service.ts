@@ -4,6 +4,7 @@ import { VenueTag } from '@app/entity/venue-tag.entity';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
+import { HousingArea } from '@app/shared/enums/housing-area.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import html from '@app/shared/html';
 import SharedConstants from '@app/shared/SharedConstants';
@@ -16,6 +17,14 @@ import { checkCarrdProfile, getVerifiedCharacter } from '../../../common/api-che
 import { Contains } from '../../../common/db';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import { ImagesService } from '../images/images.service';
+
+const HOUSING_AREA_LABELS: Record<HousingArea, string> = {
+  [HousingArea.MIST]: 'Dorf des Nebels',
+  [HousingArea.LAVENDER_BEDS]: 'Lavendelbeete',
+  [HousingArea.GOBLET]: 'Kelchkuppe',
+  [HousingArea.SHIROGANE]: 'Shirogane',
+  [HousingArea.EMPYREUM]: 'Empyreum',
+};
 
 @Injectable()
 export class VenuesService {
@@ -61,28 +70,37 @@ export class VenuesService {
   }
 
 	private toVenueSummaryDto(venue: Venue): VenueSummaryDto {
-		let address: string;
-
-		if (venue.location === VenueLocation.OPEN_WORLD) {
-			address = venue.address;
-		} else {
-			const plot = venue.location === VenueLocation.HOUSE ? `plot ${venue.plot}` : `apartment ${venue.room}`;
-			address = `Ward ${venue.ward}, ${plot}`;
-
-			if (venue.subdivision) {
-				address += ' (subdivision)';
-			}
-		}
-
 		return {
 			id: venue.id,
 			name: venue.name,
 			server: venue.server.name,
 			purpose: venue.purpose,
 			housingArea: venue.housingArea,
-			address
+			address: this.formatVenueSummaryAddress(venue),
 		}
 	}
+
+  private formatVenueSummaryAddress(venue: Venue): string {
+    if (venue.location === VenueLocation.OPEN_WORLD) {
+      return venue.address;
+    }
+
+    const housingArea = venue.housingArea ? (HOUSING_AREA_LABELS[venue.housingArea] || '') : '';
+    const ward = venue.ward !== null && venue.ward !== undefined ? `Bezirk ${venue.ward}` : '';
+
+    const unit = venue.location === VenueLocation.HOUSE
+      ? `Grundstueck ${venue.plot ?? ''}`
+      : `Wohnung ${venue.room ?? ''}`;
+
+    const parts = [housingArea, ward, unit].filter((part) => part.length > 0);
+    let address = parts.join(', ');
+
+    if (venue.subdivision) {
+      address += ' (Erweiterung)';
+    }
+
+    return address;
+  }
 
 	async getVenueByName(name: string, server: string, user?: UserInfo): Promise<VenueDto> {
 		const venue = await this.venueRepo.findOne({

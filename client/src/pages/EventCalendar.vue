@@ -665,7 +665,21 @@ export default class PageEventCalendar extends Vue {
       return '';
     }
     const location = event.locations[0];
-    return location.name || location.address || location.server || '';
+    if (location.name) {
+      return location.name;
+    }
+    if (location.address) {
+      return this.normalizeLegacyVenueAddress(location.address);
+    }
+    return location.server || '';
+  }
+
+  private normalizeLegacyVenueAddress(address: string): string {
+    return address
+      .replace(/\bWard\b/gi, 'Bezirk')
+      .replace(/\bplot\b/gi, 'Grundstueck')
+      .replace(/\bapartment\b/gi, 'Wohnung')
+      .replace(/\(subdivision\)/gi, '(Erweiterung)');
   }
 
   eventIconUrl(event: EventSummaryDto) {
