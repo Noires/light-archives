@@ -89,7 +89,7 @@ export class VenuesService {
     const ward = venue.ward !== null && venue.ward !== undefined ? `Bezirk ${venue.ward}` : '';
 
     const unit = venue.location === VenueLocation.HOUSE
-      ? `Grundstueck ${venue.plot ?? ''}`
+      ? `Grundstück ${venue.plot ?? ''}`
       : `Wohnung ${venue.room ?? ''}`;
 
     const parts = [housingArea, ward, unit].filter((part) => part.length > 0);

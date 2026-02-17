@@ -539,13 +539,7 @@ export default class CalendarSidebarWidget extends Vue {
       return '';
     }
     const location = event.locations[0];
-    if (location.name) {
-      return location.name;
-    }
-    if (location.address) {
-      return this.normalizeLegacyVenueAddress(location.address);
-    }
-    return location.server || '';
+    return location.name || location.address || location.server || '';
   }
 
   summaryLocationText(event: EventSummaryDto) {
@@ -554,10 +548,7 @@ export default class CalendarSidebarWidget extends Vue {
     }
 
     const location = event.locations[0];
-    if (location.address) {
-      return this.normalizeLegacyVenueAddress(location.address);
-    }
-    return location.name || '';
+    return location.address || location.name || '';
   }
 
   summaryServerText(event: EventSummaryDto) {
@@ -567,14 +558,6 @@ export default class CalendarSidebarWidget extends Vue {
 
     const location = event.locations[0];
     return location.server || '';
-  }
-
-  private normalizeLegacyVenueAddress(address: string): string {
-    return address
-      .replace(/\bWard\b/gi, 'Bezirk')
-      .replace(/\bplot\b/gi, 'Grundstueck')
-      .replace(/\bapartment\b/gi, 'Wohnung')
-      .replace(/\(subdivision\)/gi, '(Erweiterung)');
   }
 
   eventIconUrl(event: EventSummaryDto) {
