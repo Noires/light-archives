@@ -67,9 +67,39 @@ export default class CharacterDiary extends Vue.with(Props) {
 
 <style lang="scss">
 .character-diary {
+  --diary-card-border: rgba(221, 180, 118, 0.2);
+  --diary-card-bg: #ffffff;
+  --diary-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+  --diary-card-type-bg: rgba(221, 180, 118, 0.2);
+  --diary-card-type-color: #6b4c21;
+  --diary-card-title: #1f2c38;
+  --diary-card-meta: rgba(35, 35, 35, 0.65);
+  --diary-card-excerpt: rgba(35, 35, 35, 0.72);
+  --diary-card-action: #1f4d64;
+  --diary-card-hover-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
+  --diary-card-hover-border: rgba(221, 180, 118, 0.5);
+  --diary-card-focus-ring: inset 0 0 0 2px rgba(31, 77, 100, 0.3);
+  --diary-empty: rgba(35, 35, 35, 0.7);
+
   h6 {
     margin-bottom: 16px;
   }
+}
+
+body.body--dark .character-diary {
+  --diary-card-border: rgba(141, 181, 223, 0.28);
+  --diary-card-bg: rgba(17, 25, 37, 0.94);
+  --diary-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.34);
+  --diary-card-type-bg: rgba(141, 181, 223, 0.2);
+  --diary-card-type-color: rgba(213, 226, 240, 0.94);
+  --diary-card-title: rgba(226, 237, 248, 0.96);
+  --diary-card-meta: rgba(213, 226, 240, 0.72);
+  --diary-card-excerpt: rgba(213, 226, 240, 0.82);
+  --diary-card-action: #8db5df;
+  --diary-card-hover-shadow: 0 18px 32px rgba(0, 0, 0, 0.38);
+  --diary-card-hover-border: rgba(141, 181, 223, 0.44);
+  --diary-card-focus-ring: inset 0 0 0 2px rgba(141, 181, 223, 0.36);
+  --diary-empty: rgba(213, 226, 240, 0.72);
 }
 
 .character-diary__list {
@@ -80,9 +110,9 @@ export default class CharacterDiary extends Vue.with(Props) {
 
 .character-diary__card {
   border-radius: 0;
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: #ffffff;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--diary-card-border);
+  background: var(--diary-card-bg);
+  box-shadow: var(--diary-card-shadow);
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
@@ -108,8 +138,8 @@ export default class CharacterDiary extends Vue.with(Props) {
   align-self: flex-start;
   padding: 4px 10px;
   border-radius: 0;
-  background: rgba(221, 180, 118, 0.2);
-  color: #6b4c21;
+  background: var(--diary-card-type-bg);
+  color: var(--diary-card-type-color);
   font-weight: 600;
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -121,7 +151,7 @@ export default class CharacterDiary extends Vue.with(Props) {
   font-family: $header-font;
   font-size: 1.05rem;
   line-height: 1.3;
-  color: #1f2c38;
+  color: var(--diary-card-title);
 }
 
 .character-diary__card-meta {
@@ -129,13 +159,13 @@ export default class CharacterDiary extends Vue.with(Props) {
   justify-items: end;
   text-align: right;
   gap: 2px;
-  color: rgba(35, 35, 35, 0.65);
+  color: var(--diary-card-meta);
   font-size: 0.8rem;
 }
 
 .character-diary__card-excerpt {
   margin: 0;
-  color: rgba(35, 35, 35, 0.72);
+  color: var(--diary-card-excerpt);
   font-size: 0.92rem;
   line-height: 1.5;
   display: -webkit-box;
@@ -147,24 +177,24 @@ export default class CharacterDiary extends Vue.with(Props) {
 .character-diary__card-action {
   margin-top: auto;
   font-weight: 600;
-  color: #1f4d64;
+  color: var(--diary-card-action);
   letter-spacing: 0.01em;
 }
 
 .character-diary__card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
-  border-color: rgba(221, 180, 118, 0.5);
+  box-shadow: var(--diary-card-hover-shadow);
+  border-color: var(--diary-card-hover-border);
 }
 
 .character-diary__card-link:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 2px rgba(31, 77, 100, 0.3);
+  box-shadow: var(--diary-card-focus-ring);
   border-radius: 0;
 }
 
 .character-diary__empty {
-  color: rgba(35, 35, 35, 0.7);
+  color: var(--diary-empty);
   padding: 16px 0;
 }
 

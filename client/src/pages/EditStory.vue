@@ -226,6 +226,20 @@ export default class PageEditStory extends Vue {
 </script>
 
 <style lang="scss">
+.page-edit-story {
+  --edit-story-select-group-border: rgba(221, 180, 118, 0.25);
+  --edit-story-select-group-bg: rgba(249, 247, 242, 0.95);
+  --edit-story-select-title-color: rgba(35, 35, 35, 0.7);
+  --edit-story-option-color: inherit;
+}
+
+body.body--dark .page-edit-story {
+  --edit-story-select-group-border: rgba(141, 181, 223, 0.3);
+  --edit-story-select-group-bg: rgba(17, 25, 37, 0.9);
+  --edit-story-select-title-color: rgba(213, 226, 240, 0.76);
+  --edit-story-option-color: rgba(213, 226, 240, 0.9);
+}
+
 .page-edit-story__form-controls {
   max-width: 500px;
   flex-basis: 0;
@@ -251,8 +265,8 @@ export default class PageEditStory extends Vue {
   margin-top: 12px;
   margin-bottom: 12px;
   padding: 10px 12px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(249, 247, 242, 0.95);
+  border: 1px solid var(--edit-story-select-group-border);
+  background: var(--edit-story-select-group-bg);
 }
 
 .page-edit-story__select-title {
@@ -261,7 +275,7 @@ export default class PageEditStory extends Vue {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 700;
-  color: rgba(35, 35, 35, 0.7);
+  color: var(--edit-story-select-title-color);
 }
 
 .page-edit-story__options-grid {
@@ -269,6 +283,7 @@ export default class PageEditStory extends Vue {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: 12px;
   row-gap: 6px;
+  color: var(--edit-story-option-color);
 }
 
 .page-edit-story__options-grid .q-option-group__option {

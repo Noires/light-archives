@@ -773,6 +773,20 @@ type VenueOption = {
 </script>
 
 <style lang="scss">
+.page-edit-event {
+  --edit-event-select-group-border: rgba(221, 180, 118, 0.25);
+  --edit-event-select-group-bg: rgba(249, 247, 242, 0.95);
+  --edit-event-select-title-color: rgba(35, 35, 35, 0.7);
+  --edit-event-option-color: inherit;
+}
+
+body.body--dark .page-edit-event {
+  --edit-event-select-group-border: rgba(141, 181, 223, 0.3);
+  --edit-event-select-group-bg: rgba(17, 25, 37, 0.9);
+  --edit-event-select-title-color: rgba(213, 226, 240, 0.76);
+  --edit-event-option-color: rgba(213, 226, 240, 0.9);
+}
+
 .page-edit-event__form-controls {
   flex-basis: 0;
   flex-grow: 1;
@@ -785,8 +799,8 @@ type VenueOption = {
 .page-edit-event__select-group {
   margin-bottom: 16px;
   padding: 10px 12px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(249, 247, 242, 0.95);
+  border: 1px solid var(--edit-event-select-group-border);
+  background: var(--edit-event-select-group-bg);
 }
 
 .page-edit-event__select-title {
@@ -795,7 +809,7 @@ type VenueOption = {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 700;
-  color: rgba(35, 35, 35, 0.7);
+  color: var(--edit-event-select-title-color);
 }
 
 .page-edit-event__options-grid {
@@ -803,6 +817,7 @@ type VenueOption = {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: 12px;
   row-gap: 6px;
+  color: var(--edit-event-option-color);
 }
 
 .page-edit-event__options-grid .q-option-group__option {

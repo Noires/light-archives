@@ -26,6 +26,11 @@
 	--app-page-surface: #fdfdffee;
 	--app-page-text: #1f1f1f;
 	--app-page-border: transparent;
+	--app-card-surface: rgba(255, 255, 255, 0.95);
+	--app-card-border: rgba(221, 180, 118, 0.24);
+	--app-card-text: #1f2c38;
+	--app-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.14);
+	--app-card-divider: rgba(31, 44, 56, 0.12);
 	--app-footer-bg: #ebebeb;
 	--app-footer-text: #000000;
 	--app-footer-link: #777777;
@@ -69,6 +74,11 @@ body.body--dark {
 	--app-page-surface: rgba(14, 19, 27, 0.92);
 	--app-page-text: #d9e1ea;
 	--app-page-border: rgba(132, 166, 204, 0.22);
+	--app-card-surface: rgba(17, 24, 34, 0.95);
+	--app-card-border: rgba(141, 181, 223, 0.28);
+	--app-card-text: rgba(213, 226, 240, 0.92);
+	--app-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.34);
+	--app-card-divider: rgba(141, 181, 223, 0.24);
 	--app-footer-bg: #0c121a;
 	--app-footer-text: #d9e1ea;
 	--app-footer-link: #9ec4f3;
@@ -163,8 +173,39 @@ body.body--dark .q-btn.q-btn--outline.text-secondary {
 	border-color: var(--app-btn-outline-border) !important;
 }
 
+body.body--dark :where(.q-card.q-card--dark.q-dark) {
+	background: var(--app-card-surface);
+	border: 1px solid var(--app-card-border);
+	color: var(--app-card-text);
+}
+
+body.body--dark :where(.q-card.q-card--dark.q-dark:not(.q-card--flat)) {
+	box-shadow: var(--app-card-shadow);
+}
+
+body.body--dark :where(.q-card.q-card--dark.q-dark .q-separator) {
+	background: var(--app-card-divider);
+}
+
 .q-page .q-select .q-field__control {
 	background: var(--app-select-control-bg);
+}
+
+body.body--dark .q-field--outlined .q-field__control:before {
+	border-color: rgba(141, 181, 223, 0.34);
+}
+
+body.body--dark .q-field--outlined .q-field__control:hover:before {
+	border-color: rgba(141, 181, 223, 0.52);
+}
+
+body.body--dark .q-field--outlined.q-field--focused .q-field__control:before,
+body.body--dark .q-field--outlined.q-field--highlighted .q-field__control:before {
+	border-color: transparent;
+}
+
+body.body--dark .q-field--outlined.q-field--highlighted:not(.q-field--error) .q-field__control:after {
+	border-color: var(--app-select-accent);
 }
 
 .q-page .q-select .q-field__native,
