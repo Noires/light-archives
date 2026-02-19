@@ -845,19 +845,6 @@ body.body--dark .page-index__welcome-name {
   color: rgba(213, 226, 240, 0.94);
 }
 
-body.body--dark .page-index__discord-button {
-  background: linear-gradient(135deg, #4f7ca7 0%, #375a7f 100%);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.32);
-}
-
-body.body--dark .page-index__discord-button:hover {
-  background: linear-gradient(135deg, #5c8fbe 0%, #40688f 100%);
-}
-
-body.body--dark .page-index__discord-button:active {
-  background: linear-gradient(135deg, #446c93 0%, #314d6d 100%);
-}
-
 body.body--dark .page-index__panel-link,
 body.body--dark .page-index .page-stories__card-action {
   color: rgba(171, 201, 235, 0.94);

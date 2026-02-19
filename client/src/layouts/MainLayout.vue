@@ -914,6 +914,14 @@ body.body--dark .layout__toolbar__header {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 8px 48px rgba(0, 0, 0, 0.35);
 }
 
+body.body--dark .layout__char-name::after {
+  background: linear-gradient(135deg, rgba(56, 77, 99, 0.16) 0%, var(--nav-char-bg-end) 100%);
+}
+
+body.body--dark .layout__char-name:hover::after {
+  background: linear-gradient(135deg, rgba(94, 116, 139, 0.16) 0%, var(--nav-char-bg-hover-end) 100%);
+}
+
 .layout__toolbar__header::before {
   content: '';
   position: absolute;
