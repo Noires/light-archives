@@ -1124,6 +1124,135 @@ export default class CalendarSidebarWidget extends Vue {
   min-width: 0;
 }
 
+body.body--dark .calendar-widget__card {
+  border-color: rgba(141, 181, 223, 0.28);
+  background: rgba(15, 22, 32, 0.95);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.34), 0 4px 12px rgba(0, 0, 0, 0.26);
+}
+
+body.body--dark .calendar-widget__header {
+  background: linear-gradient(135deg, rgba(141, 181, 223, 0.16) 0%, rgba(141, 181, 223, 0.06) 100%);
+  border-image: linear-gradient(90deg, rgba(141, 181, 223, 0.45) 0%, rgba(141, 181, 223, 0.15) 50%, rgba(141, 181, 223, 0.45) 100%);
+}
+
+body.body--dark .calendar-widget__title,
+body.body--dark .calendar-widget__list-header,
+body.body--dark .calendar-widget__date-header,
+body.body--dark .calendar-widget__event-title,
+body.body--dark .calendar-widget__event-meta,
+body.body--dark .calendar-widget__event-meta-item {
+  color: rgba(213, 226, 240, 0.94);
+}
+
+body.body--dark .calendar-widget__subtitle,
+body.body--dark .calendar-widget__count,
+body.body--dark .calendar-widget__empty,
+body.body--dark .calendar-widget__date-weekday,
+body.body--dark .calendar-widget__event-location-line,
+body.body--dark .calendar-widget__event-warnings-empty,
+body.body--dark .calendar-widget__event-warnings-title {
+  color: rgba(213, 226, 240, 0.72);
+}
+
+body.body--dark .calendar-widget__list-header,
+body.body--dark .calendar-widget__date-header {
+  border-bottom-color: rgba(141, 181, 223, 0.26);
+}
+
+body.body--dark .calendar-widget__actions .q-btn,
+body.body--dark .calendar-widget__heading .q-icon {
+  color: #8db5df;
+}
+
+body.body--dark .calendar-widget__actions .q-btn:hover {
+  color: #dcecff;
+  background: rgba(141, 181, 223, 0.16);
+}
+
+body.body--dark .calendar-widget .q-date {
+  background: rgba(17, 24, 34, 0.96);
+  color: rgba(213, 226, 240, 0.92);
+}
+
+body.body--dark .calendar-widget .q-date__header {
+  background: linear-gradient(135deg, rgba(141, 181, 223, 0.14) 0%, transparent 100%);
+  color: rgba(213, 226, 240, 0.92);
+  border-bottom-color: rgba(141, 181, 223, 0.26);
+}
+
+body.body--dark .calendar-widget .q-date__header-link,
+body.body--dark .calendar-widget .q-date__calendar-weekdays {
+  color: rgba(213, 226, 240, 0.84);
+}
+
+body.body--dark .calendar-widget .q-date__calendar-weekdays {
+  background: rgba(141, 181, 223, 0.12);
+}
+
+body.body--dark .calendar-widget .q-date__calendar-item button:hover {
+  background: rgba(141, 181, 223, 0.18) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+body.body--dark .calendar-widget .q-date__calendar-item--selected {
+  background: rgba(141, 181, 223, 0.24) !important;
+  box-shadow: inset 0 0 0 2px rgba(141, 181, 223, 0.36);
+}
+
+body.body--dark .calendar-widget .q-date__event {
+  background: #8db5df !important;
+}
+
+body.body--dark .calendar-widget__filters .q-field__control {
+  background: rgba(17, 24, 34, 0.94);
+  border-color: rgba(141, 181, 223, 0.28);
+}
+
+body.body--dark .calendar-widget__filters .q-field__control:hover {
+  border-color: rgba(141, 181, 223, 0.44);
+}
+
+body.body--dark .calendar-widget__filters .q-field__native,
+body.body--dark .calendar-widget__filters .q-field__label,
+body.body--dark .calendar-widget__filters .q-field__append {
+  color: rgba(213, 226, 240, 0.84);
+}
+
+body.body--dark .calendar-widget__event-card {
+  background: rgba(17, 24, 34, 0.96);
+  border-color: rgba(141, 181, 223, 0.24);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+body.body--dark .calendar-widget__event-card:hover {
+  border-color: rgba(141, 181, 223, 0.42);
+  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.34);
+}
+
+body.body--dark .calendar-widget__event-icon {
+  background: rgba(141, 181, 223, 0.18);
+  border-color: rgba(141, 181, 223, 0.32);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.24);
+}
+
+body.body--dark .calendar-widget__event-icon .q-icon {
+  color: rgba(196, 221, 247, 0.95);
+}
+
+body.body--dark .calendar-widget__event-summary:hover {
+  background: rgba(141, 181, 223, 0.13);
+  box-shadow: inset 0 0 0 1px rgba(141, 181, 223, 0.3);
+}
+
+body.body--dark .calendar-widget__event-meta-item {
+  background: rgba(141, 181, 223, 0.16);
+}
+
+body.body--dark .calendar-widget__event-warning {
+  background: rgba(141, 181, 223, 0.18);
+  color: rgba(213, 226, 240, 0.92);
+}
+
 .calendar-widget__event-link-btn {
   max-width: 100%;
 }

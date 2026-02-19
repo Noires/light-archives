@@ -773,6 +773,126 @@ export default class PageIndex extends Vue {
   padding: 24px 16px;
 }
 
+body.body--dark .page-index {
+  background: linear-gradient(180deg, #0f151f 0%, #121d2b 45%, #0d141d 100%);
+  color: rgba(213, 226, 240, 0.9);
+}
+
+body.body--dark .page-index::before {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(141, 181, 223, 0.2), transparent 55%),
+    radial-gradient(circle at 80% 0%, rgba(90, 125, 166, 0.16), transparent 50%);
+}
+
+body.body--dark .page-index h5,
+body.body--dark .page-index .page-stories__card-title,
+body.body--dark .page-index .page-characters__card-name,
+body.body--dark .page-index .page-index__changes-title {
+  color: rgba(213, 226, 240, 0.94);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+body.body--dark .page-index__hero,
+body.body--dark .page-index__panel {
+  background: rgba(17, 24, 34, 0.94);
+  border-color: rgba(141, 181, 223, 0.28);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
+}
+
+body.body--dark .page-index__panel:hover {
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.38);
+}
+
+body.body--dark .page-index__panel-header {
+  border-image: linear-gradient(
+    90deg,
+    rgba(141, 181, 223, 0.38) 0%,
+    rgba(141, 181, 223, 0.14) 50%,
+    rgba(141, 181, 223, 0.38) 100%
+  );
+  border-image-slice: 1;
+  background: linear-gradient(180deg, rgba(141, 181, 223, 0.12) 0%, transparent 100%);
+}
+
+body.body--dark .page-index__eyebrow {
+  color: rgba(171, 201, 235, 0.88);
+}
+
+body.body--dark .page-index__lead,
+body.body--dark .page-index__notice,
+body.body--dark .page-index__welcome-title,
+body.body--dark .page-index__changes-meta,
+body.body--dark .page-index__changes-time,
+body.body--dark .page-index .page-stories__card-meta,
+body.body--dark .page-index .page-stories__card-excerpt,
+body.body--dark .page-index .page-characters__card-meta,
+body.body--dark .page-index__empty {
+  color: rgba(213, 226, 240, 0.74);
+}
+
+body.body--dark .page-index__welcome {
+  border-color: rgba(141, 181, 223, 0.32);
+  background: linear-gradient(135deg, rgba(18, 26, 37, 0.96) 0%, rgba(16, 23, 33, 0.96) 100%);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+body.body--dark .page-index__welcome-avatar {
+  background: rgba(141, 181, 223, 0.2);
+  color: rgba(213, 226, 240, 0.96);
+}
+
+body.body--dark .page-index__welcome-name {
+  color: rgba(213, 226, 240, 0.94);
+}
+
+body.body--dark .page-index__discord-button {
+  background: linear-gradient(135deg, #4f7ca7 0%, #375a7f 100%);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.32);
+}
+
+body.body--dark .page-index__discord-button:hover {
+  background: linear-gradient(135deg, #5c8fbe 0%, #40688f 100%);
+}
+
+body.body--dark .page-index__discord-button:active {
+  background: linear-gradient(135deg, #446c93 0%, #314d6d 100%);
+}
+
+body.body--dark .page-index__panel-link,
+body.body--dark .page-index .page-stories__card-action {
+  color: rgba(171, 201, 235, 0.94);
+}
+
+body.body--dark .page-index__panel-link:hover {
+  color: rgba(196, 221, 247, 0.98);
+}
+
+body.body--dark .page-index__changes-item {
+  border-bottom-color: rgba(141, 181, 223, 0.22);
+}
+
+body.body--dark .page-index .page-stories__card,
+body.body--dark .page-index .page-characters__card {
+  background: rgba(18, 26, 37, 0.96);
+  border-color: rgba(141, 181, 223, 0.24);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+body.body--dark .page-index .page-stories__card:hover,
+body.body--dark .page-index .page-characters__card:hover {
+  border-color: rgba(141, 181, 223, 0.44);
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.34);
+}
+
+body.body--dark .page-index .page-stories__card-type {
+  color: rgba(196, 221, 247, 0.95);
+  background: rgba(141, 181, 223, 0.2);
+}
+
+body.body--dark .page-index .page-stories__card-link:focus-visible {
+  box-shadow: inset 0 0 0 2px rgba(141, 181, 223, 0.44);
+}
+
 @media screen and (max-width: 1100px) {
   .page-index__hero {
     grid-template-columns: minmax(0, 1fr);

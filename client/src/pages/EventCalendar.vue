@@ -32,6 +32,7 @@
           emit-value
           map-options
           label="Event-Typ"
+          popup-content-class="page-event-calendar__select-menu"
         />
         <q-select
           v-model="sortMode"
@@ -41,6 +42,7 @@
           emit-value
           map-options
           label="Sortierung"
+          popup-content-class="page-event-calendar__select-menu"
         />
       </div>
       <div>
@@ -735,10 +737,28 @@ export default class PageEventCalendar extends Vue {
   background: linear-gradient(180deg, #f8f4ee 0%, #ffffff 45%, #f2ede4 100%);
   border-radius: 30px;
   overflow: hidden;
+  --calendar-grid-border-light: rgba(221, 180, 118, 0.24);
+  --calendar-grid-border-dark: rgba(141, 181, 223, 0.28);
   --calendar-surface: rgba(255, 255, 255, 0.92);
   --calendar-surface-muted: #f9f7f2;
   --calendar-ink: #2d2d2d;
   --calendar-accent: #ddb476;
+  --calendar-border: var(--calendar-grid-border-light) 1px solid;
+  --calendar-border-dark: var(--calendar-grid-border-dark) 1px solid;
+  --calendar-border-current: rgba(22, 98, 149, 0.8) 2px solid;
+  --calendar-border-current-dark: rgba(141, 181, 223, 0.86) 2px solid;
+  --calendar-color: #445063;
+  --calendar-color-dark: #d5e2f0;
+  --calendar-background: rgba(255, 255, 255, 0.92);
+  --calendar-background-dark: rgba(17, 24, 34, 0.94);
+  --calendar-current-color: #166295;
+  --calendar-current-color-dark: #8db5df;
+  --calendar-active-date-color: #166295;
+  --calendar-active-date-color-dark: #d5e2f0;
+  --calendar-active-date-background: rgba(22, 98, 149, 0.14);
+  --calendar-active-date-background-dark: rgba(90, 125, 166, 0.42);
+  --calendar-disabled-date-color-dark: rgba(213, 226, 240, 0.46);
+  --calendar-outside-color-dark: rgba(213, 226, 240, 0.58);
 }
 
 .page-event-calendar::before {
@@ -817,6 +837,36 @@ export default class PageEventCalendar extends Vue {
   min-width: 200px;
 }
 
+.page-event-calendar__filters .q-field__control {
+  background: rgba(246, 241, 232, 0.95);
+  border-radius: 0;
+}
+
+.page-event-calendar__filters .q-field__native,
+.page-event-calendar__filters .q-field__label,
+.page-event-calendar__filters .q-field__append,
+.page-event-calendar__filters .q-field__marginal {
+  color: #20323d;
+}
+
+.page-event-calendar__select-menu {
+  border: 1px solid rgba(221, 180, 118, 0.3);
+  border-top: 2px solid rgba(221, 180, 118, 0.65);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 241, 232, 0.98) 100%);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.24);
+}
+
+.page-event-calendar__select-menu .q-item {
+  color: #20323d;
+}
+
+.page-event-calendar__select-menu .q-item:hover,
+.page-event-calendar__select-menu .q-item.q-manual-focusable--focused,
+.page-event-calendar__select-menu .q-item--active {
+  background: rgba(221, 180, 118, 0.16);
+  color: #1f2c38;
+}
+
 .page-event-calendar__navbar .q-btn {
   border-radius: 0;
 }
@@ -840,6 +890,14 @@ export default class PageEventCalendar extends Vue {
 .page-event-calendar__calendar-frame {
   width: 100%;
   height: 100%;
+}
+
+.page-event-calendar .q-calendar-month__head {
+  background: rgba(221, 180, 118, 0.08);
+}
+
+.page-event-calendar .q-calendar-month__day {
+  background: rgba(255, 255, 255, 0.35);
 }
 
 .page-event-calendar__day {
@@ -1128,6 +1186,130 @@ export default class PageEventCalendar extends Vue {
 .page-event-calendar__empty {
   color: #666;
   padding: 12px 0;
+}
+
+body.body--dark .page-event-calendar {
+  background: linear-gradient(180deg, #0f151f 0%, #111b28 45%, #0d131d 100%);
+  --calendar-surface: rgba(17, 24, 34, 0.94);
+  --calendar-surface-muted: #1b2534;
+  --calendar-ink: #d5e2f0;
+  --calendar-accent: #8db5df;
+  color: #d5e2f0;
+}
+
+body.body--dark .page-event-calendar::before {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(141, 181, 223, 0.2), transparent 55%),
+    radial-gradient(circle at 80% 0%, rgba(90, 125, 166, 0.16), transparent 50%);
+}
+
+body.body--dark .page-event-calendar__header,
+body.body--dark .page-event-calendar__navbar,
+body.body--dark .page-event-calendar__calendar,
+body.body--dark .page-event-calendar__sidebar {
+  background: rgba(17, 24, 34, 0.94);
+  border-color: rgba(141, 181, 223, 0.28);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+}
+
+body.body--dark .page-event-calendar__subtitle,
+body.body--dark .page-event-calendar__date-weekday,
+body.body--dark .page-event-calendar__date-divider,
+body.body--dark .page-event-calendar__empty {
+  color: rgba(213, 226, 240, 0.72);
+}
+
+body.body--dark .page-event-calendar__filters .q-field__control {
+  background: rgba(20, 29, 41, 0.94);
+  box-shadow: inset 0 0 0 1px rgba(141, 181, 223, 0.28);
+}
+
+body.body--dark .page-event-calendar__filters .q-field__control:hover,
+body.body--dark .page-event-calendar__filters .q-field--focused .q-field__control {
+  box-shadow: inset 0 0 0 1px rgba(141, 181, 223, 0.44);
+}
+
+body.body--dark .page-event-calendar__filters .q-field__native,
+body.body--dark .page-event-calendar__filters .q-field__label,
+body.body--dark .page-event-calendar__filters .q-field__append,
+body.body--dark .page-event-calendar__filters .q-field__marginal {
+  color: rgba(213, 226, 240, 0.84);
+}
+
+body.body--dark .page-event-calendar__select-menu {
+  border-color: rgba(141, 181, 223, 0.34);
+  border-top-color: rgba(141, 181, 223, 0.78);
+  background: linear-gradient(180deg, rgba(20, 30, 44, 0.98) 0%, rgba(12, 20, 31, 0.98) 100%);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.4);
+}
+
+body.body--dark .page-event-calendar__select-menu .q-item {
+  color: rgba(213, 226, 240, 0.9);
+}
+
+body.body--dark .page-event-calendar__select-menu .q-item:hover,
+body.body--dark .page-event-calendar__select-menu .q-item.q-manual-focusable--focused,
+body.body--dark .page-event-calendar__select-menu .q-item--active {
+  background: rgba(141, 181, 223, 0.2);
+  color: rgba(226, 237, 248, 0.98);
+}
+
+body.body--dark .page-event-calendar__select-menu .text-primary,
+body.body--dark .page-event-calendar__filters .text-primary {
+  color: #8db5df !important;
+}
+
+body.body--dark .page-event-calendar__day:hover {
+  background: rgba(141, 181, 223, 0.16);
+  border-color: rgba(141, 181, 223, 0.36);
+}
+
+body.body--dark .page-event-calendar .q-calendar-month__head {
+  background: rgba(141, 181, 223, 0.12);
+}
+
+body.body--dark .page-event-calendar .q-calendar-month__day {
+  background: rgba(12, 18, 27, 0.5);
+}
+
+body.body--dark .page-event-calendar__day_selected {
+  background: rgba(90, 125, 166, 0.3);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+}
+
+body.body--dark .page-event-calendar__day-icon {
+  background: rgba(141, 181, 223, 0.2);
+}
+
+body.body--dark .page-event-calendar__event-card,
+body.body--dark .page-event-calendar__event-card--list {
+  background: rgba(17, 24, 34, 0.96);
+  border-color: rgba(141, 181, 223, 0.24);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.32);
+}
+
+body.body--dark .page-event-calendar__event-card:hover {
+  border-color: rgba(141, 181, 223, 0.42);
+}
+
+body.body--dark .page-event-calendar__event-time,
+body.body--dark .page-event-calendar__event-title,
+body.body--dark .page-event-calendar__event-meta,
+body.body--dark .page-event-calendar__sidebar-header {
+  color: rgba(213, 226, 240, 0.92);
+}
+
+body.body--dark .page-event-calendar__event-summary:hover {
+  background: rgba(141, 181, 223, 0.12);
+}
+
+body.body--dark .page-event-calendar__event-warnings-title {
+  color: rgba(213, 226, 240, 0.72);
+}
+
+body.body--dark .page-event-calendar__event-warning {
+  background: rgba(141, 181, 223, 0.2);
+  color: #d5e2f0;
 }
 
 @keyframes page-event-calendar-rise {

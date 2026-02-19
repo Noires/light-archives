@@ -11,40 +11,258 @@
 	src: url(/fonts/Cinzel-Eorzea-Medium.woff2) format('woff2'), url(/fonts/Cinzel-Eorzea-Medium.woff) format('woff');
 }
 
+:root {
+	--app-body-bg-color: #ddb476;
+	--app-body-bg-image: url(assets/bg.jpg);
+	--app-text-color: #1f1f1f;
+	--app-link-color: #ddb476;
+	--app-link-hover-color: #c59826;
+	--app-link-visited-color: #ddb476;
+	--app-item-color: #000000;
+	--app-scrollbar-track: #ddb476;
+	--app-scrollbar-thumb: #edd297;
+	--app-page-scrollbar-track: #eeeeee;
+	--app-page-scrollbar-thumb: #cccccc;
+	--app-page-surface: #fdfdffee;
+	--app-page-text: #1f1f1f;
+	--app-page-border: transparent;
+	--app-footer-bg: #ebebeb;
+	--app-footer-text: #000000;
+	--app-footer-link: #777777;
+	--app-footer-link-hover: #bbbbbb;
+	--app-table-surface: #f0f0f0;
+	--app-select-control-bg: rgba(246, 241, 232, 0.95);
+	--app-select-control-text: #20323d;
+	--app-select-menu-border: rgba(221, 180, 118, 0.3);
+	--app-select-menu-border-top: rgba(221, 180, 118, 0.65);
+	--app-select-menu-bg-start: rgba(255, 255, 255, 0.98);
+	--app-select-menu-bg-end: rgba(246, 241, 232, 0.98);
+	--app-select-menu-item: #20323d;
+	--app-select-menu-item-hover-bg: rgba(221, 180, 118, 0.16);
+	--app-select-menu-item-hover: #1f2c38;
+	--app-select-accent: #1f4d64;
+	--app-select-shadow: 0 14px 30px rgba(0, 0, 0, 0.24);
+	--app-toggle-off: rgba(39, 50, 62, 0.62);
+	--app-toggle-on: #1f4d64;
+	--app-toggle-thumb-off: #ffffff;
+	--app-toggle-thumb-on-icon: #ffffff;
+	--app-toggle-thumb-off-icon: rgba(31, 44, 56, 0.62);
+	--app-toggle-thumb-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px rgba(0, 0, 0, 0.14), 0 1px 5px rgba(0, 0, 0, 0.12);
+}
+
+html.webp {
+	--app-body-bg-image: url(assets/bg.webp);
+}
+
+body.body--dark {
+	--app-body-bg-color: #0d1118;
+	--app-body-bg-image: url(assets/bg_dark.jpg);
+	--app-text-color: #d9e1ea;
+	--app-link-color: #9ec4f3;
+	--app-link-hover-color: #c3dbff;
+	--app-link-visited-color: #9ec4f3;
+	--app-item-color: #d9e1ea;
+	--app-scrollbar-track: #1b2738;
+	--app-scrollbar-thumb: #445974;
+	--app-page-scrollbar-track: #1c2532;
+	--app-page-scrollbar-thumb: #4b617d;
+	--app-page-surface: rgba(14, 19, 27, 0.92);
+	--app-page-text: #d9e1ea;
+	--app-page-border: rgba(132, 166, 204, 0.22);
+	--app-footer-bg: #0c121a;
+	--app-footer-text: #d9e1ea;
+	--app-footer-link: #9ec4f3;
+	--app-footer-link-hover: #c3dbff;
+	--app-table-surface: #1b2533;
+	--app-btn-primary-bg-start: #3e6d9a;
+	--app-btn-primary-bg-end: #2a4f73;
+	--app-btn-secondary-bg-start: #4f7ba6;
+	--app-btn-secondary-bg-end: #385a7f;
+	--app-btn-primary-text: #f2f7ff;
+	--app-btn-secondary-text: #edf5ff;
+	--app-btn-primary-flat: #b7d3f3;
+	--app-btn-secondary-flat: #c8def7;
+	--app-btn-flat-hover-bg: rgba(141, 181, 223, 0.2);
+	--app-btn-outline-border: rgba(141, 181, 223, 0.5);
+	--app-btn-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+	--app-select-control-bg: rgba(20, 29, 41, 0.94);
+	--app-select-control-text: rgba(213, 226, 240, 0.84);
+	--app-select-menu-border: rgba(141, 181, 223, 0.34);
+	--app-select-menu-border-top: rgba(141, 181, 223, 0.78);
+	--app-select-menu-bg-start: rgba(20, 30, 44, 0.98);
+	--app-select-menu-bg-end: rgba(12, 20, 31, 0.98);
+	--app-select-menu-item: rgba(213, 226, 240, 0.9);
+	--app-select-menu-item-hover-bg: rgba(141, 181, 223, 0.2);
+	--app-select-menu-item-hover: rgba(226, 237, 248, 0.98);
+	--app-select-accent: #8db5df;
+	--app-select-shadow: 0 16px 34px rgba(0, 0, 0, 0.4);
+	--app-toggle-off: rgba(213, 226, 240, 0.68);
+	--app-toggle-on: #8db5df;
+	--app-toggle-thumb-off: rgba(25, 36, 51, 0.98);
+	--app-toggle-thumb-on-icon: #0f1824;
+	--app-toggle-thumb-off-icon: rgba(213, 226, 240, 0.78);
+	--app-toggle-thumb-shadow: 0 4px 10px rgba(0, 0, 0, 0.38);
+}
+
+html.webp body.body--dark {
+	--app-body-bg-image: url(assets/bg_dark.webp);
+}
+
 // app global css in SCSS form
 body {
 	font-family: $body-font;
-	background-color: #DDB476;
-	background-image: url(assets/bg.jpg);
+	background-color: var(--app-body-bg-color);
+	background-image: var(--app-body-bg-image);
 	background-size: cover;
 	background-attachment: fixed;
 	scrollbar-color: dark;
 	line-height: 1.6;
+	color: var(--app-text-color);
 }
 
-html.webp body {
-	background-image: url(assets/bg.webp);
+// Override Quasar's `body.body--dark { background: var(--q-dark-page); }`
+// so dark mode keeps the custom app background image.
+body.body--dark {
+	background-color: var(--app-body-bg-color);
+	background-image: var(--app-body-bg-image);
+	background-size: cover;
+	background-attachment: fixed;
+}
+
+body.body--dark .q-btn.bg-primary {
+	background: linear-gradient(135deg, var(--app-btn-primary-bg-start) 0%, var(--app-btn-primary-bg-end) 100%) !important;
+	color: var(--app-btn-primary-text) !important;
+	box-shadow: var(--app-btn-shadow);
+}
+
+body.body--dark .q-btn.bg-secondary {
+	background: linear-gradient(135deg, var(--app-btn-secondary-bg-start) 0%, var(--app-btn-secondary-bg-end) 100%) !important;
+	color: var(--app-btn-secondary-text) !important;
+	box-shadow: var(--app-btn-shadow);
+}
+
+body.body--dark .q-btn.q-btn--flat.text-primary,
+body.body--dark .q-btn.q-btn--outline.text-primary {
+	color: var(--app-btn-primary-flat) !important;
+}
+
+body.body--dark .q-btn.q-btn--flat.text-secondary,
+body.body--dark .q-btn.q-btn--outline.text-secondary {
+	color: var(--app-btn-secondary-flat) !important;
+}
+
+body.body--dark .q-btn.q-btn--flat.text-primary:hover,
+body.body--dark .q-btn.q-btn--flat.text-secondary:hover,
+body.body--dark .q-btn.q-btn--outline.text-primary:hover,
+body.body--dark .q-btn.q-btn--outline.text-secondary:hover {
+	background: var(--app-btn-flat-hover-bg) !important;
+}
+
+body.body--dark .q-btn.q-btn--outline.text-primary,
+body.body--dark .q-btn.q-btn--outline.text-secondary {
+	border-color: var(--app-btn-outline-border) !important;
+}
+
+.q-page .q-select .q-field__control {
+	background: var(--app-select-control-bg);
+}
+
+.q-page .q-select .q-field__native,
+.q-page .q-select .q-field__label,
+.q-page .q-select .q-field__append,
+.q-page .q-select .q-field__marginal {
+	color: var(--app-select-control-text);
+}
+
+.q-menu[role='listbox'],
+.q-select__dialog [role='listbox'] {
+	border: 1px solid var(--app-select-menu-border);
+	border-top: 2px solid var(--app-select-menu-border-top);
+	background: linear-gradient(180deg, var(--app-select-menu-bg-start) 0%, var(--app-select-menu-bg-end) 100%);
+	box-shadow: var(--app-select-shadow);
+}
+
+.q-menu[role='listbox'] .q-item[role='option'],
+.q-select__dialog [role='listbox'] .q-item[role='option'] {
+	color: var(--app-select-menu-item);
+}
+
+.q-menu[role='listbox'] .q-item[role='option']:hover,
+.q-menu[role='listbox'] .q-item[role='option'].q-manual-focusable--focused,
+.q-menu[role='listbox'] .q-item[role='option'].q-item--active,
+.q-select__dialog [role='listbox'] .q-item[role='option']:hover,
+.q-select__dialog [role='listbox'] .q-item[role='option'].q-manual-focusable--focused,
+.q-select__dialog [role='listbox'] .q-item[role='option'].q-item--active {
+	background: var(--app-select-menu-item-hover-bg);
+	color: var(--app-select-menu-item-hover);
+}
+
+.q-menu[role='listbox'] .text-primary,
+.q-select__dialog [role='listbox'] .text-primary,
+.q-page .q-select .text-primary {
+	color: var(--app-select-accent) !important;
+}
+
+.q-toggle .q-toggle__inner {
+	color: var(--app-toggle-off);
+}
+
+.q-toggle .q-toggle__thumb:after {
+	background: var(--app-toggle-thumb-off);
+	box-shadow: var(--app-toggle-thumb-shadow);
+}
+
+.q-toggle .q-toggle__thumb .q-icon {
+	color: var(--app-toggle-thumb-off-icon);
+	opacity: 0.74;
+}
+
+.q-toggle .q-toggle__inner--truthy {
+	color: var(--app-toggle-on);
+}
+
+.q-toggle .q-toggle__inner--truthy .q-toggle__track {
+	opacity: 0.56;
+}
+
+.q-toggle .q-toggle__inner--truthy .q-toggle__thumb:after {
+	background-color: currentColor;
+}
+
+.q-toggle .q-toggle__inner--truthy .q-toggle__thumb .q-icon {
+	color: var(--app-toggle-thumb-on-icon);
+	opacity: 1;
+}
+
+body.body--dark .q-toggle .q-toggle__inner,
+body.body--dark .q-toggle--dark .q-toggle__inner {
+	color: var(--app-toggle-off);
+}
+
+body.body--dark .q-toggle .q-toggle__inner--truthy,
+body.body--dark .q-toggle--dark .q-toggle__inner--truthy {
+	color: var(--app-toggle-on);
 }
 
 *::-webkit-scrollbar {
-	background: #DDB476;
+	background: var(--app-scrollbar-track);
 	width: 12px;
 }
 
 *::-webkit-scrollbar-thumb {
-	background: #EDD297;
+	background: var(--app-scrollbar-thumb);
 	border: 1px solid #888;
 	border-radius: 5px;
 }
 
 .q-page *::-webkit-scrollbar {
-	background: #eeeeee;
+	background: var(--app-page-scrollbar-track);
 	border: none;
 	width: 12px;
 }
 
 .q-page *::-webkit-scrollbar-thumb {
-	background: #cccccc;
+	background: var(--app-page-scrollbar-thumb);
 	border: none;
 	border-radius: 5px;
 }
@@ -107,28 +325,28 @@ form h6 {
 
 a {
 	text-decoration: none;
-	color: $link-color;
+	color: var(--app-link-color);
 	transition: color 0.3s ease;
 }
 
 .q-page a:visited {
-	color: $link-visited-color;
+	color: var(--app-link-visited-color);
 }
 
 .q-item {
-	color: black;
+	color: var(--app-item-color);
 }
 
 .q-page a.q-item:visited {
-	color: black;
+	color: var(--app-item-color);
 }
 
 .q-page a:hover {
-	color: $link-hover-color;
+	color: var(--app-link-hover-color);
 }
 
 .q-page a.q-item:hover {
-	color: black;
+	color: var(--app-item-color);
 }
 
 ol li {
@@ -182,8 +400,19 @@ ol li {
 	background: $striped-list-bg-even;
 }
 
+body.body--dark .striped-list .q-item,
+body.body--dark .striped-list tbody tr {
+	background: rgba(21, 30, 42, 0.9);
+}
+
+body.body--dark .striped-list .q-item:nth-child(even),
+body.body--dark .striped-list thead tr,
+body.body--dark .striped-list tr:nth-child(even) {
+	background: rgba(29, 40, 56, 0.92);
+}
+
 .paged-link-table thead tr {
-  background: #f0f0f0;
+  background: var(--app-table-surface);
 }
 
 .paged-link-table th {
@@ -203,7 +432,523 @@ ol li {
 }
 
 .paged-link-table td > a:link, .paged-link-table td > a:visited, .paged-link-table td > a:hover {
-  color: black;
+  color: var(--app-item-color);
+}
+
+// Global dark-mode overrides for list-heavy archive pages.
+body.body--dark .page-characters,
+body.body--dark .page-venues,
+body.body--dark .page-communities,
+body.body--dark .page-noticeboard,
+body.body--dark .page-stories,
+body.body--dark .page-changes {
+	background: linear-gradient(180deg, #0f151f 0%, #121d2b 46%, #0d141d 100%);
+	color: rgba(213, 226, 240, 0.92);
+}
+
+body.body--dark .page-characters::before,
+body.body--dark .page-venues::before,
+body.body--dark .page-communities::before,
+body.body--dark .page-noticeboard::before,
+body.body--dark .page-stories::before,
+body.body--dark .page-changes::before {
+	background:
+		radial-gradient(circle at 20% 30%, rgba(141, 181, 223, 0.2), transparent 55%),
+		radial-gradient(circle at 80% 0%, rgba(90, 125, 166, 0.16), transparent 50%);
+}
+
+body.body--dark .page-characters__hero,
+body.body--dark .page-venues__hero,
+body.body--dark .page-communities__hero,
+body.body--dark .page-noticeboard__hero,
+body.body--dark .page-stories__hero,
+body.body--dark .page-changes__hero,
+body.body--dark .page-characters__alphabet-nav,
+body.body--dark .page-characters__toolbar,
+body.body--dark .page-venues__toolbar,
+body.body--dark .page-communities__toolbar,
+body.body--dark .page-noticeboard__toolbar,
+body.body--dark .page-stories__toolbar,
+body.body--dark .page-changes__toolbar,
+body.body--dark .page-characters__list,
+body.body--dark .page-venues__list,
+body.body--dark .page-communities__list,
+body.body--dark .page-noticeboard__list,
+body.body--dark .page-stories__list,
+body.body--dark .page-changes__list-wrapper,
+body.body--dark .page-characters__empty,
+body.body--dark .page-venues__empty,
+body.body--dark .page-communities__empty,
+body.body--dark .page-noticeboard__empty,
+body.body--dark .page-stories__empty,
+body.body--dark .page-changes__empty {
+	background: rgba(17, 24, 34, 0.94);
+	border-color: rgba(141, 181, 223, 0.28);
+	box-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
+}
+
+body.body--dark .page-characters__eyebrow,
+body.body--dark .page-venues__eyebrow,
+body.body--dark .page-communities__eyebrow,
+body.body--dark .page-noticeboard__eyebrow,
+body.body--dark .page-stories__eyebrow,
+body.body--dark .page-changes__eyebrow {
+	color: rgba(171, 201, 235, 0.88);
+}
+
+body.body--dark .page-characters__lead,
+body.body--dark .page-venues__lead,
+body.body--dark .page-communities__lead,
+body.body--dark .page-noticeboard__lead,
+body.body--dark .page-stories__lead,
+body.body--dark .page-changes__lead,
+body.body--dark .page-characters__count-label,
+body.body--dark .page-venues__count-label,
+body.body--dark .page-communities__count-label,
+body.body--dark .page-noticeboard__count-label,
+body.body--dark .page-stories__hero-count-label,
+body.body--dark .page-changes__hero-count-label,
+body.body--dark .page-stories__card-meta,
+body.body--dark .page-stories__card-excerpt,
+body.body--dark .page-stories__empty,
+body.body--dark .page-stories__empty-subtitle,
+body.body--dark .page-changes__item-time,
+body.body--dark .page-changes__item-meta,
+body.body--dark .page-changes__item-summary,
+body.body--dark .page-changes__empty,
+body.body--dark .page-changes__empty-subtitle,
+body.body--dark .page-characters__card-meta,
+body.body--dark .page-characters__card-profession,
+body.body--dark .page-characters__empty,
+body.body--dark .page-venues__empty,
+body.body--dark .page-communities__empty,
+body.body--dark .page-noticeboard__empty,
+body.body--dark .venue-list__meta,
+body.body--dark .venue-list__server,
+body.body--dark .community-list__goal,
+body.body--dark .noticeboard-item-list__meta,
+body.body--dark .noticeboard-item-list__time {
+	color: rgba(213, 226, 240, 0.74);
+}
+
+body.body--dark .page-characters__count-number,
+body.body--dark .page-venues__count-number,
+body.body--dark .page-communities__count-number,
+body.body--dark .page-noticeboard__count-number,
+body.body--dark .page-stories__hero-count-number,
+body.body--dark .page-changes__hero-count-number,
+body.body--dark .page-characters__stats,
+body.body--dark .page-venues__stats,
+body.body--dark .page-communities__stats,
+body.body--dark .page-noticeboard__stats,
+body.body--dark .page-stories__stats,
+body.body--dark .page-changes__stats,
+body.body--dark .page-characters__card-name,
+body.body--dark .page-stories__card-title,
+body.body--dark .page-changes__item-title,
+body.body--dark .venue-list__name,
+body.body--dark .community-list__name,
+body.body--dark .noticeboard-item-list__title {
+	color: rgba(213, 226, 240, 0.94);
+}
+
+body.body--dark .page-characters .q-field__control,
+body.body--dark .page-venues .q-field__control,
+body.body--dark .page-communities .q-field__control,
+body.body--dark .page-noticeboard .q-field__control,
+body.body--dark .page-stories .q-field__control,
+body.body--dark .page-changes .q-field__control {
+	background: rgba(20, 29, 41, 0.94) !important;
+	box-shadow: inset 0 0 0 1px rgba(141, 181, 223, 0.28);
+}
+
+body.body--dark .page-characters .q-field__native,
+body.body--dark .page-characters .q-field__label,
+body.body--dark .page-characters .q-field__append,
+body.body--dark .page-venues .q-field__native,
+body.body--dark .page-venues .q-field__label,
+body.body--dark .page-venues .q-field__append,
+body.body--dark .page-communities .q-field__native,
+body.body--dark .page-communities .q-field__label,
+body.body--dark .page-communities .q-field__append,
+body.body--dark .page-noticeboard .q-field__native,
+body.body--dark .page-noticeboard .q-field__label,
+body.body--dark .page-noticeboard .q-field__append,
+body.body--dark .page-stories .q-field__native,
+body.body--dark .page-stories .q-field__label,
+body.body--dark .page-stories .q-field__append,
+body.body--dark .page-changes .q-field__native,
+body.body--dark .page-changes .q-field__label,
+body.body--dark .page-changes .q-field__append {
+	color: rgba(213, 226, 240, 0.84);
+}
+
+body.body--dark .page-characters__card,
+body.body--dark .page-stories__card,
+body.body--dark .page-changes__item,
+body.body--dark .venue-list__item,
+body.body--dark .community-list__item,
+body.body--dark .noticeboard-item-list__item {
+	background: rgba(18, 26, 37, 0.96);
+	border-color: rgba(141, 181, 223, 0.24);
+	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+body.body--dark .page-characters__card:hover,
+body.body--dark .page-stories__card:hover,
+body.body--dark .page-changes__item:hover,
+body.body--dark .venue-list__item:hover,
+body.body--dark .community-list__item:hover,
+body.body--dark .noticeboard-item-list__item:hover {
+	border-color: rgba(141, 181, 223, 0.44);
+	box-shadow: 0 16px 28px rgba(0, 0, 0, 0.34);
+}
+
+body.body--dark .page-characters__alphabet-btn {
+	background: rgba(20, 29, 41, 0.96);
+	border-color: rgba(141, 181, 223, 0.32);
+	color: rgba(213, 226, 240, 0.9);
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.24);
+}
+
+body.body--dark .page-characters__alphabet-btn:hover {
+	background: rgba(141, 181, 223, 0.18);
+	border-color: rgba(141, 181, 223, 0.48);
+}
+
+body.body--dark .page-characters__alphabet-btn--active {
+	background: linear-gradient(135deg, rgba(141, 181, 223, 0.3) 0%, rgba(102, 149, 200, 0.18) 100%);
+	border-color: rgba(141, 181, 223, 0.58);
+	color: rgba(218, 232, 247, 0.96);
+}
+
+body.body--dark .page-stories__card-type {
+	color: rgba(196, 221, 247, 0.95);
+	background: rgba(141, 181, 223, 0.2);
+}
+
+body.body--dark .page-stories__card-action {
+	color: rgba(196, 221, 247, 0.95);
+}
+
+body.body--dark .page-stories__card-link:focus-visible {
+	box-shadow: inset 0 0 0 2px rgba(141, 181, 223, 0.44);
+}
+
+body.body--dark .page-changes__item-icon .q-icon {
+	color: rgba(141, 181, 223, 0.94);
+}
+
+body.body--dark .page-changes__item-arrow .q-icon {
+	color: rgba(213, 226, 240, 0.56);
+}
+
+// Additional dark-mode coverage for support and static content pages.
+body.body--dark .page-about,
+body.body--dark .page-beginner-guide,
+body.body--dark .page-faq,
+body.body--dark .page-rules,
+body.body--dark .page-free-companies,
+body.body--dark .page-support-tickets,
+body.body--dark .page-support-queue,
+body.body--dark .page-new-support-ticket,
+body.body--dark .page-support-ticket,
+body.body--dark .page-support-ticket-admin {
+	background: linear-gradient(180deg, #0f151f 0%, #121d2b 46%, #0d141d 100%);
+	color: rgba(213, 226, 240, 0.92);
+}
+
+body.body--dark .page-about::before,
+body.body--dark .page-beginner-guide::before,
+body.body--dark .page-faq::before,
+body.body--dark .page-rules::before,
+body.body--dark .page-free-companies::before,
+body.body--dark .page-support-tickets::before,
+body.body--dark .page-support-queue::before,
+body.body--dark .page-new-support-ticket::before,
+body.body--dark .page-support-ticket::before,
+body.body--dark .page-support-ticket-admin::before {
+	background:
+		radial-gradient(circle at 20% 30%, rgba(141, 181, 223, 0.2), transparent 55%),
+		radial-gradient(circle at 80% 0%, rgba(90, 125, 166, 0.16), transparent 50%);
+}
+
+body.body--dark .page-about__hero,
+body.body--dark .page-about__panel,
+body.body--dark .page-beginner-guide__hero,
+body.body--dark .page-beginner-guide__content,
+body.body--dark .page-faq__hero,
+body.body--dark .page-faq__content,
+body.body--dark .page-rules__hero,
+body.body--dark .page-rules__content,
+body.body--dark .page-free-companies__hero,
+body.body--dark .page-free-companies__toolbar,
+body.body--dark .page-free-companies__list,
+body.body--dark .page-free-companies__empty,
+body.body--dark .page-support-tickets__hero,
+body.body--dark .page-support-tickets__toolbar,
+body.body--dark .page-support-tickets__table-shell,
+body.body--dark .page-support-queue__hero,
+body.body--dark .page-support-queue__toolbar,
+body.body--dark .page-support-queue__table-shell,
+body.body--dark .page-new-support-ticket__hero,
+body.body--dark .page-new-support-ticket__form-card,
+body.body--dark .page-support-ticket__hero,
+body.body--dark .page-support-ticket__messages-shell,
+body.body--dark .page-support-ticket__reply-card,
+body.body--dark .page-support-ticket__closed-banner,
+body.body--dark .page-support-ticket-admin__hero,
+body.body--dark .page-support-ticket-admin__controls,
+body.body--dark .page-support-ticket-admin__messages-shell,
+body.body--dark .page-support-ticket-admin__reply-card,
+body.body--dark .page-support-ticket-admin__note-card,
+body.body--dark .page-support-ticket-admin__closed-banner,
+body.body--dark .page-free-company__members-header,
+body.body--dark .page-free-company__members-grid,
+body.body--dark .page-free-company__members-empty,
+body.body--dark .page-verify__card,
+body.body--dark .page-terms__card,
+body.body--dark .page-terms__terms-of-use {
+	background: rgba(17, 24, 34, 0.94);
+	border-color: rgba(141, 181, 223, 0.28);
+	box-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
+}
+
+body.body--dark .page-support-tickets__limit-banner {
+	border-color: rgba(184, 110, 13, 0.5);
+	background: rgba(122, 79, 24, 0.44);
+	color: rgba(255, 224, 184, 0.95);
+}
+
+body.body--dark .page-about__eyebrow,
+body.body--dark .page-beginner-guide__eyebrow,
+body.body--dark .page-faq__eyebrow,
+body.body--dark .page-rules__eyebrow,
+body.body--dark .page-free-companies__eyebrow,
+body.body--dark .page-support-tickets__eyebrow,
+body.body--dark .page-support-queue__eyebrow,
+body.body--dark .page-new-support-ticket__eyebrow,
+body.body--dark .page-support-ticket__eyebrow,
+body.body--dark .page-support-ticket-admin__eyebrow {
+	color: rgba(171, 201, 235, 0.88);
+}
+
+body.body--dark .page-about__lead,
+body.body--dark .page-beginner-guide__hero p,
+body.body--dark .page-faq__hero p,
+body.body--dark .page-rules__hero p,
+body.body--dark .page-free-companies__lead,
+body.body--dark .page-free-companies__count-label,
+body.body--dark .page-free-companies__empty,
+body.body--dark .page-support-tickets__lead,
+body.body--dark .page-support-tickets__hero-count-label,
+body.body--dark .page-support-tickets__hero-stats,
+body.body--dark .page-support-tickets__empty,
+body.body--dark .page-support-tickets__empty-subtitle,
+body.body--dark .page-support-queue__lead,
+body.body--dark .page-support-queue__hero-count-label,
+body.body--dark .page-support-queue__empty,
+body.body--dark .page-support-queue__empty-subtitle,
+body.body--dark .page-new-support-ticket__lead,
+body.body--dark .page-support-ticket__lead,
+body.body--dark .page-support-ticket__time,
+body.body--dark .page-support-ticket__empty,
+body.body--dark .page-support-ticket-admin__lead,
+body.body--dark .page-support-ticket-admin__meta-line,
+body.body--dark .page-support-ticket-admin__empty,
+body.body--dark .page-free-company__member-meta,
+body.body--dark .page-free-company__member-profession,
+body.body--dark .page-free-company__members-empty,
+body.body--dark .free-company-name-list__goal,
+body.body--dark .free-company-name-list__server,
+body.body--dark .page-verify > p,
+body.body--dark .page-terms__card > p {
+	color: rgba(213, 226, 240, 0.74);
+}
+
+body.body--dark .page-free-companies__count-number,
+body.body--dark .page-free-companies__stats,
+body.body--dark .page-support-tickets__hero-count-number,
+body.body--dark .page-support-tickets__toolbar-meta,
+body.body--dark .page-support-tickets__ticket-number,
+body.body--dark .page-support-queue__hero-count-number,
+body.body--dark .page-support-ticket__reply-title,
+body.body--dark .page-support-ticket-admin__section-title,
+body.body--dark .page-free-company__members-count,
+body.body--dark .page-free-company__member-name,
+body.body--dark .free-company-name-list__name {
+	color: rgba(213, 226, 240, 0.94);
+}
+
+body.body--dark .free-company-name-list__item,
+body.body--dark .page-free-company__member-card {
+	background: rgba(18, 26, 37, 0.96);
+	border-color: rgba(141, 181, 223, 0.24);
+	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+body.body--dark .free-company-name-list__item:hover,
+body.body--dark .page-free-company__member-card:hover {
+	border-color: rgba(141, 181, 223, 0.44);
+	box-shadow: 0 16px 28px rgba(0, 0, 0, 0.34);
+}
+
+body.body--dark .page-free-companies .q-field__control,
+body.body--dark .page-support-tickets .q-field__control,
+body.body--dark .page-support-queue .q-field__control,
+body.body--dark .page-new-support-ticket .q-field__control,
+body.body--dark .page-support-ticket .q-field__control,
+body.body--dark .page-support-ticket-admin .q-field__control,
+body.body--dark .page-verify .q-field__control,
+body.body--dark .page-terms .q-field__control {
+	background: rgba(20, 29, 41, 0.94) !important;
+	box-shadow: inset 0 0 0 1px rgba(141, 181, 223, 0.28);
+}
+
+body.body--dark .page-free-companies .q-field__native,
+body.body--dark .page-free-companies .q-field__label,
+body.body--dark .page-free-companies .q-field__append,
+body.body--dark .page-support-tickets .q-field__native,
+body.body--dark .page-support-tickets .q-field__label,
+body.body--dark .page-support-tickets .q-field__append,
+body.body--dark .page-support-queue .q-field__native,
+body.body--dark .page-support-queue .q-field__label,
+body.body--dark .page-support-queue .q-field__append,
+body.body--dark .page-new-support-ticket .q-field__native,
+body.body--dark .page-new-support-ticket .q-field__label,
+body.body--dark .page-new-support-ticket .q-field__append,
+body.body--dark .page-support-ticket .q-field__native,
+body.body--dark .page-support-ticket .q-field__label,
+body.body--dark .page-support-ticket .q-field__append,
+body.body--dark .page-support-ticket-admin .q-field__native,
+body.body--dark .page-support-ticket-admin .q-field__label,
+body.body--dark .page-support-ticket-admin .q-field__append,
+body.body--dark .page-verify .q-field__native,
+body.body--dark .page-verify .q-field__label,
+body.body--dark .page-verify .q-field__append,
+body.body--dark .page-terms .q-field__native,
+body.body--dark .page-terms .q-field__label,
+body.body--dark .page-terms .q-field__append {
+	color: rgba(213, 226, 240, 0.84);
+}
+
+body.body--dark .page-support-tickets__table .q-table thead tr,
+body.body--dark .page-support-queue__table .q-table thead tr {
+	background: rgba(21, 31, 44, 0.95);
+}
+
+body.body--dark .page-support-tickets__table .q-table tbody tr:hover,
+body.body--dark .page-support-queue__table .q-table tbody tr:hover {
+	background: rgba(141, 181, 223, 0.14);
+}
+
+body.body--dark .page-support-tickets__tabs .q-tab {
+	color: rgba(213, 226, 240, 0.78);
+}
+
+body.body--dark .page-support-tickets__tabs .q-tab--active {
+	color: rgba(171, 201, 235, 0.96);
+}
+
+body.body--dark .page-about__hero-links a,
+body.body--dark .page-about__lead a {
+	color: rgba(171, 201, 235, 0.94);
+}
+
+body.body--dark .page-about__link-list p {
+	color: rgba(213, 226, 240, 0.72);
+}
+
+body.body--dark .page-about__table {
+	box-shadow: inset 0 0 0 1px rgba(141, 181, 223, 0.24);
+}
+
+body.body--dark .page-about__table th {
+	background: rgba(27, 38, 53, 0.96);
+}
+
+body.body--dark .page-faq__markdown h3,
+body.body--dark .page-rules__markdown h4 {
+	border-top-color: rgba(141, 181, 223, 0.38);
+}
+
+body.body--dark .page-faq__markdown h4 {
+	border-left-color: rgba(141, 181, 223, 0.7);
+	background: linear-gradient(90deg, rgba(141, 181, 223, 0.22), rgba(141, 181, 223, 0.06));
+	color: rgba(213, 226, 240, 0.94);
+}
+
+body.body--dark .page-rules__markdown hr {
+	border-top-color: rgba(141, 181, 223, 0.4);
+}
+
+body.body--dark .page-rules__markdown dfn {
+	color: rgba(187, 214, 242, 0.9);
+}
+
+body.body--dark .page-verify__card {
+	background: linear-gradient(180deg, rgba(17, 24, 34, 0.98), rgba(14, 20, 30, 0.98));
+}
+
+body.body--dark .page-verify__card-section::before {
+	background: radial-gradient(800px 200px at 0% 0%, rgba(141, 181, 223, 0.22), transparent);
+}
+
+body.body--dark .page-terms__card {
+	background: linear-gradient(180deg, rgba(17, 24, 34, 0.98), rgba(14, 20, 30, 0.98));
+}
+
+body.body--dark .page-terms__terms-of-use {
+	box-shadow: inset 0 0 0 1px rgba(141, 181, 223, 0.24);
+}
+
+// Event detail view dark-mode adjustments.
+body.body--dark .event-view {
+	color: rgba(213, 226, 240, 0.9);
+}
+
+body.body--dark .event-view__icon {
+	background: rgba(141, 181, 223, 0.2);
+	border-color: rgba(141, 181, 223, 0.32);
+	box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+}
+
+body.body--dark .event-view__icon .q-icon,
+body.body--dark .event-view__subtitle,
+body.body--dark .event-view__location-tags {
+	color: rgba(213, 226, 240, 0.72);
+}
+
+body.body--dark .event-view__type,
+body.body--dark .event-view__meta-label,
+body.body--dark .event-view__warnings-title {
+	color: rgba(213, 226, 240, 0.62);
+}
+
+body.body--dark .event-view__chip,
+body.body--dark .event-view__warning-chip {
+	background: rgba(141, 181, 223, 0.2);
+	color: rgba(213, 226, 240, 0.92);
+}
+
+body.body--dark .event-view__meta,
+body.body--dark .event-view__location-card {
+	background: rgba(17, 24, 34, 0.94);
+	border-color: rgba(141, 181, 223, 0.28);
+	box-shadow: 0 12px 22px rgba(0, 0, 0, 0.3);
+}
+
+body.body--dark .event-view__meta-row {
+	color: rgba(213, 226, 240, 0.84);
+}
+
+body.body--dark .event-view__location-title {
+	color: rgba(213, 226, 240, 0.94);
+}
+
+body.body--dark .event-icon-edit-section__placeholder {
+	background: rgba(17, 24, 34, 0.94);
+	color: rgba(213, 226, 240, 0.72);
 }
 
 .edit-bar {
@@ -222,6 +967,10 @@ ol li {
 	margin-bottom: 5px;
 	border-bottom: 1px solid #aaa;
 	cursor: pointer;
+}
+
+body.body--dark .hide-details__title {
+	border-bottom-color: rgba(141, 181, 223, 0.34);
 }
 
 .hide-details__content {

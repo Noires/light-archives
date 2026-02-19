@@ -1,5 +1,5 @@
 <template>
-	<q-layout class="rounded-borders no-outline">
+	<q-layout class="page-character-layout rounded-borders no-outline">
 		<q-drawer class="border-radius-inherit" v-model="drawer" show-if-above
 			:mini="miniState" @mouseover="miniState = false" @mouseout="miniState = true" :width="200" :breakpoint="0">
 			<q-scroll-area class="fit" :horizontal-thumb-style="{ opacity: 0 }">
@@ -280,23 +280,37 @@ export default class PageCharacter extends Vue {
 </script>
 
 <style lang="scss">
-.q-item.edit-profile {
-	background-color: #9F848D;
-	color: #1b1b1b;
+.page-character-layout {
+	--character-edit-bg: #9f848d;
+	--character-edit-bg-hover: #615056;
+	--character-edit-color: #1b1b1b;
+	--character-edit-color-hover: #000000;
+}
+
+body.body--dark .page-character-layout {
+	--character-edit-bg: rgba(141, 181, 223, 0.22);
+	--character-edit-bg-hover: rgba(141, 181, 223, 0.34);
+	--character-edit-color: rgba(226, 237, 248, 0.95);
+	--character-edit-color-hover: #f2f7ff;
+}
+
+.page-character-layout .q-item.edit-profile {
+	background-color: var(--character-edit-bg);
+	color: var(--character-edit-color);
 	transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-.q-item.edit-profile:hover {
-	background-color: #615056;
-	color: #000000;
+.page-character-layout .q-item.edit-profile:hover {
+	background-color: var(--character-edit-bg-hover);
+	color: var(--character-edit-color-hover);
 }
 
-.q-item.edit-profile:hover .q-icon {
-	color: #000000;
+.page-character-layout .q-item.edit-profile:hover .q-icon {
+	color: var(--character-edit-color-hover);
 }
 
-.q-item.edit-profile .q-icon,
-.q-item.edit-profile .q-item-section {
+.page-character-layout .q-item.edit-profile .q-icon,
+.page-character-layout .q-item.edit-profile .q-item-section {
 	transition: color 0.25s ease;
 }
 </style>

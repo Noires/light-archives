@@ -179,23 +179,39 @@ export default class VenueProfile extends Vue.with(Props) {
   gap: 12px;
 }
 
+.venue-profile {
+  --venue-event-card-border: rgba(221, 180, 118, 0.25);
+  --venue-event-card-bg: rgba(255, 255, 255, 0.92);
+  --venue-event-card-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+  --venue-event-time-color: rgba(35, 35, 35, 0.7);
+  --venue-event-title-color: #1f2c38;
+}
+
+body.body--dark .venue-profile {
+  --venue-event-card-border: rgba(141, 181, 223, 0.35);
+  --venue-event-card-bg: rgba(17, 26, 39, 0.88);
+  --venue-event-card-shadow: 0 12px 26px rgba(0, 0, 0, 0.34);
+  --venue-event-time-color: rgba(213, 226, 240, 0.72);
+  --venue-event-title-color: rgba(226, 237, 248, 0.96);
+}
+
 .venue-profile__event-card {
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--venue-event-card-border);
+  background: var(--venue-event-card-bg);
   padding: 12px 16px;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--venue-event-card-shadow);
 }
 
 .venue-profile__event-time {
   font-size: 0.85rem;
   font-weight: 600;
-  color: rgba(35, 35, 35, 0.7);
+  color: var(--venue-event-time-color);
   margin-bottom: 4px;
 }
 
 .venue-profile__event-title {
   font-weight: 700;
-  color: #1f2c38;
+  color: var(--venue-event-title-color);
   text-decoration: none;
 }
 

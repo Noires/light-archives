@@ -357,6 +357,54 @@ export default class PageGallery extends Vue {
   color: rgba(35, 35, 35, 0.7);
 }
 
+body.body--dark .page-gallery {
+  background: linear-gradient(180deg, #0f151f 0%, #121d2b 45%, #0d141d 100%);
+  color: rgba(213, 226, 240, 0.9);
+}
+
+body.body--dark .page-gallery::before {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(141, 181, 223, 0.2), transparent 55%),
+    radial-gradient(circle at 80% 0%, rgba(90, 125, 166, 0.16), transparent 50%);
+}
+
+body.body--dark .page-gallery__hero,
+body.body--dark .page-gallery__toolbar,
+body.body--dark .page-gallery__empty {
+  background: rgba(17, 24, 34, 0.94);
+  border-color: rgba(141, 181, 223, 0.28);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
+}
+
+body.body--dark .page-gallery__eyebrow {
+  color: rgba(171, 201, 235, 0.88);
+}
+
+body.body--dark .page-gallery__lead,
+body.body--dark .page-gallery__count-label {
+  color: rgba(213, 226, 240, 0.74);
+}
+
+body.body--dark .page-gallery__count-number,
+body.body--dark .page-gallery__stats {
+  color: rgba(213, 226, 240, 0.94);
+}
+
+body.body--dark .page-gallery__search-query .q-field__control {
+  background: rgba(20, 29, 41, 0.94) !important;
+  box-shadow: inset 0 0 0 1px rgba(141, 181, 223, 0.28);
+}
+
+body.body--dark .page-gallery__search-query .q-field__native,
+body.body--dark .page-gallery__search-query .q-field__label,
+body.body--dark .page-gallery__search-query .q-field__append {
+  color: rgba(213, 226, 240, 0.84);
+}
+
+body.body--dark .page-gallery__pagination .q-btn {
+  color: rgba(213, 226, 240, 0.88);
+}
+
 @media screen and (max-width: 1100px) {
   .page-gallery__hero {
     flex-direction: column;
