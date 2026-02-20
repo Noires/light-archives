@@ -1,4 +1,5 @@
 import { HousingArea } from '@app/shared/enums/housing-area.enum';
+import { MembershipStatus } from '@app/shared/enums/membership-status.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import SharedConstants from '@app/shared/SharedConstants';
 import { Type } from 'class-transformer';
@@ -12,6 +13,18 @@ export class VenueDto {
 
   @IsBoolean()
   mine: boolean;
+
+  @IsEnum(MembershipStatus)
+  @IsOptional()
+  membershipStatus?: MembershipStatus|null;
+
+  @IsBoolean()
+  @IsOptional()
+  canEdit?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  canManageMembers?: boolean;
 
 	@Type(() => Number)
 	@IsNumber()

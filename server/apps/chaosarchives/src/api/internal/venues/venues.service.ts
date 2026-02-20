@@ -1,19 +1,23 @@
 import { UserInfo } from '@app/auth/model/user-info';
-import { Character, ContentNote, Image, Server, Venue } from '@app/entity';
+import { Character, ContentNote, Image, Server, Venue, VenueMembership } from '@app/entity';
 import { VenueTag } from '@app/entity/venue-tag.entity';
+import { CharacterIdWrapper } from '@app/shared/dto/common/character-id-wrapper.dto';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
+import { VenueMemberDto } from '@app/shared/dto/venues/venue-member.dto';
+import { VenueMemberFlagsDto } from '@app/shared/dto/venues/venue-member-flags.dto';
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { HousingArea } from '@app/shared/enums/housing-area.enum';
+import { MembershipStatus } from '@app/shared/enums/membership-status.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import html from '@app/shared/html';
 import SharedConstants from '@app/shared/SharedConstants';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import crypto from 'crypto';
 import { DateTime } from 'luxon';
-import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
-import { checkCarrdProfile, getVerifiedCharacter } from '../../../common/api-checks';
+import { Connection, EntityManager, FindOneOptions, IsNull, Not, Repository } from 'typeorm';
+import { assertUserCharacterId, checkCarrdProfile, getVerifiedCharacter } from '../../../common/api-checks';
 import { Contains } from '../../../common/db';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import { ImagesService } from '../images/images.service';
@@ -30,6 +34,7 @@ const HOUSING_AREA_LABELS: Record<HousingArea, string> = {
 export class VenuesService {
   constructor(
     @InjectRepository(Venue) private venueRepo: Repository<Venue>,
+    @InjectRepository(VenueMembership) private venueMembershipRepo: Repository<VenueMembership>,
     private connection: Connection,
     private imagesService: ImagesService,
   ) {}
@@ -102,7 +107,7 @@ export class VenuesService {
     return address;
   }
 
-	async getVenueByName(name: string, server: string, user?: UserInfo): Promise<VenueDto> {
+	async getVenueByName(name: string, server: string, characterId?: number, user?: UserInfo): Promise<VenueDto> {
 		const venue = await this.venueRepo.findOne({
 			where: {
 				name,
@@ -117,10 +122,10 @@ export class VenuesService {
 			throw new NotFoundException('Venue not found');
 		}
 
-		return this.toVenueDto(venue, user);
+		return this.toVenueDto(venue, characterId, user);
 	}
 
-	async getVenue(venueId: number, user?: UserInfo): Promise<VenueDto> {
+	async getVenue(venueId: number, characterId?: number, user?: UserInfo): Promise<VenueDto> {
 		const venue = await this.venueRepo.findOne({
 			where: {
 				id: venueId,
@@ -132,15 +137,32 @@ export class VenuesService {
 			throw new NotFoundException('Venue not found');
 		}
 
-		return this.toVenueDto(venue, user);
+		return this.toVenueDto(venue, characterId, user);
 	}
 
-	private async toVenueDto(venue: Venue, user?: UserInfo): Promise<VenueDto> {
+	private async toVenueDto(venue: Venue, characterId?: number, user?: UserInfo): Promise<VenueDto> {
 		const banner = await venue.banner;
+    const userCharacterIds = user?.characters?.map((ch) => ch.id) || [];
+
+    if (user && characterId && !userCharacterIds.includes(characterId)) {
+      throw new ForbiddenException('Invalid character ID');
+    }
+
+    const isSelectedCharacterOwner = !!characterId && venue.owner.id === characterId;
+    const membership = characterId ? await this.getMembership(this.venueMembershipRepo, venue.id, characterId) : null;
+    const membershipStatus = membership
+      ? membership.status
+      : (isSelectedCharacterOwner ? MembershipStatus.CONFIRMED : null);
+    const canEdit = isSelectedCharacterOwner || (!!membership && membership.status === MembershipStatus.CONFIRMED && membership.canEdit);
+    const canManageMembers = isSelectedCharacterOwner
+      || (!!membership && membership.status === MembershipStatus.CONFIRMED && membership.canManageMembers);
 
 		return {
 			id: venue.id,
-			mine: !!venue.owner && !!user && user.characters.some(ch => ch.id === venue.owner!.id),
+			mine: !!venue.owner && !!user && userCharacterIds.includes(venue.owner!.id),
+      membershipStatus,
+      canEdit,
+      canManageMembers,
 			foundedAt: venue.foundedAt,
 			name: venue.name,
 			server: venue.server.name,
@@ -205,20 +227,26 @@ export class VenuesService {
 			venue.owner = character;
 			venue.tags = [];
 			await this.saveInternal(em, venue, venueDto, user);
+
+      const membership = new VenueMembership();
+      membership.character = character;
+      membership.venue = venue;
+      membership.status = MembershipStatus.CONFIRMED;
+      membership.canEdit = true;
+      membership.canManageMembers = true;
+      await em.getRepository(VenueMembership).save(membership);
+
 			return { id: venue.id };
 		});		
 	}
 
 	async editVenue(venueDto: VenueDto, user: UserInfo): Promise<void> {
+    await this.assertEditRights(venueDto.id, user);
+
 		await this.connection.transaction(async em => {
 			const venue = await em.getRepository(Venue).findOne({
 				where: {
 					id: venueDto.id,
-					owner: {
-						user: {
-							id: user.id
-						}
-					},
 				},
 				relations: [ 'owner', 'banner', 'banner.owner', 'tags' ]
 			});
@@ -371,6 +399,263 @@ export class VenuesService {
 
 		await em.save(venue);
 	}
+
+  async getVenueMembers(venueId: number, user: UserInfo): Promise<VenueMemberDto[]> {
+    await this.assertEditRights(venueId, user);
+
+    const memberships = await this.venueMembershipRepo
+      .createQueryBuilder('membership')
+      .innerJoinAndSelect('membership.venue', 'venue')
+      .innerJoinAndSelect('venue.owner', 'owner')
+      .innerJoinAndSelect('membership.character', 'character')
+      .innerJoinAndSelect('character.server', 'server')
+      .where('venue.id = :venueId', { venueId })
+      .andWhere('membership.status <> :rejected', { rejected: MembershipStatus.REJECTED })
+      .orderBy('character.name', 'ASC')
+      .select([
+        'membership.id',
+        'character.id',
+        'character.name',
+        'character.avatar',
+        'server.id',
+        'server.name',
+        'membership.status',
+        'membership.canEdit',
+        'membership.canManageMembers',
+      ])
+      .getMany();
+
+    const members = memberships.map((membership) => ({
+      characterId: membership.character.id,
+      name: membership.character.name,
+      server: membership.character.server.name,
+      avatar: membership.character.avatar,
+      status: membership.status,
+      canEdit: membership.canEdit,
+      canManageMembers: membership.canManageMembers,
+    }));
+
+    const venue = await this.venueRepo.findOne({
+      where: { id: venueId },
+      relations: ['owner', 'owner.server'],
+    });
+    const ownerId = venue?.owner?.id;
+    const hasOwnerRow = !!ownerId && members.some((member) => member.characterId === ownerId);
+
+    if (!hasOwnerRow) {
+      if (venue?.owner) {
+        members.unshift({
+          characterId: venue.owner.id,
+          name: venue.owner.name,
+          server: venue.owner.server.name,
+          avatar: venue.owner.avatar,
+          status: MembershipStatus.CONFIRMED,
+          canEdit: true,
+          canManageMembers: true,
+        });
+      }
+    }
+
+    return members;
+  }
+
+  async applyForMembership(venueId: number, characterIdWrapper: CharacterIdWrapper, user: UserInfo): Promise<void> {
+    const characterId = characterIdWrapper.characterId;
+    assertUserCharacterId(characterId, user);
+
+    await this.connection.transaction(async (em) => {
+      const membershipRepo = em.getRepository(VenueMembership);
+      const existingMembership = await this.getMembership(membershipRepo, venueId, characterId);
+
+      if (existingMembership) {
+        return;
+      }
+
+      const [venue, character] = await Promise.all([
+        em.getRepository(Venue).findOne({
+          where: { id: venueId },
+          relations: ['owner'],
+        }),
+        em.getRepository(Character).findOneBy({ id: characterId }),
+      ]);
+
+      if (!character) {
+        throw new NotFoundException('Invalid character');
+      }
+
+      if (!venue) {
+        throw new NotFoundException('Invalid venue');
+      }
+
+      if (venue.owner.id === characterId) {
+        const ownerMembership = membershipRepo.create({
+          venue,
+          character,
+          status: MembershipStatus.CONFIRMED,
+          canEdit: true,
+          canManageMembers: true,
+        });
+
+        await membershipRepo.save(ownerMembership);
+        return;
+      }
+
+      const newMembership = membershipRepo.create({
+        venue,
+        character,
+        status: MembershipStatus.APPLIED,
+        canEdit: false,
+        canManageMembers: false,
+      });
+
+      await membershipRepo.save(newMembership);
+    });
+  }
+
+  async approveMember(venueId: number, characterIdWrapper: CharacterIdWrapper, user: UserInfo): Promise<void> {
+    await this.setMembershipStatus(venueId, characterIdWrapper, user, MembershipStatus.CONFIRMED);
+  }
+
+  async rejectMember(venueId: number, characterIdWrapper: CharacterIdWrapper, user: UserInfo): Promise<void> {
+    await this.setMembershipStatus(venueId, characterIdWrapper, user, MembershipStatus.REJECTED);
+  }
+
+  private async setMembershipStatus(
+    venueId: number,
+    characterIdWrapper: CharacterIdWrapper,
+    user: UserInfo,
+    status: MembershipStatus,
+  ): Promise<void> {
+    await this.assertManageMembersRights(venueId, user);
+
+    const characterId = characterIdWrapper.characterId;
+
+    await this.connection.transaction(async (em) => {
+      const membershipRepo = em.getRepository(VenueMembership);
+      const membership = await this.getMembership(membershipRepo, venueId, characterId, true);
+
+      if (!membership) {
+        throw new NotFoundException('Venue member not found');
+      }
+
+      if (membership.status === status) {
+        return;
+      }
+
+      if (status === MembershipStatus.REJECTED && characterId === membership.venue.owner.id) {
+        throw new ConflictException('Venue owner cannot be rejected');
+      }
+
+      membership.status = status;
+      await membershipRepo.save(membership);
+    });
+  }
+
+  async setMemberFlags(venueId: number, characterId: number, flags: VenueMemberFlagsDto, user: UserInfo): Promise<void> {
+    await this.assertManageMembersRights(venueId, user);
+
+    const canEdit = await this.checkEditRights(venueId, user);
+
+    await this.connection.transaction(async (em) => {
+      const membershipRepo = em.getRepository(VenueMembership);
+      const membership = await this.getMembership(membershipRepo, venueId, characterId, true);
+
+      if (!membership) {
+        throw new NotFoundException('Venue member not found');
+      }
+
+      if (!canEdit && !membership.canEdit && flags.canEdit) {
+        throw new ForbiddenException('You do not have edit permission and cannot set it for others');
+      }
+
+      if (membership.status !== MembershipStatus.CONFIRMED) {
+        throw new ConflictException("Non-confirmed member's flags cannot be edited");
+      }
+
+      if (characterId === membership.venue.owner.id) {
+        throw new ConflictException('Venue owner flags cannot be edited');
+      }
+
+      membership.canEdit = flags.canEdit;
+      membership.canManageMembers = flags.canManageMembers;
+      await membershipRepo.save(membership);
+    });
+  }
+
+  private async checkEditRights(venueId: number, user: UserInfo): Promise<boolean> {
+    return this.checkFlag(venueId, user.characters.map((ch) => ch.id), false);
+  }
+
+  private async assertEditRights(venueId: number, user: UserInfo): Promise<void> {
+    if (!(await this.checkEditRights(venueId, user))) {
+      throw new ForbiddenException('Operation not permitted');
+    }
+  }
+
+  private async checkManageMembersRights(venueId: number, user: UserInfo): Promise<boolean> {
+    return this.checkFlag(venueId, user.characters.map((ch) => ch.id), true);
+  }
+
+  private async assertManageMembersRights(venueId: number, user: UserInfo): Promise<void> {
+    if (!(await this.checkManageMembersRights(venueId, user))) {
+      throw new ForbiddenException('Operation not permitted');
+    }
+  }
+
+  private async checkFlag(venueId: number, characterIds: number[], manageMembersFlag: boolean): Promise<boolean> {
+    if (characterIds.length === 0) {
+      return false;
+    }
+
+    const ownerCount = await this.venueRepo
+      .createQueryBuilder('venue')
+      .innerJoinAndSelect('venue.owner', 'owner')
+      .where('venue.id = :venueId', { venueId })
+      .andWhere('owner.id IN (:...characterIds)', { characterIds })
+      .getCount();
+
+    if (ownerCount > 0) {
+      return true;
+    }
+
+    const flagName = manageMembersFlag ? 'canManageMembers' : 'canEdit';
+
+    const membershipCount = await this.venueMembershipRepo
+      .createQueryBuilder('membership')
+      .innerJoinAndSelect('membership.venue', 'venue')
+      .innerJoinAndSelect('membership.character', 'character')
+      .where('venue.id = :venueId', { venueId })
+      .andWhere('character.id IN (:...characterIds)', { characterIds })
+      .andWhere('membership.status = :status', { status: MembershipStatus.CONFIRMED })
+      .andWhere(`membership.${flagName} = :flag`, { flag: true })
+      .getCount();
+
+    return membershipCount > 0;
+  }
+
+  private async getMembership(
+    repo: Repository<VenueMembership>,
+    venueId: number,
+    characterId: number,
+    extended?: boolean
+  ): Promise<VenueMembership | null> {
+    const options: FindOneOptions<VenueMembership> = {
+      where: {
+        venue: {
+          id: venueId,
+        },
+        character: {
+          id: characterId,
+        },
+      },
+    };
+
+    if (extended) {
+      options.relations = ['venue', 'venue.owner'];
+    }
+
+    return (await repo.findOne(options)) || null;
+  }
 
   async deleteVenue(venueId: number, user: UserInfo): Promise<void> {
 		await this.connection.transaction(async em => {

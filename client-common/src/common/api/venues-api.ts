@@ -1,4 +1,6 @@
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
+import { VenueMemberDto } from '@app/shared/dto/venues/venue-member.dto';
+import { VenueMemberFlagsDto } from '@app/shared/dto/venues/venue-member-flags.dto';
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import APITransport, { QueryParams } from './api-transport';
@@ -19,12 +21,12 @@ export default class VenuesAPI {
     return this.transport.get<VenueSummaryDto[]>('search', params);
   }
 
-	async getVenue(id: number): Promise<VenueDto> {
-		return this.transport.tokenGet<VenueDto>(`${id}`);
+	async getVenue(id: number, characterId?: number): Promise<VenueDto> {
+		return this.transport.tokenGet<VenueDto>(`${id}`, characterId ? { characterId } : undefined);
 	}
 
-	async getVenueByName(name: string, server: string): Promise<VenueDto> {
-		return this.transport.tokenGet<VenueDto>(`${server}/${name}`);
+	async getVenueByName(name: string, server: string, characterId?: number): Promise<VenueDto> {
+		return this.transport.tokenGet<VenueDto>(`${server}/${name}`, characterId ? { characterId } : undefined);
 	}
 
 	async createVenue(venue: VenueDto): Promise<IdWrapper> {
@@ -38,4 +40,24 @@ export default class VenuesAPI {
 	async deleteVenue(id: number): Promise<void> {
 		return this.transport.authDelete<void>(`${id}`);
 	}
+
+  async applyForMembership(id: number, characterId: number): Promise<void> {
+    return this.transport.authPost(`${id}/members/apply`, { characterId });
+  }
+
+  async getMembers(id: number): Promise<VenueMemberDto[]> {
+    return this.transport.authGet(`${id}/members`);
+  }
+
+  async approveMember(id: number, characterId: number): Promise<void> {
+    return this.transport.authPost(`${id}/members/approve`, { characterId });
+  }
+
+  async rejectMember(id: number, characterId: number): Promise<void> {
+    return this.transport.authPost(`${id}/members/reject`, { characterId });
+  }
+
+  async setMemberFlags(id: number, characterId: number, flags: VenueMemberFlagsDto): Promise<void> {
+    return this.transport.authPut(`${id}/members/${characterId}/flags`, flags);
+  }
 }

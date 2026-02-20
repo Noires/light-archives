@@ -1,4 +1,6 @@
 import { FreeCompanySummaryDto } from '@app/shared/dto/fcs/free-company-summary.dto';
+import { FreeCompanyMemberEditFlagDto } from '@app/shared/dto/fcs/free-company-member-edit-flag.dto';
+import { FreeCompanyMemberPermissionDto } from '@app/shared/dto/fcs/free-company-member-permission.dto';
 import { FreeCompanyDto } from '@app/shared/dto/fcs/free-company.dto';
 import { MyFreeCompanySummaryDto } from '@app/shared/dto/fcs/my-free-company-summary.dto';
 import APITransport from './api-transport';
@@ -26,15 +28,23 @@ export default class FreeCompaniesAPI {
 		return this.transport.get<FreeCompanySummaryDto[]>('');
 	}
 
-	async getFreeCompanyById(id: number): Promise<FreeCompanyDto> {
-		return this.transport.tokenGet<FreeCompanyDto>(`${id}`);
+	async getFreeCompanyById(id: number, characterId?: number): Promise<FreeCompanyDto> {
+		return this.transport.tokenGet<FreeCompanyDto>(`${id}`, characterId ? { characterId } : undefined);
 	}
 
-	async getFreeCompany(name: string, server: string): Promise<FreeCompanyDto> {
-		return this.transport.tokenGet<FreeCompanyDto>(`profile/${server}/${name}`);
+	async getFreeCompany(name: string, server: string, characterId?: number): Promise<FreeCompanyDto> {
+		return this.transport.tokenGet<FreeCompanyDto>(`profile/${server}/${name}`, characterId ? { characterId } : undefined);
 	}
 
 	async saveFreeCompany(fc: FreeCompanyDto): Promise<void> {
 		await this.transport.authPut<void>(`/${fc.id}`, fc);
 	}
+
+  async getMemberPermissions(id: number): Promise<FreeCompanyMemberPermissionDto[]> {
+    return this.transport.authGet<FreeCompanyMemberPermissionDto[]>(`${id}/member-permissions`);
+  }
+
+  async setMemberEditPermission(id: number, characterId: number, flag: FreeCompanyMemberEditFlagDto): Promise<void> {
+    return this.transport.authPut<void>(`${id}/members/${characterId}/edit-permission`, flag);
+  }
 }

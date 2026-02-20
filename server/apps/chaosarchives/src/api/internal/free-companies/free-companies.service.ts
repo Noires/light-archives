@@ -1,11 +1,13 @@
 import { UserInfo } from '@app/auth/model/user-info';
-import { Character, FreeCompany, Image } from '@app/entity';
+import { Character, FreeCompany, FreeCompanyMemberPermission, Image } from '@app/entity';
 import { CharacterIdWrapper } from '@app/shared/dto/common/character-id-wrapper.dto';
+import { FreeCompanyMemberEditFlagDto } from '@app/shared/dto/fcs/free-company-member-edit-flag.dto';
+import { FreeCompanyMemberPermissionDto } from '@app/shared/dto/fcs/free-company-member-permission.dto';
 import { FreeCompanySummaryDto } from '@app/shared/dto/fcs/free-company-summary.dto';
 import { FreeCompanyDto } from '@app/shared/dto/fcs/free-company.dto';
 import { MyFreeCompanySummaryDto } from '@app/shared/dto/fcs/my-free-company-summary.dto';
 import SharedConstants from '@app/shared/SharedConstants';
-import { BadRequestException, ForbiddenException, GoneException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, GoneException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime } from 'luxon';
 import { Connection, IsNull, Not, Repository } from 'typeorm';
@@ -22,6 +24,8 @@ export class FreeCompaniesService {
     private connection: Connection,
     @InjectRepository(Character) private characterRepo: Repository<Character>,
     @InjectRepository(FreeCompany) private freeCompanyRepo: Repository<FreeCompany>,
+    @InjectRepository(FreeCompanyMemberPermission)
+    private freeCompanyMemberPermissionRepo: Repository<FreeCompanyMemberPermission>,
   ) {}
 
   async getMyFreeCompany(
@@ -195,7 +199,7 @@ export class FreeCompaniesService {
     }));
   }
 
-  async getFreeCompany(name: string, server: string, user?: UserInfo): Promise<FreeCompanyDto> {
+  async getFreeCompany(name: string, server: string, characterId?: number, user?: UserInfo): Promise<FreeCompanyDto> {
     const fc = await this.freeCompanyRepo.findOne({
       where: {
         name,
@@ -210,10 +214,10 @@ export class FreeCompaniesService {
       throw new NotFoundException('Free Company not found');
     }
 
-    return this.toFreeCompanyDto(fc, user);
+    return this.toFreeCompanyDto(fc, characterId, user);
   }
 
-  async getFreeCompanyById(id: number, user?: UserInfo): Promise<FreeCompanyDto> {
+  async getFreeCompanyById(id: number, characterId?: number, user?: UserInfo): Promise<FreeCompanyDto> {
 	const fc = await this.freeCompanyRepo.findOne({
 		where: {
 			id: id
@@ -225,10 +229,12 @@ export class FreeCompaniesService {
 		throw new NotFoundException('Free Company not found');
 	}
 
-	return this.toFreeCompanyDto(fc, user);
+	return this.toFreeCompanyDto(fc, characterId, user);
 }
 
   async editFreeCompany(fcDto: FreeCompanyDto, user: UserInfo): Promise<void> {
+    await this.assertEditRights(fcDto.id, user);
+
     await this.connection.transaction(async (em) => {
       const fcRepo = em.getRepository(FreeCompany);
       const fc = await fcRepo.findOne({
@@ -242,8 +248,8 @@ export class FreeCompaniesService {
         throw new NotFoundException('Free Company not found');
       }
 
-      if (!fc.leader || !user || !user.characters.some((ch) => ch.id === fc.leader!.id)) {
-        throw new ForbiddenException('Not your Free Company');
+      if (!fc.leader) {
+        throw new ForbiddenException('Operation not permitted');
       }
 
       fc.description = fcDto.description;
@@ -289,12 +295,205 @@ export class FreeCompaniesService {
     });
   }
 
-  async toFreeCompanyDto(fc: FreeCompany, user?: UserInfo): Promise<FreeCompanyDto> {
+  async getMemberPermissions(freeCompanyId: number, user: UserInfo): Promise<FreeCompanyMemberPermissionDto[]> {
+    const fc = await this.assertLeaderRights(freeCompanyId, user);
+    const leaderId = fc.leader!.id;
+
+    const [members, grantedPermissions] = await Promise.all([
+      this.characterRepo.find({
+        where: {
+          freeCompany: {
+            id: freeCompanyId,
+          },
+        },
+        relations: ['server'],
+        order: {
+          name: 'ASC',
+        },
+      }),
+      this.freeCompanyMemberPermissionRepo.find({
+        where: {
+          freeCompany: {
+            id: freeCompanyId,
+          },
+          canEdit: true,
+        },
+        relations: ['character'],
+      }),
+    ]);
+
+    const grantedMemberIds = new Set(grantedPermissions.map((permission) => permission.character.id));
+
+    return members.map((member) => {
+      const isLeader = member.id === leaderId;
+
+      return {
+        characterId: member.id,
+        name: member.name,
+        server: member.server.name,
+        avatar: member.avatar,
+        canEdit: isLeader || grantedMemberIds.has(member.id),
+        isLeader,
+      };
+    });
+  }
+
+  async setMemberEditPermission(
+    freeCompanyId: number,
+    characterId: number,
+    editFlag: FreeCompanyMemberEditFlagDto,
+    user: UserInfo,
+  ): Promise<void> {
+    const fc = await this.assertLeaderRights(freeCompanyId, user);
+    const leaderId = fc.leader!.id;
+
+    if (characterId === leaderId) {
+      throw new ConflictException('Free Company leader permission cannot be changed');
+    }
+
+    const member = await this.characterRepo.findOne({
+      where: {
+        id: characterId,
+        freeCompany: {
+          id: freeCompanyId,
+        },
+      },
+    });
+
+    if (!member) {
+      throw new NotFoundException('Free Company member not found');
+    }
+
+    const existingPermission = await this.freeCompanyMemberPermissionRepo.findOne({
+      where: {
+        freeCompany: {
+          id: freeCompanyId,
+        },
+        character: {
+          id: characterId,
+        },
+      },
+    });
+
+    if (!editFlag.canEdit) {
+      if (existingPermission) {
+        await this.freeCompanyMemberPermissionRepo.remove(existingPermission);
+      }
+
+      return;
+    }
+
+    if (existingPermission) {
+      if (!existingPermission.canEdit) {
+        existingPermission.canEdit = true;
+        await this.freeCompanyMemberPermissionRepo.save(existingPermission);
+      }
+
+      return;
+    }
+
+    const newPermission = this.freeCompanyMemberPermissionRepo.create({
+      freeCompany: fc,
+      character: member,
+      canEdit: true,
+    });
+    await this.freeCompanyMemberPermissionRepo.save(newPermission);
+  }
+
+  private async assertLeaderRights(freeCompanyId: number, user: UserInfo): Promise<FreeCompany> {
+    const fc = await this.freeCompanyRepo.findOne({
+      where: {
+        id: freeCompanyId,
+      },
+      relations: ['leader'],
+    });
+
+    if (!fc) {
+      throw new NotFoundException('Free Company not found');
+    }
+
+    const leaderId = fc.leader?.id;
+
+    if (!leaderId || !user.characters.some((character) => character.id === leaderId)) {
+      throw new ForbiddenException('Operation not permitted');
+    }
+
+    return fc;
+  }
+
+  private async assertEditRights(freeCompanyId: number, user: UserInfo): Promise<void> {
+    if (!(await this.checkEditRights(freeCompanyId, user))) {
+      throw new ForbiddenException('Operation not permitted');
+    }
+  }
+
+  private async checkEditRights(freeCompanyId: number, user: UserInfo): Promise<boolean> {
+    const userCharacterIds = user.characters.map((character) => character.id);
+
+    if (userCharacterIds.length === 0) {
+      return false;
+    }
+
+    const leaderCount = await this.freeCompanyRepo
+      .createQueryBuilder('freeCompany')
+      .innerJoin('freeCompany.leader', 'leader')
+      .where('freeCompany.id = :freeCompanyId', { freeCompanyId })
+      .andWhere('leader.id IN (:...userCharacterIds)', { userCharacterIds })
+      .getCount();
+
+    if (leaderCount > 0) {
+      return true;
+    }
+
+    const permissionCount = await this.freeCompanyMemberPermissionRepo
+      .createQueryBuilder('permission')
+      .innerJoin('permission.freeCompany', 'freeCompany')
+      .innerJoin('freeCompany.leader', 'leader')
+      .innerJoin('permission.character', 'character')
+      .innerJoin('character.freeCompany', 'characterFreeCompany')
+      .where('freeCompany.id = :freeCompanyId', { freeCompanyId })
+      .andWhere('character.id IN (:...userCharacterIds)', { userCharacterIds })
+      .andWhere('characterFreeCompany.id = :freeCompanyId', { freeCompanyId })
+      .andWhere('permission.canEdit = :canEdit', { canEdit: true })
+      .getCount();
+
+    return permissionCount > 0;
+  }
+
+  private async hasMemberEditPermission(freeCompanyId: number, characterId: number): Promise<boolean> {
+    const permissionCount = await this.freeCompanyMemberPermissionRepo
+      .createQueryBuilder('permission')
+      .innerJoin('permission.freeCompany', 'freeCompany')
+      .innerJoin('freeCompany.leader', 'leader')
+      .innerJoin('permission.character', 'character')
+      .innerJoin('character.freeCompany', 'characterFreeCompany')
+      .where('freeCompany.id = :freeCompanyId', { freeCompanyId })
+      .andWhere('character.id = :characterId', { characterId })
+      .andWhere('characterFreeCompany.id = :freeCompanyId', { freeCompanyId })
+      .andWhere('permission.canEdit = :canEdit', { canEdit: true })
+      .getCount();
+
+    return permissionCount > 0;
+  }
+
+  async toFreeCompanyDto(fc: FreeCompany, characterId?: number, user?: UserInfo): Promise<FreeCompanyDto> {
     const banner = await fc.banner;
+    const userCharacterIds = user?.characters?.map((ch) => ch.id) || [];
+
+    if (user && characterId && !userCharacterIds.includes(characterId)) {
+      throw new ForbiddenException('Invalid character ID');
+    }
+
+    const canEdit = !!characterId
+      && (
+        (!!fc.leader && fc.leader.id === characterId)
+        || (await this.hasMemberEditPermission(fc.id, characterId))
+      );
 
     return {
       id: fc.id,
-      mine: !!fc.leader && !!user && user.characters.some((ch) => ch.id === fc.leader!.id),
+      mine: !!fc.leader && !!user && userCharacterIds.includes(fc.leader.id),
+      canEdit,
       claimed: !!fc.claimedAt,
       foundedAt: fc.foundedAt.getTime(),
       name: fc.name,

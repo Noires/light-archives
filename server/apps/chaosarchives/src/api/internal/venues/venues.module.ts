@@ -1,4 +1,4 @@
-import { Venue } from '@app/entity';
+import { Venue, VenueMembership } from '@app/entity';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ImagesModule } from '../images/images.module';
@@ -7,7 +7,7 @@ import { VenuesService } from './venues.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Venue]),
+    TypeOrmModule.forFeature([Venue, VenueMembership]),
     ImagesModule,
   ],
   controllers: [VenuesController],

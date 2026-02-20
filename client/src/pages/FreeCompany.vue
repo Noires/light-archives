@@ -39,6 +39,13 @@
 				</div>
 			</section>
 
+      <section v-if="fc.mine" class="page-free-company__permissions">
+        <header class="page-free-company__members-header">
+          <h3>Bearbeitungsrechte</h3>
+        </header>
+        <free-company-member-permission-editor :members="memberPermissions" :free-company-id="fc.id" />
+      </section>
+
     	<report-violation-section :pageType="PageType.FREE_COMPANY" :pageId="fc.id" />
 		</template>
 		<template v-else-if="notFound">
@@ -50,28 +57,35 @@
 
 <script lang="ts">
 import { FreeCompanyDto } from '@app/shared/dto/fcs/free-company.dto';
+import { FreeCompanyMemberPermissionDto } from '@app/shared/dto/fcs/free-company-member-permission.dto';
+import type FreeCompaniesAPI from '@common/common/api/free-companies-api';
 import { CharacterSummaryDto } from '@app/shared/dto/characters/character-summary.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import errors from '@app/shared/errors';
 import FreeCompanyProfile from 'components/free-company/FreeCompanyProfile.vue';
+import FreeCompanyMemberPermissionEditor from 'components/free-company/FreeCompanyMemberPermissionEditor.vue';
 import { useApi } from 'src/boot/axios';
 import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
 import { notifyError } from 'src/common/notify';
 import { useRouter } from 'src/router';
+import { useStore } from 'src/store';
 import { MetaOptions } from 'quasar/dist/types/meta';
 import { createMetaMixin } from 'quasar';
 import { PageType } from '@app/shared/enums/page-type.enum';
 import ReportViolationSection from 'src/components/common/ReportViolationSection.vue';
 
 const $api = useApi();
+const freeCompaniesApi = $api.freeCompanies as unknown as FreeCompaniesAPI;
 const $router = useRouter();
+const $store = useStore();
 
 interface Content {
 	name: string;
 	server: string;
 	fc: FreeCompanyDto;
 	members: PagingResultDto<CharacterSummaryDto>;
+  memberPermissions: FreeCompanyMemberPermissionDto[];
 	notFound: boolean;
 }
 
@@ -87,13 +101,19 @@ async function load(params: RouteParams): Promise<Content> {
 		name = name.replace(/_/g, ' ');
 
 		try {
-			const fc = await $api.freeCompanies.getFreeCompany(name, server);
+      const characterId = $store.getters.characterId || undefined;
+			const fc = await freeCompaniesApi.getFreeCompany(name, server, characterId);
+      const members = await $api.characters.getCharacterProfiles({ freeCompanyId: fc.id, limit: 99999 });
+      const memberPermissions: FreeCompanyMemberPermissionDto[] = fc.mine
+        ? await freeCompaniesApi.getMemberPermissions(fc.id)
+        : [];
 
 			return {
 				name,
 				server,
 				fc,
-				members: await $api.characters.getCharacterProfiles({ freeCompanyId: fc.id, limit: 99999 }),
+				members,
+        memberPermissions,
 				notFound: false
 			}
 		} catch (e) {
@@ -103,6 +123,7 @@ async function load(params: RouteParams): Promise<Content> {
 					server,
 					fc: new FreeCompanyDto(),
 					members: { data: [], total: 0 },
+          memberPermissions: [],
 					notFound: true
 				}
 			} else {
@@ -115,6 +136,7 @@ async function load(params: RouteParams): Promise<Content> {
 @Options({
 	components: {
 		FreeCompanyProfile,
+    FreeCompanyMemberPermissionEditor,
 		ReportViolationSection,
 	},
 	async beforeRouteEnter(to, _, next) {
@@ -155,6 +177,7 @@ export default class PageFreeCompany extends Vue {
 	server = '';
 	fc: FreeCompanyDto = new FreeCompanyDto();
 	members: PagingResultDto<CharacterSummaryDto> = { data: [], total: 0 };
+  memberPermissions: FreeCompanyMemberPermissionDto[] = [];
 	notFound = false;
 
 	setContent(content: Content) {
@@ -169,6 +192,10 @@ export default class PageFreeCompany extends Vue {
 
 <style lang="scss">
 .page-free-company__members {
+  margin: 32px 0;
+}
+
+.page-free-company__permissions {
   margin: 32px 0;
 }
 

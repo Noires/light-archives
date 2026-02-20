@@ -1,6 +1,6 @@
 <template>
   <div class="free-company-profile">
-    <p v-if="!preview && freeCompany.mine" class="free-company-profile__edit">
+    <p v-if="!preview && freeCompany.canEdit" class="free-company-profile__edit">
       <q-btn flat color="secondary" label="Freie Gesellschaft bearbeiten" :to="editFCLink" />
     </p>
     <banner-view :banner="freeCompany.banner" />

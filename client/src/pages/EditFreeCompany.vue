@@ -65,19 +65,36 @@ import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
 import CarrdEditSection from 'src/components/common/CarrdEditSection.vue';
+import { useRouter } from 'src/router';
+import { useStore } from 'src/store';
 import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
 import HtmlEditor from '../components/common/HtmlEditor.vue';
 
 const $api = useApi();
+const $router = useRouter();
+const $store = useStore();
 
 async function load(params: RouteParams): Promise<FreeCompanyDto> {
   const name = params.fc as string;
   const server = params.server as string;
   
   try {
-    return await $api.freeCompanies.getFreeCompany(name.replace(/_/g, ' '), server);
+    const freeCompanyName = name.replace(/_/g, ' ');
+    const characterId = $store.getters.characterId || undefined;
+    const fc = await $api.freeCompanies.getFreeCompany(freeCompanyName, server, characterId);
+
+    if (!fc.canEdit) {
+      void $router.replace(`/fc/${server}/${name}`);
+      throw new Error('NO_EDIT_PERMISSION');
+    }
+
+    return fc;
   } catch (e) {
+    if (e instanceof Error && e.message === 'NO_EDIT_PERMISSION') {
+      throw e;
+    }
+
     notifyError(errors.getMessage(e));
     throw e;
   }

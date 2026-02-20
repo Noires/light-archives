@@ -37,7 +37,7 @@ export default class API {
   readonly contentNotes = new ContentNotesAPI(this.transport);
   readonly communities = new CommunitiesAPI(this.transport);
   readonly events = new EventsAPI(this.transport);
-  readonly freeCompanies = new FreeCompaniesAPI(this.transport);
+  readonly freeCompanies: FreeCompaniesAPI = new FreeCompaniesAPI(this.transport);
   readonly images = new ImagesAPI(this.transport);
   readonly links = new LinksAPI(this.transport);
   readonly locations = new LocationsAPI(this.transport);

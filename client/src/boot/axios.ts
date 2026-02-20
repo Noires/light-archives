@@ -12,7 +12,7 @@ declare module '@vue/runtime-core' {
 
 const api = new API();
 
-export function useApi() {
+export function useApi(): API {
   return api;
 }
 

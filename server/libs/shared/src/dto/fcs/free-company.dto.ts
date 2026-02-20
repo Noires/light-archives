@@ -10,6 +10,10 @@ export class FreeCompanyDto {
   mine: boolean;
 
   @IsBoolean()
+  @IsOptional()
+  canEdit?: boolean;
+
+  @IsBoolean()
   claimed: boolean;
 
   @IsNumber()

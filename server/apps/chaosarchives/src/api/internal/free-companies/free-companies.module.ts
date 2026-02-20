@@ -1,4 +1,4 @@
-import { Character, FreeCompany } from '@app/entity';
+import { Character, FreeCompany, FreeCompanyMemberPermission } from '@app/entity';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ImagesModule } from '../images/images.module';
@@ -8,7 +8,7 @@ import { LodestoneModule } from '../lodestone/lodestone.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FreeCompany, Character]),
+    TypeOrmModule.forFeature([FreeCompany, Character, FreeCompanyMemberPermission]),
     ImagesModule,
     LodestoneModule,
   ],
