@@ -4,6 +4,7 @@ import { Character, NoticeboardItem } from '@app/entity';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { NoticeboardItemSummaryDto } from '@app/shared/dto/noticeboard/noticeboard-item-summary.dto';
 import { NoticeboardItemDto } from '@app/shared/dto/noticeboard/noticeboard-item.dto';
+import { NoticeboardType } from '@app/shared/enums/noticeboard-type.enum';
 import html from '@app/shared/html';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
@@ -45,6 +46,7 @@ export class NoticeboardService {
       content: noticeboardItem.content,
       createdAt: noticeboardItem.createdAt!.getTime(),
       location: noticeboardItem.location,
+      type: noticeboardItem.type,
     });
   }
 
@@ -86,6 +88,7 @@ export class NoticeboardService {
         title: noticeboardItemDto.title,
         content: html.sanitize(noticeboardItemDto.content),
         location: noticeboardItemDto.location,
+        type: noticeboardItemDto.type || NoticeboardType.AUSHANG,
       });
 
       return noticeboardItemRepo.save(noticeboardItem);
@@ -120,6 +123,7 @@ export class NoticeboardService {
         title: noticeboardItemDto.title,
         content: html.sanitize(noticeboardItemDto.content),
         location: noticeboardItemDto.location,
+        type: noticeboardItemDto.type || NoticeboardType.AUSHANG,
       });
 
       await noticeboardItemRepo.save(noticeboardItem);
@@ -151,7 +155,7 @@ export class NoticeboardService {
       .createQueryBuilder('noticeboardItem')
       .innerJoinAndSelect('noticeboardItem.owner', 'character')
       .orderBy('noticeboardItem.createdAt', 'DESC')
-      .select(['noticeboardItem.id', 'character.name', 'noticeboardItem.title', 'noticeboardItem.createdAt', 'noticeboardItem.location'])
+      .select(['noticeboardItem.id', 'character.name', 'noticeboardItem.title', 'noticeboardItem.createdAt', 'noticeboardItem.location', 'noticeboardItem.type'])
       .limit(params.limit);
 
     if (params.characterId) {
@@ -168,6 +172,7 @@ export class NoticeboardService {
       author: noticeboardItem.owner.name,
       createdAt: noticeboardItem.createdAt!.getTime(),
       location: noticeboardItem.location,
+      type: noticeboardItem.type,
     }));
   }
 

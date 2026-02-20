@@ -6,7 +6,7 @@
         Verfasst von <router-link :to="authorLink">{{ noticeboardItem.author }}</router-link> am {{ date }}
       </div>
       <div class="noticeboard-item-view__type">
-        {{ $display.noticeboardLocations[noticeboardItem.location] }}
+        {{ $display.noticeboardTypes[noticeboardItem.type] || 'Aushang' }} · {{ $display.noticeboardLocations[noticeboardItem.location] }}
       </div>
     </section>
     <hr />

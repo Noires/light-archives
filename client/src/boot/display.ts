@@ -1,6 +1,7 @@
 import { HousingArea } from '@app/shared/enums/housing-area.enum';
 import { ImageCategory } from '@app/shared/enums/image-category.enum';
 import { noticeboardLocations } from '@app/shared/enums/noticeboard-location.enum';
+import { noticeboardTypes } from '@app/shared/enums/noticeboard-type.enum';
 import { PageType } from '@app/shared/enums/page-type.enum';
 import { races } from '@app/shared/enums/race.enum';
 import { SupportLevel } from '@app/shared/enums/support-level.enum';
@@ -31,14 +32,15 @@ class Display {
 	readonly tribes = tribes;
 
 	readonly storyTypes: { [k: string]: string } = {
-		[StoryType.PUBLISHED_WORK]: 'Veröffentlichte Arbeit',
+		[StoryType.BOOK]: 'Buch',
 		[StoryType.DIARY]: 'Tagebuch',
-		[StoryType.POETRY]: 'Poesi',
+		[StoryType.POETRY]: 'Poesie',
 		[StoryType.IC_HAPPENING]: 'IC-Geschehen',
-		[StoryType.CONCEPTUAL]: 'konzeptionell',
+		[StoryType.NEWSPAPER]: 'Zeitung',
 	};
 
 	readonly noticeboardLocations = noticeboardLocations;
+	readonly noticeboardTypes = noticeboardTypes;
 
 	readonly imageCategories: { [k: string]: string } = {
 		[ImageCategory.UNLISTED]: 'Ungelistet',

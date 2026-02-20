@@ -157,7 +157,7 @@ export default class PageEditStory extends Vue {
       this.storyBackup = new StoryDto({
         mine: true,
         createdAt: Date.now(),
-        type: StoryType.PUBLISHED_WORK,
+        type: StoryType.BOOK,
         title: '',
         content: '',
         tags: [],

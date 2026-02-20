@@ -1,4 +1,5 @@
 import { NoticeboardLocation } from "@app/shared/enums/noticeboard-location.enum";
+import { NoticeboardType } from "@app/shared/enums/noticeboard-type.enum";
 import { Type } from "class-transformer";
 import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
 
@@ -36,6 +37,10 @@ export class NoticeboardItemDto {
 
 	@IsEnum(NoticeboardLocation)
 	location: NoticeboardLocation;
+
+	@IsEnum(NoticeboardType)
+	@IsOptional()
+	type: NoticeboardType;
 
 	constructor(properties?: Readonly<NoticeboardItemDto>) {
     if (properties) {

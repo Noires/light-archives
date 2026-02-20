@@ -11,7 +11,7 @@
       <q-item-section class="noticeboard-item-list__content">
         <q-item-label class="noticeboard-item-list__title">{{ noticeboardItem.title }}</q-item-label>
         <q-item-label caption class="noticeboard-item-list__meta">
-          {{ $display.noticeboardLocations[noticeboardItem.location] }} - von {{ noticeboardItem.author }}
+          {{ $display.noticeboardTypes[noticeboardItem.type] || 'Aushang' }} · {{ $display.noticeboardLocations[noticeboardItem.location] }} - von {{ noticeboardItem.author }}
         </q-item-label>
       </q-item-section>
       <q-item-section side class="noticeboard-item-list__time">

@@ -39,6 +39,17 @@
           dense
           @update:model-value="onFilterChange"
         />
+        <q-select
+          class="page-noticeboard__type-select"
+          v-model="typeFilter"
+          label="Typ"
+          emit-value
+          map-options
+          :options="typeOptions"
+          filled
+          dense
+          @update:model-value="onFilterChange"
+        />
         <div class="page-noticeboard__stats">
           {{ filteredCount }} von {{ noticeboardItems.length }}
         </div>
@@ -85,9 +96,10 @@ const $api = useApi();
   }
 })
 export default class PageNoticeboard extends Vue {
-	noticeboardItems: NoticeboardItemSummaryDto[] = [];
+  noticeboardItems: NoticeboardItemSummaryDto[] = [];
   searchQuery = '';
   locationFilter = '';
+  typeFilter = '';
   page = 1;
   readonly perPage = 12;
 
@@ -104,16 +116,27 @@ export default class PageNoticeboard extends Vue {
     ];
   }
 
+  get typeOptions() {
+    const types = Array.from(new Set(this.noticeboardItems.map((item) => item.type))).sort();
+    return [
+      { label: 'Alle Typen', value: '' },
+      ...types.map((type) => ({ label: this.$display.noticeboardTypes[type] || type, value: type }))
+    ];
+  }
+
   get filteredNoticeboardItems() {
     const query = this.searchQuery.trim().toLowerCase();
     return this.noticeboardItems.filter((item) => {
       if (this.locationFilter && item.location !== this.locationFilter) {
         return false;
       }
+      if (this.typeFilter && item.type !== this.typeFilter) {
+        return false;
+      }
       if (!query) {
         return true;
       }
-      const haystack = `${item.title} ${item.author} ${this.$display.noticeboardLocations[item.location]}`.toLowerCase();
+      const haystack = `${item.title} ${item.author} ${this.$display.noticeboardLocations[item.location]} ${this.$display.noticeboardTypes[item.type] || ''}`.toLowerCase();
       return haystack.includes(query);
     });
   }
@@ -237,7 +260,7 @@ export default class PageNoticeboard extends Vue {
 
 .page-noticeboard__toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(160px, 0.6fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 0.6fr) minmax(160px, 0.6fr) auto auto;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
@@ -248,7 +271,8 @@ export default class PageNoticeboard extends Vue {
 }
 
 .page-noticeboard__search .q-field__control,
-.page-noticeboard__location-select .q-field__control {
+.page-noticeboard__location-select .q-field__control,
+.page-noticeboard__type-select .q-field__control {
   background: #f6f1e8;
   border-radius: 0;
 }

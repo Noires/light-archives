@@ -18,10 +18,15 @@
               $rules.required('Dieses Feld ist erforderlich.'),
             ]"
           />
-          <div class="page-edit-noticeboard-item__type-label"><label>Gebiet:</label></div>
+          <div class="page-edit-noticeboard-item__option-label"><label>Gebiet:</label></div>
           <q-option-group
             v-model="noticeboardItem.location"
             :options="locationOptions"
+          />
+          <div class="page-edit-noticeboard-item__option-label"><label>Typ:</label></div>
+          <q-option-group
+            v-model="noticeboardItem.type"
+            :options="typeOptions"
           />
           <h6>Content *</h6>
           <html-editor v-model="noticeboardItem.content" />
@@ -75,6 +80,7 @@
 <script lang="ts">
 import { NoticeboardItemDto } from '@app/shared/dto/noticeboard/noticeboard-item.dto';
 import { NoticeboardLocation } from '@app/shared/enums/noticeboard-location.enum';
+import { NoticeboardType } from '@app/shared/enums/noticeboard-type.enum';
 import CharacterSelector from 'components/common/CharacterSelector.vue';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
 import NoticeboardItemView from 'components/noticeboard/NoticeboardItemView.vue';
@@ -107,6 +113,10 @@ export default class PageEditNoticeboardItem extends Vue {
     label: displayOptions.noticeboardLocations[location],
     value: location,
   }));
+  readonly typeOptions = Object.values(NoticeboardType).map((type) => ({
+    label: displayOptions.noticeboardTypes[type],
+    value: type,
+  }));
 
   noticeboardItem = new NoticeboardItemDto();
   noticeboardItemBackup = new NoticeboardItemDto();
@@ -131,12 +141,16 @@ export default class PageEditNoticeboardItem extends Vue {
     if (id) {
       this.loaded = false;
       this.noticeboardItemBackup = await this.$api.noticeboard.getNoticeboardItem(id);
+      if (!this.noticeboardItemBackup.type) {
+        this.noticeboardItemBackup.type = NoticeboardType.AUSHANG;
+      }
       this.loaded = true;
     } else {
       this.noticeboardItemBackup = new NoticeboardItemDto({
         mine: true,
         createdAt: Date.now(),
         location: NoticeboardLocation.MULTIPLE_LOCATIONS,
+        type: NoticeboardType.AUSHANG,
         title: '',
         content: '',
       });
@@ -217,7 +231,7 @@ export default class PageEditNoticeboardItem extends Vue {
   font-family: $header-font;
 }
 
-.page-edit-noticeboard-item__type-label {
+.page-edit-noticeboard-item__option-label {
   margin-top: 12px;
 }
 </style>

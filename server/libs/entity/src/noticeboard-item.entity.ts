@@ -1,4 +1,5 @@
 import { NoticeboardLocation } from '@app/shared/enums/noticeboard-location.enum';
+import { NoticeboardType } from '@app/shared/enums/noticeboard-type.enum';
 import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { BasicEntity } from './basic.entity';
 import { Character } from './character.entity';
@@ -33,4 +34,12 @@ export class NoticeboardItem extends BasicEntity {
     nullable: false,
   })
   location: NoticeboardLocation;
+
+  @Column({
+    type: 'enum',
+    enum: NoticeboardType,
+    nullable: false,
+    default: NoticeboardType.AUSHANG,
+  })
+  type: NoticeboardType;
 }

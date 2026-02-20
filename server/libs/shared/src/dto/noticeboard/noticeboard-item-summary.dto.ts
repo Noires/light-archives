@@ -1,4 +1,5 @@
 import { NoticeboardLocation } from "@app/shared/enums/noticeboard-location.enum";
+import { NoticeboardType } from "@app/shared/enums/noticeboard-type.enum";
 
 export interface NoticeboardItemSummaryDto {
 	id: number;
@@ -6,4 +7,5 @@ export interface NoticeboardItemSummaryDto {
 	author: string;
 	createdAt: number;
 	location: NoticeboardLocation;
+	type: NoticeboardType;
 }
