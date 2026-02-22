@@ -43,7 +43,10 @@ export class AuthService {
 		userAgent: string | null,
 		ipAddress: string | null,
 	): Promise<TokenPair> {
-		const tokenEntity = await this.authService.validateRefreshToken(refreshToken);
+		const tokenEntity = await this.authService.validateRefreshToken(refreshToken, {
+			userAgent,
+			ipAddress,
+		});
 
 		if (!tokenEntity) {
 			throw new UnauthorizedException('Invalid or expired refresh token');

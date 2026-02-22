@@ -2,6 +2,7 @@ import errors from '@app/shared/errors';
 import axios, { AxiosInstance } from 'axios';
 import { boot } from 'quasar/wrappers';
 import API from '@common/common/api';
+import { notifyError } from 'src/common/notify';
 
 declare module '@vue/runtime-core' {
   interface ComponentCustomProperties {
@@ -24,6 +25,7 @@ export default boot(async ({ app, store, router }) => {
   // Set up automatic logout handler when refresh token fails
   api.setLogoutHandler(() => {
     store.commit('setUser', null);
+    notifyError('Deine Sitzung ist abgelaufen. Bitte logge dich erneut ein.');
     void router.push('/');
   });
 

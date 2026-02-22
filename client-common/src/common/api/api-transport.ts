@@ -47,14 +47,15 @@ export default class APITransport {
 
         // Check if this was an authenticated request
         const authHeader = originalRequest.headers?.Authorization;
-        if (!authHeader || !this.refreshToken) {
+        const refreshToken = this.getRefreshToken();
+        if (!authHeader || !refreshToken) {
           return Promise.reject(error);
         }
 
-        if (this.isRefreshing) {
+        if (this.getRefreshInProgress()) {
           // Queue the request while refresh is in progress
-          return new Promise((resolve, reject) => {
-            this.failedQueue.push({ resolve, reject });
+          return new Promise<string | null>((resolve, reject) => {
+            this.enqueueFailedRequest({ resolve, reject });
           }).then((token) => {
             if (token) {
               originalRequest.headers.Authorization = `Bearer ${token}`;
@@ -65,16 +66,16 @@ export default class APITransport {
         }
 
         originalRequest._retry = true;
-        this.isRefreshing = true;
+        this.setRefreshInProgress(true);
 
         try {
           const response = await axios.post<TokenResponse>(
             `${API_PREFIX}user/refresh`,
-            { refreshToken: this.refreshToken }
+            { refreshToken }
           );
 
-          const { accessToken, refreshToken } = response.data;
-          this.setTokens(accessToken, refreshToken);
+          const { accessToken, refreshToken: rotatedRefreshToken } = response.data;
+          this.setTokens(accessToken, rotatedRefreshToken);
 
           // Process queued requests
           this.processQueue(accessToken);
@@ -86,18 +87,19 @@ export default class APITransport {
           // Refresh failed - clear tokens and notify
           this.processQueue(null);
           this.clearTokens();
-          if (this.onLogout) {
-            this.onLogout();
+          const logoutHandler = this.getLogoutHandler();
+          if (logoutHandler) {
+            logoutHandler();
           }
           return Promise.reject(refreshError);
         } finally {
-          this.isRefreshing = false;
+          this.setRefreshInProgress(false);
         }
       }
     );
   }
 
-  private processQueue(token: string | null) {
+  protected processQueue(token: string | null) {
     this.failedQueue.forEach((prom) => {
       if (token) {
         prom.resolve(token);
@@ -106,6 +108,22 @@ export default class APITransport {
       }
     });
     this.failedQueue = [];
+  }
+
+  protected getRefreshInProgress(): boolean {
+    return this.isRefreshing;
+  }
+
+  protected setRefreshInProgress(isRefreshing: boolean): void {
+    this.isRefreshing = isRefreshing;
+  }
+
+  protected enqueueFailedRequest(request: FailedRequest): void {
+    this.failedQueue.push(request);
+  }
+
+  protected getLogoutHandler(): (() => void) | null {
+    return this.onLogout;
   }
 
   setLogoutHandler(handler: () => void) {
@@ -246,6 +264,26 @@ class APISubTransport extends APITransport {
 
 	protected getRefreshToken(): string | null {
 		return (this.parent as APISubTransport).getRefreshToken();
+	}
+
+	protected getRefreshInProgress(): boolean {
+		return (this.parent as APISubTransport).getRefreshInProgress();
+	}
+
+	protected setRefreshInProgress(isRefreshing: boolean): void {
+		(this.parent as APISubTransport).setRefreshInProgress(isRefreshing);
+	}
+
+	protected enqueueFailedRequest(request: FailedRequest): void {
+		(this.parent as APISubTransport).enqueueFailedRequest(request);
+	}
+
+	protected processQueue(token: string | null): void {
+		(this.parent as APISubTransport).processQueue(token);
+	}
+
+	protected getLogoutHandler(): (() => void) | null {
+		return (this.parent as APISubTransport).getLogoutHandler();
 	}
 
 	setAccessToken(accessToken: string | null) {
