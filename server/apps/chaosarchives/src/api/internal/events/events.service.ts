@@ -24,6 +24,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime, Duration } from 'luxon';
 import { firstValueFrom } from 'rxjs';
 import { Connection, EntityManager, In, IsNull, MoreThanOrEqual, Not, Repository } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { getVerifiedCharacter } from '../../../common/api-checks';
 import { Contains } from '../../../common/db';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
@@ -364,6 +365,14 @@ export class EventsService {
       if (!event) {
         throw new NotFoundException('Event not found');
       }
+
+      await eventRepo.update({
+        id: event.id,
+      }, {
+        banner: null,
+        discordBanner: null,
+        icon: null,
+      } as unknown as QueryDeepPartialEntity<Event>);
 
       await eventRepo.softRemove(event);
       return event;

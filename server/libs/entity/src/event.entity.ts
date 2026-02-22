@@ -109,18 +109,22 @@ export class Event extends BasicEntity {
 
   @ManyToOne(() => Image, {
     lazy: true,
+    nullable: true,
+    onDelete: 'SET NULL',
   })
   banner: Promise<Image|null>;
 
   @ManyToOne(() => Image, {
     lazy: true,
     nullable: true,
+    onDelete: 'SET NULL',
   })
   discordBanner: Promise<Image | null>;
 
   @ManyToOne(() => Image, {
     lazy: true,
     nullable: true,
+    onDelete: 'SET NULL',
   })
   icon: Promise<Image | null>;
 

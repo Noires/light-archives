@@ -393,7 +393,7 @@ export class ImagesService {
       }
 
       if (!force) {
-        // Check if the image is used as a banner, and if yes, refuse to delete
+        // Check if the image is used and, if yes, refuse to delete
 
         if (await em.getRepository(Character).countBy({
           banner: {
@@ -418,8 +418,23 @@ export class ImagesService {
         }) > 0) {
           throw new ConflictException('This image is in use as an event icon');
         }
+
+        if (await em.getRepository(Event).countBy({
+          discordBanner: {
+            id: image.id
+          },
+        }) > 0) {
+          throw new ConflictException('This image is in use as an event discord banner');
+        }
+
+        // Clean up stale references left on soft-deleted events.
+        await Promise.all([
+          em.query('UPDATE `event` SET `bannerId` = NULL WHERE `bannerId` = ? AND `deletedAt` IS NOT NULL', [image.id]),
+          em.query('UPDATE `event` SET `discordBannerId` = NULL WHERE `discordBannerId` = ? AND `deletedAt` IS NOT NULL', [image.id]),
+          em.query('UPDATE `event` SET `iconId` = NULL WHERE `iconId` = ? AND `deletedAt` IS NOT NULL', [image.id]),
+        ]);
       } else {
-        // Unlink as a banner
+        // Unlink from all referencing pages
 
         await em.getRepository(Character).update({
           banner: {
@@ -429,21 +444,11 @@ export class ImagesService {
           banner: null
         } as unknown as QueryDeepPartialEntity<Character>);
 
-        await em.getRepository(Event).update({
-          banner: {
-            id: image.id,
-          },
-        }, {
-          banner: null
-        } as unknown as QueryDeepPartialEntity<Event>);
-
-        await em.getRepository(Event).update({
-          icon: {
-            id: image.id,
-          },
-        }, {
-          icon: null
-        } as unknown as QueryDeepPartialEntity<Event>);
+        await Promise.all([
+          em.query('UPDATE `event` SET `bannerId` = NULL WHERE `bannerId` = ?', [image.id]),
+          em.query('UPDATE `event` SET `discordBannerId` = NULL WHERE `discordBannerId` = ?', [image.id]),
+          em.query('UPDATE `event` SET `iconId` = NULL WHERE `iconId` = ?', [image.id]),
+        ]);
       }
 
       // Delete from the database
