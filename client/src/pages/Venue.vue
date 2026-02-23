@@ -51,7 +51,7 @@
             <q-item-section avatar>
               <q-icon name="delete" />
             </q-item-section>
-            <q-item-section>LÃ¶schen</q-item-section>
+            <q-item-section>Löschen</q-item-section>
           </q-item>
         </q-list>
       </q-scroll-area>
@@ -88,7 +88,7 @@
             v-else-if="!venue.canEdit && venue.membershipStatus === MembershipStatus.APPLIED"
             class="page-venue__membership-status"
           >
-            Du hast eine Anfrage fÃ¼r eine Mitgliedschaft bei diesem Treffpunkt gesendet.
+            Du hast eine Anfrage für eine Mitgliedschaft bei diesem Treffpunkt gesendet.
           </section>
           <section
             v-else-if="!venue.canEdit && venue.membershipStatus === MembershipStatus.REJECTED"
@@ -114,9 +114,9 @@
           </section>
 
           <section v-else-if="activeSection === VenueSection.PREMISES" class="page-venue__content-box">
-            <h3>RÃ¤umlichkeiten</h3>
+            <h3>Räumlichkeiten</h3>
             <html-viewer v-if="venue.premises" :content="venue.premises" />
-            <p v-else>Keine Beschreibung der RÃ¤umlichkeiten vorhanden.</p>
+            <p v-else>Keine Beschreibung der Räumlichkeiten vorhanden.</p>
           </section>
 
           <section v-else-if="activeSection === VenueSection.MENU" class="page-venue__content-box">
@@ -170,7 +170,7 @@
           <section v-else-if="activeSection === VenueSection.MEDIA" class="page-venue__content-box">
             <h3>Medien</h3>
             <thumb-gallery v-if="mediaItems.length" :images="mediaItems" />
-            <p v-else>Keine verknÃ¼pften Bilder vorhanden.</p>
+            <p v-else>Keine verknüpften Bilder vorhanden.</p>
           </section>
 
           <section v-else-if="activeSection === VenueSection.EVENTS" class="page-venue__content-box">
@@ -248,9 +248,9 @@ const $store = useStore();
 const JOB_TYPES = [NoticeboardType.STELLENANGEBOT, NoticeboardType.STELLENGESUCH];
 
 const SECTION_LABELS: Record<VenueSection, string> = {
-  [VenueSection.OVERVIEW]: 'Ãœbersicht',
+  [VenueSection.OVERVIEW]: 'Übersicht',
   [VenueSection.RULES]: 'Regeln',
-  [VenueSection.PREMISES]: 'RÃ¤umlichkeiten',
+  [VenueSection.PREMISES]: 'Räumlichkeiten',
   [VenueSection.MENU]: 'Speisekarte',
   [VenueSection.STAFF]: 'Mitarbeiter',
   [VenueSection.JOBS]: 'Stellenangebote',
@@ -490,7 +490,7 @@ export default class PageVenue extends Vue {
       case VenueSection.RULES:
         return `Regeln von ${this.venue.name} auf ${this.venue.server}.`;
       case VenueSection.PREMISES:
-        return `RÃ¤umlichkeiten von ${this.venue.name} auf ${this.venue.server}.`;
+        return `Räumlichkeiten von ${this.venue.name} auf ${this.venue.server}.`;
       case VenueSection.MENU:
         return `Speisekarte von ${this.venue.name} auf ${this.venue.server}.`;
       case VenueSection.STAFF:
@@ -500,7 +500,7 @@ export default class PageVenue extends Vue {
       case VenueSection.OOC:
         return `OOC-Informationen zu ${this.venue.name} auf ${this.venue.server}.`;
       case VenueSection.MEDIA:
-        return `VerknÃ¼pfte Medien von ${this.venue.name} auf ${this.venue.server}.`;
+        return `Verknüpfte Medien von ${this.venue.name} auf ${this.venue.server}.`;
       case VenueSection.EVENTS:
         return `Aktuelle und vergangene Events von ${this.venue.name}.`;
       case VenueSection.NETWORK:
@@ -548,10 +548,10 @@ export default class PageVenue extends Vue {
   onDeleteClick() {
     this.$q
       .dialog({
-        title: 'LÃ¶schbestÃ¤tigung',
-        message: `MÃ¶chtest du "${this.venue.name}" wirklich lÃ¶schen?`,
+        title: 'Löschbestätigung',
+        message: `Möchtest du "${this.venue.name}" wirklich löschen?`,
         ok: {
-          label: 'LÃ¶schen',
+          label: 'Löschen',
           color: 'negative',
           flat: true,
         },
@@ -561,7 +561,7 @@ export default class PageVenue extends Vue {
         try {
           await this.$api.venues.deleteVenue(this.venue.id);
 
-          notifySuccess('Treffpunkt gelÃ¶scht.');
+          notifySuccess('Treffpunkt gelöscht.');
           void this.$router.replace('/');
         } catch (e) {
           notifyError(e);
@@ -579,7 +579,7 @@ export default class PageVenue extends Vue {
     this.$q
       .dialog({
         title: 'Mitgliedschaftsantrag',
-        message: `MÃ¶chtest du dich bei "${this.venue.name}" als ${character.name} bewerben?`,
+        message: `Möchtest du dich bei "${this.venue.name}" als ${character.name} bewerben?`,
         ok: {
           label: 'Bewerben',
           color: 'primary',
