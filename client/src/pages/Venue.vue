@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <q-layout class="page-venue-layout rounded-borders no-outline">
     <q-drawer
       v-if="venue.id && hasSectionMenu"
@@ -41,6 +41,18 @@
             </q-item-section>
             <q-item-section>Bearbeiten</q-item-section>
           </q-item>
+          <q-item
+            v-if="venue.mine"
+            class="page-venue-layout__delete-item"
+            clickable
+            v-ripple
+            @click="onDeleteClick"
+          >
+            <q-item-section avatar>
+              <q-icon name="delete" />
+            </q-item-section>
+            <q-item-section>LÃ¶schen</q-item-section>
+          </q-item>
         </q-list>
       </q-scroll-area>
     </q-drawer>
@@ -49,27 +61,23 @@
       <q-page-container>
         <template v-if="venue.id">
           <section v-if="!$store.getters.characterId"><!-- Not logged in --></section>
-          <section v-else-if="venue.canEdit" class="page-venue__edit-bar">
-            <q-btn flat color="secondary" label="Treffpunkt bearbeiten" :to="`/edit-venue/${venue.id}`" />
-            <q-btn v-if="venue.mine" flat color="negative" label="Treffpunkt löschen" @click="onDeleteClick" />
-          </section>
-          <section v-else-if="!venue.membershipStatus" class="page-venue__join-button-bar">
+          <section v-else-if="!venue.canEdit && !venue.membershipStatus" class="page-venue__join-button-bar">
             <q-btn outline color="primary" label="Treffpunkt beitreten" @click="onJoinClick" />
           </section>
           <section
-            v-else-if="venue.membershipStatus === MembershipStatus.APPLIED"
+            v-else-if="!venue.canEdit && venue.membershipStatus === MembershipStatus.APPLIED"
             class="page-venue__membership-status"
           >
-            Du hast eine Anfrage für eine Mitgliedschaft bei diesem Treffpunkt gesendet.
+            Du hast eine Anfrage fÃ¼r eine Mitgliedschaft bei diesem Treffpunkt gesendet.
           </section>
           <section
-            v-else-if="venue.membershipStatus === MembershipStatus.REJECTED"
+            v-else-if="!venue.canEdit && venue.membershipStatus === MembershipStatus.REJECTED"
             class="page-venue__membership-status"
           >
             Deine Mitgliedschaftsanfrage wurde abgelehnt.
           </section>
           <section
-            v-else-if="venue.membershipStatus === MembershipStatus.CONFIRMED"
+            v-else-if="!venue.canEdit && venue.membershipStatus === MembershipStatus.CONFIRMED"
             class="page-venue__membership-status"
           >
             Du bist ein Mitglied dieses Treffpunkts.
@@ -86,9 +94,9 @@
           </section>
 
           <section v-else-if="activeSection === VenueSection.PREMISES" class="page-venue__content-box">
-            <h3>Räumlichkeiten</h3>
+            <h3>RÃ¤umlichkeiten</h3>
             <html-viewer v-if="venue.premises" :content="venue.premises" />
-            <p v-else>Keine Beschreibung der Räumlichkeiten vorhanden.</p>
+            <p v-else>Keine Beschreibung der RÃ¤umlichkeiten vorhanden.</p>
           </section>
 
           <section v-else-if="activeSection === VenueSection.MENU" class="page-venue__content-box">
@@ -142,7 +150,7 @@
           <section v-else-if="activeSection === VenueSection.MEDIA" class="page-venue__content-box">
             <h3>Medien</h3>
             <thumb-gallery v-if="mediaItems.length" :images="mediaItems" />
-            <p v-else>Keine verknüpften Bilder vorhanden.</p>
+            <p v-else>Keine verknÃ¼pften Bilder vorhanden.</p>
           </section>
 
           <section v-else-if="activeSection === VenueSection.EVENTS" class="page-venue__content-box">
@@ -220,9 +228,9 @@ const $store = useStore();
 const JOB_TYPES = [NoticeboardType.STELLENANGEBOT, NoticeboardType.STELLENGESUCH];
 
 const SECTION_LABELS: Record<VenueSection, string> = {
-  [VenueSection.OVERVIEW]: 'Übersicht',
+  [VenueSection.OVERVIEW]: 'Ãœbersicht',
   [VenueSection.RULES]: 'Regeln',
-  [VenueSection.PREMISES]: 'Räumlichkeiten',
+  [VenueSection.PREMISES]: 'RÃ¤umlichkeiten',
   [VenueSection.MENU]: 'Speisekarte',
   [VenueSection.STAFF]: 'Mitarbeiter',
   [VenueSection.JOBS]: 'Stellenangebote',
@@ -462,7 +470,7 @@ export default class PageVenue extends Vue {
       case VenueSection.RULES:
         return `Regeln von ${this.venue.name} auf ${this.venue.server}.`;
       case VenueSection.PREMISES:
-        return `Räumlichkeiten von ${this.venue.name} auf ${this.venue.server}.`;
+        return `RÃ¤umlichkeiten von ${this.venue.name} auf ${this.venue.server}.`;
       case VenueSection.MENU:
         return `Speisekarte von ${this.venue.name} auf ${this.venue.server}.`;
       case VenueSection.STAFF:
@@ -472,7 +480,7 @@ export default class PageVenue extends Vue {
       case VenueSection.OOC:
         return `OOC-Informationen zu ${this.venue.name} auf ${this.venue.server}.`;
       case VenueSection.MEDIA:
-        return `Verknüpfte Medien von ${this.venue.name} auf ${this.venue.server}.`;
+        return `VerknÃ¼pfte Medien von ${this.venue.name} auf ${this.venue.server}.`;
       case VenueSection.EVENTS:
         return `Aktuelle und vergangene Events von ${this.venue.name}.`;
       case VenueSection.NETWORK:
@@ -520,10 +528,10 @@ export default class PageVenue extends Vue {
   onDeleteClick() {
     this.$q
       .dialog({
-        title: 'Löschbestätigung',
-        message: `Möchtest du "${this.venue.name}" wirklich löschen?`,
+        title: 'LÃ¶schbestÃ¤tigung',
+        message: `MÃ¶chtest du "${this.venue.name}" wirklich lÃ¶schen?`,
         ok: {
-          label: 'Löschen',
+          label: 'LÃ¶schen',
           color: 'negative',
           flat: true,
         },
@@ -533,7 +541,7 @@ export default class PageVenue extends Vue {
         try {
           await this.$api.venues.deleteVenue(this.venue.id);
 
-          notifySuccess('Treffpunkt gelöscht.');
+          notifySuccess('Treffpunkt gelÃ¶scht.');
           void this.$router.replace('/');
         } catch (e) {
           notifyError(e);
@@ -551,7 +559,7 @@ export default class PageVenue extends Vue {
     this.$q
       .dialog({
         title: 'Mitgliedschaftsantrag',
-        message: `Möchtest du dich bei "${this.venue.name}" als ${character.name} bewerben?`,
+        message: `MÃ¶chtest du dich bei "${this.venue.name}" als ${character.name} bewerben?`,
         ok: {
           label: 'Bewerben',
           color: 'primary',
@@ -610,12 +618,25 @@ body.body--dark .page-venue-layout {
   color: var(--venue-edit-color-hover);
 }
 
-.page-venue__edit-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
+.page-venue-layout__delete-item {
+  margin-top: 8px;
+  background: rgba(190, 40, 40, 0.14);
+  color: #7a1d1d;
+}
+
+.page-venue-layout__delete-item:hover {
+  background: rgba(190, 40, 40, 0.22);
+  color: #611313;
+}
+
+body.body--dark .page-venue-layout__delete-item {
+  background: rgba(233, 93, 93, 0.18);
+  color: rgba(255, 213, 213, 0.96);
+}
+
+body.body--dark .page-venue-layout__delete-item:hover {
+  background: rgba(233, 93, 93, 0.28);
+  color: #ffffff;
 }
 
 .page-venue__join-button-bar {
@@ -697,7 +718,6 @@ body.body--dark .page-venue-layout {
 }
 
 @media screen and (max-width: $breakpoint-sm) {
-  .page-venue__edit-bar,
   .page-venue__section-header {
     flex-direction: column;
     align-items: flex-start;
@@ -710,8 +730,12 @@ body.body--dark .page-venue-layout {
 
 @media (prefers-reduced-motion: reduce) {
   .page-venue-layout__menu .q-item,
-  .page-venue-layout__edit-item {
+  .page-venue-layout__edit-item,
+  .page-venue-layout__delete-item {
     transition: none;
   }
 }
 </style>
+
+
+

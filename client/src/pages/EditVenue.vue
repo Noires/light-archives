@@ -1,197 +1,231 @@
-<template>
+﻿<template>
   <q-page class="page-edit-venue">
     <template v-if="loaded">
       <h2>{{ venueId ? 'Treffpunkt bearbeiten' : 'Treffpunkt erstellen' }}</h2>
       <q-form ref="form" @submit="onSubmit">
         <template v-if="!preview">
-          <section class="page-edit-venue__form-controls">
-            <character-selector
-              v-if="!venueId"
-              v-model="selectedCharacterId"
-              :rules="[
-                $rules.required('Bitte wähle einen Charakter aus.'),
-              ]"
-            />
-            <q-input
-              v-model="venue.name"
-              label="Name *"
-              :rules="[
-                $rules.required('Dieses Feld ist erforderlich.'),
-              ]"
-            />
-            <world-select
-              v-model="venue.server"
-              label="Welt *"
-              :rules="[
-                $rules.required('Dieses Feld ist erforderlich.'),
-              ]"
-            />
-            <q-input
-              class="page-edit-venue__founded-at"
-              label="Gründung"
-              :model-value="foundedAtDisplay"
-              readonly
-              :rules="[
-                $rules.required('Dieses Feld ist erforderlich.'),
-              ]"
+          <section class="page-edit-venue__sections">
+            <q-tabs
+              v-model="editSection"
+              dense
+              align="left"
+              no-caps
+              active-color="secondary"
+              indicator-color="secondary"
+              class="page-edit-venue__tabs"
             >
-              <template v-slot:append>
-                <template v-if="venue.foundedAt">
-                  <q-icon name="clear" class="cursor-pointer" @click="venue.foundedAt = null" />&nbsp;
-                </template>
-                <q-icon name="event" class="cursor-pointer">
-                  <q-popup-proxy ref="qDateProxy" cover transition-show="scale" transition-hide="scale">
-                    <q-date v-model="venue.foundedAt" mask="YYYY-MM-DD">
-                      <div class="row items-center justify-end">
-                        <q-btn v-close-popup label="Schließen" color="primary" flat />
-                      </div>
-                    </q-date>
-                  </q-popup-proxy>
-                </q-icon>
-              </template>
-            </q-input>
-            <q-input
-              v-model="venue.website"
-              label="Webseite"
-              :rules="[
-                $rules.url('Bitte hinterlasse einen Link.'),
-              ]"
-            />
-            <q-input
-              v-model="venue.purpose"
-              label="Zweck"
-            />
-            <q-input
-              v-model="venue.status"
-              label="Status"
-            />
-            <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername]], in <strong>Zweck</strong> und <strong>Status</strong> nutzen.</div>
-            <q-input
-              :model-value="tags"
-              @update:model-value="onTagsChanged"
-              label="Schlagworte (mit Komma getrennt)"
-            />
-            <h6>Location</h6>
-            <q-option-group
-              inline
-              v-model="venue.location"
-              :options="locationOptions"
-              @update:model-value="onLocationUpdated"
-            />
-            <template v-if="venue.location === VenueLocation.OPEN_WORLD">
-              <q-input
-                v-model="venue.address"
-                label="Adresse *"
-                :rules="[
-                  $rules.required('Dieses Feld ist erforderlich.'),
-                ]"
-              />
-            </template>
-            <template v-else>
-              <q-select
-                label="Wohngebiet *"
-                v-model="venue.housingArea"
-                :options="housingAreaOptions"
-                emit-value
-                map-options
-                :rules="[
-                  $rules.required('Dieses Feld ist erforderlich.'),
-                ]"
-              />
-              <q-input
-                class="page-edit-venue__number-input"
-                v-model.number="venue.ward"
-                label="Bezirk *"
-                :rules="[
-                  $rules.required('Dieses Feld ist erforderlich.'),
-                  $rules.integer('Bitte eine Nummer angeben.'),
-                  $rules.minValue(SharedConstants.housing.MIN_WARD_NUMBER, `Bezirksnummer kann nicht kleiner sein als ${SharedConstants.housing.MIN_WARD_NUMBER}.`),
-                  $rules.maxValue(SharedConstants.housing.MAX_WARD_NUMBER, `Bezirksnummer kann nicht größer sein als ${SharedConstants.housing.MAX_WARD_NUMBER}.`),
-                ]"
-              />
-              <template v-if="venue.location === VenueLocation.HOUSE">
-                <q-input
-                class="page-edit-venue__number-input"
-                  v-model.number="venue.plot"
-                  label="Grundstück *"
-                  :rules="[
-                    $rules.required('Dieses Feld ist erforderlich.'),
-                    $rules.integer('Bitte eine Nummer angeben.'),
-                    $rules.minValue(SharedConstants.housing.MIN_MAIN_WARD_PLOT, `Grundstücksnummer kann nicht kleiner sein als ${SharedConstants.MIN_MAIN_WARD_PLOT}.`),
-                    $rules.maxValue(SharedConstants.housing.MAX_SUBDIVISION_PLOT, `Grundstücksnummer kann nicht größer sein als ${SharedConstants.housing.MAX_SUBDIVISION_PLOT}.`),
-                  ]"
-                  @update:model-value="onPlotUpdated"
+              <q-tab name="basic" icon="storefront" label="Basisdaten" />
+              <q-tab name="profile" icon="description" label="Profil" />
+              <q-tab name="subpages" icon="list_alt" label="Unterseiten" />
+              <q-tab name="eventTemplate" icon="event_note" label="Event-Vorlage" />
+            </q-tabs>
+            <q-separator />
+
+            <q-tab-panels v-model="editSection" animated class="bg-transparent">
+              <q-tab-panel name="basic" class="page-edit-venue__panel">
+                <h6>Basisdaten</h6>
+                <section class="page-edit-venue__form-controls">
+                  <character-selector
+                    v-if="!venueId"
+                    v-model="selectedCharacterId"
+                    :rules="[
+                      $rules.required('Bitte wähle einen Charakter aus.'),
+                    ]"
+                  />
+                  <q-input
+                    v-model="venue.name"
+                    label="Name *"
+                    :rules="[
+                      $rules.required('Dieses Feld ist erforderlich.'),
+                    ]"
+                  />
+                  <world-select
+                    v-model="venue.server"
+                    label="Welt *"
+                    :rules="[
+                      $rules.required('Dieses Feld ist erforderlich.'),
+                    ]"
+                  />
+                  <q-input
+                    class="page-edit-venue__founded-at"
+                    label="Gründung"
+                    :model-value="foundedAtDisplay"
+                    readonly
+                    :rules="[
+                      $rules.required('Dieses Feld ist erforderlich.'),
+                    ]"
+                  >
+                    <template v-slot:append>
+                      <template v-if="venue.foundedAt">
+                        <q-icon name="clear" class="cursor-pointer" @click="venue.foundedAt = null" />&nbsp;
+                      </template>
+                      <q-icon name="event" class="cursor-pointer">
+                        <q-popup-proxy ref="qDateProxy" cover transition-show="scale" transition-hide="scale">
+                          <q-date v-model="venue.foundedAt" mask="YYYY-MM-DD">
+                            <div class="row items-center justify-end">
+                              <q-btn v-close-popup label="Schließen" color="primary" flat />
+                            </div>
+                          </q-date>
+                        </q-popup-proxy>
+                      </q-icon>
+                    </template>
+                  </q-input>
+                  <q-input
+                    v-model="venue.website"
+                    label="Webseite"
+                    :rules="[
+                      $rules.url('Bitte hinterlasse einen Link.'),
+                    ]"
+                  />
+                  <q-input v-model="venue.purpose" label="Zweck" />
+                  <q-input v-model="venue.status" label="Status" />
+                  <div class="text-caption">
+                    Du kannst [[Wikilinks]], z.B. [[Charaktername]], in <strong>Zweck</strong> und <strong>Status</strong> nutzen.
+                  </div>
+                  <q-input
+                    :model-value="tags"
+                    @update:model-value="onTagsChanged"
+                    label="Schlagworte (mit Komma getrennt)"
+                  />
+
+                  <h6>Location</h6>
+                  <q-option-group
+                    inline
+                    v-model="venue.location"
+                    :options="locationOptions"
+                    @update:model-value="onLocationUpdated"
+                  />
+
+                  <template v-if="venue.location === VenueLocation.OPEN_WORLD">
+                    <q-input
+                      v-model="venue.address"
+                      label="Adresse *"
+                      :rules="[
+                        $rules.required('Dieses Feld ist erforderlich.'),
+                      ]"
+                    />
+                  </template>
+                  <template v-else>
+                    <q-select
+                      label="Wohngebiet *"
+                      v-model="venue.housingArea"
+                      :options="housingAreaOptions"
+                      emit-value
+                      map-options
+                      :rules="[
+                        $rules.required('Dieses Feld ist erforderlich.'),
+                      ]"
+                    />
+                    <q-input
+                      class="page-edit-venue__number-input"
+                      v-model.number="venue.ward"
+                      label="Bezirk *"
+                      :rules="[
+                        $rules.required('Dieses Feld ist erforderlich.'),
+                        $rules.integer('Bitte eine Nummer angeben.'),
+                        $rules.minValue(SharedConstants.housing.MIN_WARD_NUMBER, `Bezirksnummer kann nicht kleiner sein als ${SharedConstants.housing.MIN_WARD_NUMBER}.`),
+                        $rules.maxValue(SharedConstants.housing.MAX_WARD_NUMBER, `Bezirksnummer kann nicht größer sein als ${SharedConstants.housing.MAX_WARD_NUMBER}.`),
+                      ]"
+                    />
+                    <template v-if="venue.location === VenueLocation.HOUSE">
+                      <q-input
+                        class="page-edit-venue__number-input"
+                        v-model.number="venue.plot"
+                        label="Grundstück *"
+                        :rules="[
+                          $rules.required('Dieses Feld ist erforderlich.'),
+                          $rules.integer('Bitte eine Nummer angeben.'),
+                          $rules.minValue(SharedConstants.housing.MIN_MAIN_WARD_PLOT, `Grundstücksnummer kann nicht kleiner sein als ${SharedConstants.MIN_MAIN_WARD_PLOT}.`),
+                          $rules.maxValue(SharedConstants.housing.MAX_SUBDIVISION_PLOT, `Grundstücksnummer kann nicht größer sein als ${SharedConstants.housing.MAX_SUBDIVISION_PLOT}.`),
+                        ]"
+                        @update:model-value="onPlotUpdated"
+                      />
+                      <q-checkbox :model-value="venue.subdivision" label="Erweiterung" disable />
+                    </template>
+                    <template v-else-if="venue.location === VenueLocation.APARTMENT">
+                      <q-input
+                        v-model="venue.room"
+                        label="Wohnung *"
+                        :rules="[
+                          $rules.required('Dieses Feld ist erforderlich.'),
+                          (val) => parseInt(val, 10) >= SharedConstants.housing.MIN_APARTMENT_NUMBER || `Wohnungsnummer kann nicht kleiner sein als ${SharedConstants.housing.MIN_APARTMENT_NUMBER}.`,
+                          (val) => parseInt(val, 10) <= SharedConstants.housing.MAX_APARTMENT_NUMBER || `Wohnungsnummer kann nicht größer sein als ${SharedConstants.housing.MAX_APARTMENT_NUMBER}.`,
+                        ]"
+                      />
+                      <q-checkbox v-model="venue.subdivision" label="Erweiterung" />
+                    </template>
+                  </template>
+                </section>
+              </q-tab-panel>
+
+              <q-tab-panel name="profile" class="page-edit-venue__panel">
+                <h6>Profilansicht</h6>
+                <banner-edit-section v-model="venue.banner" />
+                <h6>Beschreibung</h6>
+                <html-editor v-model="venue.description" />
+                <h6>Carrd-Einbindung</h6>
+                <carrd-edit-section
+                  class="page-edit-venue__form-controls"
+                  entity-type="venue"
+                  v-model="venue.carrdProfile"
                 />
-                <q-checkbox :model-value="venue.subdivision" label="Erweiterung" disable />
-              </template>
-              <template v-else-if="venue.location === VenueLocation.APARTMENT">
+              </q-tab-panel>
+
+              <q-tab-panel name="subpages" class="page-edit-venue__panel">
+                <h6>Unterseiten</h6>
+                <q-checkbox v-model="venue.showRules" label="Regeln anzeigen" />
+                <html-editor v-if="venue.showRules" v-model="venue.rules" />
+                <q-checkbox v-model="venue.showPremises" label="Räumlichkeiten anzeigen" />
+                <html-editor v-if="venue.showPremises" v-model="venue.premises" />
+                <q-checkbox v-model="venue.showMenu" label="Speisekarte anzeigen" />
+                <html-editor v-if="venue.showMenu" v-model="venue.menu" />
+                <q-checkbox v-model="venue.showStaff" label="Mitarbeiterseite anzeigen" />
+                <q-checkbox v-model="venue.showJobs" label="Stellenangebote anzeigen (aus Anschlagbrett)" />
+                <q-checkbox v-model="venue.showOoc" label="OOC-Seite anzeigen" />
+                <html-editor v-if="venue.showOoc" v-model="venue.ooc" />
+                <q-checkbox v-model="venue.showMedia" label="Medienseite anzeigen (aus Galerie)" />
+                <q-checkbox v-model="venue.showEvents" label="Eventseite anzeigen" />
+                <q-checkbox v-model="venue.showNetwork" label="Vernetzung anzeigen" />
+                <html-editor v-if="venue.showNetwork" v-model="venue.network" />
+              </q-tab-panel>
+
+              <q-tab-panel name="eventTemplate" class="page-edit-venue__panel">
+                <h6>Event-Vorlage</h6>
                 <q-input
-                  v-model="venue.room"
-                  label="Wohnung *"
+                  v-model="venue.eventContact"
+                  label="Event-Kontakt"
+                />
+                <q-input
+                  v-model="venue.eventLink"
+                  label="Event-Link"
                   :rules="[
-                    $rules.required('Dieses Feld ist erforderlich.'),
-                    (val) => parseInt(val, 10) >= SharedConstants.housing.MIN_APARTMENT_NUMBER || `Wohnungsnummer kann nicht kleiner sein als ${SharedConstants.housing.MIN_APARTMENT_NUMBER}.`,
-                    (val) => parseInt(val, 10) <= SharedConstants.housing.MAX_APARTMENT_NUMBER || `Wohnungsnummer kann nicht größer sein als ${SharedConstants.housing.MAX_APARTMENT_NUMBER}.`,
+                    $rules.url('Bitte hinterlasse einen Link.'),
                   ]"
                 />
-                <q-checkbox v-model="venue.subdivision" label="Erweiterung" />
-              </template>
-            </template>
+                <h6>Event-Beschreibung</h6>
+                <html-editor v-model="venue.eventDescription" />
+                <h6>Event-OOC Details</h6>
+                <html-editor v-model="venue.eventOocDetails" />
+                <h6>Event-Inhaltswarnungen</h6>
+                <Multiselect
+                  v-model="venue.eventContentNotes"
+                  :options="contentNoteOptions"
+                  mode="tags"
+                  :searchable="true"
+                  :closeOnSelect="false"
+                  valueProp="value"
+                  track-by="label"
+                  label="label"
+                />
+              </q-tab-panel>
+            </q-tab-panels>
           </section>
-          <banner-edit-section v-model="venue.banner" />
-          <h6>Beschreibung</h6>
-          <html-editor v-model="venue.description" />
-          <h6>Unterseiten</h6>
-          <q-checkbox v-model="venue.showRules" label="Regeln anzeigen" />
-          <html-editor v-if="venue.showRules" v-model="venue.rules" />
-          <q-checkbox v-model="venue.showPremises" label="Raeumlichkeiten anzeigen" />
-          <html-editor v-if="venue.showPremises" v-model="venue.premises" />
-          <q-checkbox v-model="venue.showMenu" label="Speisekarte anzeigen" />
-          <html-editor v-if="venue.showMenu" v-model="venue.menu" />
-          <q-checkbox v-model="venue.showStaff" label="Mitarbeiterseite anzeigen" />
-          <q-checkbox v-model="venue.showJobs" label="Stellenangebote anzeigen (aus Anschlagbrett)" />
-          <q-checkbox v-model="venue.showOoc" label="OOC-Seite anzeigen" />
-          <html-editor v-if="venue.showOoc" v-model="venue.ooc" />
-          <q-checkbox v-model="venue.showMedia" label="Medienseite anzeigen (aus Galerie)" />
-          <q-checkbox v-model="venue.showEvents" label="Eventseite anzeigen" />
-          <q-checkbox v-model="venue.showNetwork" label="Vernetzung anzeigen" />
-          <html-editor v-if="venue.showNetwork" v-model="venue.network" />
-          <h6>Event-Vorlage</h6>
-          <q-input
-            v-model="venue.eventContact"
-            label="Event-Kontakt"
-          />
-          <q-input
-            v-model="venue.eventLink"
-            label="Event-Link"
-            :rules="[
-              $rules.url('Bitte hinterlasse einen Link.'),
-            ]"
-          />
-          <h6>Event-Beschreibung</h6>
-          <html-editor v-model="venue.eventDescription" />
-          <h6>Event-OOC Details</h6>
-          <html-editor v-model="venue.eventOocDetails" />
-          <h6>Event-Inhaltswarnungen</h6>
-          <Multiselect
-            v-model="venue.eventContentNotes"
-            :options="contentNoteOptions"
-            mode="tags"
-            :searchable="true"
-            :closeOnSelect="false"
-            valueProp="value"
-            track-by="label"
-            label="label"
-          />
-          <carrd-edit-section
-            class="page-edit-venue__form-controls"
-            entity-type="venue"
-            v-model="venue.carrdProfile"
-          />
         </template>
+
         <section v-else class="page-edit-venue__preview">
           <venue-profile :venue="venue" :preview="true" />
         </section>
+
         <div class="page-edit-venue__button-bar">
           <q-btn-toggle
             v-model="preview"
@@ -211,9 +245,7 @@
     <q-dialog v-model="confirmRevert" persistent>
       <q-card>
         <q-card-section class="row items-center">
-          <span class="q-ml-sm"
-            >Möchtest du die ungespeicherten Änderungen auf die letzte gespeicherte Version zurücksetzen?</span
-          >
+          <span class="q-ml-sm">Möchtest du die ungespeicherten Änderungen auf die letzte gespeicherte Version zurücksetzen?</span>
         </q-card-section>
 
         <q-card-actions align="right">
@@ -254,27 +286,29 @@ import { RouteParams } from 'vue-router';
 const $api = useApi();
 const $router = useRouter();
 
+type EditVenueSection = 'basic' | 'profile' | 'subpages' | 'eventTemplate';
+
 async function load(params: RouteParams): Promise<{ venue: VenueDto | null; contentNotes: { name: string }[] }> {
-	const id = parseInt(params.id as string, 10);
+  const id = parseInt(params.id as string, 10);
   const contentNotes = await $api.contentNotes.getContentNotes();
 
-	if (!id) {
-		return { venue: null, contentNotes };
-	}
+  if (!id) {
+    return { venue: null, contentNotes };
+  }
 
-	try {
-		const venue = await $api.venues.getVenue(id);
-		return { venue, contentNotes };
-	} catch (e) {
-		if (errors.getStatusCode(e) === 404) {
-			notifyError('Treffpunkt konnte nicht gefunden werden.');
-		} else {
-			notifyError(errors.getMessage(e));
-		}
+  try {
+    const venue = await $api.venues.getVenue(id);
+    return { venue, contentNotes };
+  } catch (e) {
+    if (errors.getStatusCode(e) === 404) {
+      notifyError('Treffpunkt konnte nicht gefunden werden.');
+    } else {
+      notifyError(errors.getMessage(e));
+    }
 
     void $router.replace('/');
-		throw e;
-	}
+    throw e;
+  }
 }
 
 @Options({
@@ -288,13 +322,13 @@ async function load(params: RouteParams): Promise<{ venue: VenueDto | null; cont
     WorldSelect,
     Multiselect,
   },
-	async beforeRouteEnter(to, _, next) {
-		const content = await load(to.params);
-		next(vm => (vm as PageEditVenue).setContent(content));
-	},
-	async beforeRouteUpdate(to) {
-		(this as PageEditVenue).setContent(await load(to.params));
-	},
+  async beforeRouteEnter(to, _, next) {
+    const content = await load(to.params);
+    next(vm => (vm as PageEditVenue).setContent(content));
+  },
+  async beforeRouteUpdate(to) {
+    (this as PageEditVenue).setContent(await load(to.params));
+  },
 })
 export default class PageEditVenue extends Vue {
   readonly previewOptions = [
@@ -306,7 +340,7 @@ export default class PageEditVenue extends Vue {
 
   readonly SharedConstants = SharedConstants;
 
-	venueId: number|null = null;
+  venueId: number | null = null;
   venue = new VenueDto();
   venueBackup = new VenueDto();
   contentNoteOptions: { label: string; value: string }[] = [];
@@ -316,6 +350,8 @@ export default class PageEditVenue extends Vue {
   saving = false;
 
   confirmRevert = false;
+
+  editSection: EditVenueSection = 'basic';
 
   selectedCharacterId: number | null = null;
 
@@ -327,9 +363,9 @@ export default class PageEditVenue extends Vue {
       }));
     }
 
-		if (content.venue) {
-			this.venueId = content.venue.id;
-			this.venueBackup = new VenueDto(content.venue);
+    if (content.venue) {
+      this.venueId = content.venue.id;
+      this.venueBackup = new VenueDto(content.venue);
       this.venueBackup.eventContentNotes = this.venueBackup.eventContentNotes || [];
       this.venueBackup.eventDescription = this.venueBackup.eventDescription || '';
       this.venueBackup.eventOocDetails = this.venueBackup.eventOocDetails || '';
@@ -393,10 +429,10 @@ export default class PageEditVenue extends Vue {
       });
     }
 
-    // Initialize selected character (default to current active character)
     this.selectedCharacterId = this.$store.getters.characterId || null;
 
     this.loaded = true;
+    this.editSection = 'basic';
     this.venue = new VenueDto(this.venueBackup);
   }
 
@@ -415,14 +451,14 @@ export default class PageEditVenue extends Vue {
   get locationOptions() {
     return Object.values(VenueLocation).map(location => ({
       label: this.$display.venueLocations[location],
-      value: location
+      value: location,
     }));
   }
 
   get housingAreaOptions() {
     return Object.values(HousingArea).map(housingArea => ({
       label: this.$display.housingAreas[housingArea],
-      value: housingArea
+      value: housingArea,
     }));
   }
 
@@ -500,6 +536,18 @@ export default class PageEditVenue extends Vue {
   border-bottom-style: solid;
 }
 
+.page-edit-venue__sections {
+  margin-bottom: 16px;
+}
+
+.page-edit-venue__tabs {
+  margin-bottom: 6px;
+}
+
+.page-edit-venue__panel {
+  padding: 16px 0 0;
+}
+
 .page-edit-venue__preview {
   margin-bottom: 24px;
 }
@@ -513,5 +561,13 @@ export default class PageEditVenue extends Vue {
 
 .page-edit-venue__preview h6 {
   font-family: $header-font;
+}
+
+@media screen and (max-width: $breakpoint-sm) {
+  .page-edit-venue__button-bar {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
 }
 </style>
