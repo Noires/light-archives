@@ -326,8 +326,7 @@ async function load(params: RouteParams): Promise<PageData> {
     next((vm) => (vm as PageVenue).setContent(content));
   },
   async beforeRouteUpdate(to) {
-    const content = await load(to.params);
-    (this as PageVenue).setContent(content);
+    await (this as PageVenue).loadForRoute(to.params);
   },
   mixins: [
     createMetaMixin(function (this: PageVenue) {
@@ -384,6 +383,7 @@ export default class PageVenue extends Vue {
   mediaItems: ImageSummaryDto[] = [];
   applicants: VenueMemberDto[] = [];
   confirmedMembers: VenueMemberDto[] = [];
+  private loadRequestId = 0;
 
   setContent(content: PageData) {
     this.venue = content.venue;
@@ -399,10 +399,21 @@ export default class PageVenue extends Vue {
       void this.refreshEditableMembers();
     }
 
-    const requestedSection = parseSection(this.$route.params.section as string | undefined);
-    if (requestedSection !== this.activeSection) {
+    if (content.activeSection !== this.activeSection) {
       void this.$router.replace(this.sectionPath(this.activeSection));
     }
+  }
+
+  async loadForRoute(params: RouteParams) {
+    const requestId = ++this.loadRequestId;
+    const content = await load(params);
+
+    // Ignore stale responses when users switch sections quickly.
+    if (requestId !== this.loadRequestId) {
+      return;
+    }
+
+    this.setContent(content);
   }
 
   get visibleSections(): SectionEntry[] {
@@ -484,9 +495,9 @@ export default class PageVenue extends Vue {
   }
 
   onSectionClick(section: VenueSection) {
-    if (section !== this.activeSection) {
-      this.activeSection = section;
-      void this.$router.push(this.sectionPath(section));
+    const targetPath = this.sectionPath(section);
+    if (targetPath !== this.$route.path) {
+      void this.$router.push(targetPath);
     }
   }
 
