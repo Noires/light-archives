@@ -495,10 +495,7 @@ export default class PageVenue extends Vue {
   }
 
   onSectionClick(section: VenueSection) {
-    const targetPath = this.sectionPath(section);
-    if (targetPath !== this.$route.path) {
-      void this.$router.push(targetPath);
-    }
+    this.activeSection = section;
   }
 
   private getVisibleSection(section: VenueSection): VenueSection {
