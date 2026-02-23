@@ -52,6 +52,10 @@ class Props {
   minAspectRatio = prop<number>({
     default: SharedConstants.MIN_BANNER_ASPECT_RATIO,
   });
+
+  characterId = prop<number | null>({
+    default: null,
+  });
 }
 
 @Options({
@@ -111,6 +115,7 @@ export default class BannerEditSection extends Vue.with(Props) {
         componentProps: {
           banner: true,
           minAspectRatio: this.minAspectRatio,
+          characterId: this.characterId,
         },
       })
       .onOk((image: ImageSummaryDto) => {
@@ -132,6 +137,7 @@ export default class BannerEditSection extends Vue.with(Props) {
         componentProps: {
           banner: true,
           minAspectRatio: this.minAspectRatio,
+          characterId: this.characterId,
         },
       })
       .onOk((image: ImageSummaryDto) => {

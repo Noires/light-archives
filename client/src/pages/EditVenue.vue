@@ -187,7 +187,10 @@
                   <q-checkbox v-model="venue.showNetwork" label="Vernetzung" @update:model-value="onSectionToggleChange" />
                 </section>
 
-                <banner-edit-section v-model="venue.banner" />
+                <banner-edit-section
+                  v-model="venue.banner"
+                  :character-id="!venueId ? selectedCharacterId : null"
+                />
                 <h6>Beschreibung</h6>
                 <html-editor v-model="venue.description" />
                 <h6>Carrd-Einbindung</h6>
@@ -455,8 +458,8 @@ async function load(params: RouteParams): Promise<{ venue: VenueDto | null; cont
         (this as PageEditVenue).markDirty();
       },
     },
-    selectedCharacterId() {
-      (this as PageEditVenue).markDirty();
+    selectedCharacterId(newValue: number | null, oldValue: number | null) {
+      (this as PageEditVenue).onSelectedCharacterIdChanged(newValue, oldValue);
     },
   },
 })
@@ -605,6 +608,15 @@ export default class PageEditVenue extends Vue {
 
   onSectionToggleChange() {
     this.ensureVisibleEditSection();
+  }
+
+  onSelectedCharacterIdChanged(newValue: number | null, oldValue: number | null) {
+    this.markDirty();
+
+    // During creation, a banner selected for a different owner character becomes invalid.
+    if (!this.venueId && oldValue !== null && newValue !== oldValue && this.venue.banner) {
+      this.venue.banner = null;
+    }
   }
 
   markDirty() {

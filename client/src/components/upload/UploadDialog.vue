@@ -149,6 +149,10 @@ class Props {
   mode = prop<string>({
     default: 'default',
   });
+
+  characterId = prop<number | null>({
+    default: null,
+  });
 }
 
 const MIN_BANNER_ASPECT_RATIO = SharedConstants.MIN_BANNER_ASPECT_RATIO;
@@ -204,7 +208,7 @@ export default class UploadDialog extends Vue.with(Props) {
   };
 
   created() {
-    this.detailsModel.characterId = this.$store.getters.characterId || null;
+    this.detailsModel.characterId = this.characterId || this.$store.getters.characterId || null;
   }
 
   show() {

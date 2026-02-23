@@ -40,6 +40,10 @@ class Props {
   mode = prop<string>({
     default: 'default',
   });
+
+  characterId = prop<number | null>({
+    default: null,
+  });
 }
 
 @Options({
@@ -56,7 +60,7 @@ export default class ConfirmImageDeleteDialog extends Vue.with(Props) {
   }
 
 	async created() {
-		const characterId = this.$store.getters.characterId;
+		const characterId = this.characterId || this.$store.getters.characterId;
 
 		if (!characterId) {
 			return;
@@ -104,6 +108,7 @@ export default class ConfirmImageDeleteDialog extends Vue.with(Props) {
 				banner: this.banner,
         minAspectRatio: this.minAspectRatio,
         mode: this.mode,
+        characterId: this.characterId,
 			}
     }).onOk((image: ImageSummaryDto) => {
       this.onImageSelect(image);
