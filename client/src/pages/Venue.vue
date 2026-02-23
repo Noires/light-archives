@@ -3,7 +3,7 @@
     <q-drawer
       v-if="venue.id && hasSectionMenu"
       v-model="drawer"
-      class="page-venue-layout__drawer border-radius-inherit"
+      class="border-radius-inherit"
       show-if-above
       :mini="miniState"
       :width="200"
@@ -19,7 +19,6 @@
             clickable
             v-ripple
             :active="activeSection === section.id"
-            active-class="page-venue-layout__menu-item--active"
             @click="onSectionClick(section.id)"
           >
             <q-item-section avatar>
@@ -579,11 +578,6 @@ export default class PageVenue extends Vue {
 
 <style lang="scss">
 .page-venue-layout {
-  --venue-nav-bg: rgba(255, 255, 255, 0.96);
-  --venue-nav-border: rgba(221, 180, 118, 0.35);
-  --venue-nav-text: #1f2c38;
-  --venue-nav-active-bg: rgba(221, 180, 118, 0.22);
-  --venue-nav-active-text: #6b4c21;
   --venue-edit-bg: #9f848d;
   --venue-edit-bg-hover: #615056;
   --venue-edit-color: #1b1b1b;
@@ -595,11 +589,6 @@ export default class PageVenue extends Vue {
 }
 
 body.body--dark .page-venue-layout {
-  --venue-nav-bg: rgba(17, 24, 34, 0.94);
-  --venue-nav-border: rgba(141, 181, 223, 0.3);
-  --venue-nav-text: rgba(213, 226, 240, 0.9);
-  --venue-nav-active-bg: rgba(141, 181, 223, 0.22);
-  --venue-nav-active-text: rgba(226, 237, 248, 0.96);
   --venue-edit-bg: rgba(141, 181, 223, 0.22);
   --venue-edit-bg-hover: rgba(141, 181, 223, 0.34);
   --venue-edit-color: rgba(226, 237, 248, 0.95);
@@ -608,22 +597,6 @@ body.body--dark .page-venue-layout {
   --venue-box-bg: rgba(17, 24, 34, 0.92);
   --venue-box-shadow: 0 18px 36px rgba(0, 0, 0, 0.34);
   --venue-muted: rgba(213, 226, 240, 0.74);
-}
-
-.page-venue-layout__drawer {
-  border-right: 1px solid var(--venue-nav-border);
-  background: var(--venue-nav-bg);
-  color: var(--venue-nav-text);
-}
-
-.page-venue-layout__menu .q-item {
-  border-radius: 8px;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.page-venue-layout__menu-item--active {
-  background: var(--venue-nav-active-bg);
-  color: var(--venue-nav-active-text);
 }
 
 .page-venue-layout__edit-item {
