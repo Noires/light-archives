@@ -27,8 +27,10 @@
           <q-option-group
             v-model="noticeboardItem.type"
             :options="typeOptions"
+            @update:model-value="onTypeChanged"
           />
           <q-select
+            v-if="canLinkVenueType"
             v-model="noticeboardItem.venueId"
             :options="venueOptions"
             emit-value
@@ -170,7 +172,10 @@ export default class PageEditNoticeboardItem extends Vue {
         type: queryType || NoticeboardType.AUSHANG,
         title: '',
         content: '',
-        venueId: Number.isNaN(queryVenueId) ? undefined : queryVenueId,
+        venueId:
+          !Number.isNaN(queryVenueId) && this.isVenueType(queryType || NoticeboardType.AUSHANG)
+            ? queryVenueId
+            : undefined,
       });
       this.loaded = true;
     }
@@ -179,6 +184,11 @@ export default class PageEditNoticeboardItem extends Vue {
     this.selectedCharacterId = this.$store.getters.characterId || null;
 
     this.noticeboardItem = new NoticeboardItemDto(this.noticeboardItemBackup);
+    this.onTypeChanged();
+  }
+
+  get canLinkVenueType(): boolean {
+    return this.isVenueType(this.noticeboardItem.type || NoticeboardType.AUSHANG);
   }
 
   get venueOptions() {
@@ -209,6 +219,16 @@ export default class PageEditNoticeboardItem extends Vue {
     } finally {
       this.loadingVenues = false;
     }
+  }
+
+  onTypeChanged() {
+    if (!this.canLinkVenueType) {
+      this.noticeboardItem.venueId = undefined;
+    }
+  }
+
+  private isVenueType(type: NoticeboardType): boolean {
+    return type === NoticeboardType.STELLENANGEBOT || type === NoticeboardType.STELLENGESUCH;
   }
 
   revert() {

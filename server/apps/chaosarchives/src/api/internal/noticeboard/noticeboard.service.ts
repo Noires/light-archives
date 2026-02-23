@@ -87,6 +87,8 @@ export class NoticeboardService {
       }
 
       const noticeboardItemRepo = em.getRepository(NoticeboardItem);
+      const type = noticeboardItemDto.type || NoticeboardType.AUSHANG;
+      this.assertVenueTypeAllowed(type, noticeboardItemDto.venueId);
 
       const noticeboardItem = noticeboardItemRepo.create({
         owner: {
@@ -96,7 +98,7 @@ export class NoticeboardService {
         title: noticeboardItemDto.title,
         content: html.sanitize(noticeboardItemDto.content),
         location: noticeboardItemDto.location,
-        type: noticeboardItemDto.type || NoticeboardType.AUSHANG,
+        type,
       });
 
       return noticeboardItemRepo.save(noticeboardItem);
@@ -127,12 +129,15 @@ export class NoticeboardService {
         throw new NotFoundException('Noticeboard item not found');
       }
 
+      const type = noticeboardItemDto.type || NoticeboardType.AUSHANG;
+      this.assertVenueTypeAllowed(type, noticeboardItemDto.venueId);
+
       Object.assign(noticeboardItem, {
         venue: await this.resolveVenue(noticeboardItemDto.venueId, user, em),
         title: noticeboardItemDto.title,
         content: html.sanitize(noticeboardItemDto.content),
         location: noticeboardItemDto.location,
-        type: noticeboardItemDto.type || NoticeboardType.AUSHANG,
+        type,
       });
 
       await noticeboardItemRepo.save(noticeboardItem);
@@ -227,6 +232,16 @@ export class NoticeboardService {
     }
 
     return venue;
+  }
+
+  private assertVenueTypeAllowed(type: NoticeboardType, venueId?: number): void {
+    if (!venueId) {
+      return;
+    }
+
+    if (type !== NoticeboardType.STELLENANGEBOT && type !== NoticeboardType.STELLENGESUCH) {
+      throw new BadRequestException('Venue links are only allowed for job postings');
+    }
   }
 
 	private async notifySteward(noticeboardItem: NoticeboardItem): Promise<void> {
