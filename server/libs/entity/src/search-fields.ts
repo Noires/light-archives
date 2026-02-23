@@ -35,6 +35,11 @@ export const SearchFields = {
 		'name',
 		'description',
 		'purpose',
+    'rules',
+    'premises',
+    'menu',
+    'ooc',
+    'network',
 	],
 
   event: [

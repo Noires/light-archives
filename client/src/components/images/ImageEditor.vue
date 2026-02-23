@@ -50,7 +50,15 @@ export default class ImageEditor extends Vue.with(Props) {
 				id: this.modelValue.eventId,
 				title: this.modelValue.eventTitle!,
 				startDateTime: -1
-			} : null
+			} : null,
+      venue: this.modelValue.venueId ? {
+        id: this.modelValue.venueId,
+        name: this.modelValue.venueName || '',
+        server: this.modelValue.venueServer || '',
+        purpose: '',
+        housingArea: null,
+        address: '',
+      } : null,
 		};
 	}
 
@@ -78,6 +86,10 @@ export default class ImageEditor extends Vue.with(Props) {
 				Object.assign(imageDescriptionDto, { eventId: this.imageDetails.event.id });
 			}
 
+      if (this.imageDetails.venue) {
+        Object.assign(imageDescriptionDto, { venueId: this.imageDetails.venue.id });
+      }
+
       await this.$api.images.saveImage(this.modelValue.id, imageDescriptionDto);
 			Object.assign(this.modelValue, imageDescriptionDto);
 			
@@ -87,6 +99,16 @@ export default class ImageEditor extends Vue.with(Props) {
 				this.modelValue.eventId = null;
 				this.modelValue.eventTitle = null;
 			}
+
+      if (this.imageDetails.venue) {
+        this.modelValue.venueId = this.imageDetails.venue.id;
+        this.modelValue.venueName = this.imageDetails.venue.name;
+        this.modelValue.venueServer = this.imageDetails.venue.server;
+      } else {
+        this.modelValue.venueId = null;
+        this.modelValue.venueName = null;
+        this.modelValue.venueServer = null;
+      }
 
 			this.$emit('update:model-value', this.modelValue);
     } catch (e) {

@@ -5,6 +5,7 @@ import { BasicEntity } from './basic.entity';
 import { Character } from './character.entity';
 import { Event } from './event.entity';
 import { SearchFields } from './search-fields';
+import { Venue } from './venue.entity';
 
 @Entity()
 @Unique(['hash', 'owner'])
@@ -80,4 +81,9 @@ export class Image extends BasicEntity {
     nullable: true,
   })
   event: Event|null;
+
+  @ManyToOne(() => Venue, {
+    nullable: true,
+  })
+  venue: Venue|null;
 }

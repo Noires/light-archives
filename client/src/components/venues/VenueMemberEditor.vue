@@ -51,6 +51,14 @@
             :disable="!canEditMember(props.row)"
             @update:model-value="(val) => setCanManageMembers(props.row, val)"
           />
+          <br />
+          <q-checkbox
+            dense
+            label="Im Team anzeigen"
+            :model-value="props.row.showInStaff"
+            :disable="!canEditMember(props.row)"
+            @update:model-value="(val) => setShowInStaff(props.row, val)"
+          />
         </q-td>
       </template>
       <template v-slot:body-cell-actions="props">
@@ -163,7 +171,7 @@ export default class VenueMemberEditor extends Vue.with(Props) {
       return;
     }
 
-    await this.setFlags(member, { canEdit, canManageMembers: member.canManageMembers });
+    await this.setFlags(member, { canEdit, canManageMembers: member.canManageMembers, showInStaff: member.showInStaff });
   }
 
   async setCanManageMembers(member: VenueMemberDto, canManageMembers: boolean): Promise<void> {
@@ -171,7 +179,15 @@ export default class VenueMemberEditor extends Vue.with(Props) {
       return;
     }
 
-    await this.setFlags(member, { canEdit: member.canEdit, canManageMembers });
+    await this.setFlags(member, { canEdit: member.canEdit, canManageMembers, showInStaff: member.showInStaff });
+  }
+
+  async setShowInStaff(member: VenueMemberDto, showInStaff: boolean): Promise<void> {
+    if (!this.canEditMember(member)) {
+      return;
+    }
+
+    await this.setFlags(member, { canEdit: member.canEdit, canManageMembers: member.canManageMembers, showInStaff });
   }
 
   private async setFlags(member: VenueMemberDto, flags: VenueMemberFlagsDto): Promise<void> {

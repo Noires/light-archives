@@ -27,6 +27,11 @@ export class ImageUploadRequestDto {
 
 	@Type(() => Number)
 	@IsNumber()
+	@IsOptional()
+	readonly venueId?: number;
+
+	@Type(() => Number)
+	@IsNumber()
 	readonly thumbLeft: number;
 
 	@Type(() => Number)

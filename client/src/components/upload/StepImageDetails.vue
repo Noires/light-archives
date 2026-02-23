@@ -52,6 +52,26 @@
             </q-item>
           </template>
         </q-select>
+        <q-select
+          class="step-select-image__venue-link"
+          v-model="modelValue.venue"
+          :display-value="modelValue.venue ? venueOptionLabel(modelValue.venue) : null"
+          :options="editableVenues"
+          :option-label="venueOptionLabel"
+          clearable
+          label="Treffpunktlink"
+          hint="Optional: Bild einem Treffpunkt zuordnen."
+          :loading="loadingEditableVenues"
+          @update:model-value="onModelUpdated"
+        >
+          <template v-slot:no-option>
+            <q-item>
+              <q-item-section class="text-grey">
+                Keine editierbaren Treffpunkte
+              </q-item-section>
+            </q-item>
+          </template>
+        </q-select>
       </section>
     </q-slide-transition>
     <q-input
@@ -71,6 +91,7 @@
 
 <script lang="ts">
 import { EventSearchResultDto } from '@app/shared/dto/events/event-search-result.dto';
+import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { ImageCategory } from '@app/shared/enums/image-category.enum';
 import CharacterSelector from 'components/common/CharacterSelector.vue';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
@@ -99,6 +120,8 @@ export default class StepImageDetails extends Vue.with(Props) {
 
   eventOptions: EventSearchResultDto[] = [];
   eventOptionsSearchString = '';
+  editableVenues: VenueSummaryDto[] = [];
+  loadingEditableVenues = false;
 
   categoryHints = {
     [ImageCategory.UNLISTED]:
@@ -115,6 +138,25 @@ export default class StepImageDetails extends Vue.with(Props) {
         value: category as ImageCategory,
       })
     );
+    void this.loadEditableVenues();
+  }
+
+  async loadEditableVenues() {
+    if (!this.$store.getters.characterId) {
+      this.editableVenues = [];
+      return;
+    }
+
+    this.loadingEditableVenues = true;
+    try {
+      this.editableVenues = await this.$api.venues.getEditableVenues();
+    } finally {
+      this.loadingEditableVenues = false;
+    }
+  }
+
+  venueOptionLabel(venue: VenueSummaryDto): string {
+    return `${venue.name} (${venue.server})`;
   }
 
   async onEventFilter(value: string, update: () => void, abort: () => void) {
@@ -163,6 +205,10 @@ export default class StepImageDetails extends Vue.with(Props) {
 }
 
 .step-image-details__credits {
+  margin-top: 8px;
+}
+
+.step-select-image__venue-link {
   margin-top: 8px;
 }
 </style>

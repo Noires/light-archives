@@ -39,4 +39,10 @@ export class VenueMembership extends BasicEntity {
     default: false,
   })
   canManageMembers: boolean;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  showInStaff: boolean;
 }

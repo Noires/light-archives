@@ -28,6 +28,16 @@
             v-model="noticeboardItem.type"
             :options="typeOptions"
           />
+          <q-select
+            v-model="noticeboardItem.venueId"
+            :options="venueOptions"
+            emit-value
+            map-options
+            clearable
+            label="Treffpunkt (optional)"
+            :loading="loadingVenues"
+            hint="Stellenangebote/Stellengesuche koennen direkt mit einem Treffpunkt verknuepft werden."
+          />
           <h6>Content *</h6>
           <html-editor v-model="noticeboardItem.content" />
           <template v-if="!noticeboardItem.id">
@@ -79,6 +89,7 @@
 
 <script lang="ts">
 import { NoticeboardItemDto } from '@app/shared/dto/noticeboard/noticeboard-item.dto';
+import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { NoticeboardLocation } from '@app/shared/enums/noticeboard-location.enum';
 import { NoticeboardType } from '@app/shared/enums/noticeboard-type.enum';
 import CharacterSelector from 'components/common/CharacterSelector.vue';
@@ -87,7 +98,7 @@ import NoticeboardItemView from 'components/noticeboard/NoticeboardItemView.vue'
 import { displayOptions } from 'src/boot/display';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import { Options, Vue } from 'vue-class-component';
-import { RouteParams } from 'vue-router';
+import { RouteLocationNormalized, RouteParams } from 'vue-router';
 
 @Options({
   name: 'PageEditNoticeboardItem',
@@ -97,10 +108,10 @@ import { RouteParams } from 'vue-router';
     NoticeboardItemView,
   },
   beforeRouteEnter(to, _, next) {
-    next((vm) => (vm as PageEditNoticeboardItem).load(to.params));
+    next((vm) => (vm as PageEditNoticeboardItem).load(to.params, to.query));
   },
   async beforeRouteUpdate(to) {
-    await (this as PageEditNoticeboardItem).load(to.params);
+    await (this as PageEditNoticeboardItem).load(to.params, to.query);
   },
 })
 export default class PageEditNoticeboardItem extends Vue {
@@ -120,6 +131,8 @@ export default class PageEditNoticeboardItem extends Vue {
 
   noticeboardItem = new NoticeboardItemDto();
   noticeboardItemBackup = new NoticeboardItemDto();
+  editableVenues: VenueSummaryDto[] = [];
+  loadingVenues = false;
   postOnDiscord = true;
   preview = false;
   loaded = false;
@@ -129,14 +142,18 @@ export default class PageEditNoticeboardItem extends Vue {
 
   selectedCharacterId: number | null = null;
 
-  private async load(params: RouteParams) {
+  private async load(params: RouteParams, query: RouteLocationNormalized['query']) {
     const id = parseInt(params.id as string, 10);
+    const queryVenueId = parseInt((query.venueId as string) || '', 10);
+    const queryType = (query.type as NoticeboardType) || null;
     const character = this.$store.getters.character;
 
     if (!character) {
       void this.$router.push('/');
       return;
     }
+
+    await this.loadEditableVenues();
 
     if (id) {
       this.loaded = false;
@@ -150,9 +167,10 @@ export default class PageEditNoticeboardItem extends Vue {
         mine: true,
         createdAt: Date.now(),
         location: NoticeboardLocation.MULTIPLE_LOCATIONS,
-        type: NoticeboardType.AUSHANG,
+        type: queryType || NoticeboardType.AUSHANG,
         title: '',
         content: '',
+        venueId: Number.isNaN(queryVenueId) ? undefined : queryVenueId,
       });
       this.loaded = true;
     }
@@ -161,6 +179,36 @@ export default class PageEditNoticeboardItem extends Vue {
     this.selectedCharacterId = this.$store.getters.characterId || null;
 
     this.noticeboardItem = new NoticeboardItemDto(this.noticeboardItemBackup);
+  }
+
+  get venueOptions() {
+    const options = this.editableVenues.map((venue) => ({
+      label: `${venue.name} (${venue.server})`,
+      value: venue.id,
+    }));
+
+    if (
+      this.noticeboardItem.venueId
+      && this.noticeboardItem.venueName
+      && this.noticeboardItem.venueServer
+      && !options.some((option) => option.value === this.noticeboardItem.venueId)
+    ) {
+      options.unshift({
+        label: `${this.noticeboardItem.venueName} (${this.noticeboardItem.venueServer})`,
+        value: this.noticeboardItem.venueId,
+      });
+    }
+
+    return options;
+  }
+
+  private async loadEditableVenues() {
+    this.loadingVenues = true;
+    try {
+      this.editableVenues = await this.$api.venues.getEditableVenues();
+    } finally {
+      this.loadingVenues = false;
+    }
   }
 
   revert() {

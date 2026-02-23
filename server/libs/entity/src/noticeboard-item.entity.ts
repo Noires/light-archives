@@ -4,6 +4,7 @@ import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn } from 'typeor
 import { BasicEntity } from './basic.entity';
 import { Character } from './character.entity';
 import { SearchFields } from './search-fields';
+import { Venue } from './venue.entity';
 
 @Entity()
 @Index(SearchFields.noticeboardItem, { fulltext: true })
@@ -42,4 +43,9 @@ export class NoticeboardItem extends BasicEntity {
     default: NoticeboardType.AUSHANG,
   })
   type: NoticeboardType;
+
+  @ManyToOne(() => Venue, {
+    nullable: true,
+  })
+  venue: Venue | null;
 }

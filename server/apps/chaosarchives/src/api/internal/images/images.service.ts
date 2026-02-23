@@ -1,6 +1,6 @@
 import { UserInfo } from '@app/auth/model/user-info';
 import { serverConfiguration } from '@app/configuration';
-import { Character, Event, Image } from '@app/entity';
+import { Character, Event, Image, Venue, VenueMembership } from '@app/entity';
 import { hashFile } from '@app/security';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { ImageDescriptionDto } from '@app/shared/dto/image/image-desciption.dto';
@@ -10,10 +10,12 @@ import { ImageDto } from '@app/shared/dto/image/image.dto';
 import { ImagesFilterDto } from '@app/shared/dto/image/images-filter.dto';
 import { ImageCategory } from '@app/shared/enums/image-category.enum';
 import { ImageFormat } from '@app/shared/enums/image-format.enum';
+import { MembershipStatus } from '@app/shared/enums/membership-status.enum';
 import html from '@app/shared/html';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -63,6 +65,9 @@ export class ImagesService {
       credits: image.credits,
       eventId: image.event ? image.event.id : null,
       eventTitle: image.event ? image.event.title : null,
+      venueId: image.venue ? image.venue.id : null,
+      venueName: image.venue ? image.venue.name : null,
+      venueServer: image.venue ? image.venue.server.name : null,
     };
   }
 
@@ -70,9 +75,21 @@ export class ImagesService {
     const image = await this.imageRepo.createQueryBuilder('image')
       .leftJoinAndSelect('image.owner', 'character')
       .leftJoinAndSelect('image.event', 'event')
+      .leftJoinAndSelect('image.venue', 'venue')
+      .leftJoinAndSelect('venue.server', 'venueServer')
       .leftJoinAndSelect('character.server', 'server')
       .where('image.id = :id', { id })
-      .select(['image', 'character.id', 'character.name', 'server.name', 'event.id', 'event.title' ])
+      .select([
+        'image',
+        'character.id',
+        'character.name',
+        'server.name',
+        'event.id',
+        'event.title',
+        'venue.id',
+        'venue.name',
+        'venueServer.name',
+      ])
       .getOne();
 
     if (!image || image.category === ImageCategory.UNLISTED) {
@@ -83,11 +100,12 @@ export class ImagesService {
   }
 
   async getImages(filter: ImagesFilterDto): Promise<PagingResultDto<ImageSummaryDto>> {
-    const { searchQuery, characterId, eventId, offset, limit, category } = filter;
+    const { searchQuery, characterId, eventId, venueId, offset, limit, category } = filter;
     const query = this.imageRepo.createQueryBuilder('image')
       .leftJoinAndSelect('image.owner', 'character')
       .leftJoinAndSelect('character.server', 'server')
-      .leftJoinAndSelect('image.event', 'event');
+      .leftJoinAndSelect('image.event', 'event')
+      .leftJoinAndSelect('image.venue', 'venue');
 
     if (searchQuery) {
       query.andWhere('(image.title LIKE :searchQuery OR character.name LIKE :searchQuery)', {
@@ -103,22 +121,25 @@ export class ImagesService {
       query.andWhere('event.id = :eventId', { eventId });
     }
 
+    if (venueId) {
+      query.andWhere('venue.id = :venueId', { venueId });
+    }
+
     if (category) {
       query.andWhere('image.category = :category', { category });
     } else {
       query.andWhere('image.category <> :category', { category: ImageCategory.UNLISTED });
     }
 
-    if (offset) {
+    if (offset !== undefined) {
       query.offset(offset);
     }
 
-    if (limit) {
+    if (limit !== undefined) {
       query.limit(limit);
     }
     
     query.orderBy('image.createdAt', 'DESC')
-      .limit(limit)
       .select(['image', 'character.id', 'character.name', 'server.name']);
     
     const [ total, images ] = await Promise.all([ query.getCount(), query.getMany() ]);
@@ -166,10 +187,22 @@ export class ImagesService {
     const images = await this.imageRepo.createQueryBuilder('image')
       .leftJoinAndSelect('image.owner', 'character')
       .leftJoinAndSelect('image.event', 'event')
+      .leftJoinAndSelect('image.venue', 'venue')
+      .leftJoinAndSelect('venue.server', 'venueServer')
       .leftJoinAndSelect('character.server', 'server')
       .where('character.id = :characterId', { characterId })
       .orderBy('image.createdAt', 'DESC')
-      .select(['image', 'character.id', 'character.name', 'server.name', 'event.id', 'event.title'])
+      .select([
+        'image',
+        'character.id',
+        'character.name',
+        'server.name',
+        'event.id',
+        'event.title',
+        'venue.id',
+        'venue.name',
+        'venueServer.name',
+      ])
       .getMany();
 
     return images.map(image => this.toImageDto(image, user));
@@ -246,14 +279,15 @@ export class ImagesService {
         // Check the user still has upload space left
         const maxUploadSpaceMiB = serverConfiguration.maxUploadSpacePerUserMiB;
         const maxUploadSpaceBytes = maxUploadSpaceMiB * 1024 * 1024;
-        const currentUploadSpaceBytes = await em
+        const currentUploadSpace = await em
           .getRepository(Image)
           .createQueryBuilder('image')
           .innerJoinAndSelect('image.owner', 'character')
           .innerJoinAndSelect('character.user', 'user')
           .where('user.id = :userId', { userId: user.id })
-          .select('SUM(image.size)')
-          .getRawOne();
+          .select('COALESCE(SUM(image.size), 0)', 'total')
+          .getRawOne<{ total: string | number }>();
+        const currentUploadSpaceBytes = Number(currentUploadSpace?.total || 0);
 
         if (currentUploadSpaceBytes + size > maxUploadSpaceBytes) {
           throw new BadRequestException(
@@ -295,6 +329,7 @@ export class ImagesService {
         });
         
         await this.assignImageEvent(em, image, request);
+        await this.assignImageVenue(em, image, request, user);
         await em.getRepository(Image).save(image);
 
         return {
@@ -334,10 +369,11 @@ export class ImagesService {
         .createQueryBuilder('image')
         .innerJoinAndSelect('image.owner', 'character')
         .leftJoinAndSelect('image.event', 'event')
+        .leftJoinAndSelect('image.venue', 'venue')
         .innerJoinAndSelect('character.user', 'user')
         .where('image.id = :id', { id } )
         .andWhere('user.id = :userId', { userId: user.id })
-        .select([ 'image', 'event' ])
+        .select([ 'image', 'event', 'venue' ])
         .getOne();
 
       if (!image) {
@@ -356,6 +392,7 @@ export class ImagesService {
       image.credits = request.credits;
 
       await this.assignImageEvent(em, image, request);
+      await this.assignImageVenue(em, image, request, user);
       await imageRepo.save(image);
     });
   }
@@ -373,6 +410,58 @@ export class ImagesService {
 
       // eslint-disable-next-line no-param-reassign
       image.event = event;
+    }
+  }
+
+  private async assignImageVenue(
+    em: EntityManager,
+    image: Image,
+    request: ImageDescriptionDto,
+    user: UserInfo,
+  ) {
+    if (!request.venueId) {
+      // eslint-disable-next-line no-param-reassign
+      image.venue = null;
+      return;
+    }
+
+    if (!image.venue || request.venueId !== image.venue.id) {
+      const venue = await em.getRepository(Venue).findOne({
+        where: { id: request.venueId },
+      });
+
+      if (!venue) {
+        throw new BadRequestException('Venue not found');
+      }
+
+      const characterIds = user.characters.map((character) => character.id);
+      if (characterIds.length === 0) {
+        throw new ForbiddenException('You cannot link this venue');
+      }
+
+      const canEditVenue = await em
+        .getRepository(Venue)
+        .createQueryBuilder('venue')
+        .innerJoinAndSelect('venue.owner', 'owner')
+        .leftJoin(
+          VenueMembership,
+          'membership',
+          'membership.venueId = venue.id AND membership.status = :membershipStatus AND membership.canEdit = :canEdit',
+          {
+            membershipStatus: MembershipStatus.CONFIRMED,
+            canEdit: true,
+          },
+        )
+        .where('venue.id = :venueId', { venueId: request.venueId })
+        .andWhere('(owner.id IN (:...characterIds) OR membership.characterId IN (:...characterIds))', { characterIds })
+        .getCount();
+
+      if (!canEditVenue) {
+        throw new ForbiddenException('You cannot link this venue');
+      }
+
+      // eslint-disable-next-line no-param-reassign
+      image.venue = venue;
     }
   }
 
@@ -427,11 +516,20 @@ export class ImagesService {
           throw new ConflictException('This image is in use as an event discord banner');
         }
 
+        if (await em.getRepository(Venue).countBy({
+          banner: {
+            id: image.id,
+          },
+        }) > 0) {
+          throw new ConflictException('This image is in use as a venue banner');
+        }
+
         // Clean up stale references left on soft-deleted events.
         await Promise.all([
           em.query('UPDATE `event` SET `bannerId` = NULL WHERE `bannerId` = ? AND `deletedAt` IS NOT NULL', [image.id]),
           em.query('UPDATE `event` SET `discordBannerId` = NULL WHERE `discordBannerId` = ? AND `deletedAt` IS NOT NULL', [image.id]),
           em.query('UPDATE `event` SET `iconId` = NULL WHERE `iconId` = ? AND `deletedAt` IS NOT NULL', [image.id]),
+          em.query('UPDATE `venue` SET `bannerId` = NULL WHERE `bannerId` = ? AND `deletedAt` IS NOT NULL', [image.id]),
         ]);
       } else {
         // Unlink from all referencing pages
@@ -448,6 +546,7 @@ export class ImagesService {
           em.query('UPDATE `event` SET `bannerId` = NULL WHERE `bannerId` = ?', [image.id]),
           em.query('UPDATE `event` SET `discordBannerId` = NULL WHERE `discordBannerId` = ?', [image.id]),
           em.query('UPDATE `event` SET `iconId` = NULL WHERE `iconId` = ?', [image.id]),
+          em.query('UPDATE `venue` SET `bannerId` = NULL WHERE `bannerId` = ?', [image.id]),
         ]);
       }
 

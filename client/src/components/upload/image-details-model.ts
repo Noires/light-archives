@@ -1,4 +1,5 @@
 import { EventSearchResultDto } from '@app/shared/dto/events/event-search-result.dto';
+import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { ImageCategory } from '@app/shared/enums/image-category.enum';
 
 export interface ImageDetailsModel {
@@ -8,4 +9,5 @@ export interface ImageDetailsModel {
   description: string;
   credits: string;
   event: EventSearchResultDto|null;
+  venue: VenueSummaryDto|null;
 }

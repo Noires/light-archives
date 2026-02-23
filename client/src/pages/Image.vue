@@ -22,6 +22,7 @@
 			<section class="page-image__credits">
 				<p><strong>Credits:</strong> <link-field :content="image.credits" /></p>
 				<p v-if="image.eventId"><strong>Event:</strong> <router-link :to="`/event/${image.eventId}`">{{image.eventTitle}}</router-link></p>
+        <p v-if="image.venueId"><strong>Treffpunkt:</strong> <router-link :to="venueLink">{{ image.venueName }}</router-link></p>
 			</section>
     	<report-violation-section :pageType="PageType.IMAGE" :pageId="image.id" />
 		</template>
@@ -118,6 +119,13 @@ export default class PageImage extends Vue {
     const server = this.image.authorServer;
     const character = this.image.author.replace(/ /g, '_');
     return `/${server}/${character}`;
+  }
+
+  get venueLink(): string {
+    if (!this.image.venueId || !this.image.venueServer || !this.image.venueName) {
+      return '/venues';
+    }
+    return `/venue/${this.image.venueServer}/${this.image.venueName.replace(/ /g, '_')}`;
   }
 
 	async onDeleteClick() {

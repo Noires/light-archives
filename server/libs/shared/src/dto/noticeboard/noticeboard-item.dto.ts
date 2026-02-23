@@ -25,6 +25,19 @@ export class NoticeboardItemDto {
 	@IsOptional()
 	authorServer?: string;
 
+	@Type(() => Number)
+	@IsNumber()
+	@IsOptional()
+	venueId?: number;
+
+	@IsString()
+	@IsOptional()
+	venueName?: string;
+
+	@IsString()
+	@IsOptional()
+	venueServer?: string;
+
 	@IsNumber()
 	@IsOptional()
 	createdAt: number;

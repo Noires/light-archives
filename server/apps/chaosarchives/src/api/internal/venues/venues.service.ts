@@ -7,6 +7,7 @@ import { VenueMemberDto } from '@app/shared/dto/venues/venue-member.dto';
 import { VenueMemberFlagsDto } from '@app/shared/dto/venues/venue-member-flags.dto';
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
+import { VenueStaffMemberDto } from '@app/shared/dto/venues/venue-staff-member.dto';
 import { HousingArea } from '@app/shared/enums/housing-area.enum';
 import { MembershipStatus } from '@app/shared/enums/membership-status.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
@@ -49,6 +50,38 @@ export class VenuesService {
 
 		return myVenues.map(venue => this.toVenueSummaryDto(venue));
 	}
+
+  async getEditableVenues(user: UserInfo): Promise<VenueSummaryDto[]> {
+    const characterIds = user.characters.map((character) => character.id);
+    if (characterIds.length === 0) {
+      return [];
+    }
+
+    const venues = await this.venueRepo
+      .createQueryBuilder('venue')
+      .leftJoinAndSelect('venue.server', 'server')
+      .leftJoinAndSelect('venue.owner', 'owner')
+      .leftJoin(
+        VenueMembership,
+        'membership',
+        'membership.venueId = venue.id AND membership.status = :status AND membership.canEdit = :canEdit',
+        {
+          status: MembershipStatus.CONFIRMED,
+          canEdit: true,
+        },
+      )
+      .where('owner.id IN (:...characterIds)', { characterIds })
+      .orWhere('membership.characterId IN (:...characterIds)', { characterIds })
+      .orderBy('venue.createdAt', 'DESC')
+      .getMany();
+
+    const uniqueVenues = new Map<number, Venue>();
+    for (const venue of venues) {
+      uniqueVenues.set(venue.id, venue);
+    }
+
+    return Array.from(uniqueVenues.values()).map((venue) => this.toVenueSummaryDto(venue));
+  }
 
   async searchVenues(query: string, server?: string): Promise<VenueSummaryDto[]> {
     const trimmed = query.trim();
@@ -156,6 +189,7 @@ export class VenuesService {
     const canEdit = isSelectedCharacterOwner || (!!membership && membership.status === MembershipStatus.CONFIRMED && membership.canEdit);
     const canManageMembers = isSelectedCharacterOwner
       || (!!membership && membership.status === MembershipStatus.CONFIRMED && membership.canManageMembers);
+    const staff = venue.showStaff ? await this.getVisibleStaffMembers(venue.id, venue.owner) : [];
 
 		return {
 			id: venue.id,
@@ -186,6 +220,21 @@ export class VenuesService {
 			carrdProfile: venue.carrdProfile,
 			tags: venue.tags.map(tag => tag.name),
       eventContentNotes: venue.eventContentNotes?.map((note) => note.name) || [],
+      showRules: venue.showRules,
+      rules: venue.rules,
+      showPremises: venue.showPremises,
+      premises: venue.premises,
+      showMenu: venue.showMenu,
+      menu: venue.menu,
+      showStaff: venue.showStaff,
+      showJobs: venue.showJobs,
+      showOoc: venue.showOoc,
+      ooc: venue.ooc,
+      showMedia: venue.showMedia,
+      showEvents: venue.showEvents,
+      showNetwork: venue.showNetwork,
+      network: venue.network,
+      staff,
 			banner: !banner ? null : {
 				id: banner.id,
 				url: this.imagesService.getUrl(banner),
@@ -194,6 +243,44 @@ export class VenuesService {
 			}
 		}
 	}
+
+  private async getVisibleStaffMembers(venueId: number, owner: Character): Promise<VenueStaffMemberDto[]> {
+    const memberships = await this.venueMembershipRepo
+      .createQueryBuilder('membership')
+      .innerJoinAndSelect('membership.character', 'character')
+      .innerJoinAndSelect('character.server', 'server')
+      .where('membership.venueId = :venueId', { venueId })
+      .andWhere('membership.status = :status', { status: MembershipStatus.CONFIRMED })
+      .andWhere('membership.showInStaff = :showInStaff', { showInStaff: true })
+      .orderBy('character.name', 'ASC')
+      .select([
+        'membership.id',
+        'character.id',
+        'character.name',
+        'character.avatar',
+        'server.id',
+        'server.name',
+      ])
+      .getMany();
+
+    const result = memberships.map((membership) => ({
+      characterId: membership.character.id,
+      name: membership.character.name,
+      server: membership.character.server.name,
+      avatar: membership.character.avatar,
+    }));
+
+    if (!result.some((member) => member.characterId === owner.id)) {
+      result.unshift({
+        characterId: owner.id,
+        name: owner.name,
+        server: owner.server.name,
+        avatar: owner.avatar,
+      });
+    }
+
+    return result;
+  }
 
 	async createVenue(venueDto: VenueDto, user: UserInfo): Promise<IdWrapper> {
 		return this.connection.transaction(async em => {
@@ -234,6 +321,7 @@ export class VenuesService {
       membership.status = MembershipStatus.CONFIRMED;
       membership.canEdit = true;
       membership.canManageMembers = true;
+      membership.showInStaff = true;
       await em.getRepository(VenueMembership).save(membership);
 
 			return { id: venue.id };
@@ -270,6 +358,20 @@ export class VenuesService {
 		venue.website = venueDto.website; // TODO: Validate
 		venue.purpose = venueDto.purpose;
 		venue.status = venueDto.status;
+		venue.rules = html.sanitize(venueDto.rules || '');
+		venue.premises = html.sanitize(venueDto.premises || '');
+		venue.menu = html.sanitize(venueDto.menu || '');
+		venue.ooc = html.sanitize(venueDto.ooc || '');
+		venue.network = html.sanitize(venueDto.network || '');
+		venue.showRules = !!venueDto.showRules;
+		venue.showPremises = !!venueDto.showPremises;
+		venue.showMenu = !!venueDto.showMenu;
+		venue.showStaff = !!venueDto.showStaff;
+		venue.showJobs = !!venueDto.showJobs;
+		venue.showOoc = !!venueDto.showOoc;
+		venue.showMedia = !!venueDto.showMedia;
+		venue.showEvents = !!venueDto.showEvents;
+		venue.showNetwork = !!venueDto.showNetwork;
 		venue.carrdProfile = checkCarrdProfile(venueDto.carrdProfile, user);
 
 		// Validate founding date
@@ -422,6 +524,7 @@ export class VenuesService {
         'membership.status',
         'membership.canEdit',
         'membership.canManageMembers',
+        'membership.showInStaff',
       ])
       .getMany();
 
@@ -433,6 +536,7 @@ export class VenuesService {
       status: membership.status,
       canEdit: membership.canEdit,
       canManageMembers: membership.canManageMembers,
+      showInStaff: membership.showInStaff,
     }));
 
     const venue = await this.venueRepo.findOne({
@@ -452,6 +556,7 @@ export class VenuesService {
           status: MembershipStatus.CONFIRMED,
           canEdit: true,
           canManageMembers: true,
+          showInStaff: true,
         });
       }
     }
@@ -494,6 +599,7 @@ export class VenuesService {
           status: MembershipStatus.CONFIRMED,
           canEdit: true,
           canManageMembers: true,
+          showInStaff: true,
         });
 
         await membershipRepo.save(ownerMembership);
@@ -578,6 +684,7 @@ export class VenuesService {
 
       membership.canEdit = flags.canEdit;
       membership.canManageMembers = flags.canManageMembers;
+      membership.showInStaff = flags.showInStaff;
       await membershipRepo.save(membership);
     });
   }
@@ -590,6 +697,10 @@ export class VenuesService {
     if (!(await this.checkEditRights(venueId, user))) {
       throw new ForbiddenException('Operation not permitted');
     }
+  }
+
+  async assertCanEditVenue(venueId: number, user: UserInfo): Promise<void> {
+    await this.assertEditRights(venueId, user);
   }
 
   private async checkManageMembersRights(venueId: number, user: UserInfo): Promise<boolean> {

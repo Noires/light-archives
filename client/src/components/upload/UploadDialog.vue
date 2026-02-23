@@ -200,6 +200,7 @@ export default class UploadDialog extends Vue.with(Props) {
     description: '',
     credits: '',
     event: null,
+    venue: null,
   };
 
   created() {
@@ -420,6 +421,10 @@ export default class UploadDialog extends Vue.with(Props) {
 
     if (this.detailsModel.event) {
       Object.assign(imageDto, { eventId: this.detailsModel.event.id });
+    }
+
+    if (this.detailsModel.venue) {
+      Object.assign(imageDto, { venueId: this.detailsModel.venue.id });
     }
 
     return this.$api.images.uploadImage(imageDto, convertedFile, filename);

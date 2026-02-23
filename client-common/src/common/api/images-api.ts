@@ -26,7 +26,12 @@ export default class ImagesAPI {
     formData.append('file', file, filename);
 
     const requestMap = request as unknown as { [k: string]: string | number };
-    Object.keys(requestMap).forEach((key) => formData.append(key, `${requestMap[key]}`));
+    Object.keys(requestMap).forEach((key) => {
+      const value = requestMap[key];
+      if (value !== undefined && value !== null) {
+        formData.append(key, `${value}`);
+      }
+    });
 
     return this.transport.authPost<ImageSummaryDto>('', formData);
   }

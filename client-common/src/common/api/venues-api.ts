@@ -16,6 +16,10 @@ export default class VenuesAPI {
 		return this.transport.get<VenueSummaryDto[]>('', filter);
 	}
 
+  async getEditableVenues(): Promise<VenueSummaryDto[]> {
+    return this.transport.authGet<VenueSummaryDto[]>('my-editable');
+  }
+
   async searchVenues(query: string, server?: string): Promise<VenueSummaryDto[]> {
     const params: QueryParams = server ? { query, server } : { query };
     return this.transport.get<VenueSummaryDto[]>('search', params);

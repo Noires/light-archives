@@ -26,13 +26,19 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Transform } from 'class-transformer';
-import { IsOptional } from 'class-validator';
+import { IsIn, IsOptional } from 'class-validator';
 import { EventsService } from './events.service';
 
 class GetEventParamDto {
   @IsOptional()
   @Transform((val) => val.value === 'true')
   edit?: boolean;
+}
+
+class VenueEventsQueryDto {
+  @IsOptional()
+  @IsIn(['upcoming', 'past', 'all'])
+  timeRange?: 'upcoming' | 'past' | 'all';
 }
 
 @Controller('events')
@@ -59,8 +65,11 @@ export class EventsController {
   }
 
   @Get('/venue/:id')
-  async getEventsForVenue(@Param('id', ParseIntPipe) id: number): Promise<EventSummaryDto[]> {
-    return this.eventsService.getEventsForVenue(id);
+  async getEventsForVenue(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() query: VenueEventsQueryDto,
+  ): Promise<EventSummaryDto[]> {
+    return this.eventsService.getEventsForVenue(id, query.timeRange || 'upcoming');
   }
 
   @Get('/:id')

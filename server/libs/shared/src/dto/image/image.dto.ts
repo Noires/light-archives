@@ -17,4 +17,7 @@ export interface ImageDto {
   authorServer: string;
   eventId: number|null;
   eventTitle: string|null;
+  venueId: number|null;
+  venueName: string|null;
+  venueServer: string|null;
 }

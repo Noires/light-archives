@@ -7,6 +7,9 @@ export class VenueMemberFlagsDto {
   @IsBoolean()
   canManageMembers: boolean;
 
+  @IsBoolean()
+  showInStaff: boolean;
+
   constructor(properties?: Readonly<VenueMemberFlagsDto>) {
     if (properties) {
       Object.assign(this, properties);

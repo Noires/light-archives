@@ -8,4 +8,5 @@ export interface VenueMemberDto {
   status: MembershipStatus;
   canEdit: boolean;
   canManageMembers: boolean;
+  showInStaff: boolean;
 }

@@ -1,6 +1,6 @@
 import { UserInfo } from '@app/auth/model/user-info';
 import { serverConfiguration } from '@app/configuration';
-import { Character, NoticeboardItem } from '@app/entity';
+import { Character, NoticeboardItem, Venue } from '@app/entity';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { NoticeboardItemSummaryDto } from '@app/shared/dto/noticeboard/noticeboard-item-summary.dto';
 import { NoticeboardItemDto } from '@app/shared/dto/noticeboard/noticeboard-item.dto';
@@ -9,9 +9,10 @@ import html from '@app/shared/html';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Connection, IsNull, Not, Repository } from 'typeorm';
+import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
 import { firstValueFrom } from 'rxjs';
 import { getVerifiedCharacter } from '../../../common/api-checks';
+import { VenuesService } from '../venues/venues.service';
 
 @Injectable()
 export class NoticeboardService {
@@ -21,6 +22,7 @@ export class NoticeboardService {
     private connection: Connection,
     @InjectRepository(NoticeboardItem) private noticeboardItemRepo: Repository<NoticeboardItem>,
 		private readonly httpService: HttpService,
+    private readonly venuesService: VenuesService,
   ) {}
 
   async getNoticeboardItem(id: number, user?: UserInfo): Promise<NoticeboardItemDto> {
@@ -29,8 +31,10 @@ export class NoticeboardService {
       .innerJoinAndSelect('noticeboardItem.owner', 'character')
       .innerJoinAndSelect('character.user', 'user')
       .innerJoinAndSelect('character.server', 'server')
+      .leftJoinAndSelect('noticeboardItem.venue', 'venue')
+      .leftJoinAndSelect('venue.server', 'venueServer')
       .where('noticeboardItem.id = :id', { id })
-      .select(['noticeboardItem', 'character.id', 'character.name', 'user.id', 'server.name'])
+      .select(['noticeboardItem', 'character.id', 'character.name', 'user.id', 'server.name', 'venue.id', 'venue.name', 'venueServer.name'])
       .getOne();
 
     if (!noticeboardItem) {
@@ -47,6 +51,9 @@ export class NoticeboardService {
       createdAt: noticeboardItem.createdAt!.getTime(),
       location: noticeboardItem.location,
       type: noticeboardItem.type,
+      venueId: noticeboardItem.venue ? noticeboardItem.venue.id : undefined,
+      venueName: noticeboardItem.venue ? noticeboardItem.venue.name : undefined,
+      venueServer: noticeboardItem.venue ? noticeboardItem.venue.server.name : undefined,
     });
   }
 
@@ -85,6 +92,7 @@ export class NoticeboardService {
         owner: {
           id: character.id,
         },
+        venue: await this.resolveVenue(noticeboardItemDto.venueId, user, em),
         title: noticeboardItemDto.title,
         content: html.sanitize(noticeboardItemDto.content),
         location: noticeboardItemDto.location,
@@ -120,6 +128,7 @@ export class NoticeboardService {
       }
 
       Object.assign(noticeboardItem, {
+        venue: await this.resolveVenue(noticeboardItemDto.venueId, user, em),
         title: noticeboardItemDto.title,
         content: html.sanitize(noticeboardItemDto.content),
         location: noticeboardItemDto.location,
@@ -150,18 +159,38 @@ export class NoticeboardService {
     });
   }
 
-  async getNoticeboardItemList(params: { characterId?: number; limit?: number }): Promise<NoticeboardItemSummaryDto[]> {
+  async getNoticeboardItemList(params: { characterId?: number; venueId?: number; limit?: number }): Promise<NoticeboardItemSummaryDto[]> {
     const query = this.noticeboardItemRepo
       .createQueryBuilder('noticeboardItem')
       .innerJoinAndSelect('noticeboardItem.owner', 'character')
+      .leftJoinAndSelect('noticeboardItem.venue', 'venue')
+      .leftJoinAndSelect('venue.server', 'venueServer')
       .orderBy('noticeboardItem.createdAt', 'DESC')
-      .select(['noticeboardItem.id', 'character.name', 'noticeboardItem.title', 'noticeboardItem.createdAt', 'noticeboardItem.location', 'noticeboardItem.type'])
+      .select([
+        'noticeboardItem.id',
+        'character.name',
+        'noticeboardItem.title',
+        'noticeboardItem.createdAt',
+        'noticeboardItem.location',
+        'noticeboardItem.type',
+        'venue.id',
+        'venue.name',
+        'venueServer.name',
+      ])
       .limit(params.limit);
 
     if (params.characterId) {
       query.where('character.id = :characterId', {
         characterId: params.characterId,
       });
+    }
+
+    if (params.venueId) {
+      if (params.characterId) {
+        query.andWhere('venue.id = :venueId', { venueId: params.venueId });
+      } else {
+        query.where('venue.id = :venueId', { venueId: params.venueId });
+      }
     }
 
     const noticeboardItems = await query.getMany();
@@ -173,7 +202,31 @@ export class NoticeboardService {
       createdAt: noticeboardItem.createdAt!.getTime(),
       location: noticeboardItem.location,
       type: noticeboardItem.type,
+      venueId: noticeboardItem.venue ? noticeboardItem.venue.id : undefined,
+      venueName: noticeboardItem.venue ? noticeboardItem.venue.name : undefined,
+      venueServer: noticeboardItem.venue ? noticeboardItem.venue.server.name : undefined,
     }));
+  }
+
+  private async resolveVenue(
+    venueId: number | undefined,
+    user: UserInfo,
+    em: EntityManager,
+  ): Promise<Venue | null> {
+    if (!venueId) {
+      return null;
+    }
+
+    await this.venuesService.assertCanEditVenue(venueId, user);
+    const venue = await em.getRepository(Venue).findOne({
+      where: { id: venueId },
+    });
+
+    if (!venue) {
+      throw new NotFoundException('Venue not found');
+    }
+
+    return venue;
   }
 
 	private async notifySteward(noticeboardItem: NoticeboardItem): Promise<void> {

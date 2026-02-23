@@ -51,7 +51,20 @@ export class NoticeboardController {
 	}
 
 	@Get()
-	async getNoticeboardItemList(@Query('characterId') characterId?: string): Promise<NoticeboardItemSummaryDto[]> {
-		return this.noticeboardService.getNoticeboardItemList(characterId ? { characterId : parseInt(characterId, 10) } : {});
+	async getNoticeboardItemList(
+    @Query('characterId') characterId?: string,
+    @Query('venueId') venueId?: string,
+  ): Promise<NoticeboardItemSummaryDto[]> {
+    const params: { characterId?: number; venueId?: number } = {};
+
+    if (characterId) {
+      params.characterId = parseInt(characterId, 10);
+    }
+
+    if (venueId) {
+      params.venueId = parseInt(venueId, 10);
+    }
+
+		return this.noticeboardService.getNoticeboardItemList(params);
 	}
 }

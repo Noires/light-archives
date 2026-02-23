@@ -141,6 +141,21 @@
           <banner-edit-section v-model="venue.banner" />
           <h6>Beschreibung</h6>
           <html-editor v-model="venue.description" />
+          <h6>Unterseiten</h6>
+          <q-checkbox v-model="venue.showRules" label="Regeln anzeigen" />
+          <html-editor v-if="venue.showRules" v-model="venue.rules" />
+          <q-checkbox v-model="venue.showPremises" label="Raeumlichkeiten anzeigen" />
+          <html-editor v-if="venue.showPremises" v-model="venue.premises" />
+          <q-checkbox v-model="venue.showMenu" label="Speisekarte anzeigen" />
+          <html-editor v-if="venue.showMenu" v-model="venue.menu" />
+          <q-checkbox v-model="venue.showStaff" label="Mitarbeiterseite anzeigen" />
+          <q-checkbox v-model="venue.showJobs" label="Stellenangebote anzeigen (aus Anschlagbrett)" />
+          <q-checkbox v-model="venue.showOoc" label="OOC-Seite anzeigen" />
+          <html-editor v-if="venue.showOoc" v-model="venue.ooc" />
+          <q-checkbox v-model="venue.showMedia" label="Medienseite anzeigen (aus Galerie)" />
+          <q-checkbox v-model="venue.showEvents" label="Eventseite anzeigen" />
+          <q-checkbox v-model="venue.showNetwork" label="Vernetzung anzeigen" />
+          <html-editor v-if="venue.showNetwork" v-model="venue.network" />
           <h6>Event-Vorlage</h6>
           <q-input
             v-model="venue.eventContact"
@@ -320,6 +335,20 @@ export default class PageEditVenue extends Vue {
       this.venueBackup.eventOocDetails = this.venueBackup.eventOocDetails || '';
       this.venueBackup.eventContact = this.venueBackup.eventContact || '';
       this.venueBackup.eventLink = this.venueBackup.eventLink || '';
+      this.venueBackup.showRules = !!this.venueBackup.showRules;
+      this.venueBackup.rules = this.venueBackup.rules || '';
+      this.venueBackup.showPremises = !!this.venueBackup.showPremises;
+      this.venueBackup.premises = this.venueBackup.premises || '';
+      this.venueBackup.showMenu = !!this.venueBackup.showMenu;
+      this.venueBackup.menu = this.venueBackup.menu || '';
+      this.venueBackup.showStaff = !!this.venueBackup.showStaff;
+      this.venueBackup.showJobs = !!this.venueBackup.showJobs;
+      this.venueBackup.showOoc = !!this.venueBackup.showOoc;
+      this.venueBackup.ooc = this.venueBackup.ooc || '';
+      this.venueBackup.showMedia = !!this.venueBackup.showMedia;
+      this.venueBackup.showEvents = !!this.venueBackup.showEvents;
+      this.venueBackup.showNetwork = !!this.venueBackup.showNetwork;
+      this.venueBackup.network = this.venueBackup.network || '';
     } else {
       this.venueId = null;
       this.venueBackup = new VenueDto({
@@ -347,6 +376,20 @@ export default class PageEditVenue extends Vue {
         eventContact: '',
         eventLink: '',
         eventContentNotes: [],
+        showRules: false,
+        rules: '',
+        showPremises: false,
+        premises: '',
+        showMenu: false,
+        menu: '',
+        showStaff: false,
+        showJobs: false,
+        showOoc: false,
+        ooc: '',
+        showMedia: false,
+        showEvents: false,
+        showNetwork: false,
+        network: '',
       });
     }
 

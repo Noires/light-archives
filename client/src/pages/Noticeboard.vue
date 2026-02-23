@@ -136,7 +136,7 @@ export default class PageNoticeboard extends Vue {
       if (!query) {
         return true;
       }
-      const haystack = `${item.title} ${item.author} ${this.$display.noticeboardLocations[item.location]} ${this.$display.noticeboardTypes[item.type] || ''}`.toLowerCase();
+      const haystack = `${item.title} ${item.author} ${item.venueName || ''} ${item.venueServer || ''} ${this.$display.noticeboardLocations[item.location]} ${this.$display.noticeboardTypes[item.type] || ''}`.toLowerCase();
       return haystack.includes(query);
     });
   }

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="noticeboard-item-view">
     <h2 class="noticeboard-item-view__title">{{ noticeboardItem.title }}</h2>
     <section class="text-caption noticeboard-item-view__subtitle row">
@@ -6,7 +6,10 @@
         Verfasst von <router-link :to="authorLink">{{ noticeboardItem.author }}</router-link> am {{ date }}
       </div>
       <div class="noticeboard-item-view__type">
-        {{ $display.noticeboardTypes[noticeboardItem.type] || 'Aushang' }} · {{ $display.noticeboardLocations[noticeboardItem.location] }}
+        {{ $display.noticeboardTypes[noticeboardItem.type] || 'Aushang' }} - {{ $display.noticeboardLocations[noticeboardItem.location] }}
+        <template v-if="noticeboardItem.venueName && noticeboardItem.venueServer">
+          - <router-link :to="venueLink">{{ noticeboardItem.venueName }}</router-link>
+        </template>
       </div>
     </section>
     <hr />
@@ -47,6 +50,14 @@ export default class NoticeboardItemView extends Vue.with(Props) {
     const server = this.noticeboardItem.authorServer || '';
     const character = this.noticeboardItem.author?.replace(/ /g, '_') || '';
     return `/${server}/${character}`;
+  }
+
+  get venueLink(): string {
+    if (!this.noticeboardItem.venueServer || !this.noticeboardItem.venueName) {
+      return '/venues';
+    }
+
+    return `/venue/${this.noticeboardItem.venueServer}/${this.noticeboardItem.venueName.replace(/ /g, '_')}`;
   }
 }
 </script>

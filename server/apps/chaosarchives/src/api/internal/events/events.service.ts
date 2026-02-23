@@ -612,9 +612,12 @@ export class EventsService {
     return Promise.all(events.map((event) => this.toEventSummaryDto(event)));
   }
 
-  async getEventsForVenue(venueId: number): Promise<EventSummaryDto[]> {
+  async getEventsForVenue(
+    venueId: number,
+    timeRange: 'upcoming' | 'past' | 'all' = 'upcoming',
+  ): Promise<EventSummaryDto[]> {
     const startOfDay = DateTime.now().setZone(SharedConstants.FFXIV_SERVER_TIMEZONE).startOf('day');
-    const events = await this.eventRepo
+    const query = this.eventRepo
       .createQueryBuilder('event')
       .leftJoinAndSelect('event.locations', 'location')
       .leftJoinAndSelect('location.server', 'server')
@@ -623,16 +626,32 @@ export class EventsService {
       .leftJoinAndSelect('icon.owner', 'iconOwner')
       .leftJoinAndSelect('event.contentNotes', 'contentNotes')
       .where('venue.id = :venueId', { venueId })
-      .andWhere('event.hidden = :hidden', { hidden: false })
-      .andWhere('(event.startDateTime >= :startOfDay OR event.endDateTime >= :startOfDay)', {
+      .andWhere('event.hidden = :hidden', { hidden: false });
+
+    if (timeRange === 'upcoming') {
+      query.andWhere('(event.startDateTime >= :startOfDay OR event.endDateTime >= :startOfDay)', {
         startOfDay: startOfDay.toJSDate(),
-      })
-      .orderBy({
+      });
+      query.orderBy({
         'event.startDateTime': 'ASC',
         'event.createdAt': 'ASC',
-      })
-      .distinct(true)
-      .getMany();
+      });
+    } else if (timeRange === 'past') {
+      query.andWhere('(event.endDateTime < :startOfDay OR (event.endDateTime IS NULL AND event.startDateTime < :startOfDay))', {
+        startOfDay: startOfDay.toJSDate(),
+      });
+      query.orderBy({
+        'event.startDateTime': 'DESC',
+        'event.createdAt': 'DESC',
+      });
+    } else {
+      query.orderBy({
+        'event.startDateTime': 'ASC',
+        'event.createdAt': 'ASC',
+      });
+    }
+
+    const events = await query.distinct(true).getMany();
 
     return Promise.all(events.map((event) => this.toEventSummaryDto(event)));
   }

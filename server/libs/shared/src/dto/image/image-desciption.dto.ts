@@ -20,6 +20,11 @@ export class ImageDescriptionDto {
 	@IsOptional()
 	readonly eventId?: number;
 
+	@Type(() => Number)
+	@IsNumber()
+	@IsOptional()
+	readonly venueId?: number;
+
 	constructor(properties?: Readonly<ImageDescriptionDto>) {
     if (properties) {
       Object.assign(this, properties);

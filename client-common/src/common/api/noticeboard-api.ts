@@ -10,7 +10,7 @@ export default class NoticeboardAPI {
     this.transport = transport.atPath('noticeboard');
   }
 
-  async getNoticeboardItems(params: { characterId?: number }): Promise<NoticeboardItemSummaryDto[]> {
+  async getNoticeboardItems(params: { characterId?: number; venueId?: number }): Promise<NoticeboardItemSummaryDto[]> {
     return this.transport.get<NoticeboardItemSummaryDto[]>('', params);
   }
 

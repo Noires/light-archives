@@ -89,6 +89,95 @@ export class Venue extends BasicEntity {
 	status: string;
 
   @Column({
+    type: 'mediumtext',
+    nullable: false,
+    default: '',
+  })
+  rules: string;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  showRules: boolean;
+
+  @Column({
+    type: 'mediumtext',
+    nullable: false,
+    default: '',
+  })
+  premises: string;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  showPremises: boolean;
+
+  @Column({
+    type: 'mediumtext',
+    nullable: false,
+    default: '',
+  })
+  menu: string;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  showMenu: boolean;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  showStaff: boolean;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  showJobs: boolean;
+
+  @Column({
+    type: 'mediumtext',
+    nullable: false,
+    default: '',
+  })
+  ooc: string;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  showOoc: boolean;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  showMedia: boolean;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  showEvents: boolean;
+
+  @Column({
+    type: 'mediumtext',
+    nullable: false,
+    default: '',
+  })
+  network: string;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  showNetwork: boolean;
+
+  @Column({
     nullable: false,
     width: 100,
     default: ''

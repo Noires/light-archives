@@ -8,4 +8,7 @@ export interface NoticeboardItemSummaryDto {
 	createdAt: number;
 	location: NoticeboardLocation;
 	type: NoticeboardType;
+	venueId?: number;
+	venueName?: string;
+	venueServer?: string;
 }

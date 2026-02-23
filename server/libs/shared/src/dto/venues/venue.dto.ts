@@ -5,6 +5,7 @@ import SharedConstants from '@app/shared/SharedConstants';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Max, Min, ValidateIf, ValidateNested } from 'class-validator';
 import { BannerDto } from '../characters/banner.dto';
+import { VenueStaffMemberDto } from './venue-staff-member.dto';
 
 export class VenueDto {
   @IsNumber()
@@ -25,6 +26,10 @@ export class VenueDto {
   @IsBoolean()
   @IsOptional()
   canManageMembers?: boolean;
+
+  @IsArray()
+  @IsOptional()
+  staff?: VenueStaffMemberDto[];
 
 	@Type(() => Number)
 	@IsNumber()
@@ -122,6 +127,62 @@ export class VenueDto {
   @IsString({ each: true })
   @IsOptional()
   eventContentNotes: string[];
+
+  @IsBoolean()
+  @IsOptional()
+  showRules?: boolean;
+
+  @IsString()
+  @IsOptional()
+  rules?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  showPremises?: boolean;
+
+  @IsString()
+  @IsOptional()
+  premises?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  showMenu?: boolean;
+
+  @IsString()
+  @IsOptional()
+  menu?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  showStaff?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  showJobs?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  showOoc?: boolean;
+
+  @IsString()
+  @IsOptional()
+  ooc?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  showMedia?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  showEvents?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  showNetwork?: boolean;
+
+  @IsString()
+  @IsOptional()
+  network?: string;
 	
 	constructor(properties?: Readonly<VenueDto>) {
     if (properties) {

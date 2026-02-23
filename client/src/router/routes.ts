@@ -428,7 +428,19 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
+    path: '/venue/:server/:name/:section',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/Venue.vue') }],
+  },
+
+  {
     path: '/venue/:server/:name',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/Venue.vue') }],
+  },
+
+  { 
+    path: '/venue/:id([0-9]+)/:section',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/Venue.vue') }],
   },

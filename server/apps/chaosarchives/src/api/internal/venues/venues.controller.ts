@@ -30,6 +30,12 @@ export class VenuesController {
 		return this.venuesService.getVenues(filter);
 	}
 
+  @Get('my-editable')
+  @RoleRequired(Role.USER)
+  async getEditableVenues(@CurrentUser() user: UserInfo): Promise<VenueSummaryDto[]> {
+    return this.venuesService.getEditableVenues(user);
+  }
+
 	@Get('search')
 	async searchVenues(@Query('query') query: string, @Query('server') server?: string): Promise<VenueSummaryDto[]> {
 		return this.venuesService.searchVenues(query, server);
