@@ -170,9 +170,6 @@
                     </template>
                   </template>
                 </section>
-              </section>
-
-              <section v-else-if="editSection === 'display'" class="page-edit-venue__section">
                 <h6>Treffpunktanzeige</h6>
                 <p>
                   Zur Erweiterung des Treffpunkts können weitere Unterpunkte hinzugeschaltet werden.
@@ -353,7 +350,7 @@ const $api = useApi();
 const $router = useRouter();
 const isDirty = ref(false);
 
-type EditVenueSection = 'basic' | 'display' | 'rules' | 'premises' | 'menu' | 'staff' | 'jobs' | 'ooc' | 'media' | 'events' | 'network';
+type EditVenueSection = 'basic' | 'rules' | 'premises' | 'menu' | 'staff' | 'jobs' | 'ooc' | 'media' | 'events' | 'network';
 
 type EditSectionItem = {
   id: EditVenueSection;
@@ -591,7 +588,6 @@ export default class PageEditVenue extends Vue {
   get visibleEditSections(): EditSectionItem[] {
     const sections: EditSectionItem[] = [
       { id: 'basic', label: 'Basisdaten', icon: 'storefront' },
-      { id: 'display', label: 'Treffpunktanzeige', icon: 'visibility' },
     ];
 
     if (this.venue.showRules) sections.push({ id: 'rules', label: 'Regeln', icon: 'gavel' });
@@ -619,7 +615,7 @@ export default class PageEditVenue extends Vue {
 
   private ensureVisibleEditSection() {
     if (!this.visibleEditSections.some((section) => section.id === this.editSection)) {
-      this.editSection = 'display';
+      this.editSection = 'basic';
     }
   }
 

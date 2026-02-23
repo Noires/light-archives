@@ -60,6 +60,28 @@
     <q-page class="page-venue">
       <q-page-container>
         <template v-if="venue.id">
+          <section
+            v-if="!hasSectionMenu && (venue.canEdit || venue.mine)"
+            class="page-venue__edit-bar"
+          >
+            <q-btn
+              v-if="venue.canEdit"
+              color="secondary"
+              outline
+              icon="edit"
+              label="Bearbeiten"
+              :to="`/edit-venue/${venue.id}`"
+            />
+            <q-btn
+              v-if="venue.mine"
+              color="negative"
+              flat
+              round
+              icon="delete"
+              @click="onDeleteClick"
+            />
+          </section>
+
           <section v-if="!$store.getters.characterId"><!-- Not logged in --></section>
           <section v-else-if="!venue.canEdit && !venue.membershipStatus" class="page-venue__join-button-bar">
             <q-btn outline color="primary" label="Treffpunkt beitreten" @click="onJoinClick" />
@@ -644,6 +666,14 @@ body.body--dark .page-venue-layout__delete-item:hover {
   margin-bottom: 8px;
 }
 
+.page-venue__edit-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
 .page-venue__membership-status {
   margin: 10px 0 14px;
   padding: 12px 14px;
@@ -718,6 +748,10 @@ body.body--dark .page-venue-layout__delete-item:hover {
 }
 
 @media screen and (max-width: $breakpoint-sm) {
+  .page-venue__edit-bar {
+    justify-content: flex-start;
+  }
+
   .page-venue__section-header {
     flex-direction: column;
     align-items: flex-start;
