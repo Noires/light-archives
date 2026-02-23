@@ -10,13 +10,13 @@ import { MainPageService } from './main-page.service';
 
 @Controller('main-page')
 export class MainPageController {
-  private readonly MAX_STORIES = 10;
+  private readonly MAX_STORIES = 3;
 
-  private readonly MAX_NOTICEBOARD_ITEMS = 7;
+  private readonly MAX_NOTICEBOARD_ITEMS = 3;
 
-  private readonly MAX_NEW_VENUES = 7;
+  private readonly MAX_NEW_VENUES = 3;
 
-  private readonly MAX_NEW_COMMUNITIES = 7;
+  private readonly MAX_NEW_COMMUNITIES = 3;
 
   constructor(
     private readonly newsService: NewsService,
@@ -37,7 +37,7 @@ export class MainPageController {
         this.storiesService.getStoryList({ limit: this.MAX_STORIES }),
         this.noticeboardService.getNoticeboardItemList({ limit: this.MAX_NOTICEBOARD_ITEMS }),
         this.venuesService.getVenues({ limit: this.MAX_NEW_VENUES }),
-        this.communitiesService.getCommunities({ limit: this.MAX_NEW_VENUES }, true),
+        this.communitiesService.getCommunities({ limit: this.MAX_NEW_COMMUNITIES }, true),
       ]);
 
     mainPageContent.news = newsResult;

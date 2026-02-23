@@ -55,7 +55,7 @@
     </header>
 
     <section class="page-index__grid">
-      <section id="neueste-aenderungen" class="page-index__panel page-index__panel--wide">
+      <section id="neueste-aenderungen" class="page-index__panel page-index__panel--wide page-index__section--changes">
         <div class="page-index__panel-header">
           <h5>Neueste Änderungen</h5>
           <router-link class="page-index__panel-link" to="/changes">Komplette Liste</router-link>
@@ -74,6 +74,7 @@
                   {{ entry.title }}
                 </q-item-label>
                 <q-item-label caption class="page-index__changes-meta">
+                  <q-icon :name="changeAreaIcon(entry.area)" size="14px" class="page-index__changes-icon" />
                   {{ changeAreaLabel(entry.area) }} · {{ changeTypeLabel(entry.type) }}
                   <template v-if="entry.author"> · von {{ entry.author }}</template>
                 </q-item-label>
@@ -87,7 +88,7 @@
         </div>
       </section>
 
-      <section class="page-index__panel page-index__panel--wide">
+      <section class="page-index__panel page-index__section--stories">
         <div class="page-index__panel-header">
           <h5>Neue Geschichten</h5>
           <router-link class="page-index__panel-link" to="/stories">Alle Geschichten</router-link>
@@ -115,39 +116,39 @@
         </div>
       </section>
 
-      <section class="page-index__panel">
+      <section class="page-index__panel page-index__panel--media page-index__section--artwork">
         <div class="page-index__panel-header">
           <h5>Neue Kunstwerke</h5>
           <router-link class="page-index__panel-link" to="/gallery/artwork">Zur Galerie</router-link>
         </div>
         <div class="page-index__panel-content">
-          <thumb-gallery v-if="content.newArtwork.length" :images="content.newArtwork" />
+          <thumb-gallery v-if="latestArtwork.length" :images="latestArtwork" />
           <div v-else class="page-index__empty">Noch keine neuen Kunstwerke.</div>
         </div>
       </section>
 
-      <section class="page-index__panel">
+      <section class="page-index__panel page-index__section--noticeboard">
         <div class="page-index__panel-header">
           <h5>Neue Aushänge</h5>
           <router-link class="page-index__panel-link" to="/noticeboard">Zum Anschlagbrett</router-link>
         </div>
         <div class="page-index__panel-content page-index__panel-content--flush">
           <noticeboard-item-list
-            v-if="content.newNoticeboardItems.length"
-            :noticeboard-items="content.newNoticeboardItems"
+            v-if="latestNoticeboardItems.length"
+            :noticeboard-items="latestNoticeboardItems"
           />
           <div v-else class="page-index__empty page-index__empty--padded">Noch keine neuen Aushänge.</div>
         </div>
       </section>
 
-      <section class="page-index__panel">
+      <section class="page-index__panel page-index__section--profiles">
         <div class="page-index__panel-header">
           <h5>Neue Charaktere</h5>
           <router-link class="page-index__panel-link" to="/profiles">Alle Charaktere</router-link>
         </div>
         <div class="page-index__panel-content">
-          <div v-if="content.newProfiles.length" class="page-index__profiles-grid">
-            <div v-for="profile in content.newProfiles" :key="`${profile.name}-${profile.server}`" class="page-characters__card">
+          <div v-if="latestProfiles.length" class="page-index__profiles-grid">
+            <div v-for="profile in latestProfiles" :key="`${profile.name}-${profile.server}`" class="page-characters__card">
               <router-link :to="getProfileLink(profile)" class="page-characters__card-link">
                 <q-avatar round size="56px" class="page-characters__card-avatar">
                   <img :src="profile.avatar" />
@@ -165,49 +166,49 @@
         </div>
       </section>
 
-      <section class="page-index__panel">
+      <section class="page-index__panel page-index__section--free-companies">
         <div class="page-index__panel-header">
           <h5>Neue Freie Gesellschaften</h5>
           <router-link class="page-index__panel-link" to="/free-companies">Alle Gesellschaften</router-link>
         </div>
         <div class="page-index__panel-content page-index__panel-content--flush">
           <free-company-name-list
-            v-if="content.newFreeCompanies.length"
-            :free-companies="content.newFreeCompanies"
+            v-if="latestFreeCompanies.length"
+            :free-companies="latestFreeCompanies"
           />
           <div v-else class="page-index__empty page-index__empty--padded">Noch keine neuen Gesellschaften.</div>
         </div>
       </section>
 
-      <section class="page-index__panel">
+      <section class="page-index__panel page-index__section--venues">
         <div class="page-index__panel-header">
           <h5>Neue Treffpunkte</h5>
           <router-link class="page-index__panel-link" to="/venues">Alle Treffpunkte</router-link>
         </div>
         <div class="page-index__panel-content page-index__panel-content--flush">
-          <venue-list v-if="content.newVenues.length" :venues="content.newVenues" />
+          <venue-list v-if="latestVenues.length" :venues="latestVenues" />
           <div v-else class="page-index__empty page-index__empty--padded">Noch keine neuen Treffpunkte.</div>
         </div>
       </section>
 
-      <section class="page-index__panel">
+      <section class="page-index__panel page-index__section--communities">
         <div class="page-index__panel-header">
           <h5>Neue Communities</h5>
           <router-link class="page-index__panel-link" to="/communities">Alle Communities</router-link>
         </div>
         <div class="page-index__panel-content page-index__panel-content--flush">
-          <community-list v-if="content.newCommunities.length" :communities="content.newCommunities" />
+          <community-list v-if="latestCommunities.length" :communities="latestCommunities" />
           <div v-else class="page-index__empty page-index__empty--padded">Noch keine neuen Communities.</div>
         </div>
       </section>
 
-      <section class="page-index__panel page-index__panel--wide">
+      <section class="page-index__panel page-index__panel--media page-index__section--screenshots">
         <div class="page-index__panel-header">
           <h5>Neue Screenshots</h5>
           <router-link class="page-index__panel-link" to="/gallery/screenshot">Zur Galerie</router-link>
         </div>
         <div class="page-index__panel-content">
-          <thumb-gallery v-if="content.newScreenshots.length" :images="content.newScreenshots" />
+          <thumb-gallery v-if="latestScreenshots.length" :images="latestScreenshots" />
           <div v-else class="page-index__empty">Noch keine neuen Screenshots.</div>
         </div>
       </section>
@@ -231,7 +232,7 @@ import FreeCompanyNameList from 'src/components/free-company/FreeCompanyNameList
 import { Options, Vue } from 'vue-class-component';
 
 const $api = useApi();
-const RECENT_CHANGES_LIMIT = 6;
+const RECENT_CHANGES_LIMIT = 3;
 
 interface MainPageChangesApiClient {
   getMainPageContent(): Promise<MainPageContentDto>;
@@ -319,7 +320,35 @@ export default class PageIndex extends Vue {
   }
 
   get latestStories() {
-    return this.content.newStories.slice(0, 5);
+    return this.content.newStories.slice(0, 3);
+  }
+
+  get latestNoticeboardItems() {
+    return this.content.newNoticeboardItems.slice(0, 3);
+  }
+
+  get latestProfiles() {
+    return this.content.newProfiles.slice(0, 6);
+  }
+
+  get latestFreeCompanies() {
+    return this.content.newFreeCompanies.slice(0, 3);
+  }
+
+  get latestVenues() {
+    return this.content.newVenues.slice(0, 3);
+  }
+
+  get latestCommunities() {
+    return this.content.newCommunities.slice(0, 3);
+  }
+
+  get latestScreenshots() {
+    return this.content.newScreenshots.slice(0, 6);
+  }
+
+  get latestArtwork() {
+    return this.content.newArtwork.slice(0, 6);
   }
 
   getProfileLink(profile: MainPageContentDto['newProfiles'][number]) {
@@ -339,6 +368,21 @@ export default class PageIndex extends Vue {
     };
 
     return labels[area];
+  }
+
+  changeAreaIcon(area: ChangeArea): string {
+    const icons: Record<ChangeArea, string> = {
+      [ChangeArea.PROFILE]: 'person',
+      [ChangeArea.VENUE]: 'place',
+      [ChangeArea.COMMUNITY]: 'groups',
+      [ChangeArea.FREE_COMPANY]: 'shield',
+      [ChangeArea.STORY]: 'menu_book',
+      [ChangeArea.NOTICEBOARD]: 'campaign',
+      [ChangeArea.EVENT]: 'event',
+      [ChangeArea.MEDIA]: 'photo_library',
+    };
+
+    return icons[area];
   }
 
   changeTypeLabel(type: ChangeType): string {
@@ -523,6 +567,42 @@ export default class PageIndex extends Vue {
   grid-column: span 2;
 }
 
+.page-index__section--changes {
+  order: 1;
+}
+
+.page-index__section--noticeboard {
+  order: 2;
+}
+
+.page-index__section--stories {
+  order: 3;
+}
+
+.page-index__section--profiles {
+  order: 4;
+}
+
+.page-index__section--free-companies {
+  order: 5;
+}
+
+.page-index__section--venues {
+  order: 6;
+}
+
+.page-index__section--communities {
+  order: 7;
+}
+
+.page-index__section--screenshots {
+  order: 8;
+}
+
+.page-index__section--artwork {
+  order: 9;
+}
+
 .page-index__panel-header {
   display: flex;
   justify-content: space-between;
@@ -599,6 +679,20 @@ export default class PageIndex extends Vue {
   z-index: 2;
 }
 
+.page-index__panel--media .thumb-gallery > div {
+  width: calc(((100% - 36px) / 3) + 12px);
+}
+
+.page-index__panel--media .thumb-gallery__image-wrapper {
+  width: calc(100% - 12px);
+}
+
+.page-index__panel--media .thumb-gallery img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+
 .page-index__changes-list {
   padding: 0;
 }
@@ -620,8 +714,15 @@ export default class PageIndex extends Vue {
 }
 
 .page-index__changes-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: rgba(35, 35, 35, 0.64);
   font-size: 0.82rem;
+}
+
+.page-index__changes-icon {
+  color: #8b673a;
 }
 
 .page-index__changes-time {
@@ -655,9 +756,9 @@ export default class PageIndex extends Vue {
 .page-index .page-stories__card-link {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 18px;
-  min-height: 200px;
+  gap: 10px;
+  padding: 14px;
+  min-height: 0;
   color: inherit;
   text-decoration: none;
 }
@@ -704,7 +805,7 @@ export default class PageIndex extends Vue {
   font-size: 0.92rem;
   line-height: 1.5;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -724,7 +825,7 @@ export default class PageIndex extends Vue {
 
 .page-index__profiles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -746,7 +847,8 @@ export default class PageIndex extends Vue {
   grid-template-columns: auto 1fr;
   gap: 12px;
   align-items: center;
-  padding: 16px;
+  min-height: 88px;
+  padding: 14px 16px;
   color: inherit;
   text-decoration: none;
 }
@@ -763,6 +865,23 @@ export default class PageIndex extends Vue {
 .page-index .page-characters__card-meta {
   color: rgba(35, 35, 35, 0.7);
   font-size: 0.85rem;
+}
+
+.page-index .free-company-name-list {
+  gap: 14px;
+  padding: 12px 16px 16px;
+}
+
+.page-index .free-company-name-list__item {
+  min-height: 88px;
+  padding: 14px 16px;
+}
+
+.page-index .free-company-name-list__goal {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .page-index__empty {
@@ -828,6 +947,10 @@ body.body--dark .page-index .page-stories__card-excerpt,
 body.body--dark .page-index .page-characters__card-meta,
 body.body--dark .page-index__empty {
   color: rgba(213, 226, 240, 0.74);
+}
+
+body.body--dark .page-index__changes-icon {
+  color: rgba(196, 221, 247, 0.84);
 }
 
 body.body--dark .page-index__welcome {
@@ -904,6 +1027,13 @@ body.body--dark .page-index .page-stories__card-link:focus-visible {
     padding: 16px;
   }
 
+  .page-index__profiles-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .page-index__panel--media .thumb-gallery > div {
+    width: calc(((100% - 24px) / 2) + 12px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

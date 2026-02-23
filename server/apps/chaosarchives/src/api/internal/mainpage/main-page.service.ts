@@ -11,11 +11,11 @@ import { ImagesService } from '../images/images.service';
 
 @Injectable()
 export class MainPageService {
-	private readonly MAX_NEW_PROFILES = 7;
+	private readonly MAX_NEW_PROFILES = 6;
 
-	private readonly MAX_NEW_FCS = 7;
+	private readonly MAX_NEW_FCS = 3;
 
-	private readonly MAX_NEW_IMAGES = 8;
+	private readonly MAX_NEW_IMAGES = 6;
 
 	constructor(
 		private imagesService: ImagesService,
