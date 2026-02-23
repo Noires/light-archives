@@ -1,153 +1,191 @@
-﻿<template>
-  <q-page class="page-venue">
-    <template v-if="venue.id">
-      <section v-if="!$store.getters.characterId"><!-- Not logged in --></section>
-      <section v-else-if="venue.canEdit" class="edit-bar">
-        <q-btn flat color="secondary" label="Treffpunkt bearbeiten" :to="`/edit-venue/${venue.id}`" />
-        <q-btn v-if="venue.mine" flat color="negative" label="Treffpunkt loeschen" @click="onDeleteClick" />
-      </section>
-      <section v-else-if="!venue.membershipStatus" class="page-venue__join-button-bar">
-        <q-btn outline color="primary" label="Treffpunkt beitreten" @click="onJoinClick" />
-      </section>
-      <section
-        v-else-if="venue.membershipStatus === MembershipStatus.APPLIED"
-        class="page-venue__edit-bar page-venue__membership-status"
-      >
-        Du hast eine Anfrage fuer eine Mitgliedschaft bei diesem Treffpunkt gesendet.
-      </section>
-      <section
-        v-else-if="venue.membershipStatus === MembershipStatus.REJECTED"
-        class="page-venue__edit-bar page-venue__membership-status"
-      >
-        Deine Mitgliedschaftsanfrage wurde abgelehnt.
-      </section>
-      <section
-        v-else-if="venue.membershipStatus === MembershipStatus.CONFIRMED"
-        class="page-venue__edit-bar page-venue__membership-status"
-      >
-        Du bist ein Mitglied dieses Treffpunkts.
-      </section>
-
-      <section class="page-venue__section-nav">
-        <q-btn
-          v-for="section in visibleSections"
-          :key="section.id"
-          dense
-          flat
-          :color="activeSection === section.id ? 'primary' : 'secondary'"
-          :label="section.label"
-          :to="sectionPath(section.id)"
-        />
-      </section>
-
-      <template v-if="activeSection === VenueSection.OVERVIEW">
-        <venue-profile :venue="venue" :planned-events="overviewEvents" />
-      </template>
-
-      <section v-else-if="activeSection === VenueSection.RULES" class="page-venue__content-box">
-        <h3>Regeln</h3>
-        <html-viewer v-if="venue.rules" :content="venue.rules" />
-        <p v-else>Keine Regeln eingetragen.</p>
-      </section>
-
-      <section v-else-if="activeSection === VenueSection.PREMISES" class="page-venue__content-box">
-        <h3>Raeumlichkeiten</h3>
-        <html-viewer v-if="venue.premises" :content="venue.premises" />
-        <p v-else>Keine Beschreibung der Raeumlichkeiten vorhanden.</p>
-      </section>
-
-      <section v-else-if="activeSection === VenueSection.MENU" class="page-venue__content-box">
-        <h3>Speisekarte</h3>
-        <html-viewer v-if="venue.menu" :content="venue.menu" />
-        <p v-else>Keine Speisekarte hinterlegt.</p>
-      </section>
-
-      <section v-else-if="activeSection === VenueSection.STAFF" class="page-venue__content-box">
-        <h3>Mitarbeiter</h3>
-        <div v-if="venue.staff && venue.staff.length" class="page-venue__staff-grid">
-          <router-link
-            v-for="member in venue.staff"
-            :key="`${member.server}_${member.name}`"
-            class="page-venue__staff-card"
-            :to="`/${member.server}/${member.name.replace(/ /g, '_')}`"
+<template>
+  <q-layout class="page-venue-layout rounded-borders no-outline">
+    <q-drawer
+      v-if="venue.id"
+      v-model="drawer"
+      class="page-venue-layout__drawer border-radius-inherit"
+      show-if-above
+      :mini="miniState"
+      :width="200"
+      :breakpoint="0"
+      @mouseover="miniState = false"
+      @mouseout="miniState = true"
+    >
+      <q-scroll-area class="fit" :horizontal-thumb-style="{ opacity: 0 }">
+        <q-list padding class="page-venue-layout__menu">
+          <q-item
+            v-for="section in visibleSections"
+            :key="section.id"
+            clickable
+            v-ripple
+            :active="activeSection === section.id"
+            active-class="page-venue-layout__menu-item--active"
+            @click="onSectionClick(section.id)"
           >
-            <q-avatar round size="56px">
-              <img :src="member.avatar" :alt="member.name" />
-            </q-avatar>
-            <div>
-              <div class="page-venue__staff-name">{{ member.name }}</div>
-              <div class="page-venue__staff-server">{{ member.server }}</div>
-            </div>
-          </router-link>
-        </div>
-        <p v-else>Keine sichtbaren Mitarbeiter eingetragen.</p>
-      </section>
+            <q-item-section avatar>
+              <q-icon :name="section.icon" />
+            </q-item-section>
+            <q-item-section>
+              {{ section.label }}
+            </q-item-section>
+          </q-item>
 
-      <section v-else-if="activeSection === VenueSection.JOBS" class="page-venue__content-box">
-        <div class="page-venue__section-header">
-          <h3>Stellenangebote</h3>
-          <q-btn
+          <q-item
             v-if="venue.canEdit"
-            flat
-            color="primary"
-            label="Neuen Job-Aushang erstellen"
-            :to="`/create-noticeboard-item?venueId=${venue.id}&type=${NoticeboardType.STELLENANGEBOT}`"
-          />
-        </div>
-        <noticeboard-item-list v-if="jobItems.length" :noticeboard-items="jobItems" />
-        <p v-else>Keine Stellenangebote oder Stellengesuche vorhanden.</p>
-      </section>
+            class="page-venue-layout__edit-item"
+            clickable
+            v-ripple
+            :to="`/edit-venue/${venue.id}`"
+          >
+            <q-item-section avatar>
+              <q-icon name="edit" />
+            </q-item-section>
+            <q-item-section>Bearbeiten</q-item-section>
+          </q-item>
+        </q-list>
+      </q-scroll-area>
+    </q-drawer>
 
-      <section v-else-if="activeSection === VenueSection.OOC" class="page-venue__content-box">
-        <h3>OOC</h3>
-        <html-viewer v-if="venue.ooc" :content="venue.ooc" />
-        <p v-else>Keine OOC-Informationen vorhanden.</p>
-      </section>
+    <q-page class="page-venue">
+      <q-page-container>
+        <template v-if="venue.id">
+          <section v-if="!$store.getters.characterId"><!-- Not logged in --></section>
+          <section v-else-if="venue.canEdit" class="page-venue__edit-bar">
+            <q-btn flat color="secondary" label="Treffpunkt bearbeiten" :to="`/edit-venue/${venue.id}`" />
+            <q-btn v-if="venue.mine" flat color="negative" label="Treffpunkt loeschen" @click="onDeleteClick" />
+          </section>
+          <section v-else-if="!venue.membershipStatus" class="page-venue__join-button-bar">
+            <q-btn outline color="primary" label="Treffpunkt beitreten" @click="onJoinClick" />
+          </section>
+          <section
+            v-else-if="venue.membershipStatus === MembershipStatus.APPLIED"
+            class="page-venue__membership-status"
+          >
+            Du hast eine Anfrage fuer eine Mitgliedschaft bei diesem Treffpunkt gesendet.
+          </section>
+          <section
+            v-else-if="venue.membershipStatus === MembershipStatus.REJECTED"
+            class="page-venue__membership-status"
+          >
+            Deine Mitgliedschaftsanfrage wurde abgelehnt.
+          </section>
+          <section
+            v-else-if="venue.membershipStatus === MembershipStatus.CONFIRMED"
+            class="page-venue__membership-status"
+          >
+            Du bist ein Mitglied dieses Treffpunkts.
+          </section>
 
-      <section v-else-if="activeSection === VenueSection.MEDIA" class="page-venue__content-box">
-        <h3>Medien</h3>
-        <thumb-gallery v-if="mediaItems.length" :images="mediaItems" />
-        <p v-else>Keine verknuepften Bilder vorhanden.</p>
-      </section>
+          <template v-if="activeSection === VenueSection.OVERVIEW">
+            <venue-profile :venue="venue" :planned-events="overviewEvents" />
+          </template>
 
-      <section v-else-if="activeSection === VenueSection.EVENTS" class="page-venue__content-box">
-        <h3>Aktuelle und kommende Events</h3>
-        <div v-if="upcomingEvents.length" class="page-venue__event-list">
-          <div v-for="event in upcomingEvents" :key="event.id" class="page-venue__event-item">
-            <router-link :to="`/event/${event.id}`">{{ event.title }}</router-link>
-            <div class="page-venue__event-time">{{ formatTimeRange(event) }}</div>
-          </div>
-        </div>
-        <p v-else>Keine aktuellen oder kommenden Events.</p>
+          <section v-else-if="activeSection === VenueSection.RULES" class="page-venue__content-box">
+            <h3>Regeln</h3>
+            <html-viewer v-if="venue.rules" :content="venue.rules" />
+            <p v-else>Keine Regeln eingetragen.</p>
+          </section>
 
-        <h3 class="page-venue__past-events-title">Vergangene Events</h3>
-        <div v-if="pastEvents.length" class="page-venue__event-list">
-          <div v-for="event in pastEvents" :key="`past_${event.id}`" class="page-venue__event-item">
-            <router-link :to="`/event/${event.id}`">{{ event.title }}</router-link>
-            <div class="page-venue__event-time">{{ formatTimeRange(event) }}</div>
-          </div>
-        </div>
-        <p v-else>Keine vergangenen Events gefunden.</p>
-      </section>
+          <section v-else-if="activeSection === VenueSection.PREMISES" class="page-venue__content-box">
+            <h3>Raeumlichkeiten</h3>
+            <html-viewer v-if="venue.premises" :content="venue.premises" />
+            <p v-else>Keine Beschreibung der Raeumlichkeiten vorhanden.</p>
+          </section>
 
-      <section v-else-if="activeSection === VenueSection.NETWORK" class="page-venue__content-box">
-        <h3>Vernetzung</h3>
-        <html-viewer v-if="venue.network" :content="venue.network" />
-        <p v-else>Keine Vernetzungsinformationen vorhanden.</p>
-      </section>
+          <section v-else-if="activeSection === VenueSection.MENU" class="page-venue__content-box">
+            <h3>Speisekarte</h3>
+            <html-viewer v-if="venue.menu" :content="venue.menu" />
+            <p v-else>Keine Speisekarte hinterlegt.</p>
+          </section>
 
-      <template v-if="venue.canManageMembers">
-        <template v-if="applicants.length > 0">
-          <h3>Bewerber</h3>
-          <venue-applicant-editor :venue-id="venue.id" :members="applicants" @updated="refreshEditableMembers" />
+          <section v-else-if="activeSection === VenueSection.STAFF" class="page-venue__content-box">
+            <h3>Mitarbeiter</h3>
+            <div v-if="venue.staff && venue.staff.length" class="page-venue__staff-grid">
+              <router-link
+                v-for="member in venue.staff"
+                :key="`${member.server}_${member.name}`"
+                class="page-venue__staff-card"
+                :to="`/${member.server}/${member.name.replace(/ /g, '_')}`"
+              >
+                <q-avatar round size="56px">
+                  <img :src="member.avatar" :alt="member.name" />
+                </q-avatar>
+                <div>
+                  <div class="page-venue__staff-name">{{ member.name }}</div>
+                  <div class="page-venue__staff-server">{{ member.server }}</div>
+                </div>
+              </router-link>
+            </div>
+            <p v-else>Keine sichtbaren Mitarbeiter eingetragen.</p>
+          </section>
+
+          <section v-else-if="activeSection === VenueSection.JOBS" class="page-venue__content-box">
+            <div class="page-venue__section-header">
+              <h3>Stellenangebote</h3>
+              <q-btn
+                v-if="venue.canEdit"
+                flat
+                color="primary"
+                label="Neuen Job-Aushang erstellen"
+                :to="`/create-noticeboard-item?venueId=${venue.id}&type=${NoticeboardType.STELLENANGEBOT}`"
+              />
+            </div>
+            <noticeboard-item-list v-if="jobItems.length" :noticeboard-items="jobItems" />
+            <p v-else>Keine Stellenangebote oder Stellengesuche vorhanden.</p>
+          </section>
+
+          <section v-else-if="activeSection === VenueSection.OOC" class="page-venue__content-box">
+            <h3>OOC</h3>
+            <html-viewer v-if="venue.ooc" :content="venue.ooc" />
+            <p v-else>Keine OOC-Informationen vorhanden.</p>
+          </section>
+
+          <section v-else-if="activeSection === VenueSection.MEDIA" class="page-venue__content-box">
+            <h3>Medien</h3>
+            <thumb-gallery v-if="mediaItems.length" :images="mediaItems" />
+            <p v-else>Keine verknuepften Bilder vorhanden.</p>
+          </section>
+
+          <section v-else-if="activeSection === VenueSection.EVENTS" class="page-venue__content-box">
+            <h3>Aktuelle und kommende Events</h3>
+            <div v-if="upcomingEvents.length" class="page-venue__event-list">
+              <div v-for="event in upcomingEvents" :key="event.id" class="page-venue__event-item">
+                <router-link :to="`/event/${event.id}`">{{ event.title }}</router-link>
+                <div class="page-venue__event-time">{{ formatTimeRange(event) }}</div>
+              </div>
+            </div>
+            <p v-else>Keine aktuellen oder kommenden Events.</p>
+
+            <h3 class="page-venue__past-events-title">Vergangene Events</h3>
+            <div v-if="pastEvents.length" class="page-venue__event-list">
+              <div v-for="event in pastEvents" :key="`past_${event.id}`" class="page-venue__event-item">
+                <router-link :to="`/event/${event.id}`">{{ event.title }}</router-link>
+                <div class="page-venue__event-time">{{ formatTimeRange(event) }}</div>
+              </div>
+            </div>
+            <p v-else>Keine vergangenen Events gefunden.</p>
+          </section>
+
+          <section v-else-if="activeSection === VenueSection.NETWORK" class="page-venue__content-box">
+            <h3>Vernetzung</h3>
+            <html-viewer v-if="venue.network" :content="venue.network" />
+            <p v-else>Keine Vernetzungsinformationen vorhanden.</p>
+          </section>
+
+          <template v-if="venue.canManageMembers">
+            <template v-if="applicants.length > 0">
+              <h3>Bewerber</h3>
+              <venue-applicant-editor :venue-id="venue.id" :members="applicants" @updated="refreshEditableMembers" />
+            </template>
+            <h3>Mitglieder</h3>
+            <venue-member-editor :venue="venue" :members="confirmedMembers" @updated="refreshEditableMembers" />
+          </template>
+
+          <report-violation-section :pageType="PageType.VENUE" :pageId="venue.id" />
         </template>
-        <h3>Mitglieder</h3>
-        <venue-member-editor :venue="venue" :members="confirmedMembers" @updated="refreshEditableMembers" />
-      </template>
-
-      <report-violation-section :pageType="PageType.VENUE" :pageId="venue.id" />
-    </template>
-  </q-page>
+      </q-page-container>
+    </q-page>
+  </q-layout>
 </template>
 
 <script lang="ts">
@@ -194,6 +232,25 @@ const SECTION_LABELS: Record<VenueSection, string> = {
   [VenueSection.EVENTS]: 'Events',
   [VenueSection.NETWORK]: 'Vernetzung',
 };
+
+const SECTION_ICONS: Record<VenueSection, string> = {
+  [VenueSection.OVERVIEW]: 'home',
+  [VenueSection.RULES]: 'gavel',
+  [VenueSection.PREMISES]: 'meeting_room',
+  [VenueSection.MENU]: 'restaurant_menu',
+  [VenueSection.STAFF]: 'badge',
+  [VenueSection.JOBS]: 'work',
+  [VenueSection.OOC]: 'forum',
+  [VenueSection.MEDIA]: 'collections',
+  [VenueSection.EVENTS]: 'event',
+  [VenueSection.NETWORK]: 'hub',
+};
+
+interface SectionEntry {
+  id: VenueSection;
+  label: string;
+  icon: string;
+}
 
 interface PageData {
   venue: VenueDto;
@@ -316,6 +373,9 @@ export default class PageVenue extends Vue {
   readonly VenueSection = VenueSection;
   readonly NoticeboardType = NoticeboardType;
 
+  drawer = false;
+  miniState = true;
+
   venue: VenueDto = new VenueDto();
   activeSection: VenueSection = VenueSection.OVERVIEW;
   upcomingEvents: EventSummaryDto[] = [];
@@ -345,35 +405,35 @@ export default class PageVenue extends Vue {
     }
   }
 
-  get visibleSections() {
-    const sections: { id: VenueSection; label: string }[] = [{ id: VenueSection.OVERVIEW, label: SECTION_LABELS[VenueSection.OVERVIEW] }];
+  get visibleSections(): SectionEntry[] {
+    const sections: SectionEntry[] = [{ id: VenueSection.OVERVIEW, label: SECTION_LABELS[VenueSection.OVERVIEW], icon: SECTION_ICONS[VenueSection.OVERVIEW] }];
 
     if (this.venue.showRules) {
-      sections.push({ id: VenueSection.RULES, label: SECTION_LABELS[VenueSection.RULES] });
+      sections.push({ id: VenueSection.RULES, label: SECTION_LABELS[VenueSection.RULES], icon: SECTION_ICONS[VenueSection.RULES] });
     }
     if (this.venue.showPremises) {
-      sections.push({ id: VenueSection.PREMISES, label: SECTION_LABELS[VenueSection.PREMISES] });
+      sections.push({ id: VenueSection.PREMISES, label: SECTION_LABELS[VenueSection.PREMISES], icon: SECTION_ICONS[VenueSection.PREMISES] });
     }
     if (this.venue.showMenu) {
-      sections.push({ id: VenueSection.MENU, label: SECTION_LABELS[VenueSection.MENU] });
+      sections.push({ id: VenueSection.MENU, label: SECTION_LABELS[VenueSection.MENU], icon: SECTION_ICONS[VenueSection.MENU] });
     }
     if (this.venue.showStaff) {
-      sections.push({ id: VenueSection.STAFF, label: SECTION_LABELS[VenueSection.STAFF] });
+      sections.push({ id: VenueSection.STAFF, label: SECTION_LABELS[VenueSection.STAFF], icon: SECTION_ICONS[VenueSection.STAFF] });
     }
     if (this.venue.showJobs) {
-      sections.push({ id: VenueSection.JOBS, label: SECTION_LABELS[VenueSection.JOBS] });
+      sections.push({ id: VenueSection.JOBS, label: SECTION_LABELS[VenueSection.JOBS], icon: SECTION_ICONS[VenueSection.JOBS] });
     }
     if (this.venue.showOoc) {
-      sections.push({ id: VenueSection.OOC, label: SECTION_LABELS[VenueSection.OOC] });
+      sections.push({ id: VenueSection.OOC, label: SECTION_LABELS[VenueSection.OOC], icon: SECTION_ICONS[VenueSection.OOC] });
     }
     if (this.venue.showMedia) {
-      sections.push({ id: VenueSection.MEDIA, label: SECTION_LABELS[VenueSection.MEDIA] });
+      sections.push({ id: VenueSection.MEDIA, label: SECTION_LABELS[VenueSection.MEDIA], icon: SECTION_ICONS[VenueSection.MEDIA] });
     }
     if (this.venue.showEvents) {
-      sections.push({ id: VenueSection.EVENTS, label: SECTION_LABELS[VenueSection.EVENTS] });
+      sections.push({ id: VenueSection.EVENTS, label: SECTION_LABELS[VenueSection.EVENTS], icon: SECTION_ICONS[VenueSection.EVENTS] });
     }
     if (this.venue.showNetwork) {
-      sections.push({ id: VenueSection.NETWORK, label: SECTION_LABELS[VenueSection.NETWORK] });
+      sections.push({ id: VenueSection.NETWORK, label: SECTION_LABELS[VenueSection.NETWORK], icon: SECTION_ICONS[VenueSection.NETWORK] });
     }
 
     return sections;
@@ -417,6 +477,13 @@ export default class PageVenue extends Vue {
     }
 
     return `${base}/${section}`;
+  }
+
+  onSectionClick(section: VenueSection) {
+    if (section !== this.activeSection) {
+      this.activeSection = section;
+      void this.$router.push(this.sectionPath(section));
+    }
   }
 
   private getVisibleSection(section: VenueSection): VenueSection {
@@ -499,10 +566,71 @@ export default class PageVenue extends Vue {
 </script>
 
 <style lang="scss">
+.page-venue-layout {
+  --venue-nav-bg: rgba(255, 255, 255, 0.96);
+  --venue-nav-border: rgba(221, 180, 118, 0.35);
+  --venue-nav-text: #1f2c38;
+  --venue-nav-active-bg: rgba(221, 180, 118, 0.22);
+  --venue-nav-active-text: #6b4c21;
+  --venue-edit-bg: #9f848d;
+  --venue-edit-bg-hover: #615056;
+  --venue-edit-color: #1b1b1b;
+  --venue-edit-color-hover: #000000;
+  --venue-box-border: rgba(221, 180, 118, 0.25);
+  --venue-box-bg: rgba(255, 255, 255, 0.92);
+  --venue-box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  --venue-muted: rgba(35, 35, 35, 0.72);
+}
+
+body.body--dark .page-venue-layout {
+  --venue-nav-bg: rgba(17, 24, 34, 0.94);
+  --venue-nav-border: rgba(141, 181, 223, 0.3);
+  --venue-nav-text: rgba(213, 226, 240, 0.9);
+  --venue-nav-active-bg: rgba(141, 181, 223, 0.22);
+  --venue-nav-active-text: rgba(226, 237, 248, 0.96);
+  --venue-edit-bg: rgba(141, 181, 223, 0.22);
+  --venue-edit-bg-hover: rgba(141, 181, 223, 0.34);
+  --venue-edit-color: rgba(226, 237, 248, 0.95);
+  --venue-edit-color-hover: #f2f7ff;
+  --venue-box-border: rgba(141, 181, 223, 0.32);
+  --venue-box-bg: rgba(17, 24, 34, 0.92);
+  --venue-box-shadow: 0 18px 36px rgba(0, 0, 0, 0.34);
+  --venue-muted: rgba(213, 226, 240, 0.74);
+}
+
+.page-venue-layout__drawer {
+  border-right: 1px solid var(--venue-nav-border);
+  background: var(--venue-nav-bg);
+  color: var(--venue-nav-text);
+}
+
+.page-venue-layout__menu .q-item {
+  border-radius: 8px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.page-venue-layout__menu-item--active {
+  background: var(--venue-nav-active-bg);
+  color: var(--venue-nav-active-text);
+}
+
+.page-venue-layout__edit-item {
+  margin-top: 12px;
+  background: var(--venue-edit-bg);
+  color: var(--venue-edit-color);
+}
+
+.page-venue-layout__edit-item:hover {
+  background: var(--venue-edit-bg-hover);
+  color: var(--venue-edit-color-hover);
+}
+
 .page-venue__edit-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .page-venue__join-button-bar {
@@ -510,19 +638,21 @@ export default class PageVenue extends Vue {
   margin-bottom: 8px;
 }
 
-.page-venue__section-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 18px 0 22px;
+.page-venue__membership-status {
+  margin: 10px 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--venue-box-border);
+  background: var(--venue-box-bg);
+  box-shadow: var(--venue-box-shadow);
+  color: var(--venue-muted);
 }
 
 .page-venue__content-box {
-  margin: 22px 0;
+  margin: 14px 0 22px;
   padding: 16px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--venue-box-border);
+  background: var(--venue-box-bg);
+  box-shadow: var(--venue-box-shadow);
 }
 
 .page-venue__section-header {
@@ -543,7 +673,9 @@ export default class PageVenue extends Vue {
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 10px;
-  border: 1px solid rgba(221, 180, 118, 0.28);
+  border: 1px solid var(--venue-box-border);
+  background: var(--venue-box-bg);
+  box-shadow: var(--venue-box-shadow);
   padding: 12px;
   text-decoration: none;
   color: inherit;
@@ -555,7 +687,7 @@ export default class PageVenue extends Vue {
 
 .page-venue__staff-server {
   font-size: 0.85rem;
-  color: rgba(35, 35, 35, 0.7);
+  color: var(--venue-muted);
 }
 
 .page-venue__event-list {
@@ -564,13 +696,15 @@ export default class PageVenue extends Vue {
 }
 
 .page-venue__event-item {
-  border: 1px solid rgba(221, 180, 118, 0.2);
+  border: 1px solid var(--venue-box-border);
+  background: var(--venue-box-bg);
+  box-shadow: var(--venue-box-shadow);
   padding: 10px 12px;
 }
 
 .page-venue__event-time {
   font-size: 0.85rem;
-  color: rgba(35, 35, 35, 0.68);
+  color: var(--venue-muted);
 }
 
 .page-venue__past-events-title {
@@ -578,6 +712,7 @@ export default class PageVenue extends Vue {
 }
 
 @media screen and (max-width: $breakpoint-sm) {
+  .page-venue__edit-bar,
   .page-venue__section-header {
     flex-direction: column;
     align-items: flex-start;
@@ -585,6 +720,13 @@ export default class PageVenue extends Vue {
 
   .page-venue__staff-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-venue-layout__menu .q-item,
+  .page-venue-layout__edit-item {
+    transition: none;
   }
 }
 </style>
