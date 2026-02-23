@@ -1,28 +1,44 @@
 ﻿<template>
-  <q-page class="page-edit-venue">
-    <template v-if="loaded">
-      <h2>{{ venueId ? 'Treffpunkt bearbeiten' : 'Treffpunkt erstellen' }}</h2>
-      <q-form ref="form" @submit="onSubmit">
-        <template v-if="!preview">
-          <section class="page-edit-venue__sections">
-            <q-tabs
-              v-model="editSection"
-              dense
-              align="left"
-              no-caps
-              active-color="secondary"
-              indicator-color="secondary"
-              class="page-edit-venue__tabs"
-            >
-              <q-tab name="basic" icon="storefront" label="Basisdaten" />
-              <q-tab name="profile" icon="description" label="Profil" />
-              <q-tab name="subpages" icon="list_alt" label="Unterseiten" />
-              <q-tab name="eventTemplate" icon="event_note" label="Event-Vorlage" />
-            </q-tabs>
-            <q-separator />
+  <q-layout class="rounded-borders no-outline page-edit-venue-layout">
+    <q-drawer
+      class="border-radius-inherit edit-drawer"
+      v-model="drawer"
+      show-if-above
+      :mini="miniState"
+      @mouseover="miniState = false"
+      @mouseout="miniState = true"
+      :width="220"
+      :breakpoint="0"
+    >
+      <q-scroll-area class="fit" :horizontal-thumb-style="{ opacity: 0 }">
+        <q-list padding>
+          <q-item
+            v-for="section in visibleEditSections"
+            :key="section.id"
+            clickable
+            v-ripple
+            :active="editSection === section.id"
+            @click="editSection = section.id"
+          >
+            <q-item-section avatar>
+              <q-icon :name="section.icon" />
+            </q-item-section>
+            <q-item-section>
+              {{ section.label }}
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-scroll-area>
+    </q-drawer>
 
-            <q-tab-panels v-model="editSection" animated class="bg-transparent">
-              <q-tab-panel name="basic" class="page-edit-venue__panel">
+    <q-page class="page-edit-venue">
+      <q-page-container>
+        <template v-if="loaded">
+          <h2>{{ venueId ? 'Treffpunkt bearbeiten' : 'Treffpunkt erstellen' }}</h2>
+
+          <q-form ref="form" @submit="onSubmit">
+            <template v-if="!preview">
+              <section v-if="editSection === 'basic'" class="page-edit-venue__section">
                 <h6>Basisdaten</h6>
                 <section class="page-edit-venue__form-controls">
                   <character-selector
@@ -79,9 +95,7 @@
                   />
                   <q-input v-model="venue.purpose" label="Zweck" />
                   <q-input v-model="venue.status" label="Status" />
-                  <div class="text-caption">
-                    Du kannst [[Wikilinks]], z.B. [[Charaktername]], in <strong>Zweck</strong> und <strong>Status</strong> nutzen.
-                  </div>
+                  <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername]], in <strong>Zweck</strong> und <strong>Status</strong> nutzen.</div>
                   <q-input
                     :model-value="tags"
                     @update:model-value="onTagsChanged"
@@ -156,10 +170,26 @@
                     </template>
                   </template>
                 </section>
-              </q-tab-panel>
+              </section>
 
-              <q-tab-panel name="profile" class="page-edit-venue__panel">
-                <h6>Profilansicht</h6>
+              <section v-else-if="editSection === 'display'" class="page-edit-venue__section">
+                <h6>Treffpunktanzeige</h6>
+                <p>
+                  Zur Erweiterung des Treffpunkts können weitere Unterpunkte hinzugeschaltet werden.
+                  Diese sind rein optional.
+                </p>
+                <section class="page-edit-venue__toggle-grid">
+                  <q-checkbox v-model="venue.showRules" label="Regeln" @update:model-value="onSectionToggleChange" />
+                  <q-checkbox v-model="venue.showPremises" label="Räumlichkeiten" @update:model-value="onSectionToggleChange" />
+                  <q-checkbox v-model="venue.showMenu" label="Speisekarte" @update:model-value="onSectionToggleChange" />
+                  <q-checkbox v-model="venue.showStaff" label="Mitarbeiter" @update:model-value="onSectionToggleChange" />
+                  <q-checkbox v-model="venue.showJobs" label="Stellenangebote" @update:model-value="onSectionToggleChange" />
+                  <q-checkbox v-model="venue.showOoc" label="OOC" @update:model-value="onSectionToggleChange" />
+                  <q-checkbox v-model="venue.showMedia" label="Medien" @update:model-value="onSectionToggleChange" />
+                  <q-checkbox v-model="venue.showEvents" label="Events" @update:model-value="onSectionToggleChange" />
+                  <q-checkbox v-model="venue.showNetwork" label="Vernetzung" @update:model-value="onSectionToggleChange" />
+                </section>
+
                 <banner-edit-section v-model="venue.banner" />
                 <h6>Beschreibung</h6>
                 <html-editor v-model="venue.description" />
@@ -169,28 +199,55 @@
                   entity-type="venue"
                   v-model="venue.carrdProfile"
                 />
-              </q-tab-panel>
+              </section>
 
-              <q-tab-panel name="subpages" class="page-edit-venue__panel">
-                <h6>Unterseiten</h6>
-                <q-checkbox v-model="venue.showRules" label="Regeln anzeigen" />
-                <html-editor v-if="venue.showRules" v-model="venue.rules" />
-                <q-checkbox v-model="venue.showPremises" label="Räumlichkeiten anzeigen" />
-                <html-editor v-if="venue.showPremises" v-model="venue.premises" />
-                <q-checkbox v-model="venue.showMenu" label="Speisekarte anzeigen" />
-                <html-editor v-if="venue.showMenu" v-model="venue.menu" />
-                <q-checkbox v-model="venue.showStaff" label="Mitarbeiterseite anzeigen" />
-                <q-checkbox v-model="venue.showJobs" label="Stellenangebote anzeigen (aus Anschlagbrett)" />
-                <q-checkbox v-model="venue.showOoc" label="OOC-Seite anzeigen" />
-                <html-editor v-if="venue.showOoc" v-model="venue.ooc" />
-                <q-checkbox v-model="venue.showMedia" label="Medienseite anzeigen (aus Galerie)" />
-                <q-checkbox v-model="venue.showEvents" label="Eventseite anzeigen" />
-                <q-checkbox v-model="venue.showNetwork" label="Vernetzung anzeigen" />
-                <html-editor v-if="venue.showNetwork" v-model="venue.network" />
-              </q-tab-panel>
+              <section v-else-if="editSection === 'rules'" class="page-edit-venue__section">
+                <h6>Regeln</h6>
+                <html-editor v-model="venue.rules" />
+              </section>
 
-              <q-tab-panel name="eventTemplate" class="page-edit-venue__panel">
-                <h6>Event-Vorlage</h6>
+              <section v-else-if="editSection === 'premises'" class="page-edit-venue__section">
+                <h6>Räumlichkeiten</h6>
+                <html-editor v-model="venue.premises" />
+              </section>
+
+              <section v-else-if="editSection === 'menu'" class="page-edit-venue__section">
+                <h6>Speisekarte</h6>
+                <html-editor v-model="venue.menu" />
+              </section>
+
+              <section v-else-if="editSection === 'staff'" class="page-edit-venue__section">
+                <h6>Mitarbeiter</h6>
+                <p>Die Mitarbeiterseite zeigt automatisch Mitglieder des Treffpunkts an, die für die Anzeige freigeschaltet sind.</p>
+                <div class="text-caption">Die Sichtbarkeit wird in der Mitgliederverwaltung des Treffpunkts gesteuert.</div>
+              </section>
+
+              <section v-else-if="editSection === 'jobs'" class="page-edit-venue__section">
+                <h6>Stellenangebote</h6>
+                <p>Diese Seite zeigt automatisch Stellenangebote und Stellengesuche vom Anschlagbrett für diesen Treffpunkt.</p>
+                <q-btn
+                  v-if="venueId"
+                  flat
+                  color="primary"
+                  icon="add"
+                  label="Neuen Job-Aushang erstellen"
+                  :to="`/create-noticeboard-item?venueId=${venueId}&type=STELLENANGEBOT`"
+                />
+              </section>
+
+              <section v-else-if="editSection === 'ooc'" class="page-edit-venue__section">
+                <h6>OOC</h6>
+                <html-editor v-model="venue.ooc" />
+              </section>
+
+              <section v-else-if="editSection === 'media'" class="page-edit-venue__section">
+                <h6>Medien</h6>
+                <p>Die Medienseite zeigt automatisch verknüpfte Bilder aus der Galerie für diesen Treffpunkt.</p>
+              </section>
+
+              <section v-else-if="editSection === 'events'" class="page-edit-venue__section">
+                <h6>Events</h6>
+                <p>Diese Vorlage wird für neue Events des Treffpunkts verwendet.</p>
                 <q-input
                   v-model="venue.eventContact"
                   label="Event-Kontakt"
@@ -217,56 +274,63 @@
                   track-by="label"
                   label="label"
                 />
-              </q-tab-panel>
-            </q-tab-panels>
-          </section>
+              </section>
+
+              <section v-else-if="editSection === 'network'" class="page-edit-venue__section">
+                <h6>Vernetzung</h6>
+                <html-editor v-model="venue.network" />
+              </section>
+            </template>
+
+            <section v-else class="page-edit-venue__preview">
+              <venue-profile :venue="venue" :preview="true" />
+            </section>
+
+            <div class="page-edit-venue__button-bar">
+              <q-btn-toggle
+                v-model="preview"
+                :options="previewOptions"
+                toggle-color="secondary"
+              />
+              <div class="page-edit-venue__revert-submit">
+                <q-btn label="Zurücksetzen" color="secondary" @click="revert" />&nbsp;
+                <q-btn label="Änderungen speichern" type="submit" color="primary" />
+              </div>
+            </div>
+            <q-inner-loading :showing="saving" />
+          </q-form>
         </template>
 
-        <section v-else class="page-edit-venue__preview">
-          <venue-profile :venue="venue" :preview="true" />
-        </section>
+        <q-spinner v-else />
 
-        <div class="page-edit-venue__button-bar">
-          <q-btn-toggle
-            v-model="preview"
-            :options="previewOptions"
-            toggle-color="secondary"
-          />
-          <div class="page-edit-venue__revert-submit">
-            <q-btn label="Zurücksetzen" color="secondary" @click="revert" />&nbsp;
-            <q-btn label="Änderungen speichern" type="submit" color="primary" />
-          </div>
-        </div>
-        <q-inner-loading :showing="saving" />
-      </q-form>
-    </template>
-    <q-spinner v-else />
+        <q-dialog v-model="confirmRevert" persistent>
+          <q-card>
+            <q-card-section class="row items-center">
+              <span class="q-ml-sm">Möchtest du die ungespeicherten Änderungen auf die letzte gespeicherte Version zurücksetzen?</span>
+            </q-card-section>
 
-    <q-dialog v-model="confirmRevert" persistent>
-      <q-card>
-        <q-card-section class="row items-center">
-          <span class="q-ml-sm">Möchtest du die ungespeicherten Änderungen auf die letzte gespeicherte Version zurücksetzen?</span>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Bearbeitung fortsetzen" color="secondary" v-close-popup />
-          <q-btn
-            flat
-            label="Zurücksetzen"
-            color="negative"
-            v-close-popup
-            @click="onConfirmRevert"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-  </q-page>
+            <q-card-actions align="right">
+              <q-btn flat label="Bearbeitung fortsetzen" color="secondary" v-close-popup />
+              <q-btn
+                flat
+                label="Zurücksetzen"
+                color="negative"
+                v-close-popup
+                @click="onConfirmRevert"
+              />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
+      </q-page-container>
+    </q-page>
+  </q-layout>
 </template>
 
 <script lang="ts">
 import Multiselect from '@vueform/multiselect';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { HousingArea } from '@app/shared/enums/housing-area.enum';
+import { NoticeboardType } from '@app/shared/enums/noticeboard-type.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import errors from '@app/shared/errors';
 import SharedConstants from '@app/shared/SharedConstants';
@@ -280,13 +344,22 @@ import CharacterSelector from 'src/components/common/CharacterSelector.vue';
 import WorldSelect from 'src/components/common/WorldSelect.vue';
 import VenueProfile from 'src/components/venues/VenueProfile.vue';
 import { useRouter } from 'src/router';
+import { Dialog } from 'quasar';
 import { Options, Vue } from 'vue-class-component';
+import { ref } from 'vue';
 import { RouteParams } from 'vue-router';
 
 const $api = useApi();
 const $router = useRouter();
+const isDirty = ref(false);
 
-type EditVenueSection = 'basic' | 'profile' | 'subpages' | 'eventTemplate';
+type EditVenueSection = 'basic' | 'display' | 'rules' | 'premises' | 'menu' | 'staff' | 'jobs' | 'ooc' | 'media' | 'events' | 'network';
+
+type EditSectionItem = {
+  id: EditVenueSection;
+  label: string;
+  icon: string;
+};
 
 async function load(params: RouteParams): Promise<{ venue: VenueDto | null; contentNotes: { name: string }[] }> {
   const id = parseInt(params.id as string, 10);
@@ -323,21 +396,81 @@ async function load(params: RouteParams): Promise<{ venue: VenueDto | null; cont
     Multiselect,
   },
   async beforeRouteEnter(to, _, next) {
+    isDirty.value = false;
     const content = await load(to.params);
     next(vm => (vm as PageEditVenue).setContent(content));
   },
   async beforeRouteUpdate(to) {
     (this as PageEditVenue).setContent(await load(to.params));
   },
+  beforeRouteLeave(to, from, next) {
+    if ((this as PageEditVenue).saving) {
+      next();
+      return;
+    }
+
+    if (!isDirty.value) {
+      next();
+      return;
+    }
+
+    if (to.path.includes('edit-venue')) {
+      Dialog.create({
+        title: 'Warnung',
+        message: 'Bitte speichere oder setze deine Änderungen zurück, bevor du zu einem anderen Treffpunkt-Tab navigierst.',
+        ok: {
+          push: true,
+          label: 'Ok',
+        },
+      }).onOk(() => {
+        next(false);
+      });
+      return;
+    }
+
+    Dialog.create({
+      title: 'Warnung',
+      message: 'Ungespeicherte Änderungen gehen verloren. Möchtest du fortfahren?',
+      ok: {
+        push: true,
+        label: 'Ok',
+      },
+      cancel: {
+        push: true,
+        color: 'secondary',
+        label: 'Abbrechen',
+      },
+    })
+      .onOk(() => {
+        next();
+      })
+      .onCancel(() => {
+        next(false);
+      })
+      .onDismiss(() => {
+        next(false);
+      });
+  },
+  watch: {
+    venue: {
+      deep: true,
+      handler() {
+        (this as PageEditVenue).markDirty();
+      },
+    },
+    selectedCharacterId() {
+      (this as PageEditVenue).markDirty();
+    },
+  },
 })
 export default class PageEditVenue extends Vue {
+  readonly NoticeboardType = NoticeboardType;
   readonly previewOptions = [
     { label: 'Bearbeitung', value: false },
     { label: 'Vorschau', value: true },
   ];
 
   readonly VenueLocation = VenueLocation;
-
   readonly SharedConstants = SharedConstants;
 
   venueId: number | null = null;
@@ -353,9 +486,15 @@ export default class PageEditVenue extends Vue {
 
   editSection: EditVenueSection = 'basic';
 
+  drawer = ref(false);
+  miniState = true;
+
   selectedCharacterId: number | null = null;
+  private suppressDirtyTracking = false;
 
   setContent(content: { venue: VenueDto | null; contentNotes?: { name: string }[] }) {
+    this.suppressDirtyTracking = true;
+
     if (content.contentNotes) {
       this.contentNoteOptions = content.contentNotes.map((contentNote) => ({
         label: (ContentNoteTexts as { [key: string]: string })[contentNote.name] || contentNote.name,
@@ -434,6 +573,11 @@ export default class PageEditVenue extends Vue {
     this.loaded = true;
     this.editSection = 'basic';
     this.venue = new VenueDto(this.venueBackup);
+
+    void this.$nextTick(() => {
+      this.suppressDirtyTracking = false;
+      isDirty.value = false;
+    });
   }
 
   get foundedAtDisplay() {
@@ -442,6 +586,41 @@ export default class PageEditVenue extends Vue {
 
   get tags() {
     return this.venue.tags.join(', ');
+  }
+
+  get visibleEditSections(): EditSectionItem[] {
+    const sections: EditSectionItem[] = [
+      { id: 'basic', label: 'Basisdaten', icon: 'storefront' },
+      { id: 'display', label: 'Treffpunktanzeige', icon: 'visibility' },
+    ];
+
+    if (this.venue.showRules) sections.push({ id: 'rules', label: 'Regeln', icon: 'gavel' });
+    if (this.venue.showPremises) sections.push({ id: 'premises', label: 'Räumlichkeiten', icon: 'meeting_room' });
+    if (this.venue.showMenu) sections.push({ id: 'menu', label: 'Speisekarte', icon: 'restaurant_menu' });
+    if (this.venue.showStaff) sections.push({ id: 'staff', label: 'Mitarbeiter', icon: 'badge' });
+    if (this.venue.showJobs) sections.push({ id: 'jobs', label: 'Stellenangebote', icon: 'work' });
+    if (this.venue.showOoc) sections.push({ id: 'ooc', label: 'OOC', icon: 'forum' });
+    if (this.venue.showMedia) sections.push({ id: 'media', label: 'Medien', icon: 'collections' });
+    if (this.venue.showEvents) sections.push({ id: 'events', label: 'Events', icon: 'event' });
+    if (this.venue.showNetwork) sections.push({ id: 'network', label: 'Vernetzung', icon: 'hub' });
+
+    return sections;
+  }
+
+  onSectionToggleChange() {
+    this.ensureVisibleEditSection();
+  }
+
+  markDirty() {
+    if (!this.suppressDirtyTracking) {
+      isDirty.value = true;
+    }
+  }
+
+  private ensureVisibleEditSection() {
+    if (!this.visibleEditSections.some((section) => section.id === this.editSection)) {
+      this.editSection = 'display';
+    }
   }
 
   onTagsChanged(newTags: string) {
@@ -481,7 +660,13 @@ export default class PageEditVenue extends Vue {
   }
 
   onConfirmRevert() {
+    this.suppressDirtyTracking = true;
     this.venue = new VenueDto(this.venueBackup);
+    this.ensureVisibleEditSection();
+    void this.$nextTick(() => {
+      this.suppressDirtyTracking = false;
+      isDirty.value = false;
+    });
   }
 
   async onSubmit() {
@@ -496,12 +681,14 @@ export default class PageEditVenue extends Vue {
         const result = await this.$api.venues.createVenue(this.venue);
         this.venue.id = result.id;
         this.venueId = result.id;
+        this.venueBackup = new VenueDto(this.venue);
+        isDirty.value = false;
         void this.$router.replace(`/edit-venue/${result.id}`);
       } else {
         await this.$api.venues.editVenue(this.venue);
+        this.venueBackup = new VenueDto(this.venue);
+        isDirty.value = false;
       }
-
-      this.venueBackup = new VenueDto(this.venue);
 
       notifySuccess('Treffpunkt gespeichert.', {
         label: 'Anschauen',
@@ -532,20 +719,19 @@ export default class PageEditVenue extends Vue {
   flex-grow: 1;
 }
 
+.page-edit-venue__toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 6px 14px;
+  margin-bottom: 16px;
+}
+
 .q-field--standard.q-field--readonly.page-edit-venue__founded-at .q-field__control::before {
   border-bottom-style: solid;
 }
 
-.page-edit-venue__sections {
+.page-edit-venue__section {
   margin-bottom: 16px;
-}
-
-.page-edit-venue__tabs {
-  margin-bottom: 6px;
-}
-
-.page-edit-venue__panel {
-  padding: 16px 0 0;
 }
 
 .page-edit-venue__preview {
@@ -563,11 +749,23 @@ export default class PageEditVenue extends Vue {
   font-family: $header-font;
 }
 
+.edit-drawer {
+  background-color: #9f848d;
+}
+
+.edit-drawer .q-item {
+  color: #1b1b1b;
+}
+
 @media screen and (max-width: $breakpoint-sm) {
   .page-edit-venue__button-bar {
     flex-direction: column;
     gap: 10px;
     align-items: flex-start;
+  }
+
+  .page-edit-venue__toggle-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>
