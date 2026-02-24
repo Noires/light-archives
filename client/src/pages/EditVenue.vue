@@ -218,12 +218,6 @@
                   :venue-id="venueId || 0"
                   :character-id="selectedCharacterId"
                 />
-                <div class="page-edit-venue__button-bar">
-                  <div></div>
-                  <div class="page-edit-venue__revert-submit">
-                    <q-btn label="Angebote speichern" color="primary" :loading="savingOfferings" @click="onSaveOfferings" />
-                  </div>
-                </div>
               </section>
 
               <section v-else-if="editSection === 'staff'" class="page-edit-venue__section">
@@ -294,6 +288,10 @@
 
             <section v-else class="page-edit-venue__preview">
               <venue-profile :venue="venue" :preview="true" />
+              <section v-if="venue.showMenu" class="page-edit-venue__section">
+                <h3>Angebote</h3>
+                <venue-offerings-view :offerings="venueOfferings" />
+              </section>
             </section>
 
             <div class="page-edit-venue__button-bar">
@@ -355,6 +353,7 @@ import CharacterSelector from 'src/components/common/CharacterSelector.vue';
 import WorldSelect from 'src/components/common/WorldSelect.vue';
 import VenueProfile from 'src/components/venues/VenueProfile.vue';
 import VenueOfferingsEditor from 'src/components/venues/VenueOfferingsEditor.vue';
+import VenueOfferingsView from 'src/components/venues/VenueOfferingsView.vue';
 import { useRouter } from 'src/router';
 import { Dialog } from 'quasar';
 import { Options, Vue } from 'vue-class-component';
@@ -410,6 +409,7 @@ async function load(params: RouteParams): Promise<{ venue: VenueDto | null; cont
     WorldSelect,
     Multiselect,
     VenueOfferingsEditor,
+    VenueOfferingsView,
   },
   async beforeRouteEnter(to, _, next) {
     isDirty.value = false;
@@ -474,6 +474,9 @@ async function load(params: RouteParams): Promise<{ venue: VenueDto | null; cont
         (this as PageEditVenue).markDirty();
       },
     },
+    venueOfferings() {
+      (this as PageEditVenue).markDirty();
+    },
     selectedCharacterId(newValue: number | null, oldValue: number | null) {
       (this as PageEditVenue).onSelectedCharacterIdChanged(newValue, oldValue);
     },
@@ -497,7 +500,6 @@ export default class PageEditVenue extends Vue {
   preview = false;
   loaded = false;
   saving = false;
-  savingOfferings = false;
 
   confirmRevert = false;
 
@@ -508,11 +510,13 @@ export default class PageEditVenue extends Vue {
 
   selectedCharacterId: number | null = null;
   venueOfferings: VenueOfferingsDto = { categories: [] };
+  private savedOfferingImageIds: Set<number> = new Set();
   private suppressDirtyTracking = false;
 
   setContent(content: { venue: VenueDto | null; contentNotes?: { name: string }[]; offerings?: VenueOfferingsDto | null }) {
     this.suppressDirtyTracking = true;
     this.venueOfferings = content.offerings || { categories: [] };
+    this.savedOfferingImageIds = this.collectOfferingImageIds(this.venueOfferings);
 
     if (content.contentNotes) {
       this.contentNoteOptions = content.contentNotes.map((contentNote) => ({
@@ -682,6 +686,35 @@ export default class PageEditVenue extends Vue {
     }
   }
 
+  private collectOfferingImageIds(offerings: VenueOfferingsDto): Set<number> {
+    const ids = new Set<number>();
+    for (const cat of offerings.categories) {
+      for (const off of cat.offerings || []) {
+        if (off.imageId != null) ids.add(off.imageId);
+      }
+      for (const sub of cat.subcategories || []) {
+        for (const off of sub.offerings || []) {
+          if (off.imageId != null) ids.add(off.imageId);
+        }
+      }
+    }
+    return ids;
+  }
+
+  private cleanupUnsavedOfferingImages() {
+    if (!this.venueId) return;
+    const currentIds = this.collectOfferingImageIds(this.venueOfferings);
+    for (const id of currentIds) {
+      if (!this.savedOfferingImageIds.has(id)) {
+        void $api.venues.deleteOfferingImage(this.venueId, id).catch(() => undefined);
+      }
+    }
+  }
+
+  beforeUnmount() {
+    this.cleanupUnsavedOfferingImages();
+  }
+
   revert() {
     this.confirmRevert = true;
   }
@@ -713,6 +746,8 @@ export default class PageEditVenue extends Vue {
         void this.$router.replace(`/edit-venue/${result.id}`);
       } else {
         await this.$api.venues.editVenue(this.venue);
+        await this.$api.venues.saveOfferings(this.venueId, this.venueOfferings);
+        this.savedOfferingImageIds = this.collectOfferingImageIds(this.venueOfferings);
         this.venueBackup = new VenueDto(this.venue);
         isDirty.value = false;
       }
@@ -726,19 +761,6 @@ export default class PageEditVenue extends Vue {
       notifyError(e);
     } finally {
       this.saving = false;
-    }
-  }
-
-  async onSaveOfferings() {
-    if (!this.venueId) return;
-    this.savingOfferings = true;
-    try {
-      await this.$api.venues.saveOfferings(this.venueId, this.venueOfferings);
-      notifySuccess('Angebote gespeichert.');
-    } catch (e) {
-      notifyError(e);
-    } finally {
-      this.savingOfferings = false;
     }
   }
 

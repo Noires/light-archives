@@ -86,22 +86,32 @@
                                 <q-btn flat dense icon="delete" color="negative" size="sm" @click="removeOfferingImage(off)" :loading="off.__imageLoading" />
                               </template>
                               <template v-else>
-                                <q-btn
-                                  flat
-                                  dense
-                                  icon="photo_camera"
-                                  label="Bild hochladen"
-                                  size="sm"
-                                  @click="triggerImageUpload(off)"
-                                  :loading="off.__imageLoading"
-                                />
-                                <input
-                                  type="file"
-                                  accept="image/jpeg,image/png"
-                                  class="offerings-editor__file-input"
-                                  :ref="(el) => setFileRef(off.__key, el)"
-                                  @change="(e) => onImageFileSelected(e, off)"
-                                />
+                                <div
+                                  class="offerings-editor__drop-zone"
+                                  :class="{ 'offerings-editor__drop-zone--active': draggingOverKey === off.__key }"
+                                  @dragenter="onDragEnter(off.__key, $event)"
+                                  @dragleave="onDragLeave(off.__key, $event)"
+                                  @dragover.prevent
+                                  @drop="onDrop(off.__key, $event, off)"
+                                >
+                                  <q-btn
+                                    flat
+                                    dense
+                                    icon="photo_camera"
+                                    label="Bild hochladen"
+                                    size="sm"
+                                    @click="triggerImageUpload(off)"
+                                    :loading="off.__imageLoading"
+                                  />
+                                  <span class="offerings-editor__drop-hint">oder hierher ziehen</span>
+                                  <input
+                                    type="file"
+                                    accept="image/jpeg,image/png"
+                                    class="offerings-editor__file-input"
+                                    :ref="(el) => setFileRef(off.__key, el)"
+                                    @change="(e) => onImageFileSelected(e, off)"
+                                  />
+                                </div>
                               </template>
                             </div>
                             <div class="offerings-editor__offering-form-actions">
@@ -359,6 +369,41 @@ export default defineComponent({
   setup(props, { emit }) {
     const localCategories = ref<EditorCategory[]>([]);
     const fileRefs = new Map<string, HTMLInputElement>();
+    const draggingOverKey = ref<string | null>(null);
+
+    const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1 MB
+
+    function formatFileSize(bytes: number): string {
+      if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    async function uploadFile(file: File, off: EditorOffering) {
+      if (!props.characterId) return;
+      off.__imageLoading = true;
+      try {
+        const result = await $api.venues.uploadOfferingImage(props.venueId, props.characterId, file);
+        off.imageId = result.id;
+        off.imageUrl = result.url;
+        emitUpdate();
+      } catch (e) {
+        notifyError(e);
+      } finally {
+        off.__imageLoading = false;
+      }
+    }
+
+    function validateAndUpload(file: File, off: EditorOffering) {
+      if (file.type !== 'image/jpeg' && file.type !== 'image/png') {
+        notifyError('Nur JPEG- und PNG-Bilder sind erlaubt.');
+        return;
+      }
+      if (file.size > MAX_IMAGE_SIZE) {
+        notifyError(`Das Bild ist zu groß (${formatFileSize(file.size)}). Maximal 1 MB erlaubt.`);
+        return;
+      }
+      void uploadFile(file, off);
+    }
 
     const confirmDelete = ref<{
       show: boolean;
@@ -467,23 +512,34 @@ export default defineComponent({
       if (input) input.click();
     }
 
-    async function onImageFileSelected(event: Event, off: EditorOffering) {
+    function onImageFileSelected(event: Event, off: EditorOffering) {
       const input = event.target as HTMLInputElement;
       const file = input.files?.[0];
-      if (!file || !props.characterId) return;
+      input.value = '';
+      if (!file) return;
+      validateAndUpload(file, off);
+    }
 
-      off.__imageLoading = true;
-      try {
-        const result = await $api.venues.uploadOfferingImage(props.venueId, props.characterId, file);
-        off.imageId = result.id;
-        off.imageUrl = result.url;
-        emitUpdate();
-      } catch (e) {
-        notifyError(e);
-      } finally {
-        off.__imageLoading = false;
-        input.value = '';
+    function onDragEnter(key: string, e: DragEvent) {
+      if (e.dataTransfer?.types.includes('Files')) {
+        draggingOverKey.value = key;
       }
+    }
+
+    function onDragLeave(key: string, e: DragEvent) {
+      // Ignore if the cursor moved to a child element inside the drop zone
+      if (e.currentTarget instanceof Element && e.relatedTarget instanceof Element) {
+        if (e.currentTarget.contains(e.relatedTarget)) return;
+      }
+      if (draggingOverKey.value === key) draggingOverKey.value = null;
+    }
+
+    function onDrop(key: string, e: DragEvent, off: EditorOffering) {
+      e.preventDefault();
+      draggingOverKey.value = null;
+      const file = e.dataTransfer?.files[0];
+      if (!file) return;
+      validateAndUpload(file, off);
     }
 
     async function removeOfferingImage(off: EditorOffering) {
@@ -503,6 +559,7 @@ export default defineComponent({
 
     return {
       localCategories,
+      draggingOverKey,
       confirmDelete,
       onReorder,
       addCategory,
@@ -514,6 +571,9 @@ export default defineComponent({
       setFileRef,
       triggerImageUpload,
       onImageFileSelected,
+      onDragEnter,
+      onDragLeave,
+      onDrop,
       removeOfferingImage,
     };
   },
@@ -680,6 +740,40 @@ body.body--dark .offerings-editor__offering-price {
   height: 60px;
   object-fit: cover;
   border-radius: 3px;
+}
+
+.offerings-editor__drop-zone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px dashed rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  padding: 2px 8px 2px 2px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+body.body--dark .offerings-editor__drop-zone {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.offerings-editor__drop-zone--active {
+  background: rgba(221, 180, 118, 0.15);
+  border-color: rgba(221, 180, 118, 0.7);
+}
+
+body.body--dark .offerings-editor__drop-zone--active {
+  background: rgba(141, 181, 223, 0.15);
+  border-color: rgba(141, 181, 223, 0.6);
+}
+
+.offerings-editor__drop-hint {
+  font-size: 0.75rem;
+  color: rgba(35, 35, 35, 0.45);
+  white-space: nowrap;
+}
+
+body.body--dark .offerings-editor__drop-hint {
+  color: rgba(213, 226, 240, 0.45);
 }
 
 .offerings-editor__file-input {

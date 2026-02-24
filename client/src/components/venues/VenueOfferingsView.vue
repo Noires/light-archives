@@ -6,14 +6,14 @@
     <template v-else-if="offerings.categories.length === 1">
       <!-- Single top-level category: no tab header, show content directly -->
       <div class="offerings-view__single-category">
-        <template v-for="cat in offerings.categories" :key="cat.id">
+        <template v-for="(cat, catIdx) in offerings.categories" :key="catIdx">
           <template v-if="cat.subcategories && cat.subcategories.length > 0">
-            <template v-for="sub in cat.subcategories" :key="sub.id">
+            <template v-for="(sub, subIdx) in cat.subcategories" :key="subIdx">
               <h4 class="offerings-view__subcategory-heading">{{ sub.name }}</h4>
               <div v-if="sub.offerings && sub.offerings.length" class="offerings-view__grid">
                 <venue-offering-card
-                  v-for="offering in sub.offerings"
-                  :key="offering.id"
+                  v-for="(offering, offIdx) in sub.offerings"
+                  :key="offIdx"
                   :offering="offering"
                 />
               </div>
@@ -24,8 +24,8 @@
           <template v-if="cat.offerings && cat.offerings.length > 0">
             <div class="offerings-view__grid">
               <venue-offering-card
-                v-for="offering in cat.offerings"
-                :key="offering.id"
+                v-for="(offering, offIdx) in cat.offerings"
+                :key="offIdx"
                 :offering="offering"
               />
             </div>
@@ -45,26 +45,26 @@
         class="offerings-view__tabs"
       >
         <q-tab
-          v-for="cat in offerings.categories"
-          :key="cat.id"
+          v-for="(cat, catIdx) in offerings.categories"
+          :key="catIdx"
           :name="String(cat.id ?? cat.name)"
           :label="cat.name"
         />
       </q-tabs>
       <q-tab-panels v-model="activeTab" animated>
         <q-tab-panel
-          v-for="cat in offerings.categories"
-          :key="cat.id"
+          v-for="(cat, catIdx) in offerings.categories"
+          :key="catIdx"
           :name="String(cat.id ?? cat.name)"
           class="offerings-view__panel"
         >
           <template v-if="cat.subcategories && cat.subcategories.length > 0">
-            <template v-for="sub in cat.subcategories" :key="sub.id">
+            <template v-for="(sub, subIdx) in cat.subcategories" :key="subIdx">
               <h4 class="offerings-view__subcategory-heading">{{ sub.name }}</h4>
               <div v-if="sub.offerings && sub.offerings.length" class="offerings-view__grid">
                 <venue-offering-card
-                  v-for="offering in sub.offerings"
-                  :key="offering.id"
+                  v-for="(offering, offIdx) in sub.offerings"
+                  :key="offIdx"
                   :offering="offering"
                 />
               </div>
@@ -75,8 +75,8 @@
           <template v-if="cat.offerings && cat.offerings.length > 0">
             <div class="offerings-view__grid">
               <venue-offering-card
-                v-for="offering in cat.offerings"
-                :key="offering.id"
+                v-for="(offering, offIdx) in cat.offerings"
+                :key="offIdx"
                 :offering="offering"
               />
             </div>
