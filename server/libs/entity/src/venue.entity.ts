@@ -7,6 +7,8 @@ import { ContentNote } from './content-note.entity';
 import { Image } from './image.entity';
 import { SearchFields } from './search-fields';
 import { Server } from './server.entity';
+import { VenueOfferingCategory } from './venue-offering-category.entity';
+import { VenueOffering } from './venue-offering.entity';
 import { VenueTag } from './venue-tag.entity';
 
 @Entity()
@@ -242,4 +244,14 @@ export class Venue extends BasicEntity {
   @ManyToMany(() => ContentNote)
   @JoinTable()
   eventContentNotes: ContentNote[];
+
+  @OneToMany(() => VenueOfferingCategory, (cat) => cat.venue, {
+    cascade: true,
+  })
+  offeringCategories: VenueOfferingCategory[];
+
+  @OneToMany(() => VenueOffering, (offering) => offering.venue, {
+    cascade: true,
+  })
+  offerings: VenueOffering[];
 }

@@ -6,10 +6,12 @@ import { CharacterIdWrapper } from '@app/shared/dto/common/character-id-wrapper.
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { VenueMemberDto } from '@app/shared/dto/venues/venue-member.dto';
 import { VenueMemberFlagsDto } from '@app/shared/dto/venues/venue-member-flags.dto';
+import { VenueOfferingsDto } from '@app/shared/dto/venues/venue-offering.dto';
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { Role } from '@app/shared/enums/role.enum';
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional } from 'class-validator';
 import { VenuesService } from './venues.service';
@@ -131,4 +133,44 @@ export class VenuesController {
 	async deleteVenue(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: UserInfo): Promise<void> {
 		await this.venuesService.deleteVenue(id, user);
 	}
+
+  // ─── Offerings ──────────────────────────────────────────────────────────────
+
+  @Get(':id/offerings')
+  @UseGuards(OptionalJwtAuthGuard)
+  async getOfferings(@Param('id', ParseIntPipe) id: number): Promise<VenueOfferingsDto> {
+    return this.venuesService.getOfferings(id);
+  }
+
+  @Put(':id/offerings')
+  @RoleRequired(Role.USER)
+  async saveOfferings(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() offerings: VenueOfferingsDto,
+    @CurrentUser() user: UserInfo,
+  ): Promise<void> {
+    await this.venuesService.saveOfferings(id, offerings, user);
+  }
+
+  @Post(':id/offerings/image')
+  @RoleRequired(Role.USER)
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadOfferingImage(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('characterId', ParseIntPipe) characterId: number,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: UserInfo,
+  ): Promise<{ id: number; url: string }> {
+    return this.venuesService.uploadOfferingImage(id, characterId, file, user);
+  }
+
+  @Delete(':id/offerings/image/:imageId')
+  @RoleRequired(Role.USER)
+  async deleteOfferingImage(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('imageId', ParseIntPipe) imageId: number,
+    @CurrentUser() user: UserInfo,
+  ): Promise<void> {
+    await this.venuesService.deleteOfferingImage(id, imageId, user);
+  }
 }

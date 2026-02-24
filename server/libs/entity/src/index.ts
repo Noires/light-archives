@@ -26,6 +26,8 @@ export { SupportTicketMessage } from './support-ticket-message.entity';
 export { User } from './user.entity';
 export { Venue } from './venue.entity';
 export { VenueMembership } from './venue-membership.entity';
+export { VenueOfferingCategory } from './venue-offering-category.entity';
+export { VenueOffering } from './venue-offering.entity';
 export { VenueTag } from './venue-tag.entity';
 export { Violation } from './violation.entity';
 export { Weather } from './weather.entity';

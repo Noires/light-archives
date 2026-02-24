@@ -178,7 +178,7 @@
                 <section class="page-edit-venue__toggle-grid">
                   <q-checkbox v-model="venue.showRules" label="Regeln" @update:model-value="onSectionToggleChange" />
                   <q-checkbox v-model="venue.showPremises" label="Räumlichkeiten" @update:model-value="onSectionToggleChange" />
-                  <q-checkbox v-model="venue.showMenu" label="Speisekarte" @update:model-value="onSectionToggleChange" />
+                  <q-checkbox v-model="venue.showMenu" label="Angebote" @update:model-value="onSectionToggleChange" />
                   <q-checkbox v-model="venue.showStaff" label="Mitarbeiter" @update:model-value="onSectionToggleChange" />
                   <q-checkbox v-model="venue.showJobs" label="Stellenangebote" @update:model-value="onSectionToggleChange" />
                   <q-checkbox v-model="venue.showOoc" label="OOC" @update:model-value="onSectionToggleChange" />
@@ -212,8 +212,18 @@
               </section>
 
               <section v-else-if="editSection === 'menu'" class="page-edit-venue__section">
-                <h6>Speisekarte</h6>
-                <html-editor v-model="venue.menu" />
+                <h6>Angebote</h6>
+                <venue-offerings-editor
+                  v-model="venueOfferings"
+                  :venue-id="venueId || 0"
+                  :character-id="selectedCharacterId"
+                />
+                <div class="page-edit-venue__button-bar">
+                  <div></div>
+                  <div class="page-edit-venue__revert-submit">
+                    <q-btn label="Angebote speichern" color="primary" :loading="savingOfferings" @click="onSaveOfferings" />
+                  </div>
+                </div>
               </section>
 
               <section v-else-if="editSection === 'staff'" class="page-edit-venue__section">
@@ -329,6 +339,7 @@
 <script lang="ts">
 import Multiselect from '@vueform/multiselect';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
+import { VenueOfferingsDto } from '@app/shared/dto/venues/venue-offering.dto';
 import { HousingArea } from '@app/shared/enums/housing-area.enum';
 import { NoticeboardType } from '@app/shared/enums/noticeboard-type.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
@@ -343,6 +354,7 @@ import CarrdEditSection from 'src/components/common/CarrdEditSection.vue';
 import CharacterSelector from 'src/components/common/CharacterSelector.vue';
 import WorldSelect from 'src/components/common/WorldSelect.vue';
 import VenueProfile from 'src/components/venues/VenueProfile.vue';
+import VenueOfferingsEditor from 'src/components/venues/VenueOfferingsEditor.vue';
 import { useRouter } from 'src/router';
 import { Dialog } from 'quasar';
 import { Options, Vue } from 'vue-class-component';
@@ -361,17 +373,20 @@ type EditSectionItem = {
   icon: string;
 };
 
-async function load(params: RouteParams): Promise<{ venue: VenueDto | null; contentNotes: { name: string }[] }> {
+async function load(params: RouteParams): Promise<{ venue: VenueDto | null; contentNotes: { name: string }[]; offerings: VenueOfferingsDto | null }> {
   const id = parseInt(params.id as string, 10);
   const contentNotes = await $api.contentNotes.getContentNotes();
 
   if (!id) {
-    return { venue: null, contentNotes };
+    return { venue: null, contentNotes, offerings: null };
   }
 
   try {
-    const venue = await $api.venues.getVenue(id);
-    return { venue, contentNotes };
+    const [venue, offerings] = await Promise.all([
+      $api.venues.getVenue(id),
+      $api.venues.getOfferings(id).catch(() => ({ categories: [] } as VenueOfferingsDto)),
+    ]);
+    return { venue, contentNotes, offerings };
   } catch (e) {
     if (errors.getStatusCode(e) === 404) {
       notifyError('Treffpunkt konnte nicht gefunden werden.');
@@ -394,6 +409,7 @@ async function load(params: RouteParams): Promise<{ venue: VenueDto | null; cont
     CharacterSelector,
     WorldSelect,
     Multiselect,
+    VenueOfferingsEditor,
   },
   async beforeRouteEnter(to, _, next) {
     isDirty.value = false;
@@ -481,6 +497,7 @@ export default class PageEditVenue extends Vue {
   preview = false;
   loaded = false;
   saving = false;
+  savingOfferings = false;
 
   confirmRevert = false;
 
@@ -490,10 +507,12 @@ export default class PageEditVenue extends Vue {
   miniState = true;
 
   selectedCharacterId: number | null = null;
+  venueOfferings: VenueOfferingsDto = { categories: [] };
   private suppressDirtyTracking = false;
 
-  setContent(content: { venue: VenueDto | null; contentNotes?: { name: string }[] }) {
+  setContent(content: { venue: VenueDto | null; contentNotes?: { name: string }[]; offerings?: VenueOfferingsDto | null }) {
     this.suppressDirtyTracking = true;
+    this.venueOfferings = content.offerings || { categories: [] };
 
     if (content.contentNotes) {
       this.contentNoteOptions = content.contentNotes.map((contentNote) => ({
@@ -595,7 +614,7 @@ export default class PageEditVenue extends Vue {
 
     if (this.venue.showRules) sections.push({ id: 'rules', label: 'Regeln', icon: 'gavel' });
     if (this.venue.showPremises) sections.push({ id: 'premises', label: 'Räumlichkeiten', icon: 'meeting_room' });
-    if (this.venue.showMenu) sections.push({ id: 'menu', label: 'Speisekarte', icon: 'restaurant_menu' });
+    if (this.venue.showMenu) sections.push({ id: 'menu', label: 'Angebote', icon: 'restaurant_menu' });
     if (this.venue.showStaff) sections.push({ id: 'staff', label: 'Mitarbeiter', icon: 'badge' });
     if (this.venue.showJobs) sections.push({ id: 'jobs', label: 'Stellenangebote', icon: 'work' });
     if (this.venue.showOoc) sections.push({ id: 'ooc', label: 'OOC', icon: 'forum' });
@@ -707,6 +726,19 @@ export default class PageEditVenue extends Vue {
       notifyError(e);
     } finally {
       this.saving = false;
+    }
+  }
+
+  async onSaveOfferings() {
+    if (!this.venueId) return;
+    this.savingOfferings = true;
+    try {
+      await this.$api.venues.saveOfferings(this.venueId, this.venueOfferings);
+      notifySuccess('Angebote gespeichert.');
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      this.savingOfferings = false;
     }
   }
 

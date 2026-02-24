@@ -5,6 +5,7 @@ import SharedConstants from '@app/shared/SharedConstants';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Max, Min, ValidateIf, ValidateNested } from 'class-validator';
 import { BannerDto } from '../characters/banner.dto';
+import { VenueOfferingsDto } from './venue-offering.dto';
 import { VenueStaffMemberDto } from './venue-staff-member.dto';
 
 export class VenueDto {
@@ -183,7 +184,10 @@ export class VenueDto {
   @IsString()
   @IsOptional()
   network?: string;
-	
+
+  @IsOptional()
+  offerings?: VenueOfferingsDto;
+
 	constructor(properties?: Readonly<VenueDto>) {
     if (properties) {
       Object.assign(this, properties);

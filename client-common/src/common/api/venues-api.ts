@@ -1,6 +1,7 @@
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { VenueMemberDto } from '@app/shared/dto/venues/venue-member.dto';
 import { VenueMemberFlagsDto } from '@app/shared/dto/venues/venue-member-flags.dto';
+import { VenueOfferingsDto } from '@app/shared/dto/venues/venue-offering.dto';
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import APITransport, { QueryParams } from './api-transport';
@@ -63,5 +64,26 @@ export default class VenuesAPI {
 
   async setMemberFlags(id: number, characterId: number, flags: VenueMemberFlagsDto): Promise<void> {
     return this.transport.authPut(`${id}/members/${characterId}/flags`, flags);
+  }
+
+  // ─── Offerings ──────────────────────────────────────────────────────────────
+
+  async getOfferings(venueId: number): Promise<VenueOfferingsDto> {
+    return this.transport.get<VenueOfferingsDto>(`${venueId}/offerings`);
+  }
+
+  async saveOfferings(venueId: number, offerings: VenueOfferingsDto): Promise<void> {
+    await this.transport.authPut<void>(`${venueId}/offerings`, offerings);
+  }
+
+  async uploadOfferingImage(venueId: number, characterId: number, file: File): Promise<{ id: number; url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('characterId', characterId.toString());
+    return this.transport.authPost<{ id: number; url: string }>(`${venueId}/offerings/image`, formData);
+  }
+
+  async deleteOfferingImage(venueId: number, imageId: number): Promise<void> {
+    await this.transport.authDelete<void>(`${venueId}/offerings/image/${imageId}`);
   }
 }

@@ -120,9 +120,8 @@
           </section>
 
           <section v-else-if="activeSection === VenueSection.MENU" class="page-venue__content-box">
-            <h3>Speisekarte</h3>
-            <html-viewer v-if="venue.menu" :content="venue.menu" />
-            <p v-else>Keine Speisekarte hinterlegt.</p>
+            <h3>Angebote</h3>
+            <venue-offerings-view :offerings="venueOfferings" />
           </section>
 
           <section v-else-if="activeSection === VenueSection.STAFF" class="page-venue__content-box">
@@ -220,6 +219,7 @@ import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 import { NoticeboardItemSummaryDto } from '@app/shared/dto/noticeboard/noticeboard-item-summary.dto';
 import { VenueMemberDto } from '@app/shared/dto/venues/venue-member.dto';
+import { VenueOfferingsDto } from '@app/shared/dto/venues/venue-offering.dto';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { MembershipStatus } from '@app/shared/enums/membership-status.enum';
 import { NoticeboardType } from '@app/shared/enums/noticeboard-type.enum';
@@ -234,6 +234,7 @@ import NoticeboardItemList from 'src/components/noticeboard/NoticeboardItemList.
 import VenueApplicantEditor from 'src/components/venues/VenueApplicantEditor.vue';
 import VenueMemberEditor from 'src/components/venues/VenueMemberEditor.vue';
 import VenueProfile from 'components/venues/VenueProfile.vue';
+import VenueOfferingsView from 'src/components/venues/VenueOfferingsView.vue';
 import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import { useRouter } from 'src/router';
@@ -251,7 +252,7 @@ const SECTION_LABELS: Record<VenueSection, string> = {
   [VenueSection.OVERVIEW]: 'Übersicht',
   [VenueSection.RULES]: 'Regeln',
   [VenueSection.PREMISES]: 'Räumlichkeiten',
-  [VenueSection.MENU]: 'Speisekarte',
+  [VenueSection.MENU]: 'Angebote',
   [VenueSection.STAFF]: 'Mitarbeiter',
   [VenueSection.JOBS]: 'Stellenangebote',
   [VenueSection.OOC]: 'OOC',
@@ -286,6 +287,7 @@ interface PageData {
   pastEvents: EventSummaryDto[];
   jobs: NoticeboardItemSummaryDto[];
   media: ImageSummaryDto[];
+  offerings: VenueOfferingsDto;
 }
 
 function parseSection(rawSection?: string): VenueSection {
@@ -316,12 +318,14 @@ async function load(params: RouteParams): Promise<PageData> {
     const shouldLoadEvents = venue.showEvents || section === VenueSection.OVERVIEW;
     const shouldLoadJobs = venue.showJobs || section === VenueSection.JOBS;
     const shouldLoadMedia = venue.showMedia || section === VenueSection.MEDIA;
+    const shouldLoadOfferings = venue.showMenu || section === VenueSection.MENU;
 
-    const [upcomingEvents, pastEvents, noticeboardItems, mediaResult] = await Promise.all([
+    const [upcomingEvents, pastEvents, noticeboardItems, mediaResult, offerings] = await Promise.all([
       shouldLoadEvents && venue.id ? $api.events.getEventsForVenue(venue.id, 'upcoming') : Promise.resolve([]),
       shouldLoadEvents && venue.id ? $api.events.getEventsForVenue(venue.id, 'past') : Promise.resolve([]),
       shouldLoadJobs && venue.id ? $api.noticeboard.getNoticeboardItems({ venueId: venue.id }) : Promise.resolve([]),
       shouldLoadMedia && venue.id ? $api.images.getImages({ venueId: venue.id, limit: 24, offset: 0 }) : Promise.resolve({ total: 0, data: [] }),
+      shouldLoadOfferings && venue.id ? $api.venues.getOfferings(venue.id).catch(() => ({ categories: [] } as VenueOfferingsDto)) : Promise.resolve({ categories: [] } as VenueOfferingsDto),
     ]);
 
     return {
@@ -331,6 +335,7 @@ async function load(params: RouteParams): Promise<PageData> {
       pastEvents,
       jobs: noticeboardItems.filter((item) => JOB_TYPES.includes(item.type)),
       media: mediaResult.data,
+      offerings,
     };
   } catch (e) {
     notifyError(e);
@@ -347,6 +352,7 @@ async function load(params: RouteParams): Promise<PageData> {
     HtmlViewer,
     NoticeboardItemList,
     ThumbGallery,
+    VenueOfferingsView,
   },
   async beforeRouteEnter(to, _, next) {
     const content = await load(to.params);
@@ -408,6 +414,7 @@ export default class PageVenue extends Vue {
   pastEvents: EventSummaryDto[] = [];
   jobItems: NoticeboardItemSummaryDto[] = [];
   mediaItems: ImageSummaryDto[] = [];
+  venueOfferings: VenueOfferingsDto = { categories: [] };
   applicants: VenueMemberDto[] = [];
   confirmedMembers: VenueMemberDto[] = [];
   private loadRequestId = 0;
@@ -419,6 +426,7 @@ export default class PageVenue extends Vue {
     this.pastEvents = content.pastEvents || [];
     this.jobItems = content.jobs || [];
     this.mediaItems = content.media || [];
+    this.venueOfferings = content.offerings || { categories: [] };
     this.applicants = [];
     this.confirmedMembers = [];
 
@@ -492,7 +500,7 @@ export default class PageVenue extends Vue {
       case VenueSection.PREMISES:
         return `Räumlichkeiten von ${this.venue.name} auf ${this.venue.server}.`;
       case VenueSection.MENU:
-        return `Speisekarte von ${this.venue.name} auf ${this.venue.server}.`;
+        return `Angebote von ${this.venue.name} auf ${this.venue.server}.`;
       case VenueSection.STAFF:
         return `Mitarbeiter von ${this.venue.name} auf ${this.venue.server}.`;
       case VenueSection.JOBS:

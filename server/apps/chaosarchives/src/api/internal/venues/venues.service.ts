@@ -1,14 +1,17 @@
 import { UserInfo } from '@app/auth/model/user-info';
-import { Character, ContentNote, Image, Server, Venue, VenueMembership } from '@app/entity';
+import { Character, ContentNote, Image, Server, Venue, VenueMembership, VenueOffering, VenueOfferingCategory } from '@app/entity';
 import { VenueTag } from '@app/entity/venue-tag.entity';
 import { CharacterIdWrapper } from '@app/shared/dto/common/character-id-wrapper.dto';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { VenueMemberDto } from '@app/shared/dto/venues/venue-member.dto';
 import { VenueMemberFlagsDto } from '@app/shared/dto/venues/venue-member-flags.dto';
+import { VenueOfferingCategoryDto, VenueOfferingDto, VenueOfferingsDto } from '@app/shared/dto/venues/venue-offering.dto';
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { VenueStaffMemberDto } from '@app/shared/dto/venues/venue-staff-member.dto';
 import { HousingArea } from '@app/shared/enums/housing-area.enum';
+import { ImageCategory } from '@app/shared/enums/image-category.enum';
+import { ImageFormat } from '@app/shared/enums/image-format.enum';
 import { MembershipStatus } from '@app/shared/enums/membership-status.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import html from '@app/shared/html';
@@ -17,11 +20,14 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import { InjectRepository } from '@nestjs/typeorm';
 import crypto from 'crypto';
 import { DateTime } from 'luxon';
+import sharp from 'sharp';
 import { Connection, EntityManager, FindOneOptions, IsNull, Not, Repository } from 'typeorm';
 import { assertUserCharacterId, checkCarrdProfile, getVerifiedCharacter } from '../../../common/api-checks';
 import { Contains } from '../../../common/db';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import { ImagesService } from '../images/images.service';
+import { StorageService } from '../images/storage.service';
+import { hashFile } from '@app/security';
 
 const HOUSING_AREA_LABELS: Record<HousingArea, string> = {
   [HousingArea.MIST]: 'Dorf des Nebels',
@@ -36,8 +42,12 @@ export class VenuesService {
   constructor(
     @InjectRepository(Venue) private venueRepo: Repository<Venue>,
     @InjectRepository(VenueMembership) private venueMembershipRepo: Repository<VenueMembership>,
+    @InjectRepository(VenueOfferingCategory) private offeringCategoryRepo: Repository<VenueOfferingCategory>,
+    @InjectRepository(VenueOffering) private offeringRepo: Repository<VenueOffering>,
+    @InjectRepository(Image) private imageRepo: Repository<Image>,
     private connection: Connection,
     private imagesService: ImagesService,
+    private storageService: StorageService,
   ) {}
 
 	async getVenues(filter: { characterId?: number, limit?: number }): Promise<VenueSummaryDto[]> {
@@ -767,6 +777,301 @@ export class VenuesService {
 
     return (await repo.findOne(options)) || null;
   }
+
+  // ─── Offerings ────────────────────────────────────────────────────────────────
+
+  async getOfferings(venueId: number): Promise<VenueOfferingsDto> {
+    const topCategories = await this.offeringCategoryRepo.find({
+      where: { venue: { id: venueId }, parentCategory: IsNull() },
+      relations: [
+        'subcategories',
+        'subcategories.offerings',
+        'subcategories.offerings.image',
+        'subcategories.offerings.image.owner',
+        'offerings',
+        'offerings.image',
+        'offerings.image.owner',
+      ],
+      order: { sortOrder: 'ASC' },
+    });
+
+    return {
+      categories: topCategories.map((cat) => this.toCategoryDto(cat)),
+    };
+  }
+
+  private toCategoryDto(cat: VenueOfferingCategory): VenueOfferingCategoryDto {
+    const subcategories = (cat.subcategories || [])
+      .slice()
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((sub) => this.toCategoryDto(sub));
+
+    const offerings = (cat.offerings || [])
+      .slice()
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((off) => this.toOfferingDto(off));
+
+    return {
+      id: cat.id,
+      name: cat.name,
+      sortOrder: cat.sortOrder,
+      subcategories,
+      offerings,
+    };
+  }
+
+  private toOfferingDto(off: VenueOffering): VenueOfferingDto {
+    const image = off.image as Image | null;
+    return {
+      id: off.id,
+      name: off.name,
+      description: off.description,
+      price: off.price,
+      imageId: image?.id,
+      imageUrl: image ? this.imagesService.getUrl(image) : undefined,
+      sortOrder: off.sortOrder,
+    };
+  }
+
+  async saveOfferings(venueId: number, dto: VenueOfferingsDto, user: UserInfo): Promise<void> {
+    await this.assertEditRights(venueId, user);
+
+    // Collect image IDs referenced in the new structure
+    const referencedImageIds = this.collectReferencedImageIds(dto);
+
+    // Load current offering images with owner info (needed for S3 path after deletion)
+    const currentOfferingImages = await this.imageRepo.find({
+      where: { category: ImageCategory.OFFERING_ITEM, venue: { id: venueId } },
+      relations: ['owner'],
+    });
+
+    const imagesToDelete = currentOfferingImages.filter((img) => !referencedImageIds.has(img.id));
+    const imageIdsToDelete = imagesToDelete.map((img) => img.id);
+
+    await this.connection.transaction(async (em) => {
+      const venue = await em.getRepository(Venue).findOne({ where: { id: venueId } });
+      if (!venue) throw new NotFoundException('Venue not found');
+
+      // Delete existing top-level categories (cascade deletes subcategories and offerings)
+      await em.getRepository(VenueOfferingCategory).delete({ venue: { id: venueId }, parentCategory: IsNull() });
+
+      // Delete orphaned images from DB
+      // (ON DELETE SET NULL on VenueOffering.image means no FK violation)
+      if (imageIdsToDelete.length > 0) {
+        await em.getRepository(Image).delete(imageIdsToDelete);
+      }
+
+      // Create new structure
+      for (let i = 0; i < dto.categories.length; i++) {
+        const catDto = dto.categories[i];
+        const cat = em.getRepository(VenueOfferingCategory).create({
+          venue,
+          name: catDto.name,
+          sortOrder: catDto.sortOrder ?? i,
+          parentCategory: null,
+        });
+        await em.save(cat);
+
+        // Direct offerings in category
+        for (let j = 0; j < (catDto.offerings || []).length; j++) {
+          const offDto = catDto.offerings![j];
+          const offering = await this.buildOfferingEntity(em, venue, cat, offDto, j);
+          await em.save(offering);
+        }
+
+        // Subcategories
+        for (let j = 0; j < (catDto.subcategories || []).length; j++) {
+          const subDto = catDto.subcategories![j];
+          const sub = em.getRepository(VenueOfferingCategory).create({
+            venue,
+            name: subDto.name,
+            sortOrder: subDto.sortOrder ?? j,
+            parentCategory: cat,
+          });
+          await em.save(sub);
+
+          // Offerings in subcategory
+          for (let k = 0; k < (subDto.offerings || []).length; k++) {
+            const offDto = subDto.offerings![k];
+            const offering = await this.buildOfferingEntity(em, venue, sub, offDto, k);
+            await em.save(offering);
+          }
+        }
+      }
+    });
+
+    // Delete orphaned images from S3 after successful transaction
+    if (imagesToDelete.length > 0) {
+      await Promise.all(
+        imagesToDelete.map((img) =>
+          Promise.all([
+            this.storageService.deleteFile(`${img.owner.id}/${img.hash}/${img.filename}`).catch(() => undefined),
+            this.storageService.deleteFile(`${img.owner.id}/${img.hash}/thumb_${img.filename}`).catch(() => undefined),
+          ]),
+        ),
+      );
+    }
+  }
+
+  private collectReferencedImageIds(dto: VenueOfferingsDto): Set<number> {
+    const ids = new Set<number>();
+    for (const cat of dto.categories) {
+      for (const off of cat.offerings || []) {
+        if (off.imageId) ids.add(off.imageId);
+      }
+      for (const sub of cat.subcategories || []) {
+        for (const off of sub.offerings || []) {
+          if (off.imageId) ids.add(off.imageId);
+        }
+      }
+    }
+    return ids;
+  }
+
+  private async buildOfferingEntity(
+    em: EntityManager,
+    venue: Venue,
+    category: VenueOfferingCategory,
+    dto: VenueOfferingDto,
+    fallbackOrder: number,
+  ): Promise<VenueOffering> {
+    const offering = em.getRepository(VenueOffering).create({
+      venue,
+      category,
+      name: dto.name,
+      description: dto.description || '',
+      price: dto.price || '',
+      sortOrder: dto.sortOrder ?? fallbackOrder,
+      image: null,
+    });
+
+    if (dto.imageId) {
+      const image = await em.getRepository(Image).findOne({
+        where: { id: dto.imageId, category: ImageCategory.OFFERING_ITEM, venue: { id: venue.id } },
+      });
+      if (image) offering.image = image;
+    }
+
+    return offering;
+  }
+
+  async uploadOfferingImage(
+    venueId: number,
+    characterId: number,
+    file: Express.Multer.File,
+    user: UserInfo,
+  ): Promise<{ id: number; url: string }> {
+    await this.assertEditRights(venueId, user);
+
+    if (file.mimetype !== 'image/jpeg' && file.mimetype !== 'image/png') {
+      throw new BadRequestException('Only JPEG and PNG formats are allowed');
+    }
+
+    if (file.size > 1024 * 1024) {
+      throw new BadRequestException('File too large (maximum 1 MB)');
+    }
+
+    const uploadedPaths: string[] = [];
+
+    try {
+      return await this.connection.transaction(async (em) => {
+        const character = await getVerifiedCharacter(em, characterId, user);
+
+        const venue = await em.getRepository(Venue).findOne({ where: { id: venueId } });
+        if (!venue) throw new NotFoundException('Venue not found');
+
+        // Process image
+        const imageSharp = sharp(file.buffer);
+        const metadata = await imageSharp.metadata();
+
+        const isJpeg = metadata.format === 'jpeg' || metadata.format === 'jpg';
+        const isPng = metadata.format === 'png';
+        if (!isJpeg && !isPng) {
+          throw new BadRequestException('Only JPEG and PNG formats are allowed');
+        }
+
+        const format = isPng ? ImageFormat.PNG : ImageFormat.JPEG;
+        const mimetype = isPng ? 'image/png' : 'image/jpeg';
+
+        const resized = imageSharp.resize(800, 800, { fit: 'inside', withoutEnlargement: true });
+        const buffer = isPng
+          ? await resized.png().toBuffer()
+          : await resized.jpeg({ quality: 90 }).toBuffer();
+
+        const resizedMeta = await sharp(buffer).metadata();
+        const width = resizedMeta.width || 0;
+        const height = resizedMeta.height || 0;
+
+        const thumbOp = sharp(buffer).resize(400, 400, { fit: 'inside' });
+        const thumbBuffer = isPng
+          ? await thumbOp.png().toBuffer()
+          : await thumbOp.jpeg({ quality: 85 }).toBuffer();
+
+        const hash = await hashFile(buffer);
+        const filename = file.originalname.replace(/[<>:"/\\|?*#]/g, '_');
+        const size = buffer.length;
+
+        const path = `${character.id}/${hash}/${filename}`;
+        const thumbPath = `${character.id}/${hash}/thumb_${filename}`;
+
+        await this.storageService.uploadFile(path, buffer, mimetype);
+        uploadedPaths.push(path);
+        await this.storageService.uploadFile(thumbPath, thumbBuffer, mimetype);
+        uploadedPaths.push(thumbPath);
+
+        const imageEntity = em.getRepository(Image).create({
+          owner: character,
+          width,
+          height,
+          size,
+          hash,
+          filename,
+          category: ImageCategory.OFFERING_ITEM,
+          title: '',
+          description: '',
+          credits: '',
+          format,
+          venue,
+        });
+
+        await em.getRepository(Image).save(imageEntity);
+
+        return {
+          id: imageEntity.id,
+          url: this.storageService.getUrl(path),
+        };
+      });
+    } catch (e) {
+      if (uploadedPaths.length > 0) {
+        await Promise.all(uploadedPaths.map((p) => this.storageService.deleteFile(p).catch(() => undefined)));
+      }
+      throw e;
+    }
+  }
+
+  async deleteOfferingImage(venueId: number, imageId: number, user: UserInfo): Promise<void> {
+    await this.assertEditRights(venueId, user);
+
+    const imageEntity = await this.connection.transaction(async (em) => {
+      const image = await em.getRepository(Image).findOne({
+        where: { id: imageId, category: ImageCategory.OFFERING_ITEM, venue: { id: venueId } },
+        relations: ['owner'],
+      });
+
+      if (!image) throw new NotFoundException('Image not found');
+
+      // ON DELETE SET NULL handles FK references in VenueOffering
+      await em.getRepository(Image).remove(image);
+      return image;
+    });
+
+    await Promise.all([
+      this.storageService.deleteFile(`${imageEntity.owner.id}/${imageEntity.hash}/${imageEntity.filename}`).catch(() => undefined),
+      this.storageService.deleteFile(`${imageEntity.owner.id}/${imageEntity.hash}/thumb_${imageEntity.filename}`).catch(() => undefined),
+    ]);
+  }
+
+  // ─── End Offerings ────────────────────────────────────────────────────────────
 
   async deleteVenue(venueId: number, user: UserInfo): Promise<void> {
 		await this.connection.transaction(async em => {
