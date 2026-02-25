@@ -698,8 +698,9 @@ body.body--dark .page-venue-layout__delete-item:hover {
 
 .page-venue__staff-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 240px));
   gap: 12px;
+  justify-content: flex-start;
 }
 
 .page-venue__staff-card {
@@ -764,6 +765,5 @@ body.body--dark .page-venue-layout__delete-item:hover {
   }
 }
 </style>
-
 
 

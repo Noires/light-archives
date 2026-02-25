@@ -157,11 +157,18 @@ export default class SwitchCharacterDialog extends Vue {
 }
 
 .switch-character-dialog__character-list.character-name-list .q-item {
-  background: white;
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.switch-character-dialog__character-list.character-name-list .q-item:hover,
+.switch-character-dialog__character-list.character-name-list .q-item.q-manual-focusable--focused,
+.switch-character-dialog__character-list.character-name-list .q-item.character-name-list__item_active {
+  background: var(--app-select-menu-item-hover-bg);
+  color: var(--app-select-menu-item-hover);
 }
 
 .switch-character-dialog__character-list.character-name-list .q-item.character-name-list__item_active {
-  background: $striped-list-bg-even;
+  font-weight: 600;
 }
 
 .switch-character-dialog__add-form-buttons {
