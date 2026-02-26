@@ -1,44 +1,60 @@
 <template>
   <div class="offerings-view">
     <template v-if="!offerings || offerings.categories.length === 0">
-      <p>Keine Angebote vorhanden.</p>
+      <p class="offerings-view__empty-state">Keine Angebote vorhanden.</p>
     </template>
+
     <template v-else-if="offerings.categories.length === 1">
-      <!-- Single top-level category: no tabs, show category heading + content -->
       <div class="offerings-view__single-category">
         <template v-for="(cat, catIdx) in offerings.categories" :key="catIdx">
-          <h3 class="offerings-view__category-heading">{{ cat.name }}</h3>
-          <template v-if="cat.subcategories && cat.subcategories.length > 0">
-            <template v-for="(sub, subIdx) in cat.subcategories" :key="subIdx">
-              <h4 class="offerings-view__subcategory-heading">{{ sub.name }}</h4>
-              <div v-if="sub.offerings && sub.offerings.length" class="offerings-view__grid">
-                <venue-offering-card
-                  v-for="(offering, offIdx) in sub.offerings"
-                  :key="offIdx"
-                  :offering="offering"
-                />
-              </div>
-              <p v-else class="offerings-view__empty">Keine Einträge.</p>
+          <section class="offerings-view__category-shell">
+            <h3 class="offerings-view__category-heading">{{ cat.name }}</h3>
+
+            <template v-if="cat.subcategories && cat.subcategories.length > 0">
+              <template v-for="(sub, subIdx) in cat.subcategories" :key="subIdx">
+                <section class="offerings-view__subsection">
+                  <h4 class="offerings-view__subcategory-heading">{{ sub.name }}</h4>
+                  <div v-if="sub.offerings && sub.offerings.length" class="offerings-view__grid">
+                    <venue-offering-card
+                      v-for="(offering, offIdx) in sub.offerings"
+                      :key="offIdx"
+                      :offering="offering"
+                    />
+                  </div>
+                  <p v-else class="offerings-view__empty">Keine Eintraege.</p>
+                </section>
+              </template>
             </template>
-          </template>
-          <!-- Direct offerings in this category -->
-          <template v-if="cat.offerings && cat.offerings.length > 0">
-            <div class="offerings-view__grid">
-              <venue-offering-card
-                v-for="(offering, offIdx) in cat.offerings"
-                :key="offIdx"
-                :offering="offering"
-              />
-            </div>
-          </template>
-          <template v-if="(!cat.subcategories || cat.subcategories.length === 0) && (!cat.offerings || cat.offerings.length === 0)">
-            <p class="offerings-view__empty">Keine Einträge.</p>
-          </template>
+
+            <template v-if="cat.offerings && cat.offerings.length > 0">
+              <section class="offerings-view__subsection">
+                <h4
+                  v-if="cat.subcategories && cat.subcategories.length > 0"
+                  class="offerings-view__subcategory-heading"
+                >
+                  Weitere Angebote
+                </h4>
+                <div class="offerings-view__grid">
+                  <venue-offering-card
+                    v-for="(offering, offIdx) in cat.offerings"
+                    :key="offIdx"
+                    :offering="offering"
+                  />
+                </div>
+              </section>
+            </template>
+
+            <template
+              v-if="(!cat.subcategories || cat.subcategories.length === 0) && (!cat.offerings || cat.offerings.length === 0)"
+            >
+              <p class="offerings-view__empty">Keine Eintraege.</p>
+            </template>
+          </section>
         </template>
       </div>
     </template>
+
     <template v-else>
-      <!-- Multiple top-level categories: use tabs -->
       <q-tabs
         v-model="activeTab"
         dense
@@ -52,40 +68,64 @@
           :label="cat.name"
         />
       </q-tabs>
-      <q-tab-panels v-model="activeTab" animated>
+
+      <q-tab-panels
+        v-model="activeTab"
+        animated
+        class="offerings-view__tab-panels"
+        transition-prev="offerings-switch-prev"
+        transition-next="offerings-switch-next"
+        :transition-duration="220"
+      >
         <q-tab-panel
           v-for="(cat, catIdx) in offerings.categories"
           :key="catIdx"
           :name="String(cat.id ?? cat.name)"
           class="offerings-view__panel"
         >
-          <h3 class="offerings-view__category-heading">{{ cat.name }}</h3>
-          <template v-if="cat.subcategories && cat.subcategories.length > 0">
-            <template v-for="(sub, subIdx) in cat.subcategories" :key="subIdx">
-              <h4 class="offerings-view__subcategory-heading">{{ sub.name }}</h4>
-              <div v-if="sub.offerings && sub.offerings.length" class="offerings-view__grid">
-                <venue-offering-card
-                  v-for="(offering, offIdx) in sub.offerings"
-                  :key="offIdx"
-                  :offering="offering"
-                />
-              </div>
-              <p v-else class="offerings-view__empty">Keine Einträge.</p>
+          <section class="offerings-view__category-shell">
+            <h3 class="offerings-view__category-heading">{{ cat.name }}</h3>
+
+            <template v-if="cat.subcategories && cat.subcategories.length > 0">
+              <template v-for="(sub, subIdx) in cat.subcategories" :key="subIdx">
+                <section class="offerings-view__subsection">
+                  <h4 class="offerings-view__subcategory-heading">{{ sub.name }}</h4>
+                  <div v-if="sub.offerings && sub.offerings.length" class="offerings-view__grid">
+                    <venue-offering-card
+                      v-for="(offering, offIdx) in sub.offerings"
+                      :key="offIdx"
+                      :offering="offering"
+                    />
+                  </div>
+                  <p v-else class="offerings-view__empty">Keine Eintraege.</p>
+                </section>
+              </template>
             </template>
-          </template>
-          <!-- Direct offerings in this category -->
-          <template v-if="cat.offerings && cat.offerings.length > 0">
-            <div class="offerings-view__grid">
-              <venue-offering-card
-                v-for="(offering, offIdx) in cat.offerings"
-                :key="offIdx"
-                :offering="offering"
-              />
-            </div>
-          </template>
-          <template v-if="(!cat.subcategories || cat.subcategories.length === 0) && (!cat.offerings || cat.offerings.length === 0)">
-            <p class="offerings-view__empty">Keine Einträge.</p>
-          </template>
+
+            <template v-if="cat.offerings && cat.offerings.length > 0">
+              <section class="offerings-view__subsection">
+                <h4
+                  v-if="cat.subcategories && cat.subcategories.length > 0"
+                  class="offerings-view__subcategory-heading"
+                >
+                  Weitere Angebote
+                </h4>
+                <div class="offerings-view__grid">
+                  <venue-offering-card
+                    v-for="(offering, offIdx) in cat.offerings"
+                    :key="offIdx"
+                    :offering="offering"
+                  />
+                </div>
+              </section>
+            </template>
+
+            <template
+              v-if="(!cat.subcategories || cat.subcategories.length === 0) && (!cat.offerings || cat.offerings.length === 0)"
+            >
+              <p class="offerings-view__empty">Keine Eintraege.</p>
+            </template>
+          </section>
         </q-tab-panel>
       </q-tab-panels>
     </template>
@@ -126,54 +166,178 @@ export default class VenueOfferingsView extends Vue.with(Props) {
 </script>
 
 <style lang="scss">
+.offerings-view {
+  --offerings-surface: #ffffff;
+  --offerings-surface-soft: #faf7f1;
+  --offerings-border: rgba(122, 96, 63, 0.22);
+  --offerings-divider: rgba(122, 96, 63, 0.16);
+  --offerings-title: #2a2015;
+  --offerings-subtitle: rgba(60, 45, 29, 0.72);
+  --offerings-muted: rgba(54, 45, 35, 0.64);
+  --offerings-shadow: 0 8px 18px rgba(36, 28, 18, 0.08);
+}
+
+body.body--dark .offerings-view {
+  --offerings-surface: #14202c;
+  --offerings-surface-soft: #1a2734;
+  --offerings-border: rgba(170, 205, 237, 0.24);
+  --offerings-divider: rgba(170, 205, 237, 0.2);
+  --offerings-title: rgba(234, 244, 255, 0.96);
+  --offerings-subtitle: rgba(194, 216, 238, 0.82);
+  --offerings-muted: rgba(194, 216, 238, 0.64);
+  --offerings-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+}
+
 .offerings-view__tabs {
-  margin-bottom: 0;
+  margin-bottom: 10px;
+  padding: 4px;
+  border: 1px solid var(--offerings-border);
+  border-radius: 10px;
+  background: var(--offerings-surface-soft);
+}
+
+.offerings-view__tabs :deep(.q-tab) {
+  min-height: 36px;
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.offerings-view__tabs :deep(.q-tab--active) {
+  background: var(--offerings-surface);
+}
+
+.offerings-view__tab-panels {
+  position: relative;
+  overflow: hidden;
+  contain: layout paint;
+  overscroll-behavior: contain;
+}
+
+.offerings-view__tab-panels :deep(.q-panel),
+.offerings-view__tab-panels :deep(.q-panel.scroll) {
+  overflow: hidden !important;
+}
+
+.offerings-view__tab-panels :deep(.q-panel > div),
+.offerings-view__tab-panels :deep(.q-tab-panel) {
+  overflow: hidden;
 }
 
 .offerings-view__panel {
-  padding: 16px 0;
+  padding: 0;
+  will-change: opacity, transform;
+}
+
+.offerings-view__category-shell {
+  border: 1px solid var(--offerings-border);
+  border-radius: 12px;
+  background: var(--offerings-surface);
+  box-shadow: var(--offerings-shadow);
+  padding: 16px;
 }
 
 .offerings-view__category-heading {
-  margin: 0 0 12px;
-  font-size: 1.2rem;
+  margin: 0 0 14px;
+  font-size: 1.18rem;
   font-weight: 700;
+  color: var(--offerings-title);
+  line-height: 1.25;
+}
+
+.offerings-view__subsection + .offerings-view__subsection {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--offerings-divider);
 }
 
 .offerings-view__subcategory-heading {
-  margin: 16px 0 10px;
-  font-size: 1rem;
-  font-weight: 600;
+  margin: 0 0 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: rgba(35, 35, 35, 0.6);
-}
-
-body.body--dark .offerings-view__subcategory-heading {
-  color: rgba(213, 226, 240, 0.6);
-}
-
-.offerings-view__subcategory-heading:first-child {
-  margin-top: 0;
+  color: var(--offerings-subtitle);
 }
 
 .offerings-view__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 12px;
-  margin-bottom: 16px;
 }
 
+.offerings-view__empty-state,
 .offerings-view__empty {
-  color: rgba(35, 35, 35, 0.55);
+  margin: 0;
+  color: var(--offerings-muted);
   font-style: italic;
 }
 
-body.body--dark .offerings-view__empty {
-  color: rgba(213, 226, 240, 0.55);
+.offerings-view__empty-state {
+  border: 1px dashed var(--offerings-divider);
+  border-radius: 10px;
+  background: var(--offerings-surface-soft);
+  padding: 12px 14px;
 }
 
 .offerings-view__single-category {
-  padding: 4px 0;
+  padding: 2px 0;
+}
+
+.q-transition--offerings-switch-next-enter-active,
+.q-transition--offerings-switch-next-leave-active,
+.q-transition--offerings-switch-prev-enter-active,
+.q-transition--offerings-switch-prev-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.q-transition--offerings-switch-next-leave-active,
+.q-transition--offerings-switch-prev-leave-active {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  pointer-events: none;
+}
+
+.q-transition--offerings-switch-next-enter-from {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+.q-transition--offerings-switch-next-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.q-transition--offerings-switch-prev-enter-from {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.q-transition--offerings-switch-prev-leave-to {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .q-transition--offerings-switch-next-enter-active,
+  .q-transition--offerings-switch-next-leave-active,
+  .q-transition--offerings-switch-prev-enter-active,
+  .q-transition--offerings-switch-prev-leave-active {
+    transition: none;
+  }
+}
+
+@media screen and (max-width: $breakpoint-sm) {
+  .offerings-view__category-shell {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .offerings-view__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>

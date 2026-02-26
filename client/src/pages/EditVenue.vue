@@ -287,7 +287,7 @@
             </template>
 
             <section v-else class="page-edit-venue__preview">
-              <venue-profile :venue="venue" :preview="true" />
+              <venue-profile v-if="editSection !== 'menu'" :venue="venue" :preview="true" />
               <section v-if="venue.showMenu" class="page-edit-venue__section">
                 <h3>Angebote</h3>
                 <venue-offerings-view :offerings="venueOfferings" />
