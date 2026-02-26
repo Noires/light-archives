@@ -93,17 +93,6 @@ export class VenuesController {
     return this.venuesService.setMemberFlags(id, characterId, flags, user);
   }
 
-	@Get(':server/:name')
-	@UseGuards(OptionalJwtAuthGuard)
-	async getVenueByName(
-    @Param('name') name: string,
-    @Param('server') server: string,
-    @Query() characterId: OptionalCharacterId,
-    @CurrentUser() user?: UserInfo
-  ): Promise<VenueDto> {
-		return this.venuesService.getVenueByName(name, server, characterId.characterId, user);
-	}
-
 	@Get(':id')
 	@UseGuards(OptionalJwtAuthGuard)
 	async getVenue(
@@ -173,4 +162,15 @@ export class VenuesController {
   ): Promise<void> {
     await this.venuesService.deleteOfferingImage(id, imageId, user);
   }
+
+	@Get(':server/:name')
+	@UseGuards(OptionalJwtAuthGuard)
+	async getVenueByName(
+    @Param('name') name: string,
+    @Param('server') server: string,
+    @Query() characterId: OptionalCharacterId,
+    @CurrentUser() user?: UserInfo
+  ): Promise<VenueDto> {
+		return this.venuesService.getVenueByName(name, server, characterId.characterId, user);
+	}
 }
