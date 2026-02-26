@@ -64,9 +64,13 @@ export class CharactersService {
 
 		// TODO: Refactor
     const banner = await character.banner;
+    const appearanceImage = await character.appearanceImage;
 
     if (banner) {
       banner.owner = character; // hack, needed to determine URL - TypeORM won't load banner.owner by itself
+    }
+    if (appearanceImage) {
+      appearanceImage.owner = character; // hack, needed to determine URL - TypeORM won't load image.owner by itself
     }
 
     const freeCompany = await character.freeCompany;
@@ -144,6 +148,12 @@ export class CharactersService {
         width: banner.width,
         height: banner.height
       }),
+      appearanceImage: !appearanceImage ? null : new BannerDto({
+        id: appearanceImage.id,
+        url: this.imagesService.getUrl(appearanceImage),
+        width: appearanceImage.width,
+        height: appearanceImage.height
+      }),
       showAvatar: character.showAvatar,
       showInfoboxes: character.showInfoboxes,
       showAppearance: character.showAppearance,
@@ -182,9 +192,13 @@ export class CharactersService {
 
 		// TODO: Refactor
     const banner = await character.banner;
+    const appearanceImage = await character.appearanceImage;
 
     if (banner) {
       banner.owner = character; // hack, needed to determine URL - TypeORM won't load banner.owner by itself
+    }
+    if (appearanceImage) {
+      appearanceImage.owner = character; // hack, needed to determine URL - TypeORM won't load image.owner by itself
     }
 
     const freeCompany = await character.freeCompany;
@@ -261,6 +275,12 @@ export class CharactersService {
         url: this.imagesService.getUrl(banner),
         width: banner.width,
         height: banner.height
+      }),
+      appearanceImage: !appearanceImage ? null : new BannerDto({
+        id: appearanceImage.id,
+        url: this.imagesService.getUrl(appearanceImage),
+        width: appearanceImage.width,
+        height: appearanceImage.height
       }),
       showAvatar: character.showAvatar,
       showInfoboxes: character.showInfoboxes,
@@ -396,6 +416,27 @@ export class CharactersService {
         character.banner = Promise.resolve(banner);
       } else {
         character.banner = Promise.resolve(null as unknown as Image);
+      }
+
+      if (characterDto.appearanceImage !== undefined) {
+        if (characterDto.appearanceImage && characterDto.appearanceImage.id) {
+          const appearanceImage = await em.getRepository(Image).findOne({
+            where: {
+              id: characterDto.appearanceImage.id,
+              owner: {
+                id: character.id,
+              }
+            }
+          });
+
+          if (!appearanceImage) {
+            throw new BadRequestException('Appearance image not found');
+          }
+
+          character.appearanceImage = Promise.resolve(appearanceImage);
+        } else {
+          character.appearanceImage = Promise.resolve(null as unknown as Image);
+        }
       }
 
 			return repo.save(character);

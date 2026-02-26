@@ -1,52 +1,61 @@
 ﻿<template>
   <div class="character-appearance">
-    <section class="character-appearance__top">
+    <section
+      class="character-appearance__top"
+      :class="{ 'character-appearance__top--without-visual': !hasAppearanceImage }"
+    >
       <section class="character-appearance__details page-edit-character__form-controls">
         <h6>Allgemeines</h6>
-        <q-input readonly v-model="character.haircolor" label="Haarfarbe">
+        <q-input
+          readonly
+          v-model="character.haircolor"
+          label="Haarfarbe"
+          class="character-appearance__color-field"
+          :input-style="colorFieldInputStyle(character.haircolor)"
+        >
           <template #append>
-            <div class="character-appearance__color-pair">
+            <div v-if="hairSelectedColors.length" class="character-appearance__color-pair">
               <span
+                v-for="(color, index) in hairSelectedColors"
+                :key="`hair-${index}`"
                 class="character-appearance__color-dot"
-                :class="{ 'character-appearance__color-dot--unknown': !resolveColor(character.haircolorShade1 || character.haircolor) }"
-                :style="colorDotStyle(character.haircolorShade1 || character.haircolor)"
-              />
-              <span
-                class="character-appearance__color-dot"
-                :class="{ 'character-appearance__color-dot--unknown': !resolveColor(character.haircolorShade2) }"
-                :style="colorDotStyle(character.haircolorShade2)"
+                :style="colorDotStyle(color)"
               />
             </div>
           </template>
         </q-input>
-        <q-input readonly v-model="character.eyecolor" label="Augenfarbe">
+        <q-input
+          readonly
+          v-model="character.eyecolor"
+          label="Augenfarbe"
+          class="character-appearance__color-field"
+          :input-style="colorFieldInputStyle(character.eyecolor)"
+        >
           <template #append>
-            <div class="character-appearance__color-pair">
+            <div v-if="eyeSelectedColors.length" class="character-appearance__color-pair">
               <span
+                v-for="(color, index) in eyeSelectedColors"
+                :key="`eye-${index}`"
                 class="character-appearance__color-dot"
-                :class="{ 'character-appearance__color-dot--unknown': !resolveColor(character.eyecolorShade1 || character.eyecolor) }"
-                :style="colorDotStyle(character.eyecolorShade1 || character.eyecolor)"
-              />
-              <span
-                class="character-appearance__color-dot"
-                :class="{ 'character-appearance__color-dot--unknown': !resolveColor(character.eyecolorShade2) }"
-                :style="colorDotStyle(character.eyecolorShade2)"
+                :style="colorDotStyle(color)"
               />
             </div>
           </template>
         </q-input>
-        <q-input readonly v-model="character.skintone" label="Hautfarbe">
+        <q-input
+          readonly
+          v-model="character.skintone"
+          label="Hautfarbe"
+          class="character-appearance__color-field"
+          :input-style="colorFieldInputStyle(character.skintone)"
+        >
           <template #append>
-            <div class="character-appearance__color-pair">
+            <div v-if="skinSelectedColors.length" class="character-appearance__color-pair">
               <span
+                v-for="(color, index) in skinSelectedColors"
+                :key="`skin-${index}`"
                 class="character-appearance__color-dot"
-                :class="{ 'character-appearance__color-dot--unknown': !resolveColor(character.skintoneShade1 || character.skintone) }"
-                :style="colorDotStyle(character.skintoneShade1 || character.skintone)"
-              />
-              <span
-                class="character-appearance__color-dot"
-                :class="{ 'character-appearance__color-dot--unknown': !resolveColor(character.skintoneShade2) }"
-                :style="colorDotStyle(character.skintoneShade2)"
+                :style="colorDotStyle(color)"
               />
             </div>
           </template>
@@ -59,14 +68,8 @@
         <q-input readonly v-model="character.specialfeatures" label="Besonderheiten" />
       </section>
 
-      <aside class="character-appearance__visual">
-        <q-img
-          v-if="character.avatar"
-          :src="character.avatar"
-          class="character-appearance__visual-image"
-          fit="cover"
-        />
-        <div v-else class="character-appearance__visual-placeholder">Kein Profilbild</div>
+      <aside v-if="hasAppearanceImage" class="character-appearance__visual">
+        <q-img :src="appearanceImageUrl" class="character-appearance__visual-image" fit="cover" />
       </aside>
     </section>
 
@@ -99,6 +102,32 @@ class Props {
   },
 })
 export default class CharacterAppearance extends Vue.with(Props) {
+  private textMeasureElement: HTMLSpanElement | null = null;
+
+  get hairSelectedColors() {
+    return this.getSelectedColors(this.character.haircolorShade1, this.character.haircolorShade2);
+  }
+
+  get eyeSelectedColors() {
+    return this.getSelectedColors(this.character.eyecolorShade1, this.character.eyecolorShade2);
+  }
+
+  get skinSelectedColors() {
+    return this.getSelectedColors(this.character.skintoneShade1, this.character.skintoneShade2);
+  }
+
+  get appearanceImageUrl(): string {
+    const character = this.character as CharacterProfileDto & {
+      appearanceImage?: { url?: string } | null;
+    };
+    const url = character.appearanceImage?.url;
+    return typeof url === 'string' ? url : '';
+  }
+
+  get hasAppearanceImage() {
+    return !!this.appearanceImageUrl;
+  }
+
   resolveColor(rawColor?: string | null): string | null {
     const value = (rawColor || '').trim();
     if (!value) {
@@ -127,6 +156,58 @@ export default class CharacterAppearance extends Vue.with(Props) {
       backgroundColor: resolved,
     };
   }
+
+  private getSelectedColors(...rawColors: Array<string | null | undefined>) {
+    return rawColors
+      .map((rawColor) => this.resolveColor(rawColor))
+      .filter((color): color is string => !!color);
+  }
+
+  beforeUnmount() {
+    if (this.textMeasureElement?.parentElement) {
+      this.textMeasureElement.parentElement.removeChild(this.textMeasureElement);
+    }
+
+    this.textMeasureElement = null;
+  }
+
+  private getTextWidthPx(text: string): number {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return text.length * 8;
+    }
+
+    if (!this.textMeasureElement) {
+      const element = document.createElement('span');
+      element.style.position = 'absolute';
+      element.style.visibility = 'hidden';
+      element.style.pointerEvents = 'none';
+      element.style.whiteSpace = 'pre';
+      element.style.left = '-10000px';
+      element.style.top = '-10000px';
+      document.body.appendChild(element);
+      this.textMeasureElement = element;
+    }
+
+    const sampleInput = document.querySelector<HTMLElement>('.character-appearance__color-field .q-field__native');
+    const sampleStyle = sampleInput ? window.getComputedStyle(sampleInput) : window.getComputedStyle(document.body);
+    this.textMeasureElement.style.font = sampleStyle.font;
+    this.textMeasureElement.style.letterSpacing = sampleStyle.letterSpacing;
+    this.textMeasureElement.style.textTransform = sampleStyle.textTransform;
+    this.textMeasureElement.textContent = text || ' ';
+
+    return this.textMeasureElement.getBoundingClientRect().width;
+  }
+
+  colorFieldInputStyle(rawText?: string | null) {
+    const text = rawText || '';
+    const measuredWidth = this.getTextWidthPx(text);
+    const width = Math.max(56, Math.ceil(measuredWidth + 10));
+
+    return {
+      width: `${width}px`,
+      maxWidth: '100%',
+    };
+  }
 }
 </script>
 
@@ -137,6 +218,10 @@ export default class CharacterAppearance extends Vue.with(Props) {
   gap: 16px;
   align-items: start;
   margin-bottom: 20px;
+}
+
+.character-appearance__top--without-visual {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .character-appearance__details {
@@ -157,15 +242,6 @@ export default class CharacterAppearance extends Vue.with(Props) {
   min-height: 420px;
 }
 
-.character-appearance__visual-placeholder {
-  height: 420px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(0, 0, 0, 0.5);
-  font-style: italic;
-}
-
 .character-appearance__color-dot {
   width: 16px;
   height: 16px;
@@ -179,24 +255,32 @@ export default class CharacterAppearance extends Vue.with(Props) {
   gap: 6px;
 }
 
-.character-appearance__color-dot--unknown {
-  background-image:
-    repeating-linear-gradient(
-      -45deg,
-      rgba(0, 0, 0, 0.14) 0,
-      rgba(0, 0, 0, 0.14) 3px,
-      rgba(255, 255, 255, 0.85) 3px,
-      rgba(255, 255, 255, 0.85) 6px
-    );
+.character-appearance__color-field .q-field__control-container {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.character-appearance__color-field .q-field__control {
+  justify-content: flex-start;
+}
+
+.character-appearance__color-field .q-field__control-container.col {
+  flex: 0 1 auto;
+}
+
+.character-appearance__color-field .q-field__native,
+.character-appearance__color-field .q-field__input {
+  width: auto;
+  min-width: 6ch;
+}
+
+.character-appearance__color-field .q-field__append {
+  padding-left: 8px;
 }
 
 body.body--dark .character-appearance__visual {
   border-color: rgba(141, 181, 223, 0.3);
   background: rgba(17, 24, 34, 0.8);
-}
-
-body.body--dark .character-appearance__visual-placeholder {
-  color: rgba(213, 226, 240, 0.62);
 }
 
 body.body--dark .character-appearance__color-dot {
@@ -213,8 +297,7 @@ body.body--dark .character-appearance__color-dot {
     min-height: 280px;
   }
 
-  .character-appearance__visual-image,
-  .character-appearance__visual-placeholder {
+  .character-appearance__visual-image {
     min-height: 280px;
     height: 280px;
   }

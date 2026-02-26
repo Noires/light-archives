@@ -43,6 +43,11 @@ export class CharacterProfileDto extends BaseCharacterProfileDto {
   @IsOptional()
   banner: BannerDto|null;
 
+  @Type(() => BannerDto)
+  @ValidateNested()
+  @IsOptional()
+  appearanceImage: BannerDto|null;
+
   @IsBoolean()
   showAvatar: boolean;
 

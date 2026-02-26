@@ -6,77 +6,168 @@
       </div>
       <q-form @submit="onSubmit">
         <template v-if="!preview">
+          <section class="page-edit-character__top-grid">
           <section class="page-edit-character__form-controls">
             <h6>Allgemeines</h6>
-            <q-input @update:model-value="onChange" v-model="character.haircolor" label="Haarfarbe">
+            <q-input
+              @update:model-value="onChange"
+              v-model="character.haircolor"
+              label="Haarfarbe"
+              class="page-edit-character__color-field"
+              :input-style="colorFieldInputStyle(character.haircolor)"
+            >
               <template #append>
                 <div class="page-edit-character__color-pair">
-                  <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.haircolorShade1 || character.haircolor)">
-                    <q-popup-proxy transition-show="scale" transition-hide="scale">
-                      <q-color
-                        :model-value="pickerColor(character.haircolorShade1 || character.haircolor)"
-                        format-model="hex"
-                        @update:model-value="onColorPicked('haircolorShade1', $event)"
-                      />
-                    </q-popup-proxy>
-                  </q-btn>
-                  <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.haircolorShade2)">
-                    <q-popup-proxy transition-show="scale" transition-hide="scale">
-                      <q-color
-                        :model-value="pickerColor(character.haircolorShade2)"
-                        format-model="hex"
-                        @update:model-value="onColorPicked('haircolorShade2', $event)"
-                      />
-                    </q-popup-proxy>
-                  </q-btn>
+                  <div class="page-edit-character__color-control">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.haircolorShade1)">
+                      <q-popup-proxy transition-show="scale" transition-hide="scale">
+                        <q-color
+                          :model-value="pickerColor(character.haircolorShade1)"
+                          format-model="hex"
+                          @update:model-value="onColorPicked('haircolorShade1', $event)"
+                        />
+                      </q-popup-proxy>
+                    </q-btn>
+                    <q-btn
+                      v-if="character.haircolorShade1"
+                      dense
+                      flat
+                      round
+                      icon="close"
+                      size="xs"
+                      class="page-edit-character__color-clear-btn"
+                      @click="onColorCleared('haircolorShade1')"
+                    />
+                  </div>
+                  <div class="page-edit-character__color-control">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.haircolorShade2)">
+                      <q-popup-proxy transition-show="scale" transition-hide="scale">
+                        <q-color
+                          :model-value="pickerColor(character.haircolorShade2)"
+                          format-model="hex"
+                          @update:model-value="onColorPicked('haircolorShade2', $event)"
+                        />
+                      </q-popup-proxy>
+                    </q-btn>
+                    <q-btn
+                      v-if="character.haircolorShade2"
+                      dense
+                      flat
+                      round
+                      icon="close"
+                      size="xs"
+                      class="page-edit-character__color-clear-btn"
+                      @click="onColorCleared('haircolorShade2')"
+                    />
+                  </div>
                 </div>
               </template>
             </q-input>
-            <q-input @update:model-value="onChange" v-model="character.eyecolor" label="Augenfarbe">
+            <q-input
+              @update:model-value="onChange"
+              v-model="character.eyecolor"
+              label="Augenfarbe"
+              class="page-edit-character__color-field"
+              :input-style="colorFieldInputStyle(character.eyecolor)"
+            >
               <template #append>
                 <div class="page-edit-character__color-pair">
-                  <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.eyecolorShade1 || character.eyecolor)">
-                    <q-popup-proxy transition-show="scale" transition-hide="scale">
-                      <q-color
-                        :model-value="pickerColor(character.eyecolorShade1 || character.eyecolor)"
-                        format-model="hex"
-                        @update:model-value="onColorPicked('eyecolorShade1', $event)"
-                      />
-                    </q-popup-proxy>
-                  </q-btn>
-                  <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.eyecolorShade2)">
-                    <q-popup-proxy transition-show="scale" transition-hide="scale">
-                      <q-color
-                        :model-value="pickerColor(character.eyecolorShade2)"
-                        format-model="hex"
-                        @update:model-value="onColorPicked('eyecolorShade2', $event)"
-                      />
-                    </q-popup-proxy>
-                  </q-btn>
+                  <div class="page-edit-character__color-control">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.eyecolorShade1)">
+                      <q-popup-proxy transition-show="scale" transition-hide="scale">
+                        <q-color
+                          :model-value="pickerColor(character.eyecolorShade1)"
+                          format-model="hex"
+                          @update:model-value="onColorPicked('eyecolorShade1', $event)"
+                        />
+                      </q-popup-proxy>
+                    </q-btn>
+                    <q-btn
+                      v-if="character.eyecolorShade1"
+                      dense
+                      flat
+                      round
+                      icon="close"
+                      size="xs"
+                      class="page-edit-character__color-clear-btn"
+                      @click="onColorCleared('eyecolorShade1')"
+                    />
+                  </div>
+                  <div class="page-edit-character__color-control">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.eyecolorShade2)">
+                      <q-popup-proxy transition-show="scale" transition-hide="scale">
+                        <q-color
+                          :model-value="pickerColor(character.eyecolorShade2)"
+                          format-model="hex"
+                          @update:model-value="onColorPicked('eyecolorShade2', $event)"
+                        />
+                      </q-popup-proxy>
+                    </q-btn>
+                    <q-btn
+                      v-if="character.eyecolorShade2"
+                      dense
+                      flat
+                      round
+                      icon="close"
+                      size="xs"
+                      class="page-edit-character__color-clear-btn"
+                      @click="onColorCleared('eyecolorShade2')"
+                    />
+                  </div>
                 </div>
               </template>
             </q-input>
-            <q-input @update:model-value="onChange" v-model="character.skintone" label="Hautfarbe">
+            <q-input
+              @update:model-value="onChange"
+              v-model="character.skintone"
+              label="Hautfarbe"
+              class="page-edit-character__color-field"
+              :input-style="colorFieldInputStyle(character.skintone)"
+            >
               <template #append>
                 <div class="page-edit-character__color-pair">
-                  <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.skintoneShade1 || character.skintone)">
-                    <q-popup-proxy transition-show="scale" transition-hide="scale">
-                      <q-color
-                        :model-value="pickerColor(character.skintoneShade1 || character.skintone)"
-                        format-model="hex"
-                        @update:model-value="onColorPicked('skintoneShade1', $event)"
-                      />
-                    </q-popup-proxy>
-                  </q-btn>
-                  <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.skintoneShade2)">
-                    <q-popup-proxy transition-show="scale" transition-hide="scale">
-                      <q-color
-                        :model-value="pickerColor(character.skintoneShade2)"
-                        format-model="hex"
-                        @update:model-value="onColorPicked('skintoneShade2', $event)"
-                      />
-                    </q-popup-proxy>
-                  </q-btn>
+                  <div class="page-edit-character__color-control">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.skintoneShade1)">
+                      <q-popup-proxy transition-show="scale" transition-hide="scale">
+                        <q-color
+                          :model-value="pickerColor(character.skintoneShade1)"
+                          format-model="hex"
+                          @update:model-value="onColorPicked('skintoneShade1', $event)"
+                        />
+                      </q-popup-proxy>
+                    </q-btn>
+                    <q-btn
+                      v-if="character.skintoneShade1"
+                      dense
+                      flat
+                      round
+                      icon="close"
+                      size="xs"
+                      class="page-edit-character__color-clear-btn"
+                      @click="onColorCleared('skintoneShade1')"
+                    />
+                  </div>
+                  <div class="page-edit-character__color-control">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.skintoneShade2)">
+                      <q-popup-proxy transition-show="scale" transition-hide="scale">
+                        <q-color
+                          :model-value="pickerColor(character.skintoneShade2)"
+                          format-model="hex"
+                          @update:model-value="onColorPicked('skintoneShade2', $event)"
+                        />
+                      </q-popup-proxy>
+                    </q-btn>
+                    <q-btn
+                      v-if="character.skintoneShade2"
+                      dense
+                      flat
+                      round
+                      icon="close"
+                      size="xs"
+                      class="page-edit-character__color-clear-btn"
+                      @click="onColorCleared('skintoneShade2')"
+                    />
+                  </div>
                 </div>
               </template>
             </q-input>
@@ -86,6 +177,35 @@
             <q-input @update:model-value="onChange" v-model="character.apparentage" label="Optisches Alter" />
             <q-input @update:model-value="onChange" v-model="character.voice" label="Stimme" />
             <q-input @update:model-value="onChange" v-model="character.specialfeatures" label="Besonderheiten" />
+          </section>
+          <section class="page-edit-character__appearance-image-section">
+            <h6>Charakterbild</h6>
+            <p class="text-caption">
+              Optionales großes Bild für den Aussehen-Bereich. Du kannst ein vorhandenes Bild auswählen
+              oder wie gewohnt per Dialog hochladen und zuschneiden.
+            </p>
+            <div class="page-edit-character__appearance-media">
+              <q-img
+                v-if="character.appearanceImage"
+                class="page-edit-character__appearance-image"
+                :src="character.appearanceImage.url"
+                fit="cover"
+              />
+              <div v-else class="page-edit-character__appearance-image-placeholder">Kein Charakterbild</div>
+            </div>
+            <div class="text-right">
+              <q-btn
+                v-if="character.appearanceImage"
+                flat
+                label="Entfernen"
+                icon="remove"
+                color="negative"
+                @click="onAppearanceImageRemoveClick"
+              />&nbsp;
+              <q-btn flat label="Auswählen" icon="collections" color="secondary" @click="onAppearanceImageSelectClick" />&nbsp;
+              <q-btn flat label="Hochladen" icon="upload" color="secondary" @click="onAppearanceImageUploadClick" />
+            </div>
+          </section>
           </section>
           <h6>Erscheinungsbild</h6>
           <html-editor @update:model-value="onChange" v-model="character.appearance" />
@@ -122,8 +242,10 @@
 </template>
 
 <script lang="ts">
+import { BannerDto } from '@app/shared/dto/characters/banner.dto';
 import { CharacterProfileDto } from '@app/shared/dto/characters/character-profile.dto';
 import { CharacterRefreshResultDto } from '@app/shared/dto/characters/character-refresh-result.dto';
+import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 import SharedConstants from '@app/shared/SharedConstants';
 import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
@@ -205,6 +327,8 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
 })
 export default class PageEditProfile extends Vue {
   readonly SharedConstants = SharedConstants;
+  readonly APPEARANCE_IMAGE_ASPECT_RATIO = 2 / 3;
+  private textMeasureElement: HTMLSpanElement | null = null;
 
   readonly previewOptions = [
     { label: 'Bearbeitung', value: false },
@@ -295,8 +419,112 @@ export default class PageEditProfile extends Vue {
     };
   }
 
+  beforeUnmount() {
+    if (this.textMeasureElement?.parentElement) {
+      this.textMeasureElement.parentElement.removeChild(this.textMeasureElement);
+    }
+
+    this.textMeasureElement = null;
+  }
+
+  private getTextWidthPx(text: string): number {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return text.length * 8;
+    }
+
+    if (!this.textMeasureElement) {
+      const element = document.createElement('span');
+      element.style.position = 'absolute';
+      element.style.visibility = 'hidden';
+      element.style.pointerEvents = 'none';
+      element.style.whiteSpace = 'pre';
+      element.style.left = '-10000px';
+      element.style.top = '-10000px';
+      document.body.appendChild(element);
+      this.textMeasureElement = element;
+    }
+
+    const sampleInput = document.querySelector<HTMLElement>('.page-edit-character__color-field .q-field__native');
+    const sampleStyle = sampleInput ? window.getComputedStyle(sampleInput) : window.getComputedStyle(document.body);
+    this.textMeasureElement.style.font = sampleStyle.font;
+    this.textMeasureElement.style.letterSpacing = sampleStyle.letterSpacing;
+    this.textMeasureElement.style.textTransform = sampleStyle.textTransform;
+    this.textMeasureElement.textContent = text || ' ';
+
+    return this.textMeasureElement.getBoundingClientRect().width;
+  }
+
+  colorFieldInputStyle(rawText?: string | null) {
+    const text = rawText || '';
+    const measuredWidth = this.getTextWidthPx(text);
+    const width = Math.max(56, Math.ceil(measuredWidth + 10));
+
+    return {
+      width: `${width}px`,
+      maxWidth: '100%',
+    };
+  }
+
   onColorPicked(field: CharacterColorField, color: string) {
     this.character[field] = color;
+    this.onChange();
+  }
+
+  onColorCleared(field: CharacterColorField) {
+    this.character[field] = '';
+    this.onChange();
+  }
+
+  async onAppearanceImageSelectClick() {
+    const GalleryDialog = (await import('components/common/GalleryDialog.vue')).default;
+
+    this.$q
+      .dialog({
+        component: GalleryDialog,
+        componentProps: {
+          characterId: this.character.id,
+          banner: true,
+          minAspectRatio: this.APPEARANCE_IMAGE_ASPECT_RATIO,
+        },
+      })
+      .onOk((image: ImageSummaryDto) => {
+        this.setAppearanceImage(image);
+      });
+  }
+
+  async onAppearanceImageUploadClick() {
+    const UploadDialog = (await import('components/upload/UploadDialog.vue')).default;
+
+    this.$q
+      .dialog({
+        component: UploadDialog,
+        componentProps: {
+          characterId: this.character.id,
+          banner: true,
+          minAspectRatio: this.APPEARANCE_IMAGE_ASPECT_RATIO,
+        },
+      })
+      .onOk((image: ImageSummaryDto) => {
+        this.setAppearanceImage(image);
+      });
+  }
+
+  onAppearanceImageRemoveClick() {
+    if (!this.character.appearanceImage) {
+      return;
+    }
+
+    this.character.appearanceImage = null;
+    this.onChange();
+  }
+
+  setAppearanceImage(image: ImageSummaryDto) {
+    this.character.appearanceImage = new BannerDto({
+      id: image.id,
+      url: image.url,
+      width: image.width,
+      height: image.height,
+    });
     this.onChange();
   }
 
@@ -338,6 +566,14 @@ export default class PageEditProfile extends Vue {
 </script>
 
 <style lang="scss">
+.page-edit-character__top-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 36%);
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 20px;
+}
+
 .page-edit-character__form-controls {
   max-width: 500px;
   flex-basis: 0;
@@ -348,6 +584,35 @@ export default class PageEditProfile extends Vue {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+.page-edit-character__color-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.page-edit-character__color-field .q-field__control-container {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.page-edit-character__color-field .q-field__control {
+  justify-content: flex-start;
+}
+
+.page-edit-character__color-field .q-field__control-container.col {
+  flex: 0 1 auto;
+}
+
+.page-edit-character__color-field .q-field__native,
+.page-edit-character__color-field .q-field__input {
+  width: auto;
+  min-width: 6ch;
+}
+
+.page-edit-character__color-field .q-field__append {
+  padding-left: 8px;
 }
 
 .page-edit-character__color-picker-btn {
@@ -367,9 +632,56 @@ export default class PageEditProfile extends Vue {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95);
 }
 
+.page-edit-character__color-clear-btn {
+  color: rgba(0, 0, 0, 0.58);
+}
+
+.page-edit-character__appearance-image-section {
+  max-width: none;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.page-edit-character__appearance-media {
+  margin-bottom: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 420px;
+  background: rgba(246, 241, 232, 0.8);
+}
+
+.page-edit-character__appearance-image {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+}
+
+.page-edit-character__appearance-image-placeholder {
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6a7a8c;
+  font-style: italic;
+}
+
 body.body--dark .page-edit-character__color-picker-btn {
   border-color: rgba(213, 226, 240, 0.44);
   box-shadow: 0 0 0 2px rgba(10, 15, 24, 0.86);
+}
+
+body.body--dark .page-edit-character__color-clear-btn {
+  color: rgba(213, 226, 240, 0.62);
+}
+
+body.body--dark .page-edit-character__appearance-media {
+  border-color: rgba(141, 181, 223, 0.3);
+  background: rgba(17, 24, 34, 0.8);
+}
+
+body.body--dark .page-edit-character__appearance-image-placeholder {
+  color: #b0c0d1;
 }
 
 .page-edit-character__lodestone-info {
@@ -409,6 +721,22 @@ body.body--dark .page-edit-character__color-picker-btn {
 
   h2 {
     margin: 0;
+  }
+}
+
+@media screen and (max-width: $breakpoint-md) {
+  .page-edit-character__top-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .page-edit-character__appearance-media {
+    min-height: 280px;
+  }
+
+  .page-edit-character__appearance-image,
+  .page-edit-character__appearance-image-placeholder {
+    min-height: 280px;
+    height: 280px;
   }
 }
 </style>

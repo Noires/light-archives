@@ -343,6 +343,13 @@ export class Character extends BasicEntity {
   })
   banner: Promise<Image | null>;
 
+  @ManyToOne(() => Image, {
+    lazy: true,
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  appearanceImage: Promise<Image | null>;
+
   @ManyToOne(() => FreeCompany, {
     lazy: true,
   })
