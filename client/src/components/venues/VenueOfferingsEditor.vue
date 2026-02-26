@@ -18,6 +18,7 @@
                 dense
                 autofocus
                 class="offerings-editor__name-input"
+                @update:model-value="emitUpdate"
                 @keyup.enter="cat.__editing = false"
                 @blur="cat.__editing = false"
               />
@@ -50,6 +51,7 @@
                         dense
                         autofocus
                         class="offerings-editor__name-input"
+                        @update:model-value="emitUpdate"
                         @keyup.enter="sub.__editing = false"
                         @blur="sub.__editing = false"
                       />
@@ -77,9 +79,14 @@
                         <span class="drag-handle offerings-editor__drag-handle">⠿</span>
                         <template v-if="off.__expanded">
                           <div class="offerings-editor__offering-form">
-                            <q-input v-model="off.name" label="Name *" dense />
-                            <q-input v-model="off.price" label="Preis" dense placeholder="z.B. 5 Gil" />
-                            <q-input v-model="off.description" label="Beschreibung" dense type="textarea" rows="2" autogrow />
+                            <q-input v-model="off.name" label="Name *" dense @update:model-value="emitUpdate" />
+                            <q-input v-model="off.price" label="Preis" dense placeholder="z.B. 5 Gil" @update:model-value="emitUpdate" />
+                            <html-editor
+                              v-model="off.description"
+                              height="180px"
+                              :allow-images="false"
+                              @update:model-value="emitUpdate"
+                            />
                             <div class="offerings-editor__offering-image">
                               <template v-if="off.imageUrl">
                                 <img :src="off.imageUrl" class="offerings-editor__offering-thumb" alt="Bild" />
@@ -170,9 +177,14 @@
                   <span class="drag-handle offerings-editor__drag-handle">⠿</span>
                   <template v-if="off.__expanded">
                     <div class="offerings-editor__offering-form">
-                      <q-input v-model="off.name" label="Name *" dense />
-                      <q-input v-model="off.price" label="Preis" dense placeholder="z.B. 5 Gil" />
-                      <q-input v-model="off.description" label="Beschreibung" dense type="textarea" rows="2" autogrow />
+                      <q-input v-model="off.name" label="Name *" dense @update:model-value="emitUpdate" />
+                      <q-input v-model="off.price" label="Preis" dense placeholder="z.B. 5 Gil" @update:model-value="emitUpdate" />
+                      <html-editor
+                        v-model="off.description"
+                        height="180px"
+                        :allow-images="false"
+                        @update:model-value="emitUpdate"
+                      />
                       <div class="offerings-editor__offering-image">
                         <template v-if="off.imageUrl">
                           <img :src="off.imageUrl" class="offerings-editor__offering-thumb" alt="Bild" />
@@ -254,6 +266,7 @@
 <script lang="ts">
 import { VenueOfferingCategoryDto, VenueOfferingDto, VenueOfferingsDto } from '@app/shared/dto/venues/venue-offering.dto';
 import { notifyError } from 'src/common/notify';
+import HtmlEditor from 'src/components/common/HtmlEditor.vue';
 import { defineComponent, ref, watch } from 'vue';
 import draggable from 'vuedraggable';
 import { useApi } from 'src/boot/axios';
@@ -278,6 +291,7 @@ function makeKey(): string {
 }
 
 function makeOffering(partial?: Partial<VenueOfferingDto>): EditorOffering {
+  const isExistingOffering = partial?.id !== undefined;
   return {
     name: '',
     sortOrder: 0,
@@ -285,7 +299,7 @@ function makeOffering(partial?: Partial<VenueOfferingDto>): EditorOffering {
     price: '',
     ...partial,
     __key: makeKey(),
-    __expanded: true,
+    __expanded: !isExistingOffering,
     __imageLoading: false,
   };
 }
@@ -350,7 +364,7 @@ const $api = useApi();
 
 export default defineComponent({
   name: 'VenueOfferingsEditor',
-  components: { draggable },
+  components: { draggable, HtmlEditor },
   props: {
     modelValue: {
       type: Object as () => VenueOfferingsDto,
@@ -561,6 +575,7 @@ export default defineComponent({
       localCategories,
       draggingOverKey,
       confirmDelete,
+      emitUpdate,
       onReorder,
       addCategory,
       removeCategory,
@@ -738,7 +753,15 @@ body.body--dark .offerings-editor__offering-price {
 .offerings-editor__offering-thumb {
   width: 60px;
   height: 60px;
-  object-fit: cover;
+  object-fit: contain;
+  background-color: rgba(255, 255, 255, 0.9);
+  background-image:
+    linear-gradient(45deg, rgba(0, 0, 0, 0.03) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(0, 0, 0, 0.03) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.03) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.03) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
   border-radius: 3px;
 }
 

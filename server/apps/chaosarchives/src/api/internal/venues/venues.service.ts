@@ -939,7 +939,7 @@ export class VenuesService {
       venue,
       category,
       name: dto.name,
-      description: dto.description || '',
+      description: html.sanitize(dto.description || ''),
       price: dto.price || '',
       sortOrder: dto.sortOrder ?? fallbackOrder,
       image: null,

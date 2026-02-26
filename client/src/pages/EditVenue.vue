@@ -741,6 +741,8 @@ export default class PageEditVenue extends Vue {
         const result = await this.$api.venues.createVenue(this.venue);
         this.venue.id = result.id;
         this.venueId = result.id;
+        await this.$api.venues.saveOfferings(this.venueId, this.venueOfferings);
+        this.savedOfferingImageIds = this.collectOfferingImageIds(this.venueOfferings);
         this.venueBackup = new VenueDto(this.venue);
         isDirty.value = false;
         void this.$router.replace(`/edit-venue/${result.id}`);

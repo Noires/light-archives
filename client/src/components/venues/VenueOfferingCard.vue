@@ -12,7 +12,7 @@
         <span v-if="offering.price" class="offering-card__price">{{ offering.price }}</span>
       </div>
       <div v-if="offering.description" class="offering-card__description">
-        {{ offering.description }}
+        <html-viewer :content="offering.description" />
       </div>
     </div>
   </div>
@@ -20,6 +20,7 @@
 
 <script lang="ts">
 import { VenueOfferingDto } from '@app/shared/dto/venues/venue-offering.dto';
+import HtmlViewer from 'src/components/common/HtmlViewer.vue';
 import { Options, prop, Vue } from 'vue-class-component';
 
 class Props {
@@ -28,6 +29,9 @@ class Props {
 
 @Options({
   name: 'VenueOfferingCard',
+  components: {
+    HtmlViewer,
+  },
 })
 export default class VenueOfferingCard extends Vue.with(Props) {}
 </script>
@@ -51,7 +55,15 @@ body.body--dark .offering-card {
 .offering-card__image {
   width: 80px;
   height: 80px;
-  object-fit: cover;
+  object-fit: contain;
+  background-color: rgba(255, 255, 255, 0.9);
+  background-image:
+    linear-gradient(45deg, rgba(0, 0, 0, 0.03) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(0, 0, 0, 0.03) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.03) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.03) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
   border-radius: 3px;
   flex-shrink: 0;
 }
@@ -89,7 +101,10 @@ body.body--dark .offering-card__price {
   font-size: 0.85rem;
   color: rgba(35, 35, 35, 0.75);
   line-height: 1.4;
-  white-space: pre-wrap;
+}
+
+.offering-card__description :deep(section) {
+  margin: 0;
 }
 
 body.body--dark .offering-card__description {
