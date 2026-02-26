@@ -1,4 +1,4 @@
-import { IsString } from "class-validator";
+import { IsOptional, IsString } from "class-validator";
 
 export class BaseCharacterProfileDto {
   // RP fields
@@ -51,6 +51,30 @@ export class BaseCharacterProfileDto {
 
   @IsString()
   skintone: string;
+
+  @IsString()
+  @IsOptional()
+  haircolorShade1?: string;
+
+  @IsString()
+  @IsOptional()
+  haircolorShade2?: string;
+
+  @IsString()
+  @IsOptional()
+  eyecolorShade1?: string;
+
+  @IsString()
+  @IsOptional()
+  eyecolorShade2?: string;
+
+  @IsString()
+  @IsOptional()
+  skintoneShade1?: string;
+
+  @IsString()
+  @IsOptional()
+  skintoneShade2?: string;
 
   @IsString()
   build: string;

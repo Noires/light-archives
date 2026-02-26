@@ -8,9 +8,78 @@
         <template v-if="!preview">
           <section class="page-edit-character__form-controls">
             <h6>Allgemeines</h6>
-            <q-input @update:model-value="onChange" v-model="character.haircolor" label="Haarfarbe" />
-            <q-input @update:model-value="onChange" v-model="character.eyecolor" label="Augenfarbe" />
-            <q-input @update:model-value="onChange" v-model="character.skintone" label="Hautfarbe" />
+            <q-input @update:model-value="onChange" v-model="character.haircolor" label="Haarfarbe">
+              <template #append>
+                <div class="page-edit-character__color-pair">
+                  <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.haircolorShade1 || character.haircolor)">
+                    <q-popup-proxy transition-show="scale" transition-hide="scale">
+                      <q-color
+                        :model-value="pickerColor(character.haircolorShade1 || character.haircolor)"
+                        format-model="hex"
+                        @update:model-value="onColorPicked('haircolorShade1', $event)"
+                      />
+                    </q-popup-proxy>
+                  </q-btn>
+                  <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.haircolorShade2)">
+                    <q-popup-proxy transition-show="scale" transition-hide="scale">
+                      <q-color
+                        :model-value="pickerColor(character.haircolorShade2)"
+                        format-model="hex"
+                        @update:model-value="onColorPicked('haircolorShade2', $event)"
+                      />
+                    </q-popup-proxy>
+                  </q-btn>
+                </div>
+              </template>
+            </q-input>
+            <q-input @update:model-value="onChange" v-model="character.eyecolor" label="Augenfarbe">
+              <template #append>
+                <div class="page-edit-character__color-pair">
+                  <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.eyecolorShade1 || character.eyecolor)">
+                    <q-popup-proxy transition-show="scale" transition-hide="scale">
+                      <q-color
+                        :model-value="pickerColor(character.eyecolorShade1 || character.eyecolor)"
+                        format-model="hex"
+                        @update:model-value="onColorPicked('eyecolorShade1', $event)"
+                      />
+                    </q-popup-proxy>
+                  </q-btn>
+                  <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.eyecolorShade2)">
+                    <q-popup-proxy transition-show="scale" transition-hide="scale">
+                      <q-color
+                        :model-value="pickerColor(character.eyecolorShade2)"
+                        format-model="hex"
+                        @update:model-value="onColorPicked('eyecolorShade2', $event)"
+                      />
+                    </q-popup-proxy>
+                  </q-btn>
+                </div>
+              </template>
+            </q-input>
+            <q-input @update:model-value="onChange" v-model="character.skintone" label="Hautfarbe">
+              <template #append>
+                <div class="page-edit-character__color-pair">
+                  <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.skintoneShade1 || character.skintone)">
+                    <q-popup-proxy transition-show="scale" transition-hide="scale">
+                      <q-color
+                        :model-value="pickerColor(character.skintoneShade1 || character.skintone)"
+                        format-model="hex"
+                        @update:model-value="onColorPicked('skintoneShade1', $event)"
+                      />
+                    </q-popup-proxy>
+                  </q-btn>
+                  <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.skintoneShade2)">
+                    <q-popup-proxy transition-show="scale" transition-hide="scale">
+                      <q-color
+                        :model-value="pickerColor(character.skintoneShade2)"
+                        format-model="hex"
+                        @update:model-value="onColorPicked('skintoneShade2', $event)"
+                      />
+                    </q-popup-proxy>
+                  </q-btn>
+                </div>
+              </template>
+            </q-input>
             <q-input @update:model-value="onChange" v-model="character.build" label="Statur / Körperbau" />
             <q-input @update:model-value="onChange" v-model="character.height" label="Größe" />
             <q-input @update:model-value="onChange" v-model="character.weight" label="Gewicht" />
@@ -71,6 +140,13 @@ import type { ParsedCharacterData } from 'src/common/wiki-import';
 
 const $api = useApi();
 const isDirty = ref(false);
+type CharacterColorField =
+  | 'haircolorShade1'
+  | 'haircolorShade2'
+  | 'eyecolorShade1'
+  | 'eyecolorShade2'
+  | 'skintoneShade1'
+  | 'skintoneShade2';
 
 async function load(params: RouteParams): Promise<CharacterProfileDto> {
   const id = parseInt(params.id as string, 10);
@@ -185,6 +261,45 @@ export default class PageEditProfile extends Vue {
     isDirty.value = true;
   }
 
+  resolveColor(rawColor?: string | null): string | null {
+    const value = (rawColor || '').trim();
+    if (!value) {
+      return null;
+    }
+
+    const hexMatch = value.match(/#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/);
+    if (hexMatch) {
+      return hexMatch[0];
+    }
+
+    if (typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && CSS.supports('color', value)) {
+      return value;
+    }
+
+    return null;
+  }
+
+  pickerColor(rawColor?: string | null): string {
+    return this.resolveColor(rawColor) || '#7a7a7a';
+  }
+
+  colorButtonStyle(rawColor?: string | null) {
+    const resolved = this.resolveColor(rawColor);
+    if (!resolved) {
+      return undefined;
+    }
+
+    return {
+      backgroundColor: resolved,
+      backgroundImage: 'none',
+    };
+  }
+
+  onColorPicked(field: CharacterColorField, color: string) {
+    this.character[field] = color;
+    this.onChange();
+  }
+
   onRevertClick() {
     this.confirmRevert = true;
   }
@@ -227,6 +342,34 @@ export default class PageEditProfile extends Vue {
   max-width: 500px;
   flex-basis: 0;
   flex-grow: 1;
+}
+
+.page-edit-character__color-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.page-edit-character__color-picker-btn {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  background-image:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(0, 0, 0, 0.14) 0,
+      rgba(0, 0, 0, 0.14) 3px,
+      rgba(255, 255, 255, 0.85) 3px,
+      rgba(255, 255, 255, 0.85) 6px
+    );
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95);
+}
+
+body.body--dark .page-edit-character__color-picker-btn {
+  border-color: rgba(213, 226, 240, 0.44);
+  box-shadow: 0 0 0 2px rgba(10, 15, 24, 0.86);
 }
 
 .page-edit-character__lodestone-info {

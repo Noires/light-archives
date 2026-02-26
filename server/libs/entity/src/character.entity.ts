@@ -382,6 +382,48 @@ export class Character extends BasicEntity {
     default: '',
   })
   skintone: string;
+
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  haircolorShade1: string;
+
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  haircolorShade2: string;
+
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  eyecolorShade1: string;
+
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  eyecolorShade2: string;
+
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  skintoneShade1: string;
+
+  @Column({
+    nullable: false,
+    type: 'tinytext',
+    default: '',
+  })
+  skintoneShade2: string;
   
   @Column({
     nullable: false,
