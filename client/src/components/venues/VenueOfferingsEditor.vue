@@ -360,6 +360,10 @@ function toOfferingDto(off: EditorOffering, sortOrder: number): VenueOfferingDto
   };
 }
 
+function toSignature(dto: VenueOfferingsDto): string {
+  return JSON.stringify(dto);
+}
+
 const $api = useApi();
 
 export default defineComponent({
@@ -384,7 +388,7 @@ export default defineComponent({
     const localCategories = ref<EditorCategory[]>([]);
     const fileRefs = new Map<string, HTMLInputElement>();
     const draggingOverKey = ref<string | null>(null);
-    let lastEmittedValue: VenueOfferingsDto | null = null;
+    let lastEmittedSignature: string | null = null;
 
     const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1 MB
 
@@ -434,21 +438,25 @@ export default defineComponent({
     watch(
       () => props.modelValue,
       (val) => {
-        if (val && val === lastEmittedValue) {
-          lastEmittedValue = null;
+        if (!val) {
+          localCategories.value = [];
           return;
         }
 
-        if (val) {
-          localCategories.value = (val.categories || []).map(toEditorCategory);
+        const incomingSignature = toSignature(val);
+        if (lastEmittedSignature && incomingSignature === lastEmittedSignature) {
+          lastEmittedSignature = null;
+          return;
         }
+
+        localCategories.value = (val.categories || []).map(toEditorCategory);
       },
       { immediate: true, deep: false },
     );
 
     function emitUpdate() {
       const dto = toDto(localCategories.value);
-      lastEmittedValue = dto;
+      lastEmittedSignature = toSignature(dto);
       emit('update:modelValue', dto);
     }
 
