@@ -12,8 +12,10 @@ import { VerifyCharacterDto } from '@app/shared/dto/user/verify-character.dto';
 import {
   Body,
   Controller,
+  ExecutionContext,
   Get,
   Headers,
+  Injectable,
   Ip,
   ParseIntPipe,
   Post,
@@ -26,6 +28,72 @@ import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
 import { UserService } from './user.service';
 
+const DEV_ALLOWED_ORIGINS = new Set([
+  'http://localhost:8080',
+  'http://127.0.0.1:8080',
+]);
+
+function asString(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+function trimTrailingSlash(value: string): string {
+  return value.endsWith('/') ? value.slice(0, -1) : value;
+}
+
+function getConfiguredFrontendOrigin(): string | null {
+  try {
+    return new URL(serverConfiguration.frontendRoot).origin;
+  } catch {
+    return null;
+  }
+}
+
+function getAllowedReturnUrl(value: unknown): string | null {
+  const returnUrl = asString(value);
+  if (!returnUrl) {
+    return null;
+  }
+
+  try {
+    const url = new URL(returnUrl);
+    const configuredOrigin = getConfiguredFrontendOrigin();
+    if (configuredOrigin && url.origin === configuredOrigin) {
+      return returnUrl;
+    }
+
+    if (DEV_ALLOWED_ORIGINS.has(url.origin)) {
+      return returnUrl;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function getFrontendRootForRedirect(returnUrl: string | null): string {
+  if (!returnUrl) {
+    return trimTrailingSlash(serverConfiguration.frontendRoot);
+  }
+
+  try {
+    const url = new URL(returnUrl);
+    return url.origin;
+  } catch {
+    return trimTrailingSlash(serverConfiguration.frontendRoot);
+  }
+}
+
+@Injectable()
+class DiscordLoginGuard extends AuthGuard('discord') {
+  getAuthenticateOptions(context: ExecutionContext): { state?: string } {
+    const request = context.switchToHttp().getRequest<Request>();
+    const allowedReturnUrl = getAllowedReturnUrl(request.query.returnUrl);
+    return allowedReturnUrl ? { state: allowedReturnUrl } : {};
+  }
+}
+
 @Controller('user')
 export class UserController {
   constructor(
@@ -34,7 +102,7 @@ export class UserController {
   ) {}
 
   @Get('login/discord')
-  @UseGuards(AuthGuard('discord'))
+  @UseGuards(DiscordLoginGuard)
   async loginWithDiscord(): Promise<void> {
     return;
   }
@@ -49,7 +117,9 @@ export class UserController {
     const userAgent = request.headers['user-agent'] || null;
     const ipAddress = request.ip || null;
     const tokenPair = await this.publicAuthService.createTokenPair(user.id, userAgent, ipAddress);
-    const redirectUrl = `${serverConfiguration.frontendRoot}/login?token=${encodeURIComponent(tokenPair.accessToken)}&refreshToken=${encodeURIComponent(tokenPair.refreshToken)}`;
+    const allowedReturnUrl = getAllowedReturnUrl(request.query.state);
+    const frontendRoot = getFrontendRootForRedirect(allowedReturnUrl);
+    const redirectUrl = `${frontendRoot}/login?token=${encodeURIComponent(tokenPair.accessToken)}&refreshToken=${encodeURIComponent(tokenPair.refreshToken)}`;
     response.redirect(redirectUrl);
   }
 

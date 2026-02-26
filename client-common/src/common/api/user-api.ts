@@ -43,7 +43,11 @@ export default class UserAPI {
     return this.transport.post<TokenResponseDto>('refresh', { refreshToken });
   }
 
-  getDiscordLoginUrl(): string {
-    return `${this.transport.prefix}login/discord`;
+  getDiscordLoginUrl(returnUrl?: string): string {
+    if (!returnUrl) {
+      return `${this.transport.prefix}login/discord`;
+    }
+
+    return `${this.transport.prefix}login/discord?returnUrl=${encodeURIComponent(returnUrl)}`;
   }
 }

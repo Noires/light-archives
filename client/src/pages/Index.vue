@@ -390,7 +390,7 @@ export default class PageIndex extends Vue {
   }
 
   loginWithDiscord() {
-    window.location.href = this.$api.user.getDiscordLoginUrl();
+    window.location.href = this.$api.user.getDiscordLoginUrl(window.location.origin);
   }
 }
 </script>

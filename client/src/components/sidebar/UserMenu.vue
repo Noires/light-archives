@@ -291,7 +291,7 @@ export default class UserMenu extends Vue {
   }
 
   loginWithDiscord() {
-    window.location.href = this.$api.user.getDiscordLoginUrl();
+    window.location.href = this.$api.user.getDiscordLoginUrl(window.location.origin);
   }
 
   async openTelemetryConsentSettings() {
