@@ -265,7 +265,7 @@ const SECTION_ICONS: Record<VenueSection, string> = {
   [VenueSection.OVERVIEW]: 'home',
   [VenueSection.RULES]: 'gavel',
   [VenueSection.PREMISES]: 'meeting_room',
-  [VenueSection.MENU]: 'restaurant_menu',
+  [VenueSection.MENU]: 'local_offer',
   [VenueSection.STAFF]: 'badge',
   [VenueSection.JOBS]: 'work',
   [VenueSection.OOC]: 'forum',
@@ -765,5 +765,4 @@ body.body--dark .page-venue-layout__delete-item:hover {
   }
 }
 </style>
-
 

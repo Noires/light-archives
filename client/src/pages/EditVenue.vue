@@ -618,7 +618,7 @@ export default class PageEditVenue extends Vue {
 
     if (this.venue.showRules) sections.push({ id: 'rules', label: 'Regeln', icon: 'gavel' });
     if (this.venue.showPremises) sections.push({ id: 'premises', label: 'Räumlichkeiten', icon: 'meeting_room' });
-    if (this.venue.showMenu) sections.push({ id: 'menu', label: 'Angebote', icon: 'restaurant_menu' });
+    if (this.venue.showMenu) sections.push({ id: 'menu', label: 'Angebote', icon: 'local_offer' });
     if (this.venue.showStaff) sections.push({ id: 'staff', label: 'Mitarbeiter', icon: 'badge' });
     if (this.venue.showJobs) sections.push({ id: 'jobs', label: 'Stellenangebote', icon: 'work' });
     if (this.venue.showOoc) sections.push({ id: 'ooc', label: 'OOC', icon: 'forum' });
