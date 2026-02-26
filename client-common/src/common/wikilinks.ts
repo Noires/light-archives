@@ -7,8 +7,10 @@ export function unwikify(name: string): string {
 	return name.replace(/_/g, ' ');
 }
 
+const WIKILINK_REGEX = /(?:\[\[|(?:&#91;|&#x5b;|&lbrack;){2})(.+?)(?:\]\]|(?:&#93;|&#x5d;|&rbrack;){2})/gi;
+
 export function parseWikilinksInHtml(html: string): string {
-	return html.replace(/\[\[(.+?)\]\]/g, (_, link) => wikilinkToHtml(link));
+	return html.replace(WIKILINK_REGEX, (_, link) => wikilinkToHtml(link));
 }
 
 function wikilinkToHtml(linkContent: string): string {
@@ -17,18 +19,20 @@ function wikilinkToHtml(linkContent: string): string {
 		return linkContent;
 	}
 
+	const trimmedLinkContent = linkContent.trim();
+
 	let target: string;
 	let text: string;
 
-	const indexOfVbar = linkContent.indexOf('|');
+	const indexOfVbar = trimmedLinkContent.indexOf('|');
 
 	if (indexOfVbar === -1) {
-		target = wikify(linkContent);
-		text = linkContent;
+		target = wikify(trimmedLinkContent);
+		text = trimmedLinkContent;
 	} else {
-		target = wikify(linkContent.substring(0, indexOfVbar));
-		text = linkContent.substring(indexOfVbar + 1);
+		target = wikify(trimmedLinkContent.substring(0, indexOfVbar).trim());
+		text = trimmedLinkContent.substring(indexOfVbar + 1).trim() || trimmedLinkContent.substring(0, indexOfVbar).trim();
 	}
 
-	return `<a href="/link/${target}">${text}</a>`;
+	return `<a href="/link/${encodeURIComponent(target)}">${text}</a>`;
 }

@@ -877,11 +877,48 @@ export default class PageIndex extends Vue {
   padding: 14px 16px;
 }
 
-.page-index .free-company-name-list__goal {
+.page-index .free-company-name-list__crest {
+  min-width: 56px;
+  padding-right: 12px;
+}
+
+.page-index .free-company-name-list__crest .free-company-crest {
+  width: 56px;
+  height: 56px;
+}
+
+.page-index .free-company-name-list__crest .free-company-crest img {
+  width: 56px;
+  height: 56px;
+}
+
+.page-index .free-company-name-list__content {
+  gap: 2px;
+}
+
+.page-index .free-company-name-list__name {
+  font-size: 1rem;
+  line-height: 1.25;
+  font-weight: 700;
+  color: #1f2c38;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.page-index .free-company-name-list__goal {
+  font-size: 0.85rem;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.page-index .free-company-name-list__server {
+  font-size: 0.75rem;
+  line-height: 1.2;
 }
 
 .page-index__empty {

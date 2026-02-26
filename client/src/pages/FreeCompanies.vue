@@ -275,6 +275,60 @@ export default class PageFreeCompanies extends Vue {
   border: none;
 }
 
+.page-free-companies .free-company-name-list {
+  gap: 14px;
+  padding: 12px 16px 16px;
+}
+
+.page-free-companies .free-company-name-list__item {
+  min-height: 88px;
+  padding: 14px 16px;
+}
+
+.page-free-companies .free-company-name-list__crest {
+  min-width: 56px;
+  padding-right: 12px;
+}
+
+.page-free-companies .free-company-name-list__crest .free-company-crest {
+  width: 56px;
+  height: 56px;
+}
+
+.page-free-companies .free-company-name-list__crest .free-company-crest img {
+  width: 56px;
+  height: 56px;
+}
+
+.page-free-companies .free-company-name-list__content {
+  gap: 2px;
+}
+
+.page-free-companies .free-company-name-list__name {
+  font-size: 1rem;
+  line-height: 1.25;
+  font-weight: 700;
+  color: #1f2c38;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.page-free-companies .free-company-name-list__goal {
+  font-size: 0.85rem;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.page-free-companies .free-company-name-list__server {
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
 .page-free-companies__empty {
   padding: 18px;
   color: rgba(35, 35, 35, 0.7);
