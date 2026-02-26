@@ -14,16 +14,14 @@
               <template v-for="(sub, subIdx) in cat.subcategories" :key="subIdx">
                 <section class="offerings-view__subsection">
                   <h4 class="offerings-view__subcategory-heading">{{ sub.name }}</h4>
-                  <div class="offerings-view__subsection-content">
-                    <div v-if="sub.offerings && sub.offerings.length" class="offerings-view__grid">
-                      <venue-offering-card
-                        v-for="(offering, offIdx) in sub.offerings"
-                        :key="offIdx"
-                        :offering="offering"
-                      />
-                    </div>
-                    <p v-else class="offerings-view__empty">Keine Eintraege.</p>
+                  <div v-if="sub.offerings && sub.offerings.length" class="offerings-view__grid">
+                    <venue-offering-card
+                      v-for="(offering, offIdx) in sub.offerings"
+                      :key="offIdx"
+                      :offering="offering"
+                    />
                   </div>
+                  <p v-else class="offerings-view__empty">Keine Eintraege.</p>
                 </section>
               </template>
             </template>
@@ -36,17 +34,12 @@
                 >
                   Weitere Angebote
                 </h4>
-                <div
-                  class="offerings-view__subsection-content"
-                  :class="{ 'offerings-view__subsection-content--plain': !cat.subcategories || cat.subcategories.length === 0 }"
-                >
-                  <div class="offerings-view__grid">
-                    <venue-offering-card
-                      v-for="(offering, offIdx) in cat.offerings"
-                      :key="offIdx"
-                      :offering="offering"
-                    />
-                  </div>
+                <div class="offerings-view__grid">
+                  <venue-offering-card
+                    v-for="(offering, offIdx) in cat.offerings"
+                    :key="offIdx"
+                    :offering="offering"
+                  />
                 </div>
               </section>
             </template>
@@ -97,16 +90,14 @@
               <template v-for="(sub, subIdx) in cat.subcategories" :key="subIdx">
                 <section class="offerings-view__subsection">
                   <h4 class="offerings-view__subcategory-heading">{{ sub.name }}</h4>
-                  <div class="offerings-view__subsection-content">
-                    <div v-if="sub.offerings && sub.offerings.length" class="offerings-view__grid">
-                      <venue-offering-card
-                        v-for="(offering, offIdx) in sub.offerings"
-                        :key="offIdx"
-                        :offering="offering"
-                      />
-                    </div>
-                    <p v-else class="offerings-view__empty">Keine Eintraege.</p>
+                  <div v-if="sub.offerings && sub.offerings.length" class="offerings-view__grid">
+                    <venue-offering-card
+                      v-for="(offering, offIdx) in sub.offerings"
+                      :key="offIdx"
+                      :offering="offering"
+                    />
                   </div>
+                  <p v-else class="offerings-view__empty">Keine Eintraege.</p>
                 </section>
               </template>
             </template>
@@ -119,17 +110,12 @@
                 >
                   Weitere Angebote
                 </h4>
-                <div
-                  class="offerings-view__subsection-content"
-                  :class="{ 'offerings-view__subsection-content--plain': !cat.subcategories || cat.subcategories.length === 0 }"
-                >
-                  <div class="offerings-view__grid">
-                    <venue-offering-card
-                      v-for="(offering, offIdx) in cat.offerings"
-                      :key="offIdx"
-                      :offering="offering"
-                    />
-                  </div>
+                <div class="offerings-view__grid">
+                  <venue-offering-card
+                    v-for="(offering, offIdx) in cat.offerings"
+                    :key="offIdx"
+                    :offering="offering"
+                  />
                 </div>
               </section>
             </template>
@@ -183,10 +169,8 @@ export default class VenueOfferingsView extends Vue.with(Props) {
 .offerings-view {
   --offerings-surface: #ffffff;
   --offerings-surface-soft: #faf7f1;
-  --offerings-surface-subsection: #f7f2e9;
   --offerings-border: rgba(122, 96, 63, 0.22);
   --offerings-divider: rgba(122, 96, 63, 0.16);
-  --offerings-accent: rgba(122, 96, 63, 0.6);
   --offerings-title: #2a2015;
   --offerings-subtitle: rgba(60, 45, 29, 0.72);
   --offerings-muted: rgba(54, 45, 35, 0.64);
@@ -196,10 +180,8 @@ export default class VenueOfferingsView extends Vue.with(Props) {
 body.body--dark .offerings-view {
   --offerings-surface: #14202c;
   --offerings-surface-soft: #1a2734;
-  --offerings-surface-subsection: #1d2d3c;
   --offerings-border: rgba(170, 205, 237, 0.24);
   --offerings-divider: rgba(170, 205, 237, 0.2);
-  --offerings-accent: rgba(170, 205, 237, 0.74);
   --offerings-title: rgba(234, 244, 255, 0.96);
   --offerings-subtitle: rgba(194, 216, 238, 0.82);
   --offerings-muted: rgba(194, 216, 238, 0.64);
@@ -265,47 +247,19 @@ body.body--dark .offerings-view {
   line-height: 1.25;
 }
 
-.offerings-view__subsection {
-  border: 1px solid var(--offerings-divider);
-  border-radius: 10px;
-  background: var(--offerings-surface-subsection);
-  padding: 12px;
-}
-
 .offerings-view__subsection + .offerings-view__subsection {
-  margin-top: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--offerings-divider);
 }
 
 .offerings-view__subcategory-heading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   margin: 0 0 10px;
   font-size: 0.88rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--offerings-subtitle);
-}
-
-.offerings-view__subcategory-heading::before {
-  content: '';
-  width: 4px;
-  height: 0.95em;
-  border-radius: 999px;
-  background: var(--offerings-accent);
-}
-
-.offerings-view__subsection-content {
-  margin-left: 8px;
-  padding-left: 12px;
-  border-left: 1px dashed var(--offerings-divider);
-}
-
-.offerings-view__subsection-content--plain {
-  margin-left: 0;
-  padding-left: 0;
-  border-left: 0;
 }
 
 .offerings-view__grid {
@@ -384,15 +338,6 @@ body.body--dark .offerings-view {
 
   .offerings-view__grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .offerings-view__subsection {
-    padding: 10px;
-  }
-
-  .offerings-view__subsection-content {
-    margin-left: 4px;
-    padding-left: 8px;
   }
 }
 </style>

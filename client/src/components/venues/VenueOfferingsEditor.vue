@@ -66,14 +66,15 @@
                   </div>
 
                   <!-- Offerings within this subcategory -->
-                  <draggable
-                    v-model="sub.offerings"
-                    :group="{ name: 'offerings' }"
-                    handle=".drag-handle"
-                    item-key="__key"
-                    animation="150"
-                    @end="onReorder"
-                  >
+                  <div class="offerings-editor__subcategory-offerings">
+                    <draggable
+                      v-model="sub.offerings"
+                      :group="{ name: 'offerings' }"
+                      handle=".drag-handle"
+                      item-key="__key"
+                      animation="150"
+                      @end="onReorder"
+                    >
                     <template #item="{ element: off, index: offIdx }">
                       <div class="offerings-editor__offering-item">
                         <span class="drag-handle offerings-editor__drag-handle">⠿</span>
@@ -136,7 +137,7 @@
                         </div>
                       </div>
                     </template>
-                  </draggable>
+                    </draggable>
 
                   <q-btn
                     flat
@@ -144,9 +145,10 @@
                     icon="add"
                     label="Angebot hinzufügen"
                     size="sm"
-                    class="offerings-editor__add-btn"
+                    class="offerings-editor__add-btn offerings-editor__add-btn--nested"
                     @click="addOffering(sub.offerings)"
                   />
+                  </div>
                 </div>
               </template>
             </draggable>
@@ -669,40 +671,55 @@ body.body--dark .offerings-editor__drag-handle {
 }
 
 .offerings-editor__subcategories {
-  padding: 8px 10px 4px 20px;
+  padding: 8px 10px 6px 14px;
 }
 
 .offerings-editor__subcategory-block {
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 3px;
-  margin-bottom: 8px;
-  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(122, 96, 63, 0.24);
+  border-radius: 6px;
+  margin-bottom: 10px;
+  background: rgba(246, 238, 226, 0.55);
 }
 
 body.body--dark .offerings-editor__subcategory-block {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(141, 181, 223, 0.26);
+  background: rgba(24, 36, 50, 0.72);
 }
 
 .offerings-editor__subcategory-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 8px;
-  background: rgba(0, 0, 0, 0.04);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  padding: 7px 9px;
+  background: rgba(122, 96, 63, 0.1);
+  border-bottom: 1px solid rgba(122, 96, 63, 0.2);
 }
 
 body.body--dark .offerings-editor__subcategory-header {
-  background: rgba(255, 255, 255, 0.04);
-  border-bottom-color: rgba(255, 255, 255, 0.06);
+  background: rgba(141, 181, 223, 0.14);
+  border-bottom-color: rgba(141, 181, 223, 0.24);
 }
 
 .offerings-editor__subcategory-name {
   flex: 1;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.9rem;
+  color: rgba(42, 32, 21, 0.9);
   cursor: pointer;
+}
+
+body.body--dark .offerings-editor__subcategory-name {
+  color: rgba(223, 239, 255, 0.92);
+}
+
+.offerings-editor__subcategory-offerings {
+  margin: 8px 8px 8px 12px;
+  padding-left: 12px;
+  border-left: 2px solid rgba(122, 96, 63, 0.28);
+}
+
+body.body--dark .offerings-editor__subcategory-offerings {
+  border-left-color: rgba(141, 181, 223, 0.34);
 }
 
 .offerings-editor__direct-offerings {
@@ -713,17 +730,17 @@ body.body--dark .offerings-editor__subcategory-header {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 8px;
-  border-radius: 3px;
-  margin-bottom: 4px;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(122, 96, 63, 0.2);
   flex-wrap: wrap;
 }
 
 body.body--dark .offerings-editor__offering-item {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(18, 29, 42, 0.84);
+  border-color: rgba(141, 181, 223, 0.22);
 }
 
 .offerings-editor__offering-name {
@@ -826,6 +843,10 @@ body.body--dark .offerings-editor__drop-hint {
 .offerings-editor__add-btn {
   margin: 4px 0 6px;
   font-size: 0.8rem;
+}
+
+.offerings-editor__add-btn--nested {
+  margin-top: 2px;
 }
 
 .offerings-editor__add-top-btn {
