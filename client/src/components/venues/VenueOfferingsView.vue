@@ -4,9 +4,10 @@
       <p>Keine Angebote vorhanden.</p>
     </template>
     <template v-else-if="offerings.categories.length === 1">
-      <!-- Single top-level category: no tab header, show content directly -->
+      <!-- Single top-level category: no tabs, show category heading + content -->
       <div class="offerings-view__single-category">
         <template v-for="(cat, catIdx) in offerings.categories" :key="catIdx">
+          <h3 class="offerings-view__category-heading">{{ cat.name }}</h3>
           <template v-if="cat.subcategories && cat.subcategories.length > 0">
             <template v-for="(sub, subIdx) in cat.subcategories" :key="subIdx">
               <h4 class="offerings-view__subcategory-heading">{{ sub.name }}</h4>
@@ -58,6 +59,7 @@
           :name="String(cat.id ?? cat.name)"
           class="offerings-view__panel"
         >
+          <h3 class="offerings-view__category-heading">{{ cat.name }}</h3>
           <template v-if="cat.subcategories && cat.subcategories.length > 0">
             <template v-for="(sub, subIdx) in cat.subcategories" :key="subIdx">
               <h4 class="offerings-view__subcategory-heading">{{ sub.name }}</h4>
@@ -130,6 +132,12 @@ export default class VenueOfferingsView extends Vue.with(Props) {
 
 .offerings-view__panel {
   padding: 16px 0;
+}
+
+.offerings-view__category-heading {
+  margin: 0 0 12px;
+  font-size: 1.2rem;
+  font-weight: 700;
 }
 
 .offerings-view__subcategory-heading {
