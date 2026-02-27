@@ -3,6 +3,7 @@ import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, MinLength, 
 import { BannerDto } from "../characters/banner.dto";
 import { EventType } from "../../enums/event-type.enum";
 import { EventIconDto } from "./event-icon.dto";
+import { EventLinkDto } from "./event-link.dto";
 import { EventLocationDto } from "./event-location.dto";
 
 export abstract class BaseEventDto {
@@ -18,10 +19,6 @@ export abstract class BaseEventDto {
 	@IsNumber()
 	@IsOptional()
 	characterId?: number;
-
-	@IsBoolean()
-	@IsOptional()
-	recurring: boolean;
 
 	@IsString()
 	details: string;
@@ -44,6 +41,12 @@ export abstract class BaseEventDto {
 	@IsOptional()
 	linkText?: string;
 
+	@Type(() => EventLinkDto)
+	@ValidateNested({ each: true })
+	@IsArray()
+	@IsOptional()
+	links?: EventLinkDto[];
+
 	@IsString()
 	contact: string;
 
@@ -55,9 +58,22 @@ export abstract class BaseEventDto {
 	@IsOptional()
 	adultOnly?: boolean;
 
+	@IsBoolean()
+	@IsOptional()
+	closedEvent?: boolean;
+
+	@Type(() => Number)
+	@IsNumber()
+	@IsOptional()
+	registrationDeadlineDays?: number|null;
+
 	@IsString({ each: true })
 	@IsOptional()
 	contentNotes: string[];
+
+	@IsString()
+	@IsOptional()
+	extraInfo?: string;
 
   @Type(() => BannerDto)
   @ValidateNested()

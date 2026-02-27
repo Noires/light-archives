@@ -6,6 +6,7 @@ import { Character } from './character.entity';
 import { ContentNote } from './content-note.entity';
 import { EventLocation } from './event-location.entity';
 import { EventAnnouncement } from './event-announcement.entity';
+import { EventRegistration } from './event-registration.entity';
 import { Image } from './image.entity';
 import { SearchFields } from './search-fields';
 
@@ -63,6 +64,12 @@ export class Event extends BasicEntity {
   linkText: string;
 
   @Column({
+    type: 'simple-json',
+    nullable: true,
+  })
+  links: { url: string; label?: string }[] | null;
+
+  @Column({
     nullable: false,
     default: '',
   })
@@ -99,13 +106,26 @@ export class Event extends BasicEntity {
     nullable: false,
     default: false,
   })
-  hidden: boolean;
+  closedEvent: boolean;
+
+  @Column({
+    type: 'integer',
+    nullable: true,
+  })
+  registrationDeadlineDays: number | null;
 
   @Column({
     nullable: false,
     default: false,
   })
-  recurring: boolean;
+  hidden: boolean;
+
+  @Column({
+    type: 'mediumtext',
+    nullable: false,
+    default: '',
+  })
+  extraInfo: string;
 
   @ManyToOne(() => Image, {
     lazy: true,
@@ -140,6 +160,9 @@ export class Event extends BasicEntity {
     lazy: true,
   })
   announcements: Promise<EventAnnouncement[]>;
+
+  @OneToMany(() => EventRegistration, (registration) => registration.event)
+  registrations: EventRegistration[];
 
   @ManyToMany(() => ContentNote)
   @JoinTable()

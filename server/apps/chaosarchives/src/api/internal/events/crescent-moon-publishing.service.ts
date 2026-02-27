@@ -10,7 +10,6 @@ import parse from 'node-html-parser';
 import { firstValueFrom } from 'rxjs';
 import utils from '../../../common/utils';
 import { ExternalEvent } from './model/external-event';
-import { isRecurringEvent } from './util/event-utils';
 
 
 @Injectable()
@@ -112,7 +111,6 @@ export class CrescentMoonPublishingService {
 					id: -1,
 					title: name,
 					details: '',
-					recurring: isRecurringEvent(name),
 					locations,
 					link: href,
 					startDateTime: date!.toMillis(),

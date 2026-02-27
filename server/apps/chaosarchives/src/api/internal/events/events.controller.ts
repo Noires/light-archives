@@ -2,6 +2,7 @@ import { CurrentUser } from '@app/auth/decorators/current-user.decorator';
 import { RoleRequired } from '@app/auth/decorators/role-required.decorator';
 import { OptionalJwtAuthGuard } from '@app/auth/guards/optional-jwt-auth.guard';
 import { UserInfo } from '@app/auth/model/user-info';
+import { CharacterIdWrapper } from '@app/shared/dto/common/character-id-wrapper.dto';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { BaseEventDto } from '@app/shared/dto/events/base-event.dto';
 import { EventCreaterResultDto } from '@app/shared/dto/events/event-create-result.dto';
@@ -113,5 +114,25 @@ export class EventsController {
   @RoleRequired(Role.USER)
   async deleteEvent(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: UserInfo): Promise<void> {
     return this.eventsService.deleteEvent(id, user);
+  }
+
+  @Post('/:id/registrations')
+  @RoleRequired(Role.USER)
+  async registerForEvent(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: CharacterIdWrapper,
+    @CurrentUser() user: UserInfo,
+  ): Promise<void> {
+    return this.eventsService.registerForEvent(id, body.characterId, user);
+  }
+
+  @Delete('/:id/registrations/:characterId')
+  @RoleRequired(Role.USER)
+  async unregisterForEvent(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('characterId', ParseIntPipe) characterId: number,
+    @CurrentUser() user: UserInfo,
+  ): Promise<void> {
+    return this.eventsService.unregisterForEvent(id, characterId, user);
   }
 }

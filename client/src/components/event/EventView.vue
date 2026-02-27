@@ -21,9 +21,6 @@
             <q-tooltip>{{ timeRangeLocal }}</q-tooltip>
           </span>
           <span class="event-view__type">{{ eventTypeLabel }}</span>
-          <q-chip v-if="event.recurring" dense class="event-view__chip">
-            Wiederkehrend
-          </q-chip>
         </div>
       </div>
     </header>
@@ -56,12 +53,26 @@
           <div class="event-view__meta-value">{{ eventTypeLabel }}</div>
         </div>
       </div>
-      <div v-if="event.link" class="event-view__meta-row">
+      <div v-if="eventLinks.length" class="event-view__meta-row">
         <q-icon name="link" />
         <div class="event-view__meta-body">
-          <div class="event-view__meta-label">Link</div>
+          <div class="event-view__meta-label">Links</div>
           <div class="event-view__meta-value">
-            <a :href="event.link" target="_blank" rel="noopener">{{ linkLabel(event.link, event.linkText) }}</a>
+            <div v-for="(item, index) in eventLinks" :key="`event-link-${index}`">
+              <a :href="item.url" target="_blank" rel="noopener">{{ linkLabel(item.url, item.label) }}</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="event-view__meta-row">
+        <q-icon :name="event.closedEvent ? 'lock' : 'lock_open'" />
+        <div class="event-view__meta-body">
+          <div class="event-view__meta-label">Closed Event</div>
+          <div class="event-view__meta-value">
+            {{ event.closedEvent ? 'Ja' : 'Nein' }}
+            <span v-if="event.closedEvent && event.registrationDeadlineDays !== null && event.registrationDeadlineDays !== undefined">
+              · Anmeldefrist: {{ event.registrationDeadlineDays }} Tag(e) vor Beginn
+            </span>
           </div>
         </div>
       </div>
@@ -135,11 +146,17 @@
       <h3>OOC Details</h3>
       <html-viewer :content="event.oocDetails" />
     </section>
+
+    <section v-if="hasExtraInfo" class="event-view__details">
+      <h3>Extra Infos</h3>
+      <html-viewer :content="event.extraInfo" />
+    </section>
   </div>
 </template>
 
 <script lang="ts">
 import { BaseEventDto } from '@app/shared/dto/events/base-event.dto';
+import { EventLinkDto } from '@app/shared/dto/events/event-link.dto';
 import { EventLocationDto } from '@app/shared/dto/events/event-location.dto';
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
 import { getEventTypeLabel } from 'src/common/event-types';
@@ -180,6 +197,30 @@ export default class EventView extends Vue.with(Props) {
     return notes.map((note) => (ContentNoteTexts as { [key: string]: string })[note] || note);
   }
 
+  get eventLinks(): EventLinkDto[] {
+    const links = (this.event.links || [])
+      .filter((link) => !!link?.url)
+      .map((link) => new EventLinkDto({
+        url: link.url,
+        label: link.label || undefined,
+      }));
+
+    if (links.length > 0) {
+      return links;
+    }
+
+    if (this.event.link) {
+      return [
+        new EventLinkDto({
+          url: this.event.link,
+          label: this.event.linkText || undefined,
+        }),
+      ];
+    }
+
+    return [];
+  }
+
   get hasStartDate(): boolean {
     return this.isValidTimestamp(this.event.startDateTime);
   }
@@ -214,6 +255,10 @@ export default class EventView extends Vue.with(Props) {
 
   get hasOocDetails(): boolean {
     return this.hasHtmlContent(this.event.oocDetails);
+  }
+
+  get hasExtraInfo(): boolean {
+    return this.hasHtmlContent(this.event.extraInfo);
   }
 
   formatServer(value: number | null | undefined): string {
@@ -314,12 +359,6 @@ export default class EventView extends Vue.with(Props) {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: rgba(35, 35, 35, 0.55);
-}
-
-.event-view__chip {
-  background: rgba(221, 180, 118, 0.25);
-  color: #6b4c21;
-  font-weight: 600;
 }
 
 .event-view__meta {

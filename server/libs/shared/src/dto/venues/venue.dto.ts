@@ -5,6 +5,9 @@ import SharedConstants from '@app/shared/SharedConstants';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Max, Min, ValidateIf, ValidateNested } from 'class-validator';
 import { BannerDto } from '../characters/banner.dto';
+import { EventIconDto } from '../events/event-icon.dto';
+import { EventLinkDto } from '../events/event-link.dto';
+import { EventType } from '../../enums/event-type.enum';
 import { VenueOfferingsDto } from './venue-offering.dto';
 import { VenueStaffMemberDto } from './venue-staff-member.dto';
 
@@ -73,6 +76,62 @@ export class VenueDto {
   @IsString()
   @IsOptional()
   eventLink: string;
+
+  @Type(() => EventLinkDto)
+  @ValidateNested({ each: true })
+  @IsArray()
+  @IsOptional()
+  eventLinks?: EventLinkDto[];
+
+  @IsString()
+  @IsOptional()
+  eventTitle?: string;
+
+  @IsEnum(EventType)
+  @IsOptional()
+  eventType?: EventType;
+
+  @IsBoolean()
+  @IsOptional()
+  eventAdultOnly?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  eventClosed?: boolean;
+
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  eventRegistrationDeadlineDays?: number | null;
+
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  eventStartDateTime?: number | null;
+
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  eventEndDateTime?: number | null;
+
+  @IsString()
+  @IsOptional()
+  eventExtraInfo?: string;
+
+  @Type(() => EventIconDto)
+  @ValidateNested()
+  @IsOptional()
+  eventIcon?: EventIconDto | null;
+
+  @Type(() => BannerDto)
+  @ValidateNested()
+  @IsOptional()
+  eventBanner?: BannerDto | null;
+
+  @Type(() => BannerDto)
+  @ValidateNested()
+  @IsOptional()
+  eventDiscordBanner?: BannerDto | null;
 
   @IsString()
   website: string;

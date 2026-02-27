@@ -1,13 +1,15 @@
 import { UserInfo } from '@app/auth/model/user-info';
 import { serverConfiguration } from '@app/configuration';
-import { Character, ContentNote, Event, EventAnnouncement, EventLocation, Image, Server, Venue } from '@app/entity';
+import { Character, ContentNote, Event, EventAnnouncement, EventLocation, EventRegistration, Image, Server, Venue } from '@app/entity';
 import { BannerDto } from '@app/shared/dto/characters/banner.dto';
 import { BaseEventDto } from '@app/shared/dto/events/base-event.dto';
 import { EventAnnouncementDto } from '@app/shared/dto/events/event-announcement.dto';
 import { EventCreaterResultDto } from '@app/shared/dto/events/event-create-result.dto';
 import { EventEditDto } from '@app/shared/dto/events/event-edit.dto';
 import { EventIconDto } from '@app/shared/dto/events/event-icon.dto';
+import { EventLinkDto } from '@app/shared/dto/events/event-link.dto';
 import { EventLocationDto } from '@app/shared/dto/events/event-location.dto';
+import { EventParticipantDto } from '@app/shared/dto/events/event-participant.dto';
 import { EventSearchResultDto } from '@app/shared/dto/events/event-search-result.dto';
 import { EventSummariesDto } from '@app/shared/dto/events/event-summaries.dto';
 import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
@@ -62,7 +64,23 @@ export class EventsService {
       where: {
         id,
       },
-      relations: ['owner', 'owner.user', 'locations', 'locations.server', 'locations.venue', 'banner', 'banner.owner', 'discordBanner', 'discordBanner.owner', 'icon', 'icon.owner', 'contentNotes'],
+      relations: [
+        'owner',
+        'owner.user',
+        'locations',
+        'locations.server',
+        'locations.venue',
+        'banner',
+        'banner.owner',
+        'discordBanner',
+        'discordBanner.owner',
+        'icon',
+        'icon.owner',
+        'contentNotes',
+        'registrations',
+        'registrations.character',
+        'registrations.character.server',
+      ],
     });
 
     if (!event) {
@@ -125,13 +143,26 @@ export class EventsService {
     event.endDateTime = eventDto.endDateTime ? new Date(eventDto.endDateTime) : null;
     event.details = html.sanitize(eventDto.details);
     event.oocDetails = html.sanitize(eventDto.oocDetails);
-    event.link = eventDto.link; // TODO: Validate
-    event.linkText = eventDto.link ? (eventDto.linkText || '') : '';
+    const links = this.normalizeLinks(eventDto.links, eventDto.link, eventDto.linkText);
+
+    for (const link of links) {
+      if (!isValidUrl(link.url)) {
+        throw new BadRequestException(`Invalid event link: ${link.url}`);
+      }
+    }
+
+    event.links = links;
+    event.link = links[0]?.url || '';
+    event.linkText = links[0]?.label || '';
     event.contact = eventDto.contact;
-    event.recurring = eventDto.recurring;
     const normalizedEventType = this.normalizeEventType(eventDto.eventType);
     event.eventType = normalizedEventType;
     event.adultOnly = eventDto.adultOnly ?? (this.isLegacyAdultType(eventDto.eventType) || event.adultOnly || false);
+    event.closedEvent = !!eventDto.closedEvent;
+    event.registrationDeadlineDays = event.closedEvent
+      ? this.normalizeRegistrationDeadlineDays(eventDto.registrationDeadlineDays)
+      : null;
+    event.extraInfo = html.sanitize(eventDto.extraInfo || '');
     if (eventDto.contentNotes !== undefined) {
       event.contentNotes = eventDto.contentNotes
         .filter(note => note !== '')
@@ -361,6 +392,73 @@ export class EventsService {
     void this.notifySteward(eventEntity); // no await
   }
 
+  async registerForEvent(eventId: number, characterId: number, user: UserInfo): Promise<void> {
+    await this.connection.transaction(async (em) => {
+      const event = await em.getRepository(Event).findOne({
+        where: {
+          id: eventId,
+        },
+        relations: ['owner', 'owner.user'],
+      });
+
+      if (!event) {
+        throw new NotFoundException('Event not found');
+      }
+
+      this.assertRegistrationAllowed(event);
+      const character = await getVerifiedCharacter(em, characterId, user);
+      const registrationRepo = em.getRepository(EventRegistration);
+      const existingRegistration = await registrationRepo.findOne({
+        where: {
+          event: { id: event.id },
+          character: { id: character.id },
+        },
+        relations: ['event', 'character'],
+      });
+
+      if (existingRegistration) {
+        return;
+      }
+
+      const registration = registrationRepo.create({
+        event,
+        character,
+      });
+      await registrationRepo.save(registration);
+    });
+  }
+
+  async unregisterForEvent(eventId: number, characterId: number, user: UserInfo): Promise<void> {
+    await this.connection.transaction(async (em) => {
+      const event = await em.getRepository(Event).findOne({
+        where: {
+          id: eventId,
+        },
+      });
+
+      if (!event) {
+        throw new NotFoundException('Event not found');
+      }
+
+      this.assertRegistrationAllowed(event);
+      const character = await getVerifiedCharacter(em, characterId, user);
+      const registrationRepo = em.getRepository(EventRegistration);
+      const registration = await registrationRepo.findOne({
+        where: {
+          event: { id: event.id },
+          character: { id: character.id },
+        },
+        relations: ['event', 'character'],
+      });
+
+      if (!registration) {
+        return;
+      }
+
+      await registrationRepo.remove(registration);
+    });
+  }
+
   private async notifySteward(event: Event): Promise<void> {
     try {
       this.logger.debug(`Notifying Steward about event ${event.id} change`);
@@ -483,13 +581,16 @@ export class EventsService {
 
       event.title = eventDto.title;
       event.details = html.sanitize(eventDto.details);
-      event.recurring = eventDto.recurring;
       event.startDateTime = new Date(eventDto.startDateTime);
       event.endDateTime = eventDto.endDateTime ? new Date(eventDto.endDateTime) : null;
       event.source = eventDto.source;
       event.eventType = EventType.RP;
       event.adultOnly = false;
+      event.closedEvent = false;
+      event.registrationDeadlineDays = null;
+      event.extraInfo = '';
       event.externalSourceLink = eventDto.link;
+      event.links = [];
       event.linkText = '';
 
         const dtoLocations = eventDto.locations;
@@ -650,6 +751,36 @@ export class EventsService {
     return event.adultOnly || this.isLegacyAdultType(event.eventType);
   }
 
+  private getRegistrationDeadlineAt(event: Event): Date | null {
+    if (!event.closedEvent) {
+      return null;
+    }
+
+    const deadlineDays = event.registrationDeadlineDays ?? 0;
+    return DateTime.fromJSDate(event.startDateTime)
+      .minus({ days: deadlineDays })
+      .toJSDate();
+  }
+
+  private isRegistrationOpen(event: Event): boolean {
+    const deadlineAt = this.getRegistrationDeadlineAt(event);
+    if (!deadlineAt) {
+      return false;
+    }
+
+    return Date.now() <= deadlineAt.getTime();
+  }
+
+  private assertRegistrationAllowed(event: Event): void {
+    if (!event.closedEvent) {
+      throw new BadRequestException('Registrations are only available for closed events');
+    }
+
+    if (!this.isRegistrationOpen(event)) {
+      throw new BadRequestException('Registration deadline has passed');
+    }
+  }
+
   private async toEventSummaryDto(event: Event): Promise<EventSummaryDto> {
     const icon = await event.icon;
     const eventType = this.normalizeEventType(event.eventType);
@@ -676,10 +807,12 @@ export class EventsService {
       endDateTime: event.endDateTime ? event.endDateTime.getTime() : null,
       link: event.externalSourceLink || '',
       linkText: event.linkText || '',
+      links: this.normalizeLinks(event.links, event.externalSourceLink || event.link, event.linkText),
       source: event.source,
       eventType,
       adultOnly,
-      recurring: event.recurring,
+      closedEvent: event.closedEvent,
+      registrationDeadlineDays: event.registrationDeadlineDays,
       contentNotes: (event.contentNotes || []).map((note) => note.name),
       locations: event.locations.map((location) => ({
         id: location.id,
@@ -699,6 +832,25 @@ export class EventsService {
     const icon = await event.icon;
     const eventType = this.normalizeEventType(event.eventType);
     const adultOnly = this.resolveAdultOnly(event);
+    const registrationDeadlineAt = this.getRegistrationDeadlineAt(event);
+    const registrationOpen = this.isRegistrationOpen(event);
+    const userCharacterIds = user?.characters?.map((character) => character.id) || [];
+    const registrations = (event.registrations || []).slice().sort((a, b) =>
+      utils.compareNumbers(a.createdAt.getTime(), b.createdAt.getTime()),
+    );
+    const myRegistrationCharacterIds = registrations
+      .map((registration) => registration.character?.id)
+      .filter((characterId): characterId is number => !!characterId && userCharacterIds.includes(characterId));
+    const canManageParticipants = event.owner?.user?.id === user?.id;
+    const participants = registrations.map((registration) =>
+      new EventParticipantDto({
+        characterId: registration.character.id,
+        name: registration.character.name,
+        server: registration.character.server?.name || '',
+        avatar: registration.character.avatar,
+        registeredAt: registration.createdAt.getTime(),
+      }),
+    );
     let announcements: EventAnnouncement[] = [];
     let images: ImageSummaryDto[] = [];
 
@@ -716,16 +868,19 @@ export class EventsService {
       title: event.title,
       mine: event.owner?.user?.id === user?.id,
       details: event.details,
-      recurring: event.recurring,
       oocDetails: event.oocDetails,
       startDateTime: event.startDateTime.getTime(),
       endDateTime: event.endDateTime ? event.endDateTime.getTime() : null,
       link: event.externalSourceLink || event.link,
       linkText: event.linkText || '',
+      links: this.normalizeLinks(event.links, event.externalSourceLink || event.link, event.linkText),
       contact: event.contact,
       eventType,
       adultOnly,
+      closedEvent: event.closedEvent,
+      registrationDeadlineDays: event.registrationDeadlineDays,
       contentNotes: (event.contentNotes || []).map((note) => note.name),
+      extraInfo: event.extraInfo || '',
       banner: !banner
         ? null
         : new BannerDto({
@@ -764,7 +919,17 @@ export class EventsService {
     };
 
     if (!edit) {
-      return new EventDto({ ...properties, images });
+      return new EventDto({
+        ...properties,
+        images,
+        registrationDeadlineAt: registrationDeadlineAt ? registrationDeadlineAt.getTime() : null,
+        registrationOpen,
+        participantCount: registrations.length,
+        userRegistered: myRegistrationCharacterIds.length > 0,
+        myRegistrationCharacterIds,
+        canManageParticipants,
+        participants: canManageParticipants ? participants : [],
+      });
     }
 
     return new EventEditDto({
@@ -778,5 +943,44 @@ export class EventsService {
           }),
       ),
     });
+  }
+
+  private normalizeLinks(
+    links: EventLinkDto[] | null | undefined,
+    legacyLink?: string | null,
+    legacyLabel?: string | null,
+  ): EventLinkDto[] {
+    const normalized = (links || [])
+      .map((link) => ({
+        url: (link?.url || '').trim(),
+        label: (link?.label || '').trim(),
+      }))
+      .filter((link) => link.url.length > 0)
+      .map((link) => new EventLinkDto({
+        url: link.url,
+        label: link.label || undefined,
+      }));
+
+    if (normalized.length === 0) {
+      const url = (legacyLink || '').trim();
+      if (url.length > 0) {
+        return [
+          new EventLinkDto({
+            url,
+            label: (legacyLabel || '').trim() || undefined,
+          }),
+        ];
+      }
+    }
+
+    return normalized;
+  }
+
+  private normalizeRegistrationDeadlineDays(value: number | null | undefined): number | null {
+    if (value === null || value === undefined || Number.isNaN(value)) {
+      return null;
+    }
+
+    return Math.max(0, Math.floor(value));
   }
 }

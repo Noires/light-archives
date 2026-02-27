@@ -10,7 +10,6 @@ import parse from 'node-html-parser';
 import { firstValueFrom } from 'rxjs';
 import { ChocoboChronicleEventsDto } from './dto/chocobo-chronicle-events.dto';
 import { ExternalEvent } from './model/external-event';
-import { isRecurringEvent } from './util/event-utils';
 
 @Injectable()
 export class ChocoboChronicleService {
@@ -36,7 +35,6 @@ export class ChocoboChronicleService {
 				id: -1,
 				title: this.processTitle(event.title),
 				details: event.description,
-				recurring: isRecurringEvent(event.title),
 				startDateTime: this.parseDate(event.utc_start_date),
 				endDateTime: this.parseDate(event.utc_end_date),
 				image: event.image.url,

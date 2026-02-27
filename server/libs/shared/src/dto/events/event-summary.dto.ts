@@ -1,6 +1,7 @@
 import { EventSource } from '@app/shared/enums/event-source.enum';
 import { EventType } from '@app/shared/enums/event-type.enum';
 import { EventIconDto } from './event-icon.dto';
+import { EventLinkDto } from './event-link.dto';
 import { EventLocationDto } from './event-location.dto';
 
 export interface EventSummaryDto {
@@ -11,10 +12,12 @@ export interface EventSummaryDto {
   endDateTime: number | null;
   link: string;
   linkText?: string;
+  links?: EventLinkDto[];
 	source: EventSource;
 	eventType: EventType;
   adultOnly?: boolean;
-  recurring: boolean;
+  closedEvent?: boolean;
+  registrationDeadlineDays?: number | null;
   locations: EventLocationDto[];
   contentNotes: string[];
 }

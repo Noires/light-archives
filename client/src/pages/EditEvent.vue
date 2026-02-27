@@ -4,161 +4,216 @@
       <h2>{{ eventId ? 'Event bearbeiten' : 'Neues Event erstellen' }}</h2>
       <q-form ref="form" @submit="onSubmit">
         <template v-if="!preview">
-          <section class="page-edit-event__form-controls">
-            <character-selector
-              v-if="!eventId"
-              v-model="selectedCharacterId"
-              :rules="[
-                $rules.required('Bitte wähle einen Charakter aus.'),
-              ]"
-            />
-            <q-input
-              v-model="event.title"
-              label="Titel *"
-              :rules="[
-                $rules.required('Dieses Feld ist erforderlich.'),
-              ]"
-            />
-            <div class="page-edit-event__select-group">
-              <div class="page-edit-event__select-title">Event-Typ *</div>
-              <q-option-group
-                v-model="event.eventType"
-                :options="eventTypeOptions"
-                type="radio"
-                color="secondary"
-                class="page-edit-event__options-grid"
+          <section class="page-edit-event__section">
+            <h6>1. Treffpunkt und Vorlage</h6>
+            <p class="page-edit-event__section-hint">
+              Verknüpfe zuerst einen Treffpunkt. So wird die Eventvorlage direkt übernommen und du sparst dir viele manuelle Eingaben.
+            </p>
+            <section class="page-edit-event__form-controls">
+              <character-selector
+                v-if="!eventId"
+                v-model="selectedCharacterId"
+                :rules="[
+                  $rules.required('Bitte wähle einen Charakter aus.'),
+                ]"
+              />
+              <q-select
+                v-model="event.locations[0].venueId"
+                label="Verknüpfter Treffpunkt (optional)"
+                use-input
+                input-debounce="250"
+                emit-value
+                map-options
+                clearable
+                :options="venueOptions"
+                @filter="onVenueSearch"
+                @update:model-value="onVenueSelected"
+              />
+              <q-input
+                v-model="event.locations[0].name"
+                label="Treffpunktname *"
                 :rules="[
                   $rules.required('Dieses Feld ist erforderlich.'),
                 ]"
               />
-            </div>
-            <div class="page-edit-event__select-group">
-              <div class="page-edit-event__select-title">Nicht jugendfrei (18+)</div>
-              <adult-only-selector v-model="event.adultOnly" />
-            </div>
-            <q-date-time-picker
-              v-if="startDateTimeVisible"
-              label="Datum/Uhrzeit Beginn *"
-              v-model="startDateTime"
-              :display-value="startDateTimeDisplay"
-              mode="datetime"
-              first-day-of-week="1"
-              format24h
-              :rules="[
-                $rules.required('Dieses Feld ist erforderlich.'),
-              ]"
-            />
-            <q-date-time-picker
-              v-if="endDateTimeVisible"
-              label="Datum/Uhrzeit Ende"
-              v-model="endDateTime"
-              :display-value="endDateTimeDisplay"
-              mode="datetime"
-              first-day-of-week="1"
-              format24h
-              clearable
-            />
-            <q-checkbox
-              v-model="event.recurring"
-              label="Dies ist ein wiederkehrendes Event."
-            />
-            <div class="page-edit-event__select-group">
-              <div class="page-edit-event__select-title">Inhaltswarnungen</div>
-              <q-option-group
-                v-model="event.contentNotes"
-                :options="contentNoteOptions"
-                type="checkbox"
-                color="secondary"
-                class="page-edit-event__options-grid"
+              <q-input
+                v-model="event.locations[0].address"
+                label="Adresse"
+              >
+                <template v-slot:prepend>
+                  <q-icon name="place" />
+                </template>
+              </q-input>
+              <world-select
+                v-model="event.locations[0].server"
+                label="Welt"
+                :rules="[
+                  $rules.required('Dieses Feld ist erforderlich.'),
+                ]"
               />
+              <q-input
+                v-model="event.locations[0].link"
+                label="Standortlink"
+                :rules="[
+                  $rules.url('Bitte hinterlasse eine gültige URL.'),
+                ]"
+              >
+                <template v-slot:prepend>
+                  <q-icon name="link" />
+                </template>
+              </q-input>
+              <q-input
+                v-model="event.locations[0].linkText"
+                label="Standort-Linktext (optional)"
+              />
+            </section>
+          </section>
+
+          <section class="page-edit-event__section">
+            <h6>2. Eckdaten</h6>
+            <section class="page-edit-event__form-controls">
+              <q-input
+                v-model="event.title"
+                label="Titel *"
+                :rules="[
+                  $rules.required('Dieses Feld ist erforderlich.'),
+                ]"
+              />
+              <div class="page-edit-event__select-group">
+                <div class="page-edit-event__select-title">Event-Typ *</div>
+                <q-option-group
+                  v-model="event.eventType"
+                  :options="eventTypeOptions"
+                  type="radio"
+                  color="secondary"
+                  class="page-edit-event__options-grid"
+                  :rules="[
+                    $rules.required('Dieses Feld ist erforderlich.'),
+                  ]"
+                />
+              </div>
+              <div class="page-edit-event__select-group">
+                <div class="page-edit-event__select-title">Nicht jugendfrei (18+)</div>
+                <adult-only-selector v-model="event.adultOnly" />
+              </div>
+              <div class="page-edit-event__select-group">
+                <div class="page-edit-event__select-title">Closed Event</div>
+                <q-option-group
+                  v-model="event.closedEvent"
+                  :options="yesNoOptions"
+                  type="radio"
+                  color="secondary"
+                  inline
+                />
+              </div>
+              <q-input
+                v-if="event.closedEvent"
+                v-model.number="event.registrationDeadlineDays"
+                type="number"
+                min="0"
+                label="Anmeldefrist (Tage vor Beginn)"
+              />
+              <q-date-time-picker
+                v-if="startDateTimeVisible"
+                label="Datum/Uhrzeit Beginn *"
+                v-model="startDateTime"
+                :display-value="startDateTimeDisplay"
+                mode="datetime"
+                first-day-of-week="1"
+                format24h
+                :rules="[
+                  $rules.required('Dieses Feld ist erforderlich.'),
+                ]"
+              />
+              <q-date-time-picker
+                v-if="endDateTimeVisible"
+                label="Datum/Uhrzeit Ende"
+                v-model="endDateTime"
+                :display-value="endDateTimeDisplay"
+                mode="datetime"
+                first-day-of-week="1"
+                format24h
+                clearable
+              />
+              <div class="page-edit-event__select-group">
+                <div class="page-edit-event__select-title">Inhaltswarnungen</div>
+                <q-option-group
+                  v-model="event.contentNotes"
+                  :options="contentNoteOptions"
+                  type="checkbox"
+                  color="secondary"
+                  class="page-edit-event__options-grid"
+                />
+              </div>
+            </section>
+          </section>
+
+          <section class="page-edit-event__section">
+            <h6>3. Inhalte, Kontakt und Links</h6>
+            <h6>Event-Beschreibung</h6>
+            <html-editor v-model="event.details" />
+            <h6>OOC-Details</h6>
+            <html-editor v-model="event.oocDetails" />
+            <h6>Extra-Infos</h6>
+            <html-editor v-model="event.extraInfo" />
+            <q-input
+              v-model="event.contact"
+              label="Event-Kontakt"
+            />
+            <h6>Event-Links</h6>
+            <template v-for="(_, index) in (event.links || [])" :key="`event-link-${index}`">
+              <div class="page-edit-event__event-link-row">
+                <q-input
+                  v-model="event.links[index].url"
+                  label="Link"
+                  :rules="[
+                    $rules.url('Bitte hinterlasse einen Link.'),
+                  ]"
+                />
+                <q-input
+                  v-model="event.links[index].label"
+                  label="Linktext (optional)"
+                />
+                <q-btn
+                  flat
+                  color="negative"
+                  icon="delete"
+                  aria-label="Event-Link entfernen"
+                  @click="removeEventLink(index)"
+                />
+              </div>
+            </template>
+            <div class="page-edit-event__inline-actions">
+              <q-btn flat color="secondary" icon="add" label="Event-Link hinzufügen" @click="addEventLink" />
             </div>
-            <h6>Standort</h6>
-            <q-select
-              v-model="event.locations[0].venueId"
-              label="Treffpunkt verknüpfen (optional)"
-              use-input
-              input-debounce="250"
-              emit-value
-              map-options
-              clearable
-              :options="venueOptions"
-              @filter="onVenueSearch"
-              @update:model-value="onVenueSelected"
-            />
-            <q-input
-              v-model="event.locations[0].name"
-              label="Treffpunkt-Name *"
-              :rules="[
-                $rules.required('Dieses Feld ist erforderlich.'),
-              ]"
-            />
-            <q-input
-              v-model="event.locations[0].address"
-              label="Adresse"
-            >
-              <template v-slot:prepend>
-                <q-icon name="place" />
-              </template>
-            </q-input>
-            <world-select
-              v-model="event.locations[0].server"
-              label="Welt"
-              :rules="[
-                $rules.required('Dieses Feld ist erforderlich.'),
-              ]"
-            />
-            <q-input
-              v-model="event.locations[0].link"
-              label="Standortlink"
-              :rules="[
-                $rules.url('Bitte hinterlasse eine gültige URL.'),
-              ]"
-            >
-              <template v-slot:prepend>
-                <q-icon name="link" />
-              </template>
-            </q-input>
-            <q-input
-              v-model="event.locations[0].linkText"
-              label="Standort-Linktext (optional)"
+          </section>
+
+          <section class="page-edit-event__section">
+            <h6>4. Medien</h6>
+            <event-icon-edit-section v-model="event.icon" />
+            <banner-edit-section v-model="event.banner" />
+            <banner-edit-section
+              v-model="event.discordBanner"
+              title="Discord-Banner"
+              :ratio="5 / 2"
+              :min-aspect-ratio="minDiscordBannerAspectRatio"
+              hint="Mindestens 5:2 (Breite:Höhe), empfohlen 1500x600. Formate: JPG/PNG, max. 1 MiB. Beim Hochladen kannst du den Ausschnitt zuschneiden."
             />
           </section>
-          <h6>Details</h6>
-          <html-editor v-model="event.details" />
-          <h6>OOC Details</h6>
-          <html-editor v-model="event.oocDetails" />
-          <event-icon-edit-section v-model="event.icon" />
-          <banner-edit-section v-model="event.banner" />
-          <banner-edit-section
-            v-model="event.discordBanner"
-            title="Discord-Banner"
-            :ratio="5 / 2"
-            :min-aspect-ratio="minDiscordBannerAspectRatio"
-            hint="Mindestens 5:2 (Breite:Höhe), empfohlen 1500x600. Formate: JPG/PNG, max. 1 MiB. Beim Hochladen kannst du den Ausschnitt zuschneiden."
-          />
-          <q-input
-            v-model="event.link"
-            label="Link"
-            :rules="[
-              $rules.url('Bitte hinterlasse einen Link.'),
-            ]"
-          />
-          <q-input
-            v-model="event.linkText"
-            label="Linktext (optional)"
-          />
-          <q-input
-            v-model="event.contact"
-            label="Kontakt"
-          />
-          <h6>Vorankündigungen</h6>
-          <p>Der Chaos Archives Discord-Bot kann das Event im <tt>#rp-event-announcements</tt>-Channel ankündigen. Du kannst Vorankündigungen flexibel planen (z. B. 2 Wochen, 1 Woche oder 2 Tage vorher).</p>
-          <template v-for="(_, index) in event.announcements" :key="index">
-            <event-announcement-editor v-model="event.announcements[index]" @remove="removeAnnouncement(index)" />
-          </template>
-          <div class="page-edit-event__button-bar" style="justify-content: end">
-            <q-btn flat color="secondary" icon="add" label="Vorankündigung hinzufügen" @click="addAnnouncement" />
-          </div>
+
+          <section class="page-edit-event__section">
+            <h6>5. Vorankündigungen</h6>
+            <p class="page-edit-event__section-hint">
+              Der Chaos Archives Discord-Bot kann das Event im Kanal <tt>#rp-event-announcements</tt> ankündigen.
+              Leere Texte werden beim Speichern automatisch aus Titel und Beschreibung befüllt.
+            </p>
+            <template v-for="(_, index) in event.announcements" :key="index">
+              <event-announcement-editor v-model="event.announcements[index]" @remove="removeAnnouncement(index)" />
+            </template>
+            <div class="page-edit-event__inline-actions">
+              <q-btn flat color="secondary" icon="add" label="Vorankündigung hinzufügen" @click="addAnnouncement" />
+            </div>
+          </section>
         </template>
         <section v-else class="page-edit-event__preview">
           <event-view :event="event" :preview="true" />
@@ -205,6 +260,7 @@
 <script lang="ts">
 import { EventAnnouncementDto } from '@app/shared/dto/events/event-announcement.dto';
 import { EventEditDto } from '@app/shared/dto/events/event-edit.dto';
+import { EventLinkDto } from '@app/shared/dto/events/event-link.dto';
 import { EventLocationDto } from '@app/shared/dto/events/event-location.dto';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
@@ -318,6 +374,10 @@ export default class PageEditEvent extends Vue {
     { label: 'Bearbeitung', value: false },
     { label: 'Vorschau', value: true },
   ];
+  readonly yesNoOptions = [
+    { label: 'Ja', value: true },
+    { label: 'Nein', value: false },
+  ];
 
   eventId: number|null = null;
   event = new EventEditDto();
@@ -354,7 +414,6 @@ export default class PageEditEvent extends Vue {
 			this.eventBackup = new EventEditDto(content.event);
       this.normalizeEvent(this.eventBackup);
       this.eventBackup.discordBanner = this.eventBackup.discordBanner || null;
-      this.eventBackup.linkText = this.eventBackup.linkText || '';
       this.ensureSingleLocation(this.eventBackup);
     } else {
       this.eventId = null;
@@ -365,12 +424,15 @@ export default class PageEditEvent extends Vue {
         title: '',
         details: '',
         oocDetails: '',
+        extraInfo: '',
         link: '',
         linkText: '',
+        links: [],
         contact: '',
-        recurring: false,
         eventType: EventType.RP,
         adultOnly: false,
+        closedEvent: false,
+        registrationDeadlineDays: null,
         banner: null,
         discordBanner: null,
         icon: null,
@@ -407,6 +469,16 @@ export default class PageEditEvent extends Vue {
     }
     target.eventType = target.eventType || EventType.RP;
     target.adultOnly = target.adultOnly === true;
+    target.closedEvent = target.closedEvent === true;
+    if (target.registrationDeadlineDays === null || target.registrationDeadlineDays === undefined) {
+      target.registrationDeadlineDays = null;
+    } else {
+      target.registrationDeadlineDays = Math.max(0, Math.floor(target.registrationDeadlineDays));
+    }
+    target.extraInfo = target.extraInfo || '';
+    target.links = this.normalizeLinks(target.links, target.link, target.linkText);
+    target.link = target.links[0]?.url || '';
+    target.linkText = target.links[0]?.label || '';
   }
 
   private ensureSingleLocation(target: EventEditDto) {
@@ -485,6 +557,25 @@ export default class PageEditEvent extends Vue {
     this.event.announcements.splice(index, 1);
   }
 
+  addEventLink() {
+    if (!this.event.links) {
+      this.event.links = [];
+    }
+
+    this.event.links.push(new EventLinkDto({
+      url: '',
+      label: '',
+    }));
+  }
+
+  removeEventLink(index: number) {
+    if (!this.event.links) {
+      return;
+    }
+
+    this.event.links.splice(index, 1);
+  }
+
   newLocation() {
     return new EventLocationDto({
       name: '',
@@ -494,6 +585,33 @@ export default class PageEditEvent extends Vue {
       linkText: '',
       venueId: undefined,
     });
+  }
+
+  private normalizeLinks(
+    links: EventLinkDto[] | null | undefined,
+    legacyLink?: string | null,
+    legacyLabel?: string | null,
+  ): EventLinkDto[] {
+    const normalized = (links || [])
+      .map((link) => new EventLinkDto({
+        url: (link?.url || '').trim(),
+        label: (link?.label || '').trim() || undefined,
+      }))
+      .filter((link) => link.url.length > 0);
+
+    if (normalized.length === 0) {
+      const legacyUrl = (legacyLink || '').trim();
+      if (legacyUrl.length > 0) {
+        return [
+          new EventLinkDto({
+            url: legacyUrl,
+            label: (legacyLabel || '').trim() || undefined,
+          }),
+        ];
+      }
+    }
+
+    return normalized;
   }
 
   async onVenueSearch(value: string, update: (fn: () => void) => void) {
@@ -606,6 +724,10 @@ export default class PageEditEvent extends Vue {
   }
 
   private applyVenueTemplate(venue: VenueDto) {
+    if (!this.event.title && venue.eventTitle) {
+      this.event.title = venue.eventTitle;
+    }
+
     if (!this.event.details && venue.eventDescription) {
       this.event.details = venue.eventDescription;
     }
@@ -618,13 +740,82 @@ export default class PageEditEvent extends Vue {
       this.event.contact = venue.eventContact;
     }
 
-    if (!this.event.link && (venue.eventLink || venue.website)) {
-      this.event.link = venue.eventLink || venue.website;
+    if ((!this.event.links || this.event.links.length === 0) && (venue.eventLinks?.length || venue.eventLink || venue.website)) {
+      const templateLinks = venue.eventLinks && venue.eventLinks.length > 0
+        ? venue.eventLinks
+        : [{ url: venue.eventLink || venue.website, label: '' }];
+
+      this.event.links = this.normalizeLinks(templateLinks, venue.eventLink || venue.website, '');
+      this.event.link = this.event.links[0]?.url || '';
+      this.event.linkText = this.event.links[0]?.label || '';
+    }
+
+    if (this.event.eventType === EventType.RP && venue.eventType && venue.eventType !== EventType.RP) {
+      this.event.eventType = venue.eventType;
+    }
+
+    if (!this.event.adultOnly && venue.eventAdultOnly) {
+      this.event.adultOnly = true;
+    }
+
+    if (!this.event.closedEvent && venue.eventClosed) {
+      this.event.closedEvent = true;
+      this.event.registrationDeadlineDays = venue.eventRegistrationDeadlineDays ?? null;
+    }
+
+    if (!this.event.extraInfo && venue.eventExtraInfo) {
+      this.event.extraInfo = venue.eventExtraInfo;
+    }
+
+    if (!this.event.icon && venue.eventIcon) {
+      this.event.icon = venue.eventIcon;
+    }
+
+    if (!this.event.banner && venue.eventBanner) {
+      this.event.banner = venue.eventBanner;
+    }
+
+    if (!this.event.discordBanner && venue.eventDiscordBanner) {
+      this.event.discordBanner = venue.eventDiscordBanner;
+    }
+
+    if (!this.event.startDateTime && venue.eventStartDateTime) {
+      const start = this.resolveNextMatchingWeekdayTime(venue.eventStartDateTime);
+      this.event.startDateTime = start;
+      this.startDateTime = this.fromMillis(start);
+    }
+
+    if (!this.event.endDateTime && venue.eventEndDateTime) {
+      const end = this.resolveNextMatchingWeekdayTime(venue.eventEndDateTime);
+      this.event.endDateTime = end;
+      this.endDateTime = this.fromMillis(end);
     }
 
     if ((!this.event.contentNotes || this.event.contentNotes.length === 0) && venue.eventContentNotes?.length) {
       this.event.contentNotes = [...venue.eventContentNotes];
     }
+  }
+
+  private resolveNextMatchingWeekdayTime(templateMillis: number): number {
+    const template = DateTime.fromMillis(templateMillis, {
+      zone: SharedConstants.FFXIV_SERVER_TIMEZONE,
+    });
+    const now = DateTime.now().setZone(SharedConstants.FFXIV_SERVER_TIMEZONE);
+    const daysToAdd = (template.weekday - now.weekday + 7) % 7;
+    let candidate = now
+      .plus({ days: daysToAdd })
+      .set({
+        hour: template.hour,
+        minute: template.minute,
+        second: 0,
+        millisecond: 0,
+      });
+
+    if (daysToAdd === 0 && candidate.toMillis() <= now.toMillis()) {
+      candidate = candidate.plus({ weeks: 1 });
+    }
+
+    return candidate.toMillis();
   }
 
   private toVenueSummary(venue: VenueDto): VenueSummaryDto {
@@ -681,6 +872,14 @@ export default class PageEditEvent extends Vue {
     this.saving = true;
 
     try {
+      this.normalizeEvent(this.event);
+      const eventLinks = this.event.links || [];
+      this.event.link = eventLinks[0]?.url || '';
+      this.event.linkText = eventLinks[0]?.label || '';
+      if (!this.event.closedEvent) {
+        this.event.registrationDeadlineDays = null;
+      }
+
       this.applyAnnouncementDefaults();
 
       if (!this.eventId) {
@@ -763,6 +962,9 @@ type VenueOption = {
   --edit-event-select-group-bg: rgba(249, 247, 242, 0.95);
   --edit-event-select-title-color: rgba(35, 35, 35, 0.7);
   --edit-event-option-color: inherit;
+  --edit-event-section-border: rgba(221, 180, 118, 0.22);
+  --edit-event-section-bg: rgba(255, 255, 255, 0.82);
+  --edit-event-section-hint: rgba(35, 35, 35, 0.75);
 }
 
 body.body--dark .page-edit-event {
@@ -770,11 +972,26 @@ body.body--dark .page-edit-event {
   --edit-event-select-group-bg: rgba(17, 25, 37, 0.9);
   --edit-event-select-title-color: rgba(213, 226, 240, 0.76);
   --edit-event-option-color: rgba(213, 226, 240, 0.9);
+  --edit-event-section-border: rgba(141, 181, 223, 0.3);
+  --edit-event-section-bg: rgba(17, 25, 37, 0.88);
+  --edit-event-section-hint: rgba(213, 226, 240, 0.82);
 }
 
 .page-edit-event__form-controls {
   flex-basis: 0;
   flex-grow: 1;
+}
+
+.page-edit-event__section {
+  margin-bottom: 22px;
+  padding: 14px 16px;
+  border: 1px solid var(--edit-event-section-border);
+  background: var(--edit-event-section-bg);
+}
+
+.page-edit-event__section-hint {
+  margin: 0 0 12px;
+  color: var(--edit-event-section-hint);
 }
 
 .page-edit-event__preview {
@@ -809,9 +1026,34 @@ body.body--dark .page-edit-event {
   margin: 0;
 }
 
+.page-edit-event__event-link-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.page-edit-event__inline-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media screen and (max-width: $breakpoint-sm) {
   .page-edit-event__options-grid {
     grid-template-columns: 1fr;
+  }
+
+  .page-edit-event__event-link-row {
+    grid-template-columns: 1fr;
+  }
+
+  .page-edit-event__section {
+    padding: 12px;
+  }
+
+  .page-edit-event__inline-actions {
+    justify-content: flex-start;
   }
 }
 

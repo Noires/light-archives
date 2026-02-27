@@ -253,20 +253,100 @@
                 <h6>Events</h6>
                 <p>Diese Vorlage wird für neue Events des Treffpunkts verwendet.</p>
                 <q-input
+                  v-model="venue.eventTitle"
+                  label="Titel (Vorlage)"
+                />
+                <div class="page-edit-venue__select-group">
+                  <div class="page-edit-venue__select-title">Event-Typ</div>
+                  <q-option-group
+                    v-model="venue.eventType"
+                    :options="eventTypeOptions"
+                    type="radio"
+                    color="secondary"
+                    class="page-edit-venue__options-grid"
+                  />
+                </div>
+                <div class="page-edit-venue__select-group">
+                  <div class="page-edit-venue__select-title">Closed Event</div>
+                  <q-option-group
+                    v-model="venue.eventClosed"
+                    :options="yesNoOptions"
+                    type="radio"
+                    color="secondary"
+                    inline
+                  />
+                </div>
+                <q-input
+                  v-if="venue.eventClosed"
+                  v-model.number="venue.eventRegistrationDeadlineDays"
+                  type="number"
+                  min="0"
+                  label="Anmeldefrist (Tage vor Beginn)"
+                />
+                <div class="page-edit-venue__select-group">
+                  <div class="page-edit-venue__select-title">18+ Event</div>
+                  <adult-only-selector v-model="venue.eventAdultOnly" />
+                </div>
+                <q-date-time-picker
+                  v-if="eventTemplateStartDateTimeVisible"
+                  label="Datum/Uhrzeit Beginn (Vorlage)"
+                  v-model="eventTemplateStartDateTime"
+                  :display-value="eventTemplateStartDateTimeDisplay"
+                  mode="datetime"
+                  first-day-of-week="1"
+                  format24h
+                  clearable
+                />
+                <q-date-time-picker
+                  v-if="eventTemplateEndDateTimeVisible"
+                  label="Datum/Uhrzeit Ende (Vorlage)"
+                  v-model="eventTemplateEndDateTime"
+                  :display-value="eventTemplateEndDateTimeDisplay"
+                  mode="datetime"
+                  first-day-of-week="1"
+                  format24h
+                  clearable
+                />
+                <q-input
                   v-model="venue.eventContact"
                   label="Event-Kontakt"
                 />
-                <q-input
-                  v-model="venue.eventLink"
-                  label="Event-Link"
-                  :rules="[
-                    $rules.url('Bitte hinterlasse einen Link.'),
-                  ]"
+                <h6>Event-Links</h6>
+                <template v-for="(_, index) in (venue.eventLinks || [])" :key="`venue-event-link-${index}`">
+                  <div class="page-edit-venue__event-link-row">
+                    <q-input
+                      v-model="venue.eventLinks[index].url"
+                      label="Link"
+                      :rules="[
+                        $rules.url('Bitte hinterlasse einen Link.'),
+                      ]"
+                    />
+                    <q-input
+                      v-model="venue.eventLinks[index].label"
+                      label="Linktext (optional)"
+                    />
+                    <q-btn
+                      flat
+                      color="negative"
+                      icon="delete"
+                      aria-label="Event-Link entfernen"
+                      @click="removeEventLink(index)"
+                    />
+                  </div>
+                </template>
+                <q-btn
+                  flat
+                  color="secondary"
+                  icon="add"
+                  label="Event-Link hinzufügen"
+                  @click="addEventLink"
                 />
                 <h6>Event-Beschreibung</h6>
                 <html-editor v-model="venue.eventDescription" />
                 <h6>Event-OOC Details</h6>
                 <html-editor v-model="venue.eventOocDetails" />
+                <h6>Extra-Infos</h6>
+                <html-editor v-model="venue.eventExtraInfo" />
                 <h6>Event-Inhaltswarnungen</h6>
                 <Multiselect
                   v-model="venue.eventContentNotes"
@@ -277,6 +357,15 @@
                   valueProp="value"
                   track-by="label"
                   label="label"
+                />
+                <event-icon-edit-section v-model="venue.eventIcon" />
+                <banner-edit-section v-model="venue.eventBanner" title="Event-Banner" />
+                <banner-edit-section
+                  v-model="venue.eventDiscordBanner"
+                  title="Discord-Banner"
+                  :ratio="5 / 2"
+                  :min-aspect-ratio="minDiscordBannerAspectRatio"
+                  hint="Mindestens 5:2 (Breite:Höhe), empfohlen 1500x600. Formate: JPG/PNG, max. 1 MiB. Beim Hochladen kannst du den Ausschnitt zuschneiden."
                 />
               </section>
 
@@ -340,17 +429,24 @@ import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { VenueOfferingsDto } from '@app/shared/dto/venues/venue-offering.dto';
 import { HousingArea } from '@app/shared/enums/housing-area.enum';
 import { NoticeboardType } from '@app/shared/enums/noticeboard-type.enum';
+import { EventType } from '@app/shared/enums/event-type.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import errors from '@app/shared/errors';
 import SharedConstants from '@app/shared/SharedConstants';
+import { Component as QDateTimePicker } from '@toby.mosque/quasar-ui-qdatetimepicker';
+import '@toby.mosque/quasar-ui-qdatetimepicker/dist/index.css';
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
+import { EventTypeOptions } from 'src/common/event-types';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
+import { DateTime } from 'luxon';
 import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
 import CarrdEditSection from 'src/components/common/CarrdEditSection.vue';
 import CharacterSelector from 'src/components/common/CharacterSelector.vue';
 import WorldSelect from 'src/components/common/WorldSelect.vue';
+import AdultOnlySelector from 'src/components/event/AdultOnlySelector.vue';
+import EventIconEditSection from 'src/components/event/EventIconEditSection.vue';
 import VenueProfile from 'src/components/venues/VenueProfile.vue';
 import VenueOfferingsEditor from 'src/components/venues/VenueOfferingsEditor.vue';
 import VenueOfferingsView from 'src/components/venues/VenueOfferingsView.vue';
@@ -401,12 +497,15 @@ async function load(params: RouteParams): Promise<{ venue: VenueDto | null; cont
 @Options({
   name: 'PageEditVenue',
   components: {
+    QDateTimePicker,
     VenueProfile,
     HtmlEditor,
     BannerEditSection,
     CarrdEditSection,
     CharacterSelector,
     WorldSelect,
+    AdultOnlySelector,
+    EventIconEditSection,
     Multiselect,
     VenueOfferingsEditor,
     VenueOfferingsView,
@@ -480,6 +579,26 @@ async function load(params: RouteParams): Promise<{ venue: VenueDto | null; cont
     selectedCharacterId(newValue: number | null, oldValue: number | null) {
       (this as PageEditVenue).onSelectedCharacterIdChanged(newValue, oldValue);
     },
+    eventTemplateStartDateTime: {
+      handler(newValue: string, oldValue: string) {
+        if (newValue !== oldValue) {
+          const that = this as PageEditVenue;
+          that.venue.eventStartDateTime = that.toMillis(newValue);
+          that.eventTemplateStartDateTimeVisible = false;
+          void that.$nextTick(() => that.eventTemplateStartDateTimeVisible = true);
+        }
+      },
+    },
+    eventTemplateEndDateTime: {
+      handler(newValue: string, oldValue: string) {
+        if (newValue !== oldValue) {
+          const that = this as PageEditVenue;
+          that.venue.eventEndDateTime = that.toMillis(newValue);
+          that.eventTemplateEndDateTimeVisible = false;
+          void that.$nextTick(() => that.eventTemplateEndDateTimeVisible = true);
+        }
+      },
+    },
   },
 })
 export default class PageEditVenue extends Vue {
@@ -488,9 +607,15 @@ export default class PageEditVenue extends Vue {
     { label: 'Bearbeitung', value: false },
     { label: 'Vorschau', value: true },
   ];
+  readonly eventTypeOptions = EventTypeOptions;
+  readonly yesNoOptions = [
+    { label: 'Ja', value: true },
+    { label: 'Nein', value: false },
+  ];
 
   readonly VenueLocation = VenueLocation;
   readonly SharedConstants = SharedConstants;
+  readonly minDiscordBannerAspectRatio = SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO;
 
   venueId: number | null = null;
   venue = new VenueDto();
@@ -510,6 +635,10 @@ export default class PageEditVenue extends Vue {
 
   selectedCharacterId: number | null = null;
   venueOfferings: VenueOfferingsDto = { categories: [] };
+  eventTemplateStartDateTime: string | null = null;
+  eventTemplateEndDateTime: string | null = null;
+  eventTemplateStartDateTimeVisible = true;
+  eventTemplateEndDateTimeVisible = true;
   private savedOfferingImageIds: Set<number> = new Set();
   private suppressDirtyTracking = false;
 
@@ -547,6 +676,7 @@ export default class PageEditVenue extends Vue {
       this.venueBackup.showEvents = !!this.venueBackup.showEvents;
       this.venueBackup.showNetwork = !!this.venueBackup.showNetwork;
       this.venueBackup.network = this.venueBackup.network || '';
+      this.ensureVenueTemplateDefaults(this.venueBackup);
     } else {
       this.venueId = null;
       this.venueBackup = new VenueDto({
@@ -573,6 +703,18 @@ export default class PageEditVenue extends Vue {
         eventOocDetails: '',
         eventContact: '',
         eventLink: '',
+        eventLinks: [],
+        eventTitle: '',
+        eventType: EventType.RP,
+        eventAdultOnly: false,
+        eventClosed: false,
+        eventRegistrationDeadlineDays: null,
+        eventStartDateTime: null,
+        eventEndDateTime: null,
+        eventExtraInfo: '',
+        eventIcon: null,
+        eventBanner: null,
+        eventDiscordBanner: null,
         eventContentNotes: [],
         showRules: false,
         rules: '',
@@ -589,6 +731,7 @@ export default class PageEditVenue extends Vue {
         showNetwork: false,
         network: '',
       });
+      this.ensureVenueTemplateDefaults(this.venueBackup);
     }
 
     this.selectedCharacterId = this.$store.getters.characterId || null;
@@ -596,6 +739,9 @@ export default class PageEditVenue extends Vue {
     this.loaded = true;
     this.editSection = 'basic';
     this.venue = new VenueDto(this.venueBackup);
+    this.ensureVenueTemplateDefaults(this.venue);
+    this.eventTemplateStartDateTime = this.fromMillis(this.venue.eventStartDateTime || null);
+    this.eventTemplateEndDateTime = this.fromMillis(this.venue.eventEndDateTime || null);
 
     void this.$nextTick(() => {
       this.suppressDirtyTracking = false;
@@ -646,6 +792,94 @@ export default class PageEditVenue extends Vue {
     if (!this.suppressDirtyTracking) {
       isDirty.value = true;
     }
+  }
+
+  private ensureVenueTemplateDefaults(target: VenueDto) {
+    const links = (target.eventLinks || [])
+      .map((link) => ({
+        url: (link.url || '').trim(),
+        label: (link.label || '').trim(),
+      }))
+      .filter((link) => link.url.length > 0);
+
+    if (links.length === 0 && target.eventLink) {
+      links.push({
+        url: target.eventLink,
+        label: '',
+      });
+    }
+
+    target.eventLinks = links;
+    target.eventLink = links[0]?.url || '';
+    target.eventTitle = target.eventTitle || '';
+    target.eventType = target.eventType || EventType.RP;
+    target.eventAdultOnly = target.eventAdultOnly === true;
+    target.eventClosed = target.eventClosed === true;
+    if (target.eventRegistrationDeadlineDays === undefined || target.eventRegistrationDeadlineDays === null) {
+      target.eventRegistrationDeadlineDays = null;
+    } else {
+      target.eventRegistrationDeadlineDays = Math.max(0, Math.floor(target.eventRegistrationDeadlineDays));
+    }
+
+    target.eventStartDateTime = Number.isFinite(target.eventStartDateTime as number)
+      ? target.eventStartDateTime!
+      : null;
+    target.eventEndDateTime = Number.isFinite(target.eventEndDateTime as number)
+      ? target.eventEndDateTime!
+      : null;
+    target.eventExtraInfo = target.eventExtraInfo || '';
+    target.eventIcon = target.eventIcon || null;
+    target.eventBanner = target.eventBanner || null;
+    target.eventDiscordBanner = target.eventDiscordBanner || null;
+  }
+
+  private fromMillis(value: number | null): string | null {
+    if (!value) {
+      return null;
+    }
+
+    return DateTime.fromMillis(value, {
+      zone: SharedConstants.FFXIV_SERVER_TIMEZONE,
+    }).toISO().substring(0, 16);
+  }
+
+  private toMillis(value: string | null): number | null {
+    if (!value) {
+      return null;
+    }
+
+    return DateTime.fromISO(value, {
+      zone: SharedConstants.FFXIV_SERVER_TIMEZONE,
+    }).toMillis();
+  }
+
+  get eventTemplateStartDateTimeDisplay() {
+    const millis = this.toMillis(this.eventTemplateStartDateTime);
+    return millis ? this.$display.formatDateTimeServer(millis) : '';
+  }
+
+  get eventTemplateEndDateTimeDisplay() {
+    const millis = this.toMillis(this.eventTemplateEndDateTime);
+    return millis ? this.$display.formatDateTimeServer(millis) : '';
+  }
+
+  addEventLink() {
+    if (!this.venue.eventLinks) {
+      this.venue.eventLinks = [];
+    }
+
+    this.venue.eventLinks.push({
+      url: '',
+      label: '',
+    });
+  }
+
+  removeEventLink(index: number) {
+    if (!this.venue.eventLinks) {
+      return;
+    }
+
+    this.venue.eventLinks.splice(index, 1);
   }
 
   private ensureVisibleEditSection() {
@@ -722,6 +956,9 @@ export default class PageEditVenue extends Vue {
   onConfirmRevert() {
     this.suppressDirtyTracking = true;
     this.venue = new VenueDto(this.venueBackup);
+    this.ensureVenueTemplateDefaults(this.venue);
+    this.eventTemplateStartDateTime = this.fromMillis(this.venue.eventStartDateTime || null);
+    this.eventTemplateEndDateTime = this.fromMillis(this.venue.eventEndDateTime || null);
     this.ensureVisibleEditSection();
     void this.$nextTick(() => {
       this.suppressDirtyTracking = false;
@@ -733,6 +970,13 @@ export default class PageEditVenue extends Vue {
     this.saving = true;
 
     try {
+      this.ensureVenueTemplateDefaults(this.venue);
+      const eventLinks = this.venue.eventLinks || [];
+      this.venue.eventLink = eventLinks[0]?.url || '';
+      if (!this.venue.eventClosed) {
+        this.venue.eventRegistrationDeadlineDays = null;
+      }
+
       if (!this.venueId) {
         if (!this.selectedCharacterId) {
           throw new Error('No character selected');
@@ -790,6 +1034,36 @@ export default class PageEditVenue extends Vue {
   margin-bottom: 16px;
 }
 
+.page-edit-venue__select-group {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border: 1px solid rgba(221, 180, 118, 0.25);
+  background: rgba(249, 247, 242, 0.95);
+}
+
+.page-edit-venue__select-title {
+  margin-bottom: 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: rgba(35, 35, 35, 0.7);
+}
+
+.page-edit-venue__options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 12px;
+}
+
+.page-edit-venue__event-link-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
 .q-field--standard.q-field--readonly.page-edit-venue__founded-at .q-field__control::before {
   border-bottom-style: solid;
 }
@@ -830,6 +1104,14 @@ export default class PageEditVenue extends Vue {
 
   .page-edit-venue__toggle-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .page-edit-venue__options-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-edit-venue__event-link-row {
+    grid-template-columns: 1fr;
   }
 }
 </style>

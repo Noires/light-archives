@@ -1,4 +1,5 @@
 import { HousingArea } from '@app/shared/enums/housing-area.enum';
+import { EventType } from '@app/shared/enums/event-type.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import { Column, Entity, Index, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique } from 'typeorm';
 import { BasicEntity } from './basic.entity';
@@ -71,6 +72,84 @@ export class Venue extends BasicEntity {
     default: ''
   })
   eventLink: string;
+
+  @Column({
+    type: 'simple-json',
+    nullable: true,
+  })
+  eventLinks: { url: string; label?: string }[] | null;
+
+  @Column({
+    nullable: false,
+    default: '',
+  })
+  eventTitle: string;
+
+  @Column({
+    type: 'enum',
+    enum: EventType,
+    nullable: false,
+    default: EventType.RP,
+  })
+  eventType: EventType;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  eventAdultOnly: boolean;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  eventClosed: boolean;
+
+  @Column({
+    type: 'integer',
+    nullable: true,
+  })
+  eventRegistrationDeadlineDays: number | null;
+
+  @Column({
+    type: 'datetime',
+    nullable: true,
+  })
+  eventStartDateTime: Date | null;
+
+  @Column({
+    type: 'datetime',
+    nullable: true,
+  })
+  eventEndDateTime: Date | null;
+
+  @Column({
+    type: 'mediumtext',
+    nullable: false,
+    default: '',
+  })
+  eventExtraInfo: string;
+
+  @ManyToOne(() => Image, {
+    lazy: true,
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  eventBanner: Promise<Image | null>;
+
+  @ManyToOne(() => Image, {
+    lazy: true,
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  eventDiscordBanner: Promise<Image | null>;
+
+  @ManyToOne(() => Image, {
+    lazy: true,
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  eventIcon: Promise<Image | null>;
 
   @Column({
     nullable: false,

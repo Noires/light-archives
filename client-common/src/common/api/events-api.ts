@@ -39,6 +39,14 @@ export default class EventsAPI {
     return this.transport.authDelete<void>(`${id}`);
   }
 
+  async registerForEvent(id: number, characterId: number): Promise<void> {
+    return this.transport.authPost<void>(`${id}/registrations`, { characterId });
+  }
+
+  async unregisterForEvent(id: number, characterId: number): Promise<void> {
+    return this.transport.authDelete<void>(`${id}/registrations/${characterId}`);
+  }
+
   async searchEvents(query: string): Promise<EventSearchResultDto[]> {
     return this.transport.authGet<EventSearchResultDto[]>('search', { query });
   }

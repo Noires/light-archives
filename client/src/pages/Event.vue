@@ -5,6 +5,50 @@
 			<q-btn flat color="negative" label="Event löschen" @click="onDeleteClick" />
 		</section>
 		<event-view v-if="event.title" :event="event" />
+    <section v-if="event.closedEvent" class="event-registration">
+      <h3>Anmeldung</h3>
+      <p v-if="registrationDeadlineDisplay"><strong>Anmeldefrist:</strong> {{ registrationDeadlineDisplay }}</p>
+      <p><strong>Status:</strong> {{ event.registrationOpen ? 'Anmeldung offen' : 'Anmeldung geschlossen' }}</p>
+      <p><strong>Angemeldet:</strong> {{ participantCount }}</p>
+
+      <div class="event-registration__actions">
+        <q-btn
+          v-if="selectedCharacterId && event.registrationOpen && !isSelectedCharacterRegistered"
+          color="primary"
+          label="Für Event anmelden"
+          :loading="registrationActionPending"
+          @click="registerSelectedCharacter"
+        />
+        <q-btn
+          v-if="selectedCharacterId && event.registrationOpen && isSelectedCharacterRegistered"
+          color="negative"
+          label="Vom Event abmelden"
+          :loading="registrationActionPending"
+          @click="unregisterSelectedCharacter"
+        />
+      </div>
+
+      <p v-if="!selectedCharacterId">Wähle einen Charakter aus, um dich anzumelden.</p>
+
+      <section v-if="event.canManageParticipants" class="event-registration__participants">
+        <h4>Teilnehmerliste</h4>
+        <q-list bordered separator v-if="participants.length">
+          <q-item v-for="participant in participants" :key="participant.characterId">
+            <q-item-section avatar>
+              <q-avatar>
+                <img v-if="participant.avatar" :src="participant.avatar" alt="avatar" />
+                <q-icon v-else name="person" />
+              </q-avatar>
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ participant.name }} ({{ participant.server }})</q-item-label>
+              <q-item-label caption>{{ formatRegistrationDate(participant.registeredAt) }}</q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-list>
+        <p v-else>Noch keine Anmeldungen.</p>
+      </section>
+    </section>
 		<template v-if="event.images && event.images.length > 0">
 			<h3>Bilder zu diesem Event</h3>
 			<thumb-gallery :images="event.images" />
@@ -15,6 +59,7 @@
 
 <script lang="ts">
 import { EventDto } from '@app/shared/dto/events/event.dto';
+import { EventParticipantDto } from '@app/shared/dto/events/event-participant.dto';
 import { PageType } from '@app/shared/enums/page-type.enum';
 import errors from '@app/shared/errors';
 import { createMetaMixin } from 'quasar';
@@ -98,11 +143,85 @@ export default class PageEvent extends Vue {
 	
 	eventId = -1;
 	event = {} as EventDto;
+  registrationActionPending = false;
 
 	setContent(event: EventDto, eventId: number) {
 		this.eventId = eventId;
 		this.event = event;
 	}
+
+  get selectedCharacterId(): number | null {
+    return this.$store.getters.characterId;
+  }
+
+  get participantCount(): number {
+    return this.event.participantCount || 0;
+  }
+
+  get participants(): EventParticipantDto[] {
+    return this.event.participants || [];
+  }
+
+  get registrationDeadlineDisplay(): string {
+    if (!this.event.registrationDeadlineAt) {
+      return '';
+    }
+
+    return this.$display.formatDateTimeServer(this.event.registrationDeadlineAt);
+  }
+
+  get isSelectedCharacterRegistered(): boolean {
+    const selectedCharacterId = this.selectedCharacterId;
+    if (!selectedCharacterId) {
+      return false;
+    }
+
+    return (this.event.myRegistrationCharacterIds || []).includes(selectedCharacterId);
+  }
+
+  formatRegistrationDate(millis: number): string {
+    return this.$display.formatDateTimeServer(millis);
+  }
+
+  async registerSelectedCharacter() {
+    if (!this.selectedCharacterId || !this.eventId) {
+      return;
+    }
+
+    this.registrationActionPending = true;
+    try {
+      await this.$api.events.registerForEvent(this.eventId, this.selectedCharacterId);
+      notifySuccess('Anmeldung gespeichert.');
+      await this.reloadEvent();
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      this.registrationActionPending = false;
+    }
+  }
+
+  async unregisterSelectedCharacter() {
+    if (!this.selectedCharacterId || !this.eventId) {
+      return;
+    }
+
+    this.registrationActionPending = true;
+    try {
+      await this.$api.events.unregisterForEvent(this.eventId, this.selectedCharacterId);
+      notifySuccess('Abmeldung gespeichert.');
+      await this.reloadEvent();
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      this.registrationActionPending = false;
+    }
+  }
+
+  private async reloadEvent() {
+    const event = await this.$api.events.getEvent(this.eventId);
+    this.setContent(event, this.eventId);
+    void this.$store.dispatch('updateEvents');
+  }
 
 	onDeleteClick() {
 		this.$q.dialog({
@@ -130,4 +249,24 @@ export default class PageEvent extends Vue {
 </script>
 
 <style lang="scss">
+.event-registration {
+  margin: 20px 0 28px;
+}
+
+.event-registration__actions {
+  display: flex;
+  gap: 10px;
+  margin: 8px 0 10px;
+}
+
+.event-registration__participants {
+  margin-top: 16px;
+}
+
+@media screen and (max-width: $breakpoint-sm) {
+  .event-registration__actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
 </style>

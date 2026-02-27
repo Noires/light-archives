@@ -9,6 +9,9 @@ import { VenueOfferingCategoryDto, VenueOfferingDto, VenueOfferingsDto } from '@
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { VenueStaffMemberDto } from '@app/shared/dto/venues/venue-staff-member.dto';
+import { EventIconDto } from '@app/shared/dto/events/event-icon.dto';
+import { EventLinkDto } from '@app/shared/dto/events/event-link.dto';
+import { EventType } from '@app/shared/enums/event-type.enum';
 import { HousingArea } from '@app/shared/enums/housing-area.enum';
 import { ImageCategory } from '@app/shared/enums/image-category.enum';
 import { ImageFormat } from '@app/shared/enums/image-format.enum';
@@ -16,6 +19,7 @@ import { MembershipStatus } from '@app/shared/enums/membership-status.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import html from '@app/shared/html';
 import SharedConstants from '@app/shared/SharedConstants';
+import { isValidUrl } from '@app/shared/validation/validators';
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import crypto from 'crypto';
@@ -150,6 +154,63 @@ export class VenuesService {
     return address;
   }
 
+  private normalizeEventType(eventType?: EventType | null): EventType {
+    if (!eventType || this.isLegacyAdultType(eventType)) {
+      return EventType.RP;
+    }
+
+    return eventType;
+  }
+
+  private isLegacyAdultType(eventType?: EventType | null): boolean {
+    return eventType === EventType.ADULT;
+  }
+
+  private normalizeTemplateLinks(
+    links: EventLinkDto[] | null | undefined,
+    legacyLink?: string | null,
+  ): EventLinkDto[] {
+    const normalized = (links || [])
+      .map((link) => ({
+        url: (link?.url || '').trim(),
+        label: (link?.label || '').trim(),
+      }))
+      .filter((link) => link.url.length > 0)
+      .map((link) => new EventLinkDto({
+        url: link.url,
+        label: link.label || undefined,
+      }));
+
+    if (normalized.length === 0) {
+      const url = (legacyLink || '').trim();
+      if (url.length > 0) {
+        return [new EventLinkDto({ url })];
+      }
+    }
+
+    return normalized;
+  }
+
+  private normalizeRegistrationDeadlineDays(value: number | null | undefined): number | null {
+    if (value === null || value === undefined || Number.isNaN(value)) {
+      return null;
+    }
+
+    return Math.max(0, Math.floor(value));
+  }
+
+  private normalizeOptionalDateTime(value: number | null | undefined, fieldName: string): Date | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (!Number.isFinite(value)) {
+      throw new BadRequestException(`Invalid ${fieldName}`);
+    }
+
+    return new Date(value);
+  }
+
 	async getVenueByName(name: string, server: string, characterId?: number, user?: UserInfo): Promise<VenueDto> {
 		const venue = await this.venueRepo.findOne({
 			where: {
@@ -158,7 +219,21 @@ export class VenuesService {
 					name: server,
 				},
 			},
-			relations: [ 'server', 'owner', 'owner.server', 'banner', 'banner.owner', 'tags', 'eventContentNotes' ]
+			relations: [
+        'server',
+        'owner',
+        'owner.server',
+        'banner',
+        'banner.owner',
+        'eventBanner',
+        'eventBanner.owner',
+        'eventDiscordBanner',
+        'eventDiscordBanner.owner',
+        'eventIcon',
+        'eventIcon.owner',
+        'tags',
+        'eventContentNotes',
+      ]
 		});
 
 		if (!venue) {
@@ -173,7 +248,21 @@ export class VenuesService {
 			where: {
 				id: venueId,
 			},
-			relations: [ 'server', 'owner', 'owner.server', 'banner', 'banner.owner', 'tags', 'eventContentNotes' ]
+			relations: [
+        'server',
+        'owner',
+        'owner.server',
+        'banner',
+        'banner.owner',
+        'eventBanner',
+        'eventBanner.owner',
+        'eventDiscordBanner',
+        'eventDiscordBanner.owner',
+        'eventIcon',
+        'eventIcon.owner',
+        'tags',
+        'eventContentNotes',
+      ]
 		});
 
 		if (!venue) {
@@ -185,6 +274,9 @@ export class VenuesService {
 
 	private async toVenueDto(venue: Venue, characterId?: number, user?: UserInfo): Promise<VenueDto> {
 		const banner = await venue.banner;
+    const eventBanner = await venue.eventBanner;
+    const eventDiscordBanner = await venue.eventDiscordBanner;
+    const eventIcon = await venue.eventIcon;
     const userCharacterIds = user?.characters?.map((ch) => ch.id) || [];
 
     if (user && characterId && !userCharacterIds.includes(characterId)) {
@@ -200,6 +292,10 @@ export class VenuesService {
     const canManageMembers = isSelectedCharacterOwner
       || (!!membership && membership.status === MembershipStatus.CONFIRMED && membership.canManageMembers);
     const staff = venue.showStaff ? await this.getVisibleStaffMembers(venue.id, venue.owner) : [];
+
+    if (eventIcon) {
+      await this.imagesService.ensureIconThumb(eventIcon);
+    }
 
 		return {
 			id: venue.id,
@@ -217,6 +313,15 @@ export class VenuesService {
 			eventOocDetails: venue.eventOocDetails,
 			eventContact: venue.eventContact,
 			eventLink: venue.eventLink,
+      eventLinks: this.normalizeTemplateLinks(venue.eventLinks, venue.eventLink),
+      eventTitle: venue.eventTitle,
+      eventType: this.normalizeEventType(venue.eventType),
+      eventAdultOnly: !!venue.eventAdultOnly,
+      eventClosed: !!venue.eventClosed,
+      eventRegistrationDeadlineDays: venue.eventRegistrationDeadlineDays,
+      eventStartDateTime: venue.eventStartDateTime ? venue.eventStartDateTime.getTime() : null,
+      eventEndDateTime: venue.eventEndDateTime ? venue.eventEndDateTime.getTime() : null,
+      eventExtraInfo: venue.eventExtraInfo || '',
 			purpose: venue.purpose,
 			website: venue.website,
 			status: venue.status,
@@ -245,6 +350,32 @@ export class VenuesService {
       showNetwork: venue.showNetwork,
       network: venue.network,
       staff,
+      eventIcon: !eventIcon
+        ? null
+        : new EventIconDto({
+            id: eventIcon.id,
+            previewUrl: this.imagesService.getThumbUrl(eventIcon),
+            url: this.imagesService.getUrl(eventIcon),
+            thumbUrl: this.imagesService.getIconUrl(eventIcon),
+            width: eventIcon.width,
+            height: eventIcon.height,
+          }),
+      eventBanner: !eventBanner
+        ? null
+        : {
+            id: eventBanner.id,
+            url: this.imagesService.getUrl(eventBanner),
+            width: eventBanner.width,
+            height: eventBanner.height,
+          },
+      eventDiscordBanner: !eventDiscordBanner
+        ? null
+        : {
+            id: eventDiscordBanner.id,
+            url: this.imagesService.getUrl(eventDiscordBanner),
+            width: eventDiscordBanner.width,
+            height: eventDiscordBanner.height,
+          },
 			banner: !banner ? null : {
 				id: banner.id,
 				url: this.imagesService.getUrl(banner),
@@ -346,7 +477,18 @@ export class VenuesService {
 				where: {
 					id: venueDto.id,
 				},
-				relations: [ 'owner', 'banner', 'banner.owner', 'tags' ]
+				relations: [
+          'owner',
+          'banner',
+          'banner.owner',
+          'eventBanner',
+          'eventBanner.owner',
+          'eventDiscordBanner',
+          'eventDiscordBanner.owner',
+          'eventIcon',
+          'eventIcon.owner',
+          'tags',
+        ]
 			});
 
 			if (!venue) {
@@ -363,8 +505,26 @@ export class VenuesService {
 		venue.description = html.sanitize(venueDto.description);
     venue.eventDescription = html.sanitize(venueDto.eventDescription || '');
     venue.eventOocDetails = html.sanitize(venueDto.eventOocDetails || '');
+    venue.eventTitle = venueDto.eventTitle || '';
     venue.eventContact = venueDto.eventContact || '';
-    venue.eventLink = venueDto.eventLink || '';
+    const eventLinks = this.normalizeTemplateLinks(venueDto.eventLinks, venueDto.eventLink);
+    for (const link of eventLinks) {
+      if (!isValidUrl(link.url)) {
+        throw new BadRequestException(`Invalid event template link: ${link.url}`);
+      }
+    }
+    venue.eventLinks = eventLinks;
+    venue.eventLink = eventLinks[0]?.url || '';
+    const eventType = this.normalizeEventType(venueDto.eventType);
+    venue.eventType = eventType;
+    venue.eventAdultOnly = venueDto.eventAdultOnly ?? this.isLegacyAdultType(venueDto.eventType);
+    venue.eventClosed = !!venueDto.eventClosed;
+    venue.eventRegistrationDeadlineDays = venue.eventClosed
+      ? this.normalizeRegistrationDeadlineDays(venueDto.eventRegistrationDeadlineDays)
+      : null;
+    venue.eventStartDateTime = this.normalizeOptionalDateTime(venueDto.eventStartDateTime, 'eventStartDateTime');
+    venue.eventEndDateTime = this.normalizeOptionalDateTime(venueDto.eventEndDateTime, 'eventEndDateTime');
+    venue.eventExtraInfo = html.sanitize(venueDto.eventExtraInfo || '');
 		venue.website = venueDto.website; // TODO: Validate
 		venue.purpose = venueDto.purpose;
 		venue.status = venueDto.status;
@@ -486,6 +646,91 @@ export class VenuesService {
 		} else {
 			venue.banner = Promise.resolve(null);
 		}
+
+    if (venueDto.eventBanner && venueDto.eventBanner.id) {
+      const eventBanner = await em.getRepository(Image).findOne({
+        where: {
+          id: venueDto.eventBanner.id,
+          owner: {
+            user: {
+              id: user.id,
+            },
+          },
+        },
+      });
+
+      if (!eventBanner) {
+        throw new BadRequestException('Event banner not found');
+      }
+
+      if (eventBanner.width / eventBanner.height < SharedConstants.MIN_BANNER_ASPECT_RATIO) {
+        throw new BadRequestException(
+          getBannerAspectRatioErrorMessage(
+            'Event-Banner',
+            eventBanner.width,
+            eventBanner.height,
+            SharedConstants.MIN_BANNER_ASPECT_RATIO,
+          ),
+        );
+      }
+
+      venue.eventBanner = Promise.resolve(eventBanner);
+    } else {
+      venue.eventBanner = Promise.resolve(null);
+    }
+
+    if (venueDto.eventDiscordBanner && venueDto.eventDiscordBanner.id) {
+      const eventDiscordBanner = await em.getRepository(Image).findOne({
+        where: {
+          id: venueDto.eventDiscordBanner.id,
+          owner: {
+            user: {
+              id: user.id,
+            },
+          },
+        },
+      });
+
+      if (!eventDiscordBanner) {
+        throw new BadRequestException('Event discord banner not found');
+      }
+
+      if (eventDiscordBanner.width / eventDiscordBanner.height < SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO) {
+        throw new BadRequestException(
+          getBannerAspectRatioErrorMessage(
+            'Event Discord-Banner',
+            eventDiscordBanner.width,
+            eventDiscordBanner.height,
+            SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO,
+          ),
+        );
+      }
+
+      venue.eventDiscordBanner = Promise.resolve(eventDiscordBanner);
+    } else {
+      venue.eventDiscordBanner = Promise.resolve(null);
+    }
+
+    if (venueDto.eventIcon && venueDto.eventIcon.id) {
+      const eventIcon = await em.getRepository(Image).findOne({
+        where: {
+          id: venueDto.eventIcon.id,
+          owner: {
+            user: {
+              id: user.id,
+            },
+          },
+        },
+      });
+
+      if (!eventIcon) {
+        throw new BadRequestException('Event icon not found');
+      }
+
+      venue.eventIcon = Promise.resolve(eventIcon);
+    } else {
+      venue.eventIcon = Promise.resolve(null);
+    }
 		
 		// Set tags
 
