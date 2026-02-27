@@ -459,7 +459,11 @@ export class VenuesService {
 			const banner = await em.getRepository(Image).findOne({
 				where: {
 					id: venueDto.banner.id,
-					owner: venue.owner
+					owner: {
+						user: {
+							id: user.id,
+						},
+					},
 				}
 			});
 
