@@ -1,7 +1,7 @@
 <template>
   <div class="html-editor">
-    <div :id="toolbarId" class="html-editor__toolbar"></div>
     <editor
+      ref="hugerteEditor"
       v-if="bundleReady"
       class="html-editor__editor"
       :style="{ height: height }"
@@ -62,7 +62,7 @@ const RTE_OPTIONS = {
     table: { title: 'Tabelle', items: 'inserttable | cell row column | tableprops deletetable' },
     help: { title: 'Hilfe', items: 'help' }
   },
-  menubar: 'edit view insert format list table help',
+  menubar: false,
   image_title: true,
   image_description: false,
   image_advtab: true,
@@ -99,11 +99,8 @@ const RTE_OPTIONS = {
     ]}
   ],
   fontsize_formats: '8pt 10.5pt 12pt 14pt 18pt 24pt 36pt',
-  skin_url: 'default',
-  content_css: 'default',
 };
 
-let uid = 0;
 const HugeRteEditor = Editor as unknown as DefineComponent;
 
 type EditorRegistrySpec = {
@@ -133,6 +130,10 @@ interface EditorApi {
   focus(): void;
 }
 
+interface HugeRteVueRef {
+  rerender(init: Record<string, unknown>): void;
+}
+
 class Props {
   modelValue = prop<string>({
     required: true,
@@ -152,9 +153,11 @@ class Props {
   components: {
     Editor: HugeRteEditor
   },
+  watch: {
+    isDarkMode: 'onDarkModeChanged'
+  }
 })
 export default class HtmlEditor extends Vue.with(Props) {
-  toolbarId = `html-editor__toolbar${uid++}`;
   bundleReady = false;
 
   async created() {
@@ -186,9 +189,10 @@ export default class HtmlEditor extends Vue.with(Props) {
     return {
       ...RTE_OPTIONS,
       plugins,
-      fixed_toolbar_container: `#${this.toolbarId}`,
+      skin_url: this.isDarkMode ? 'dark' : 'default',
+      content_css: this.isDarkMode ? 'dark' : 'default',
       setup: (editor: EditorApi) => {
-        // Custom code dialog with CodeMirror syntax highlighting
+        // Custom code dialog with Ace syntax highlighting
         editor.ui.registry.addButton('code', {
           tooltip: 'Quellcode bearbeiten',
           icon: 'sourcecode',
@@ -246,6 +250,26 @@ export default class HtmlEditor extends Vue.with(Props) {
         }
       }
     };
+  }
+
+  get isDarkMode(): boolean {
+    return this.$q.dark.isActive;
+  }
+
+  private onDarkModeChanged() {
+    if (!this.bundleReady) {
+      return;
+    }
+
+    const editorRef = this.$refs.hugerteEditor as HugeRteVueRef | undefined;
+    if (!editorRef?.rerender) {
+      return;
+    }
+
+    editorRef.rerender({
+      skin_url: this.isDarkMode ? 'dark' : 'default',
+      content_css: this.isDarkMode ? 'dark' : 'default',
+    });
   }
 
   onClickCapture(event: Event) {
@@ -318,10 +342,22 @@ export default class HtmlEditor extends Vue.with(Props) {
 <style lang="scss">
 @import url($extraGoogleFonts);
 
+body {
+  --html-editor-border: #aaa;
+  --html-editor-surface: #fff;
+  --html-editor-muted: #666;
+}
+
+body.body--dark {
+  --html-editor-border: rgba(141, 181, 223, 0.36);
+  --html-editor-surface: rgba(17, 24, 34, 0.96);
+  --html-editor-muted: rgba(213, 226, 240, 0.74);
+}
+
 .html-editor__editor {
   height: 400px;
-  background: white;
-  border: 1px solid #aaa;
+  background: var(--html-editor-surface);
+  border: 1px solid var(--html-editor-border);
   padding: 8px;
   overflow-y: auto;
 }
@@ -330,40 +366,16 @@ export default class HtmlEditor extends Vue.with(Props) {
   font-family: $header-font;
 }
 
-.tox, .tox-tinymce {
-  font-family: $body-font!important;
-}
-
-.html-editor__toolbar {
-  width: calc(100% + 4px);
+.tox,
+.tox-tinymce {
+  font-family: $body-font !important;
 }
 
 .html-editor__loading {
   padding: 12px;
-  border: 1px solid #aaa;
-  background: white;
-  color: #666;
-}
-
-// CodeMirror in TinyMCE dialog
-.tox-dialog .CodeMirror {
-  height: 500px !important;
-  min-height: 500px;
-  border: 1px solid #ccc;
-  font-size: 13px;
-  font-family: 'Courier New', Courier, monospace;
-}
-
-.tox-dialog .tox-form__group {
-  max-width: none !important;
-}
-
-.tox-dialog .tox-textarea {
-  display: none;
-}
-
-.tox-dialog--width-lg {
-  max-width: 1200px;
-  width: 90vw;
+  border: 1px solid var(--html-editor-border);
+  background: var(--html-editor-surface);
+  color: var(--html-editor-muted);
 }
 </style>
+

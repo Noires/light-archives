@@ -16,12 +16,15 @@ import 'hugerte/themes/silver';
 
 // The oxide skin.
 import 'hugerte/skins/ui/oxide/skin.js';
+import 'hugerte/skins/ui/oxide-dark/skin.js';
 
 // The content skin provided by oxide.
 import 'hugerte/skins/ui/oxide/content.js';
+import 'hugerte/skins/ui/oxide-dark/content.js';
 
 // The default content CSS.
 import 'hugerte/skins/content/default/content.js';
+import 'hugerte/skins/content/dark/content.js';
 
 // Plugins used by HtmlEditor.
 import 'hugerte/plugins/advlist';

@@ -1021,6 +1021,22 @@ export default class PageEditVenue extends Vue {
 <style src="@vueform/multiselect/themes/default.css"></style>
 
 <style lang="scss">
+.page-edit-venue {
+  --edit-venue-select-group-border: rgba(221, 180, 118, 0.25);
+  --edit-venue-select-group-bg: rgba(249, 247, 242, 0.95);
+  --edit-venue-select-title-color: rgba(35, 35, 35, 0.7);
+  --edit-venue-drawer-bg: #9f848d;
+  --edit-venue-drawer-text: #1b1b1b;
+}
+
+body.body--dark .page-edit-venue {
+  --edit-venue-select-group-border: rgba(141, 181, 223, 0.3);
+  --edit-venue-select-group-bg: rgba(17, 25, 37, 0.9);
+  --edit-venue-select-title-color: rgba(213, 226, 240, 0.76);
+  --edit-venue-drawer-bg: rgba(141, 181, 223, 0.22);
+  --edit-venue-drawer-text: rgba(226, 237, 248, 0.96);
+}
+
 .page-edit-venue__form-controls {
   max-width: 500px;
   flex-basis: 0;
@@ -1037,8 +1053,8 @@ export default class PageEditVenue extends Vue {
 .page-edit-venue__select-group {
   margin-bottom: 16px;
   padding: 10px 12px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(249, 247, 242, 0.95);
+  border: 1px solid var(--edit-venue-select-group-border);
+  background: var(--edit-venue-select-group-bg);
 }
 
 .page-edit-venue__select-title {
@@ -1047,7 +1063,7 @@ export default class PageEditVenue extends Vue {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 700;
-  color: rgba(35, 35, 35, 0.7);
+  color: var(--edit-venue-select-title-color);
 }
 
 .page-edit-venue__options-grid {
@@ -1088,11 +1104,35 @@ export default class PageEditVenue extends Vue {
 }
 
 .edit-drawer {
-  background-color: #9f848d;
+  background-color: var(--edit-venue-drawer-bg);
 }
 
 .edit-drawer .q-item {
-  color: #1b1b1b;
+  color: var(--edit-venue-drawer-text);
+}
+
+body.body--dark .page-edit-venue .multiselect {
+  background: rgba(17, 24, 34, 0.92);
+  border-color: rgba(141, 181, 223, 0.32);
+  color: rgba(226, 237, 248, 0.95);
+}
+
+body.body--dark .page-edit-venue .multiselect-dropdown {
+  background: rgba(17, 24, 34, 0.96);
+  border-color: rgba(141, 181, 223, 0.32);
+}
+
+body.body--dark .page-edit-venue .multiselect-option {
+  color: rgba(226, 237, 248, 0.95);
+}
+
+body.body--dark .page-edit-venue .multiselect-option.is-pointed {
+  background: rgba(141, 181, 223, 0.2);
+}
+
+body.body--dark .page-edit-venue .multiselect-tag {
+  background: rgba(141, 181, 223, 0.26);
+  color: rgba(226, 237, 248, 0.96);
 }
 
 @media screen and (max-width: $breakpoint-sm) {
