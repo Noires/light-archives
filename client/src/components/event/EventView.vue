@@ -67,11 +67,12 @@
       <div class="event-view__meta-row">
         <q-icon :name="event.closedEvent ? 'lock' : 'lock_open'" />
         <div class="event-view__meta-body">
-          <div class="event-view__meta-label">Closed Event</div>
+          <div class="event-view__meta-label">Geschlossenes Event</div>
           <div class="event-view__meta-value">
             {{ event.closedEvent ? 'Ja' : 'Nein' }}
             <span v-if="event.closedEvent && event.registrationDeadlineDays !== null && event.registrationDeadlineDays !== undefined">
               · Anmeldefrist: {{ event.registrationDeadlineDays }} Tag(e) vor Beginn
+              <span v-if="event.registrationDeadlineTime"> um {{ event.registrationDeadlineTime }} Uhr</span>
             </span>
           </div>
         </div>

@@ -267,7 +267,7 @@
                   />
                 </div>
                 <div class="page-edit-venue__select-group">
-                  <div class="page-edit-venue__select-title">Closed Event</div>
+                  <div class="page-edit-venue__select-title">Geschlossenes Event</div>
                   <q-option-group
                     v-model="venue.eventClosed"
                     :options="yesNoOptions"
@@ -275,38 +275,61 @@
                     color="secondary"
                     inline
                   />
+                  <div class="text-caption">
+                    Für Events aus dieser Vorlage gilt eine Anmeldepflicht bis zur gesetzten Frist.
+                  </div>
                 </div>
                 <q-input
                   v-if="venue.eventClosed"
                   v-model.number="venue.eventRegistrationDeadlineDays"
                   type="number"
                   min="0"
-                  label="Anmeldefrist (Tage vor Beginn)"
+                  label="Frist: Tage vor Beginn"
+                />
+                <q-input
+                  v-if="venue.eventClosed"
+                  v-model="venue.eventRegistrationDeadlineTime"
+                  type="time"
+                  clearable
+                  label="Frist: Uhrzeit"
                 />
                 <div class="page-edit-venue__select-group">
-                  <div class="page-edit-venue__select-title">18+ Event</div>
+                  <div class="page-edit-venue__select-title">Nicht jugendfrei (18+)</div>
                   <adult-only-selector v-model="venue.eventAdultOnly" />
+                  <div class="text-caption">
+                    Markiert alle aus der Vorlage erstellten Events automatisch als 18+.
+                  </div>
                 </div>
-                <q-date-time-picker
-                  v-if="eventTemplateStartDateTimeVisible"
-                  label="Datum/Uhrzeit Beginn (Vorlage)"
-                  v-model="eventTemplateStartDateTime"
-                  :display-value="eventTemplateStartDateTimeDisplay"
-                  mode="datetime"
-                  first-day-of-week="1"
-                  format24h
-                  clearable
-                />
-                <q-date-time-picker
-                  v-if="eventTemplateEndDateTimeVisible"
-                  label="Datum/Uhrzeit Ende (Vorlage)"
-                  v-model="eventTemplateEndDateTime"
-                  :display-value="eventTemplateEndDateTimeDisplay"
-                  mode="datetime"
-                  first-day-of-week="1"
-                  format24h
-                  clearable
-                />
+                <div class="page-edit-venue__template-grid">
+                  <q-select
+                    v-model="venue.eventStartWeekday"
+                    :options="weekdayOptions"
+                    emit-value
+                    map-options
+                    clearable
+                    label="Beginn: Wochentag (optional)"
+                  />
+                  <q-input
+                    v-model="venue.eventStartTime"
+                    type="time"
+                    clearable
+                    label="Beginn: Uhrzeit (optional)"
+                  />
+                </div>
+                <div class="page-edit-venue__template-grid">
+                  <q-input
+                    v-model="venue.eventEndTime"
+                    type="time"
+                    clearable
+                    label="Ende: Uhrzeit (optional)"
+                  />
+                  <q-input
+                    v-model.number="venue.eventEndDurationDays"
+                    type="number"
+                    min="0"
+                    label="Ende: Dauer in Tagen (optional)"
+                  />
+                </div>
                 <q-input
                   v-model="venue.eventContact"
                   label="Event-Kontakt"
@@ -346,18 +369,22 @@
                 <h6>Event-OOC Details</h6>
                 <html-editor v-model="venue.eventOocDetails" />
                 <h6>Extra-Infos</h6>
-                <html-editor v-model="venue.eventExtraInfo" />
-                <h6>Event-Inhaltswarnungen</h6>
-                <Multiselect
-                  v-model="venue.eventContentNotes"
-                  :options="contentNoteOptions"
-                  mode="tags"
-                  :searchable="true"
-                  :closeOnSelect="false"
-                  valueProp="value"
-                  track-by="label"
-                  label="label"
+                <q-input
+                  v-model="venue.eventExtraInfo"
+                  maxlength="100"
+                  counter
+                  label="Extra-Info (max. 100 Zeichen)"
                 />
+                <div class="page-edit-venue__select-group">
+                  <div class="page-edit-venue__select-title">Event-Inhaltswarnungen</div>
+                  <q-option-group
+                    v-model="venue.eventContentNotes"
+                    :options="contentNoteOptions"
+                    type="checkbox"
+                    color="secondary"
+                    class="page-edit-venue__options-grid"
+                  />
+                </div>
                 <event-icon-edit-section v-model="venue.eventIcon" />
                 <banner-edit-section v-model="venue.eventBanner" title="Event-Banner" />
                 <banner-edit-section
@@ -424,7 +451,6 @@
 </template>
 
 <script lang="ts">
-import Multiselect from '@vueform/multiselect';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { VenueOfferingsDto } from '@app/shared/dto/venues/venue-offering.dto';
 import { HousingArea } from '@app/shared/enums/housing-area.enum';
@@ -433,12 +459,9 @@ import { EventType } from '@app/shared/enums/event-type.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import errors from '@app/shared/errors';
 import SharedConstants from '@app/shared/SharedConstants';
-import { Component as QDateTimePicker } from '@toby.mosque/quasar-ui-qdatetimepicker';
-import '@toby.mosque/quasar-ui-qdatetimepicker/dist/index.css';
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
 import { EventTypeOptions } from 'src/common/event-types';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
-import { DateTime } from 'luxon';
 import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
@@ -497,7 +520,6 @@ async function load(params: RouteParams): Promise<{ venue: VenueDto | null; cont
 @Options({
   name: 'PageEditVenue',
   components: {
-    QDateTimePicker,
     VenueProfile,
     HtmlEditor,
     BannerEditSection,
@@ -506,7 +528,6 @@ async function load(params: RouteParams): Promise<{ venue: VenueDto | null; cont
     WorldSelect,
     AdultOnlySelector,
     EventIconEditSection,
-    Multiselect,
     VenueOfferingsEditor,
     VenueOfferingsView,
   },
@@ -579,26 +600,6 @@ async function load(params: RouteParams): Promise<{ venue: VenueDto | null; cont
     selectedCharacterId(newValue: number | null, oldValue: number | null) {
       (this as PageEditVenue).onSelectedCharacterIdChanged(newValue, oldValue);
     },
-    eventTemplateStartDateTime: {
-      handler(newValue: string, oldValue: string) {
-        if (newValue !== oldValue) {
-          const that = this as PageEditVenue;
-          that.venue.eventStartDateTime = that.toMillis(newValue);
-          that.eventTemplateStartDateTimeVisible = false;
-          void that.$nextTick(() => that.eventTemplateStartDateTimeVisible = true);
-        }
-      },
-    },
-    eventTemplateEndDateTime: {
-      handler(newValue: string, oldValue: string) {
-        if (newValue !== oldValue) {
-          const that = this as PageEditVenue;
-          that.venue.eventEndDateTime = that.toMillis(newValue);
-          that.eventTemplateEndDateTimeVisible = false;
-          void that.$nextTick(() => that.eventTemplateEndDateTimeVisible = true);
-        }
-      },
-    },
   },
 })
 export default class PageEditVenue extends Vue {
@@ -611,6 +612,15 @@ export default class PageEditVenue extends Vue {
   readonly yesNoOptions = [
     { label: 'Ja', value: true },
     { label: 'Nein', value: false },
+  ];
+  readonly weekdayOptions = [
+    { label: 'Montag', value: 1 },
+    { label: 'Dienstag', value: 2 },
+    { label: 'Mittwoch', value: 3 },
+    { label: 'Donnerstag', value: 4 },
+    { label: 'Freitag', value: 5 },
+    { label: 'Samstag', value: 6 },
+    { label: 'Sonntag', value: 7 },
   ];
 
   readonly VenueLocation = VenueLocation;
@@ -635,10 +645,6 @@ export default class PageEditVenue extends Vue {
 
   selectedCharacterId: number | null = null;
   venueOfferings: VenueOfferingsDto = { categories: [] };
-  eventTemplateStartDateTime: string | null = null;
-  eventTemplateEndDateTime: string | null = null;
-  eventTemplateStartDateTimeVisible = true;
-  eventTemplateEndDateTimeVisible = true;
   private savedOfferingImageIds: Set<number> = new Set();
   private suppressDirtyTracking = false;
 
@@ -709,8 +715,13 @@ export default class PageEditVenue extends Vue {
         eventAdultOnly: false,
         eventClosed: false,
         eventRegistrationDeadlineDays: null,
+        eventRegistrationDeadlineTime: null,
         eventStartDateTime: null,
         eventEndDateTime: null,
+        eventStartWeekday: null,
+        eventStartTime: null,
+        eventEndTime: null,
+        eventEndDurationDays: null,
         eventExtraInfo: '',
         eventIcon: null,
         eventBanner: null,
@@ -740,8 +751,6 @@ export default class PageEditVenue extends Vue {
     this.editSection = 'basic';
     this.venue = new VenueDto(this.venueBackup);
     this.ensureVenueTemplateDefaults(this.venue);
-    this.eventTemplateStartDateTime = this.fromMillis(this.venue.eventStartDateTime || null);
-    this.eventTemplateEndDateTime = this.fromMillis(this.venue.eventEndDateTime || null);
 
     void this.$nextTick(() => {
       this.suppressDirtyTracking = false;
@@ -815,52 +824,71 @@ export default class PageEditVenue extends Vue {
     target.eventType = target.eventType || EventType.RP;
     target.eventAdultOnly = target.eventAdultOnly === true;
     target.eventClosed = target.eventClosed === true;
-    if (target.eventRegistrationDeadlineDays === undefined || target.eventRegistrationDeadlineDays === null) {
-      target.eventRegistrationDeadlineDays = null;
-    } else {
-      target.eventRegistrationDeadlineDays = Math.max(0, Math.floor(target.eventRegistrationDeadlineDays));
+    target.eventRegistrationDeadlineDays = this.normalizeOptionalNonNegativeInteger(target.eventRegistrationDeadlineDays);
+    target.eventRegistrationDeadlineTime = this.normalizeOptionalTime(target.eventRegistrationDeadlineTime);
+    target.eventStartWeekday = this.normalizeOptionalWeekday(target.eventStartWeekday);
+    target.eventStartTime = this.normalizeOptionalTime(target.eventStartTime);
+    target.eventEndTime = this.normalizeOptionalTime(target.eventEndTime);
+    target.eventEndDurationDays = this.normalizeOptionalNonNegativeInteger(target.eventEndDurationDays);
+
+    if (target.eventStartWeekday === null || target.eventStartTime === null) {
+      target.eventStartWeekday = null;
+      target.eventStartTime = null;
+      target.eventStartDateTime = null;
     }
 
-    target.eventStartDateTime = Number.isFinite(target.eventStartDateTime as number)
-      ? target.eventStartDateTime!
-      : null;
-    target.eventEndDateTime = Number.isFinite(target.eventEndDateTime as number)
-      ? target.eventEndDateTime!
-      : null;
-    target.eventExtraInfo = target.eventExtraInfo || '';
+    if (
+      target.eventStartWeekday === null
+      || target.eventStartTime === null
+      || target.eventEndTime === null
+      || target.eventEndDurationDays === null
+    ) {
+      target.eventEndTime = null;
+      target.eventEndDurationDays = null;
+      target.eventEndDateTime = null;
+    }
+
+    if (!target.eventClosed) {
+      target.eventRegistrationDeadlineDays = null;
+      target.eventRegistrationDeadlineTime = null;
+    }
+
+    target.eventStartDateTime = Number.isFinite(target.eventStartDateTime as number) ? target.eventStartDateTime! : null;
+    target.eventEndDateTime = Number.isFinite(target.eventEndDateTime as number) ? target.eventEndDateTime! : null;
+    target.eventExtraInfo = (target.eventExtraInfo || '').trim().substring(0, 100);
     target.eventIcon = target.eventIcon || null;
     target.eventBanner = target.eventBanner || null;
     target.eventDiscordBanner = target.eventDiscordBanner || null;
   }
 
-  private fromMillis(value: number | null): string | null {
+  private normalizeOptionalNonNegativeInteger(value: number | null | undefined): number | null {
+    if (value === undefined || value === null || Number.isNaN(value)) {
+      return null;
+    }
+
+    return Math.max(0, Math.floor(value));
+  }
+
+  private normalizeOptionalWeekday(value: number | null | undefined): number | null {
+    if (value === undefined || value === null || Number.isNaN(value)) {
+      return null;
+    }
+
+    const normalized = Math.floor(value);
+    return normalized >= 1 && normalized <= 7 ? normalized : null;
+  }
+
+  private normalizeOptionalTime(value: string | null | undefined): string | null {
     if (!value) {
       return null;
     }
 
-    return DateTime.fromMillis(value, {
-      zone: SharedConstants.FFXIV_SERVER_TIMEZONE,
-    }).toISO().substring(0, 16);
-  }
-
-  private toMillis(value: string | null): number | null {
-    if (!value) {
+    const normalized = value.trim();
+    if (normalized.length === 0) {
       return null;
     }
 
-    return DateTime.fromISO(value, {
-      zone: SharedConstants.FFXIV_SERVER_TIMEZONE,
-    }).toMillis();
-  }
-
-  get eventTemplateStartDateTimeDisplay() {
-    const millis = this.toMillis(this.eventTemplateStartDateTime);
-    return millis ? this.$display.formatDateTimeServer(millis) : '';
-  }
-
-  get eventTemplateEndDateTimeDisplay() {
-    const millis = this.toMillis(this.eventTemplateEndDateTime);
-    return millis ? this.$display.formatDateTimeServer(millis) : '';
+    return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(normalized) ? normalized : null;
   }
 
   addEventLink() {
@@ -957,8 +985,6 @@ export default class PageEditVenue extends Vue {
     this.suppressDirtyTracking = true;
     this.venue = new VenueDto(this.venueBackup);
     this.ensureVenueTemplateDefaults(this.venue);
-    this.eventTemplateStartDateTime = this.fromMillis(this.venue.eventStartDateTime || null);
-    this.eventTemplateEndDateTime = this.fromMillis(this.venue.eventEndDateTime || null);
     this.ensureVisibleEditSection();
     void this.$nextTick(() => {
       this.suppressDirtyTracking = false;
@@ -975,6 +1001,7 @@ export default class PageEditVenue extends Vue {
       this.venue.eventLink = eventLinks[0]?.url || '';
       if (!this.venue.eventClosed) {
         this.venue.eventRegistrationDeadlineDays = null;
+        this.venue.eventRegistrationDeadlineTime = null;
       }
 
       if (!this.venueId) {
@@ -1018,8 +1045,6 @@ export default class PageEditVenue extends Vue {
 }
 </script>
 
-<style src="@vueform/multiselect/themes/default.css"></style>
-
 <style lang="scss">
 .page-edit-venue {
   --edit-venue-select-group-border: rgba(221, 180, 118, 0.25);
@@ -1033,8 +1058,8 @@ body.body--dark .page-edit-venue {
   --edit-venue-select-group-border: rgba(141, 181, 223, 0.3);
   --edit-venue-select-group-bg: rgba(17, 25, 37, 0.9);
   --edit-venue-select-title-color: rgba(213, 226, 240, 0.76);
-  --edit-venue-drawer-bg: rgba(141, 181, 223, 0.22);
-  --edit-venue-drawer-text: rgba(226, 237, 248, 0.96);
+  --edit-venue-drawer-bg: #9f848d;
+  --edit-venue-drawer-text: #1b1b1b;
 }
 
 .page-edit-venue__form-controls {
@@ -1072,12 +1097,22 @@ body.body--dark .page-edit-venue {
   gap: 6px 12px;
 }
 
+.page-edit-venue__options-grid .q-option-group__option {
+  margin: 0;
+}
+
 .page-edit-venue__event-link-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
   margin-bottom: 8px;
+}
+
+.page-edit-venue__template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .q-field--standard.q-field--readonly.page-edit-venue__founded-at .q-field__control::before {
@@ -1111,28 +1146,8 @@ body.body--dark .page-edit-venue {
   color: var(--edit-venue-drawer-text);
 }
 
-body.body--dark .page-edit-venue .multiselect {
-  background: rgba(17, 24, 34, 0.92);
-  border-color: rgba(141, 181, 223, 0.32);
-  color: rgba(226, 237, 248, 0.95);
-}
-
-body.body--dark .page-edit-venue .multiselect-dropdown {
-  background: rgba(17, 24, 34, 0.96);
-  border-color: rgba(141, 181, 223, 0.32);
-}
-
-body.body--dark .page-edit-venue .multiselect-option {
-  color: rgba(226, 237, 248, 0.95);
-}
-
-body.body--dark .page-edit-venue .multiselect-option.is-pointed {
-  background: rgba(141, 181, 223, 0.2);
-}
-
-body.body--dark .page-edit-venue .multiselect-tag {
-  background: rgba(141, 181, 223, 0.26);
-  color: rgba(226, 237, 248, 0.96);
+.edit-drawer .q-item.q-item--active {
+  background: rgba(255, 255, 255, 0.32);
 }
 
 @media screen and (max-width: $breakpoint-sm) {
@@ -1151,6 +1166,10 @@ body.body--dark .page-edit-venue .multiselect-tag {
   }
 
   .page-edit-venue__event-link-row {
+    grid-template-columns: 1fr;
+  }
+
+  .page-edit-venue__template-grid {
     grid-template-columns: 1fr;
   }
 }

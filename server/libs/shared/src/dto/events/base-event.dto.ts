@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, MinLength, ValidateNested } from "class-validator";
+import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Matches, MinLength, ValidateNested } from "class-validator";
 import { BannerDto } from "../characters/banner.dto";
 import { EventType } from "../../enums/event-type.enum";
 import { EventIconDto } from "./event-icon.dto";
@@ -66,6 +66,11 @@ export abstract class BaseEventDto {
 	@IsNumber()
 	@IsOptional()
 	registrationDeadlineDays?: number|null;
+
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
+  @IsOptional()
+  registrationDeadlineTime?: string | null;
 
 	@IsString({ each: true })
 	@IsOptional()

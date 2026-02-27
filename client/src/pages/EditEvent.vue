@@ -95,9 +95,12 @@
               <div class="page-edit-event__select-group">
                 <div class="page-edit-event__select-title">Nicht jugendfrei (18+)</div>
                 <adult-only-selector v-model="event.adultOnly" />
+                <div class="text-caption">
+                  Markiere das Event als 18+, wenn es Inhalte nur für Erwachsene enthält.
+                </div>
               </div>
               <div class="page-edit-event__select-group">
-                <div class="page-edit-event__select-title">Closed Event</div>
+                <div class="page-edit-event__select-title">Geschlossenes Event</div>
                 <q-option-group
                   v-model="event.closedEvent"
                   :options="yesNoOptions"
@@ -105,6 +108,9 @@
                   color="secondary"
                   inline
                 />
+                <div class="text-caption">
+                  Teilnahme nur mit Anmeldung bis zur Frist. Nach Ablauf der Frist sind keine Zu- oder Absagen mehr möglich.
+                </div>
               </div>
               <q-input
                 v-if="event.closedEvent"
@@ -112,6 +118,13 @@
                 type="number"
                 min="0"
                 label="Anmeldefrist (Tage vor Beginn)"
+              />
+              <q-input
+                v-if="event.closedEvent"
+                v-model="event.registrationDeadlineTime"
+                type="time"
+                clearable
+                label="Anmeldefrist Uhrzeit (optional)"
               />
               <q-date-time-picker
                 v-if="startDateTimeVisible"
@@ -433,6 +446,7 @@ export default class PageEditEvent extends Vue {
         adultOnly: false,
         closedEvent: false,
         registrationDeadlineDays: null,
+        registrationDeadlineTime: null,
         banner: null,
         discordBanner: null,
         icon: null,
@@ -474,6 +488,10 @@ export default class PageEditEvent extends Vue {
       target.registrationDeadlineDays = null;
     } else {
       target.registrationDeadlineDays = Math.max(0, Math.floor(target.registrationDeadlineDays));
+    }
+    target.registrationDeadlineTime = this.normalizeOptionalTime(target.registrationDeadlineTime);
+    if (!target.closedEvent) {
+      target.registrationDeadlineTime = null;
     }
     target.extraInfo = target.extraInfo || '';
     target.links = this.normalizeLinks(target.links, target.link, target.linkText);
@@ -612,6 +630,19 @@ export default class PageEditEvent extends Vue {
     }
 
     return normalized;
+  }
+
+  private normalizeOptionalTime(value: string | null | undefined): string | null {
+    if (!value) {
+      return null;
+    }
+
+    const normalized = value.trim();
+    if (normalized.length === 0) {
+      return null;
+    }
+
+    return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(normalized) ? normalized : null;
   }
 
   async onVenueSearch(value: string, update: (fn: () => void) => void) {
@@ -758,9 +789,18 @@ export default class PageEditEvent extends Vue {
       this.event.adultOnly = true;
     }
 
-    if (!this.event.closedEvent && venue.eventClosed) {
-      this.event.closedEvent = true;
-      this.event.registrationDeadlineDays = venue.eventRegistrationDeadlineDays ?? null;
+    if (venue.eventClosed) {
+      if (!this.event.closedEvent) {
+        this.event.closedEvent = true;
+      }
+
+      if (this.event.registrationDeadlineDays === null || this.event.registrationDeadlineDays === undefined) {
+        this.event.registrationDeadlineDays = venue.eventRegistrationDeadlineDays ?? null;
+      }
+
+      if (!this.event.registrationDeadlineTime && venue.eventRegistrationDeadlineTime) {
+        this.event.registrationDeadlineTime = venue.eventRegistrationDeadlineTime;
+      }
     }
 
     if (!this.event.extraInfo && venue.eventExtraInfo) {
@@ -779,16 +819,20 @@ export default class PageEditEvent extends Vue {
       this.event.discordBanner = venue.eventDiscordBanner;
     }
 
-    if (!this.event.startDateTime && venue.eventStartDateTime) {
-      const start = this.resolveNextMatchingWeekdayTime(venue.eventStartDateTime);
-      this.event.startDateTime = start;
-      this.startDateTime = this.fromMillis(start);
+    if (!this.event.startDateTime) {
+      const start = this.resolveTemplateStartDateTime(venue);
+      if (start) {
+        this.event.startDateTime = start;
+        this.startDateTime = this.fromMillis(start);
+      }
     }
 
-    if (!this.event.endDateTime && venue.eventEndDateTime) {
-      const end = this.resolveNextMatchingWeekdayTime(venue.eventEndDateTime);
-      this.event.endDateTime = end;
-      this.endDateTime = this.fromMillis(end);
+    if (!this.event.endDateTime) {
+      const end = this.resolveTemplateEndDateTime(venue, this.event.startDateTime || null);
+      if (end) {
+        this.event.endDateTime = end;
+        this.endDateTime = this.fromMillis(end);
+      }
     }
 
     if ((!this.event.contentNotes || this.event.contentNotes.length === 0) && venue.eventContentNotes?.length) {
@@ -796,17 +840,50 @@ export default class PageEditEvent extends Vue {
     }
   }
 
-  private resolveNextMatchingWeekdayTime(templateMillis: number): number {
-    const template = DateTime.fromMillis(templateMillis, {
-      zone: SharedConstants.FFXIV_SERVER_TIMEZONE,
-    });
+  private resolveTemplateStartDateTime(venue: VenueDto): number | null {
+    if (venue.eventStartWeekday && venue.eventStartTime) {
+      return this.resolveNextMatchingWeekdayTime(venue.eventStartWeekday, venue.eventStartTime);
+    }
+
+    if (venue.eventStartDateTime) {
+      return this.resolveLegacyNextMatchingWeekdayTime(venue.eventStartDateTime);
+    }
+
+    return null;
+  }
+
+  private resolveTemplateEndDateTime(venue: VenueDto, startMillis: number | null): number | null {
+    if (startMillis && venue.eventEndTime && venue.eventEndDurationDays !== null && venue.eventEndDurationDays !== undefined) {
+      const [hour, minute] = venue.eventEndTime.split(':').map((part) => parseInt(part, 10));
+      return DateTime.fromMillis(startMillis, {
+        zone: SharedConstants.FFXIV_SERVER_TIMEZONE,
+      })
+        .plus({ days: Math.max(0, Math.floor(venue.eventEndDurationDays)) })
+        .set({
+          hour,
+          minute,
+          second: 0,
+          millisecond: 0,
+        })
+        .toMillis();
+    }
+
+    if (venue.eventEndDateTime) {
+      return this.resolveLegacyNextMatchingWeekdayTime(venue.eventEndDateTime);
+    }
+
+    return null;
+  }
+
+  private resolveNextMatchingWeekdayTime(weekday: number, time: string): number {
+    const [hour, minute] = time.split(':').map((part) => parseInt(part, 10));
     const now = DateTime.now().setZone(SharedConstants.FFXIV_SERVER_TIMEZONE);
-    const daysToAdd = (template.weekday - now.weekday + 7) % 7;
+    const daysToAdd = (weekday - now.weekday + 7) % 7;
     let candidate = now
       .plus({ days: daysToAdd })
       .set({
-        hour: template.hour,
-        minute: template.minute,
+        hour,
+        minute,
         second: 0,
         millisecond: 0,
       });
@@ -816,6 +893,13 @@ export default class PageEditEvent extends Vue {
     }
 
     return candidate.toMillis();
+  }
+
+  private resolveLegacyNextMatchingWeekdayTime(templateMillis: number): number {
+    const template = DateTime.fromMillis(templateMillis, {
+      zone: SharedConstants.FFXIV_SERVER_TIMEZONE,
+    });
+    return this.resolveNextMatchingWeekdayTime(template.weekday, template.toFormat('HH:mm'));
   }
 
   private toVenueSummary(venue: VenueDto): VenueSummaryDto {
@@ -878,6 +962,7 @@ export default class PageEditEvent extends Vue {
       this.event.linkText = eventLinks[0]?.label || '';
       if (!this.event.closedEvent) {
         this.event.registrationDeadlineDays = null;
+        this.event.registrationDeadlineTime = null;
       }
 
       this.applyAnnouncementDefaults();

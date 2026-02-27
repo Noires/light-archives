@@ -112,6 +112,13 @@ export class Venue extends BasicEntity {
   eventRegistrationDeadlineDays: number | null;
 
   @Column({
+    type: 'varchar',
+    length: 5,
+    nullable: true,
+  })
+  eventRegistrationDeadlineTime: string | null;
+
+  @Column({
     type: 'datetime',
     nullable: true,
   })
@@ -122,6 +129,32 @@ export class Venue extends BasicEntity {
     nullable: true,
   })
   eventEndDateTime: Date | null;
+
+  @Column({
+    type: 'integer',
+    nullable: true,
+  })
+  eventStartWeekday: number | null;
+
+  @Column({
+    type: 'varchar',
+    length: 5,
+    nullable: true,
+  })
+  eventStartTime: string | null;
+
+  @Column({
+    type: 'varchar',
+    length: 5,
+    nullable: true,
+  })
+  eventEndTime: string | null;
+
+  @Column({
+    type: 'integer',
+    nullable: true,
+  })
+  eventEndDurationDays: number | null;
 
   @Column({
     type: 'mediumtext',

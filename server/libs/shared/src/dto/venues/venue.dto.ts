@@ -3,7 +3,7 @@ import { MembershipStatus } from '@app/shared/enums/membership-status.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import SharedConstants from '@app/shared/SharedConstants';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Max, Min, ValidateIf, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min, ValidateIf, ValidateNested } from 'class-validator';
 import { BannerDto } from '../characters/banner.dto';
 import { EventIconDto } from '../events/event-icon.dto';
 import { EventLinkDto } from '../events/event-link.dto';
@@ -104,6 +104,11 @@ export class VenueDto {
   @IsOptional()
   eventRegistrationDeadlineDays?: number | null;
 
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
+  @IsOptional()
+  eventRegistrationDeadlineTime?: string | null;
+
   @Type(() => Number)
   @IsNumber()
   @IsOptional()
@@ -114,7 +119,31 @@ export class VenueDto {
   @IsOptional()
   eventEndDateTime?: number | null;
 
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(7)
+  @IsOptional()
+  eventStartWeekday?: number | null;
+
   @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
+  @IsOptional()
+  eventStartTime?: string | null;
+
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
+  @IsOptional()
+  eventEndTime?: string | null;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  eventEndDurationDays?: number | null;
+
+  @IsString()
+  @MaxLength(100)
   @IsOptional()
   eventExtraInfo?: string;
 

@@ -18,6 +18,7 @@ export interface EventSummaryDto {
   adultOnly?: boolean;
   closedEvent?: boolean;
   registrationDeadlineDays?: number | null;
+  registrationDeadlineTime?: string | null;
   locations: EventLocationDto[];
   contentNotes: string[];
 }

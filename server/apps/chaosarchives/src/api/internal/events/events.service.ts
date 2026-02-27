@@ -162,6 +162,9 @@ export class EventsService {
     event.registrationDeadlineDays = event.closedEvent
       ? this.normalizeRegistrationDeadlineDays(eventDto.registrationDeadlineDays)
       : null;
+    event.registrationDeadlineTime = event.closedEvent
+      ? this.normalizeOptionalTime(eventDto.registrationDeadlineTime, 'registrationDeadlineTime')
+      : null;
     event.extraInfo = html.sanitize(eventDto.extraInfo || '');
     if (eventDto.contentNotes !== undefined) {
       event.contentNotes = eventDto.contentNotes
@@ -588,6 +591,7 @@ export class EventsService {
       event.adultOnly = false;
       event.closedEvent = false;
       event.registrationDeadlineDays = null;
+      event.registrationDeadlineTime = null;
       event.extraInfo = '';
       event.externalSourceLink = eventDto.link;
       event.links = [];
@@ -757,9 +761,14 @@ export class EventsService {
     }
 
     const deadlineDays = event.registrationDeadlineDays ?? 0;
-    return DateTime.fromJSDate(event.startDateTime)
-      .minus({ days: deadlineDays })
-      .toJSDate();
+    let deadline = DateTime.fromJSDate(event.startDateTime).minus({ days: deadlineDays });
+
+    if (event.registrationDeadlineTime) {
+      const [hour, minute] = event.registrationDeadlineTime.split(':').map((part) => parseInt(part, 10));
+      deadline = deadline.set({ hour, minute, second: 0, millisecond: 0 });
+    }
+
+    return deadline.toJSDate();
   }
 
   private isRegistrationOpen(event: Event): boolean {
@@ -813,6 +822,7 @@ export class EventsService {
       adultOnly,
       closedEvent: event.closedEvent,
       registrationDeadlineDays: event.registrationDeadlineDays,
+      registrationDeadlineTime: event.registrationDeadlineTime || null,
       contentNotes: (event.contentNotes || []).map((note) => note.name),
       locations: event.locations.map((location) => ({
         id: location.id,
@@ -879,6 +889,7 @@ export class EventsService {
       adultOnly,
       closedEvent: event.closedEvent,
       registrationDeadlineDays: event.registrationDeadlineDays,
+      registrationDeadlineTime: event.registrationDeadlineTime || null,
       contentNotes: (event.contentNotes || []).map((note) => note.name),
       extraInfo: event.extraInfo || '',
       banner: !banner
@@ -982,5 +993,22 @@ export class EventsService {
     }
 
     return Math.max(0, Math.floor(value));
+  }
+
+  private normalizeOptionalTime(value: string | null | undefined, fieldName: string): string | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    const normalized = value.trim();
+    if (normalized.length === 0) {
+      return null;
+    }
+
+    if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(normalized)) {
+      throw new BadRequestException(`Invalid ${fieldName}`);
+    }
+
+    return normalized;
   }
 }

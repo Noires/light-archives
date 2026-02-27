@@ -115,6 +115,13 @@ export class Event extends BasicEntity {
   registrationDeadlineDays: number | null;
 
   @Column({
+    type: 'varchar',
+    length: 5,
+    nullable: true,
+  })
+  registrationDeadlineTime: string | null;
+
+  @Column({
     nullable: false,
     default: false,
   })

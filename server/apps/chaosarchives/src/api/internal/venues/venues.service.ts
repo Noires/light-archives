@@ -199,6 +199,82 @@ export class VenuesService {
     return Math.max(0, Math.floor(value));
   }
 
+  private normalizeOptionalWeekday(value: number | null | undefined, fieldName: string): number | null {
+    if (value === null || value === undefined || Number.isNaN(value)) {
+      return null;
+    }
+
+    const normalized = Math.floor(value);
+    if (normalized < 1 || normalized > 7) {
+      throw new BadRequestException(`Invalid ${fieldName}`);
+    }
+
+    return normalized;
+  }
+
+  private normalizeOptionalNonNegativeInteger(value: number | null | undefined, fieldName: string): number | null {
+    if (value === null || value === undefined || Number.isNaN(value)) {
+      return null;
+    }
+
+    const normalized = Math.floor(value);
+    if (normalized < 0) {
+      throw new BadRequestException(`Invalid ${fieldName}`);
+    }
+
+    return normalized;
+  }
+
+  private normalizeOptionalTime(value: string | null | undefined, fieldName: string): string | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    const normalized = value.trim();
+    if (normalized.length === 0) {
+      return null;
+    }
+
+    if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(normalized)) {
+      throw new BadRequestException(`Invalid ${fieldName}`);
+    }
+
+    return normalized;
+  }
+
+  private toTimeStringFromDate(date: Date | null): string | null {
+    if (!date) {
+      return null;
+    }
+
+    return DateTime.fromJSDate(date, {
+      zone: SharedConstants.FFXIV_SERVER_TIMEZONE,
+    }).toFormat('HH:mm');
+  }
+
+  private toWeekdayFromDate(date: Date | null): number | null {
+    if (!date) {
+      return null;
+    }
+
+    return DateTime.fromJSDate(date, {
+      zone: SharedConstants.FFXIV_SERVER_TIMEZONE,
+    }).weekday;
+  }
+
+  private buildLegacyTemplateDateTime(weekday: number, time: string): Date {
+    const [hour, minute] = time.split(':').map((part) => parseInt(part, 10));
+    const baseWeekStart = DateTime.fromObject(
+      { year: 2024, month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 },
+      { zone: SharedConstants.FFXIV_SERVER_TIMEZONE },
+    );
+
+    return baseWeekStart
+      .plus({ days: weekday - 1 })
+      .set({ hour, minute, second: 0, millisecond: 0 })
+      .toJSDate();
+  }
+
   private normalizeOptionalDateTime(value: number | null | undefined, fieldName: string): Date | null {
     if (value === null || value === undefined) {
       return null;
@@ -292,6 +368,23 @@ export class VenuesService {
     const canManageMembers = isSelectedCharacterOwner
       || (!!membership && membership.status === MembershipStatus.CONFIRMED && membership.canManageMembers);
     const staff = venue.showStaff ? await this.getVisibleStaffMembers(venue.id, venue.owner) : [];
+    const legacyStart = venue.eventStartDateTime || null;
+    const legacyEnd = venue.eventEndDateTime || null;
+    const eventStartWeekday = venue.eventStartWeekday ?? this.toWeekdayFromDate(legacyStart);
+    const eventStartTime = venue.eventStartTime ?? this.toTimeStringFromDate(legacyStart);
+    const eventEndTime = venue.eventEndTime ?? this.toTimeStringFromDate(legacyEnd);
+    const eventEndDurationDays = venue.eventEndDurationDays
+      ?? (legacyStart && legacyEnd
+        ? Math.max(
+            0,
+            Math.floor(
+              DateTime.fromJSDate(legacyEnd, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE })
+                .diff(DateTime.fromJSDate(legacyStart, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE }), 'days')
+                .days,
+            ),
+          )
+        : null);
+    const eventRegistrationDeadlineTime = venue.eventRegistrationDeadlineTime || eventStartTime || null;
 
     if (eventIcon) {
       await this.imagesService.ensureIconThumb(eventIcon);
@@ -319,8 +412,13 @@ export class VenuesService {
       eventAdultOnly: !!venue.eventAdultOnly,
       eventClosed: !!venue.eventClosed,
       eventRegistrationDeadlineDays: venue.eventRegistrationDeadlineDays,
+      eventRegistrationDeadlineTime,
       eventStartDateTime: venue.eventStartDateTime ? venue.eventStartDateTime.getTime() : null,
       eventEndDateTime: venue.eventEndDateTime ? venue.eventEndDateTime.getTime() : null,
+      eventStartWeekday,
+      eventStartTime,
+      eventEndTime,
+      eventEndDurationDays,
       eventExtraInfo: venue.eventExtraInfo || '',
 			purpose: venue.purpose,
 			website: venue.website,
@@ -522,9 +620,70 @@ export class VenuesService {
     venue.eventRegistrationDeadlineDays = venue.eventClosed
       ? this.normalizeRegistrationDeadlineDays(venueDto.eventRegistrationDeadlineDays)
       : null;
-    venue.eventStartDateTime = this.normalizeOptionalDateTime(venueDto.eventStartDateTime, 'eventStartDateTime');
-    venue.eventEndDateTime = this.normalizeOptionalDateTime(venueDto.eventEndDateTime, 'eventEndDateTime');
-    venue.eventExtraInfo = html.sanitize(venueDto.eventExtraInfo || '');
+    venue.eventRegistrationDeadlineTime = venue.eventClosed
+      ? this.normalizeOptionalTime(venueDto.eventRegistrationDeadlineTime, 'eventRegistrationDeadlineTime')
+      : null;
+
+    const normalizedStartWeekday = this.normalizeOptionalWeekday(venueDto.eventStartWeekday, 'eventStartWeekday');
+    const normalizedStartTime = this.normalizeOptionalTime(venueDto.eventStartTime, 'eventStartTime');
+    const normalizedEndTime = this.normalizeOptionalTime(venueDto.eventEndTime, 'eventEndTime');
+    const normalizedEndDurationDays = this.normalizeOptionalNonNegativeInteger(
+      venueDto.eventEndDurationDays,
+      'eventEndDurationDays',
+    );
+    const legacyStartDateTime = this.normalizeOptionalDateTime(venueDto.eventStartDateTime, 'eventStartDateTime');
+    const legacyEndDateTime = this.normalizeOptionalDateTime(venueDto.eventEndDateTime, 'eventEndDateTime');
+    const effectiveStartWeekday = normalizedStartWeekday ?? this.toWeekdayFromDate(legacyStartDateTime);
+    const effectiveStartTime = normalizedStartTime ?? this.toTimeStringFromDate(legacyStartDateTime);
+    const effectiveEndTime = normalizedEndTime ?? this.toTimeStringFromDate(legacyEndDateTime);
+    const effectiveEndDurationDays = normalizedEndDurationDays
+      ?? (legacyStartDateTime && legacyEndDateTime
+        ? Math.max(
+            0,
+            Math.floor(
+              DateTime.fromJSDate(legacyEndDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE })
+                .diff(DateTime.fromJSDate(legacyStartDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE }), 'days')
+                .days,
+            ),
+          )
+        : null);
+
+    if ((effectiveStartWeekday === null) !== (effectiveStartTime === null)) {
+      throw new BadRequestException('eventStartWeekday and eventStartTime must be set together');
+    }
+
+    if ((effectiveEndTime === null) !== (effectiveEndDurationDays === null)) {
+      throw new BadRequestException('eventEndTime and eventEndDurationDays must be set together');
+    }
+
+    if (effectiveEndTime !== null && (effectiveStartWeekday === null || effectiveStartTime === null)) {
+      throw new BadRequestException('eventEndTime and eventEndDurationDays require eventStartWeekday and eventStartTime');
+    }
+
+    venue.eventStartWeekday = effectiveStartWeekday;
+    venue.eventStartTime = effectiveStartTime;
+    venue.eventEndTime = effectiveEndTime;
+    venue.eventEndDurationDays = effectiveEndDurationDays;
+
+    if (effectiveStartWeekday !== null && effectiveStartTime !== null) {
+      const referenceStart = this.buildLegacyTemplateDateTime(effectiveStartWeekday, effectiveStartTime);
+      venue.eventStartDateTime = referenceStart;
+
+      if (effectiveEndTime !== null && effectiveEndDurationDays !== null) {
+        const [endHour, endMinute] = effectiveEndTime.split(':').map((part) => parseInt(part, 10));
+        venue.eventEndDateTime = DateTime.fromJSDate(referenceStart, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE })
+          .plus({ days: effectiveEndDurationDays })
+          .set({ hour: endHour, minute: endMinute, second: 0, millisecond: 0 })
+          .toJSDate();
+      } else {
+        venue.eventEndDateTime = null;
+      }
+    } else {
+      venue.eventStartDateTime = null;
+      venue.eventEndDateTime = null;
+    }
+
+    venue.eventExtraInfo = html.sanitize((venueDto.eventExtraInfo || '').trim()).slice(0, 100);
 		venue.website = venueDto.website; // TODO: Validate
 		venue.purpose = venueDto.purpose;
 		venue.status = venueDto.status;
