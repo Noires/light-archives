@@ -254,6 +254,7 @@
                 <p>Diese Vorlage wird für neue Events des Treffpunkts verwendet.</p>
                 <q-input
                   v-model="venue.eventTitle"
+                  class="page-edit-venue__event-title"
                   label="Titel (Vorlage)"
                 />
                 <div class="page-edit-venue__select-group">
@@ -279,20 +280,60 @@
                     Für Events aus dieser Vorlage gilt eine Anmeldepflicht bis zur gesetzten Frist.
                   </div>
                 </div>
-                <q-input
-                  v-if="venue.eventClosed"
-                  v-model.number="venue.eventRegistrationDeadlineDays"
-                  type="number"
-                  min="0"
-                  label="Frist: Tage vor Beginn"
-                />
-                <q-input
-                  v-if="venue.eventClosed"
-                  v-model="venue.eventRegistrationDeadlineTime"
-                  type="time"
-                  clearable
-                  label="Frist: Uhrzeit"
-                />
+                <div v-if="venue.eventClosed" class="page-edit-venue__template-block">
+                  <div class="page-edit-venue__template-header">
+                    <div class="page-edit-venue__select-title">Anmeldefrist</div>
+                    <q-btn
+                      flat
+                      dense
+                      color="secondary"
+                      icon="restart_alt"
+                      label="Zurücksetzen"
+                      @click="clearTemplateDeadline"
+                    />
+                  </div>
+                  <div class="text-caption page-edit-venue__template-hint">
+                    Definiert, bis wann man sich vor dem Event anmelden kann.
+                  </div>
+                  <div class="page-edit-venue__template-grid">
+                    <q-input
+                      v-model.number="venue.eventRegistrationDeadlineDays"
+                      type="number"
+                      min="0"
+                      label="Tage vor Beginn"
+                    />
+                    <q-input
+                      :model-value="venue.eventRegistrationDeadlineTime || ''"
+                      readonly
+                      label="Uhrzeit (optional)"
+                    >
+                      <template v-slot:append>
+                        <q-icon
+                          v-if="venue.eventRegistrationDeadlineTime"
+                          name="clear"
+                          class="cursor-pointer"
+                          @click.stop="venue.eventRegistrationDeadlineTime = null"
+                        />
+                        <q-icon name="access_time" class="cursor-pointer">
+                          <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                            <q-time
+                              v-model="venue.eventRegistrationDeadlineTime"
+                              mask="HH:mm"
+                              format24h
+                            >
+                              <div class="row items-center justify-end">
+                                <q-btn v-close-popup label="Schließen" color="primary" flat />
+                              </div>
+                            </q-time>
+                          </q-popup-proxy>
+                        </q-icon>
+                      </template>
+                    </q-input>
+                  </div>
+                  <div v-if="registrationDeadlineSummary" class="text-caption page-edit-venue__template-summary">
+                    {{ registrationDeadlineSummary }}
+                  </div>
+                </div>
                 <div class="page-edit-venue__select-group">
                   <div class="page-edit-venue__select-title">Nicht jugendfrei (18+)</div>
                   <adult-only-selector v-model="venue.eventAdultOnly" />
@@ -300,35 +341,108 @@
                     Markiert alle aus der Vorlage erstellten Events automatisch als 18+.
                   </div>
                 </div>
-                <div class="page-edit-venue__template-grid">
-                  <q-select
-                    v-model="venue.eventStartWeekday"
-                    :options="weekdayOptions"
-                    emit-value
-                    map-options
-                    clearable
-                    label="Beginn: Wochentag (optional)"
-                  />
-                  <q-input
-                    v-model="venue.eventStartTime"
-                    type="time"
-                    clearable
-                    label="Beginn: Uhrzeit (optional)"
+                <div class="page-edit-venue__select-group">
+                  <div class="page-edit-venue__select-title">Event-Inhaltswarnungen</div>
+                  <q-option-group
+                    v-model="venue.eventContentNotes"
+                    :options="contentNoteOptions"
+                    type="checkbox"
+                    color="secondary"
+                    class="page-edit-venue__options-grid"
                   />
                 </div>
-                <div class="page-edit-venue__template-grid">
-                  <q-input
-                    v-model="venue.eventEndTime"
-                    type="time"
-                    clearable
-                    label="Ende: Uhrzeit (optional)"
-                  />
-                  <q-input
-                    v-model.number="venue.eventEndDurationDays"
-                    type="number"
-                    min="0"
-                    label="Ende: Dauer in Tagen (optional)"
-                  />
+                <div class="page-edit-venue__template-block">
+                  <div class="page-edit-venue__template-header">
+                    <div class="page-edit-venue__select-title">Vorlagen-Zeitplan</div>
+                    <q-btn
+                      flat
+                      dense
+                      color="secondary"
+                      icon="restart_alt"
+                      label="Alle Zeiten löschen"
+                      @click="clearTemplateSchedule"
+                    />
+                  </div>
+                  <div class="text-caption page-edit-venue__template-hint">
+                    Beim Erstellen eines Events wird automatisch der nächste passende Wochentag verwendet.
+                  </div>
+                  <div class="page-edit-venue__template-grid">
+                    <q-select
+                      v-model="venue.eventStartWeekday"
+                      :options="weekdayOptions"
+                      emit-value
+                      map-options
+                      clearable
+                      label="Beginn: Wochentag"
+                    />
+                    <q-input
+                      :model-value="venue.eventStartTime || ''"
+                      readonly
+                      label="Beginn: Uhrzeit"
+                    >
+                      <template v-slot:append>
+                        <q-icon
+                          v-if="venue.eventStartTime"
+                          name="clear"
+                          class="cursor-pointer"
+                          @click.stop="venue.eventStartTime = null"
+                        />
+                        <q-icon name="access_time" class="cursor-pointer">
+                          <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                            <q-time
+                              v-model="venue.eventStartTime"
+                              mask="HH:mm"
+                              format24h
+                            >
+                              <div class="row items-center justify-end">
+                                <q-btn v-close-popup label="Schließen" color="primary" flat />
+                              </div>
+                            </q-time>
+                          </q-popup-proxy>
+                        </q-icon>
+                      </template>
+                    </q-input>
+                  </div>
+                  <div class="page-edit-venue__template-grid">
+                    <q-input
+                      :model-value="venue.eventEndTime || ''"
+                      readonly
+                      :disable="!hasStartTemplate"
+                      label="Ende: Uhrzeit"
+                    >
+                      <template v-slot:append>
+                        <q-icon
+                          v-if="venue.eventEndTime"
+                          name="clear"
+                          class="cursor-pointer"
+                          @click.stop="venue.eventEndTime = null"
+                        />
+                        <q-icon name="access_time" class="cursor-pointer">
+                          <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                            <q-time
+                              v-model="venue.eventEndTime"
+                              mask="HH:mm"
+                              format24h
+                            >
+                              <div class="row items-center justify-end">
+                                <q-btn v-close-popup label="Schließen" color="primary" flat />
+                              </div>
+                            </q-time>
+                          </q-popup-proxy>
+                        </q-icon>
+                      </template>
+                    </q-input>
+                    <q-input
+                      v-model.number="venue.eventEndDurationDays"
+                      type="number"
+                      min="0"
+                      :disable="!hasStartTemplate"
+                      label="Ende: Dauer in Tagen"
+                    />
+                  </div>
+                  <div class="text-caption page-edit-venue__template-summary">
+                    {{ scheduleTemplateSummary }}
+                  </div>
                 </div>
                 <q-input
                   v-model="venue.eventContact"
@@ -375,16 +489,6 @@
                   counter
                   label="Extra-Info (max. 100 Zeichen)"
                 />
-                <div class="page-edit-venue__select-group">
-                  <div class="page-edit-venue__select-title">Event-Inhaltswarnungen</div>
-                  <q-option-group
-                    v-model="venue.eventContentNotes"
-                    :options="contentNoteOptions"
-                    type="checkbox"
-                    color="secondary"
-                    class="page-edit-venue__options-grid"
-                  />
-                </div>
                 <event-icon-edit-section v-model="venue.eventIcon" />
                 <banner-edit-section v-model="venue.eventBanner" title="Event-Banner" />
                 <banner-edit-section
@@ -766,6 +870,43 @@ export default class PageEditVenue extends Vue {
     return this.venue.tags.join(', ');
   }
 
+  get hasStartTemplate(): boolean {
+    return this.venue.eventStartWeekday !== null && this.venue.eventStartWeekday !== undefined && !!this.venue.eventStartTime;
+  }
+
+  get registrationDeadlineSummary(): string {
+    const days = this.venue.eventRegistrationDeadlineDays;
+    const time = this.venue.eventRegistrationDeadlineTime;
+
+    if (days === null || days === undefined) {
+      return '';
+    }
+
+    if (time) {
+      return `Frist: ${days} Tag(e) vor Beginn um ${time} Uhr.`;
+    }
+
+    return `Frist: ${days} Tag(e) vor Beginn.`;
+  }
+
+  get scheduleTemplateSummary(): string {
+    const startWeekday = this.venue.eventStartWeekday;
+    const startTime = this.venue.eventStartTime;
+    const endTime = this.venue.eventEndTime;
+    const endDurationDays = this.venue.eventEndDurationDays;
+
+    if (!startWeekday || !startTime) {
+      return 'Kein Beginn gesetzt. Wenn du Beginn leer lässt, wird beim Erstellen kein Zeitpunkt vorbefüllt.';
+    }
+
+    const startLabel = `Beginn: ${this.getWeekdayLabel(startWeekday)} um ${startTime} Uhr.`;
+    if (endTime === null || endTime === undefined || endDurationDays === null || endDurationDays === undefined) {
+      return `${startLabel} Kein Ende gesetzt.`;
+    }
+
+    return `${startLabel} Ende: +${endDurationDays} Tag(e), ${endTime} Uhr.`;
+  }
+
   get visibleEditSections(): EditSectionItem[] {
     const sections: EditSectionItem[] = [
       { id: 'basic', label: 'Basisdaten', icon: 'storefront' },
@@ -801,6 +942,24 @@ export default class PageEditVenue extends Vue {
     if (!this.suppressDirtyTracking) {
       isDirty.value = true;
     }
+  }
+
+  clearTemplateDeadline() {
+    this.venue.eventRegistrationDeadlineDays = null;
+    this.venue.eventRegistrationDeadlineTime = null;
+  }
+
+  clearTemplateSchedule() {
+    this.venue.eventStartWeekday = null;
+    this.venue.eventStartTime = null;
+    this.venue.eventEndTime = null;
+    this.venue.eventEndDurationDays = null;
+    this.venue.eventStartDateTime = null;
+    this.venue.eventEndDateTime = null;
+  }
+
+  private getWeekdayLabel(weekday: number): string {
+    return this.weekdayOptions.find((option) => option.value === weekday)?.label || `Wochentag ${weekday}`;
   }
 
   private ensureVenueTemplateDefaults(target: VenueDto) {
@@ -1082,6 +1241,10 @@ body.body--dark .page-edit-venue {
   background: var(--edit-venue-select-group-bg);
 }
 
+.page-edit-venue__event-title {
+  margin-bottom: 10px;
+}
+
 .page-edit-venue__select-title {
   margin-bottom: 8px;
   font-size: 0.72rem;
@@ -1113,6 +1276,29 @@ body.body--dark .page-edit-venue {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.page-edit-venue__template-block {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--edit-venue-select-group-border);
+  background: var(--edit-venue-select-group-bg);
+}
+
+.page-edit-venue__template-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.page-edit-venue__template-hint {
+  margin-bottom: 10px;
+}
+
+.page-edit-venue__template-summary {
+  margin-top: 8px;
 }
 
 .q-field--standard.q-field--readonly.page-edit-venue__founded-at .q-field__control::before {
@@ -1171,6 +1357,11 @@ body.body--dark .page-edit-venue {
 
   .page-edit-venue__template-grid {
     grid-template-columns: 1fr;
+  }
+
+  .page-edit-venue__template-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>

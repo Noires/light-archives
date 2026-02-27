@@ -100,6 +100,16 @@
                 </div>
               </div>
               <div class="page-edit-event__select-group">
+                <div class="page-edit-event__select-title">Inhaltswarnungen</div>
+                <q-option-group
+                  v-model="event.contentNotes"
+                  :options="contentNoteOptions"
+                  type="checkbox"
+                  color="secondary"
+                  class="page-edit-event__options-grid"
+                />
+              </div>
+              <div class="page-edit-event__select-group">
                 <div class="page-edit-event__select-title">Geschlossenes Event</div>
                 <q-option-group
                   v-model="event.closedEvent"
@@ -121,11 +131,32 @@
               />
               <q-input
                 v-if="event.closedEvent"
-                v-model="event.registrationDeadlineTime"
-                type="time"
-                clearable
+                :model-value="event.registrationDeadlineTime || ''"
+                readonly
                 label="Anmeldefrist Uhrzeit (optional)"
-              />
+              >
+                <template v-slot:append>
+                  <q-icon
+                    v-if="event.registrationDeadlineTime"
+                    name="clear"
+                    class="cursor-pointer"
+                    @click.stop="event.registrationDeadlineTime = null"
+                  />
+                  <q-icon name="access_time" class="cursor-pointer">
+                    <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                      <q-time
+                        v-model="event.registrationDeadlineTime"
+                        mask="HH:mm"
+                        format24h
+                      >
+                        <div class="row items-center justify-end">
+                          <q-btn v-close-popup label="Schließen" color="primary" flat />
+                        </div>
+                      </q-time>
+                    </q-popup-proxy>
+                  </q-icon>
+                </template>
+              </q-input>
               <q-date-time-picker
                 v-if="startDateTimeVisible"
                 label="Datum/Uhrzeit Beginn *"
@@ -148,16 +179,6 @@
                 format24h
                 clearable
               />
-              <div class="page-edit-event__select-group">
-                <div class="page-edit-event__select-title">Inhaltswarnungen</div>
-                <q-option-group
-                  v-model="event.contentNotes"
-                  :options="contentNoteOptions"
-                  type="checkbox"
-                  color="secondary"
-                  class="page-edit-event__options-grid"
-                />
-              </div>
             </section>
           </section>
 
