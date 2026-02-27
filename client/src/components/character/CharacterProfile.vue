@@ -106,6 +106,10 @@ export default class CharacterProfile extends Vue.with(Props) {
 <style lang="scss">
 @import url($extraGoogleFonts);
 
+.character-profile {
+  min-width: 0;
+}
+
 .character-profile__header {
   display: flex;
   align-items: center;
@@ -148,5 +152,45 @@ export default class CharacterProfile extends Vue.with(Props) {
 
 .character-profile__carrd-iframe {
   border: none;
+  height: 500px;
+}
+
+@media screen and (max-width: 768px) {
+  .character-profile__header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .character-profile__header > .layout__filler {
+    flex: 0 0 auto;
+  }
+
+  .character-profile__header > .layout__filler:last-child {
+    display: none;
+  }
+
+  .character-profile__header-title {
+    line-height: 1.2;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  .character-profile__header-names {
+    width: 100%;
+  }
+
+  .character-profile__header-subtitle {
+    font-size: 1.25em;
+    line-height: 1.25;
+  }
+
+  .character-profile__appearance-background {
+    margin-bottom: 16px;
+  }
+
+  .character-profile__carrd-iframe {
+    height: 70vh;
+    min-height: 380px;
+  }
 }
 </style>

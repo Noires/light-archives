@@ -76,5 +76,29 @@ export default class CharacterDetail extends Vue.with(Props) {
 .character-detail__value {
   flex-basis: 0;
   flex-grow: 3;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media screen and (max-width: 768px) {
+  .character-detail {
+    flex-basis: 100%;
+    max-width: 100%;
+  }
+}
+
+@media screen and (max-width: 460px) {
+  .character-detail {
+    flex-direction: column;
+  }
+
+  .character-detail__label {
+    min-width: 0;
+    padding-bottom: 0;
+  }
+
+  .character-detail__value {
+    padding-top: 2px;
+  }
 }
 </style>

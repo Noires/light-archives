@@ -1,7 +1,16 @@
 <template>
 	<q-layout class="page-character-layout rounded-borders no-outline">
-		<q-drawer class="border-radius-inherit" v-model="drawer" show-if-above
-			:mini="miniState" @mouseover="miniState = false" @mouseout="miniState = true" :width="200" :breakpoint="0">
+		<q-drawer
+			class="border-radius-inherit"
+			v-model="drawer"
+			show-if-above
+			:mini="isMobileSidebar || miniState"
+			:mini-width="56"
+			:width="200"
+			:breakpoint="0"
+			@mouseover="onDrawerMouseOver"
+			@mouseout="onDrawerMouseOut"
+		>
 			<q-scroll-area class="fit" :horizontal-thumb-style="{ opacity: 0 }">
 				<q-list padding>
 					<q-item clickable v-ripple @click="onTab('profile')">
@@ -258,6 +267,11 @@ export default class PageCharacter extends Vue {
 	character: CharacterProfileDto = new CharacterProfileDto();
 	content: CharacterContentDto = { stories: [], images: [] };
 	notFound = false;
+
+	get isMobileSidebar(): boolean {
+		return this.$q.screen.lt.md;
+	}
+
 	setContent(content: Content) {
 		if ((content.content.images.length > 0) && (content.character.banner?.url != undefined))  {
 			content.content.images = content.content.images.filter(x => !x.url.includes(content.character.banner!.url));
@@ -267,7 +281,18 @@ export default class PageCharacter extends Vue {
 
 	onTab(tab: string) {
 		this.tab = tab;
-		console.log(tab);
+	}
+
+	onDrawerMouseOver() {
+		if (!this.isMobileSidebar) {
+			this.miniState = false;
+		}
+	}
+
+	onDrawerMouseOut() {
+		if (!this.isMobileSidebar) {
+			this.miniState = true;
+		}
 	}
 
 	displayDrawer(): boolean {
