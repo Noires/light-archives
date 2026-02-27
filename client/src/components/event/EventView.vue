@@ -118,9 +118,6 @@
             <q-icon name="public" />
             <span>{{ location.server }}</span>
           </div>
-          <div v-if="location.tags" class="event-view__location-tags text-caption">
-            {{ location.tags }}
-          </div>
           <div v-if="location.link" class="event-view__location-row">
             <q-icon name="link" />
             <a :href="location.link" target="_blank" rel="noopener">{{ linkLabel(location.link, location.linkText) }}</a>
@@ -422,11 +419,6 @@ export default class EventView extends Vue.with(Props) {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.event-view__location-tags {
-  margin-top: 6px;
-  color: rgba(35, 35, 35, 0.7);
 }
 
 .event-view__details {

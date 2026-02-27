@@ -229,85 +229,65 @@ export class EventsService {
     if (eventDto.locations.length === 0) {
       throw new BadRequestException('Event must have at least one location');
     }
+    const dtoLocation = eventDto.locations[0];
+    const existingLocations = event.locations || [];
+    let location = dtoLocation.id
+      ? existingLocations.find((candidate) => candidate.id === dtoLocation.id)
+      : undefined;
 
-    /// Update locations; O(n^2) filters used for code clarity, since number of notifications is small
-    const dtoLocationIds = eventDto.locations.map((location) => location.id).filter((id) => !!id);
-    const locations: EventLocation[] = [];
-    const reusedLocations: EventLocation[] = [];
-    const locationsToRemove: EventLocation[] = [];
-
-    for (const location of event.locations) {
-      if (!dtoLocationIds.includes(location.id)) {
-        reusedLocations.push(location);
-      } else {
-        locationsToRemove.push(location);
-      }
+    if (!location && existingLocations.length > 0) {
+      location = existingLocations[0];
     }
 
+    if (!location) {
+      location = new EventLocation();
+      location.event = event;
+    }
+
+    const locationsToRemove = existingLocations.filter((candidate) => candidate !== location);
     if (locationsToRemove.length > 0) {
-      await Promise.all(locationsToRemove.map((location) => em.remove(location)));
+      await Promise.all(locationsToRemove.map((candidate) => em.remove(candidate)));
     }
 
-    const venueIds = eventDto.locations.map((location) => location.venueId).filter((id): id is number => !!id);
-    const venuesById = new Map<number, Venue>();
+    location.name = dtoLocation.name;
+    location.address = dtoLocation.address;
+    location.link = dtoLocation.link;
+    location.linkText = dtoLocation.link ? (dtoLocation.linkText || '') : '';
 
-    if (venueIds.length > 0) {
-      const venues = await em.getRepository(Venue).find({
+    if (location.link && !isValidUrl(location.link)) {
+      throw new BadRequestException(`Invalid location link: ${location.link}`);
+    }
+
+    if (dtoLocation.venueId) {
+      const venue = await em.getRepository(Venue).findOne({
         where: {
-          id: In(venueIds),
+          id: dtoLocation.venueId,
         },
         relations: ['server'],
       });
-      venues.forEach((venue) => venuesById.set(venue.id, venue));
+
+      if (!venue) {
+        throw new BadRequestException(`Venue ${dtoLocation.venueId} not found`);
+      }
+
+      location.venue = venue;
+      location.server = venue.server;
+    } else {
+      location.venue = null;
+      const server = await em.getRepository(Server).findOne({
+        where: {
+          name: dtoLocation.server,
+        },
+      });
+
+      if (!server) {
+        throw new BadRequestException(`Server ${dtoLocation.server} not found`);
+      }
+
+      location.server = server;
     }
 
-    const locationServers = await em.getRepository(Server).find({
-      where: {
-        name: In(eventDto.locations.map(location => location.server)),
-      },
-    });
-
-    for (const dtoLocation of eventDto.locations) {
-      let location = reusedLocations.find((l) => l.id === dtoLocation.id);
-
-      if (!location) {
-        location = new EventLocation();
-        location.event = event;
-      }
-
-      locations.push(location);
-      location.name = dtoLocation.name;
-      location.address = dtoLocation.address;
-      location.tags = dtoLocation.tags;
-      location.link = dtoLocation.link;
-      location.linkText = dtoLocation.link ? (dtoLocation.linkText || '') : '';
-
-      if (location.link && !isValidUrl(location.link)) {
-        throw new BadRequestException(`Invalid location link: ${location.link}`);
-      }
-
-      if (dtoLocation.venueId) {
-        const venue = venuesById.get(dtoLocation.venueId);
-
-        if (!venue) {
-          throw new BadRequestException(`Venue ${dtoLocation.venueId} not found`);
-        }
-
-        location.venue = venue;
-        location.server = venue.server;
-      } else {
-        location.venue = null;
-        const server = locationServers.find(s => s.name === dtoLocation.server);
-
-        if (!server) {
-          throw new BadRequestException(`Server ${dtoLocation.server} not found`);
-        }
-
-        location.server = server;
-      }
-    }
-
-    event.locations = locations;
+    event.locations = [location];
 
     // Update announcements; O(n^2) filters used for code clarity, since number of notifications is small
     const dtoAnnouncementIds = eventDto.announcements.map((notification) => notification.id).filter((id) => !!id);
@@ -534,7 +514,6 @@ export class EventsService {
 
           location.name = locationDto.name;
           location.address = locationDto.address;
-          location.tags = locationDto.tags;
           location.link = locationDto.link;
           location.linkText = '';
 
@@ -707,7 +686,6 @@ export class EventsService {
         name: location.name,
         address: location.address,
         server: location.server?.name || '',
-        tags: location.tags,
         link: location.link,
         linkText: location.linkText || '',
         venueId: location.venue?.id,
@@ -779,7 +757,6 @@ export class EventsService {
         name: location.name,
         address: location.address,
         server: location.server?.name || '',
-        tags: location.tags,
         link: location.link,
         linkText: location.linkText || '',
         venueId: location.venue?.id,

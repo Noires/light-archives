@@ -72,68 +72,56 @@
                 class="page-edit-event__options-grid"
               />
             </div>
-          <template v-for="(location, index) in event.locations" :key="index">
-              <h6>Standort</h6>
-              <q-select
-                v-model="location.venueId"
-                label="Treffpunkt-Name (Verknüpfen)"
-                use-input
-                input-debounce="250"
-                emit-value
-                map-options
-                clearable
-                :options="venueOptions[index] || []"
-                @filter="(val, update, abort) => onVenueSearch(val, update, abort, index)"
-                @update:model-value="(value) => onVenueSelected(value, index)"
-              />
-              <q-input
-                v-model="location.name"
-                label="Treffpunkt-Name *"
-                :rules="[
-                  $rules.required('Dieses Feld ist erforderlich.'),
-                ]"
-              />          
-              <q-input
-                v-model="location.address"
-                label="Adresse"
-              >
-                <template v-slot:prepend>
-                  <q-icon name="place" />
-                </template>
-              </q-input>
-              <world-select
-                v-model="location.server"
-                label="Welt"
-                :rules="[
-                  $rules.required('Dieses Feld ist erforderlich.'),
-                ]"
-              />
-              <q-input
-                v-model="location.link"
-                label="Standortlink"
-                :rules="[
-                  $rules.url('Bitte hinterlasse eine gültige URL.'),
-                ]"
-              >
-                <template v-slot:prepend>
-                  <q-icon name="link" />
-                </template>
-              </q-input>
-              <q-input
-                v-model="location.linkText"
-                label="Standort-Linktext (optional)"
-              />
-              <q-input
-                v-model="location.tags"
-                label="Standort Schlagworte"
-              />
-              <div v-if="event.locations.length > 1" class="page-edit-event__button-bar" style="justify-content: end">
-                <q-btn flat color="negative" icon="remove" label="Diesen Standort entfernen" @click="removeLocation(index)" />
-              </div>
-          </template>
-          <div class="page-edit-event__button-bar" style="justify-content: end">
-            <q-btn flat color="secondary" icon="add" label="Standort hinzufügen" @click="addLocation" />
-          </div>
+            <h6>Standort</h6>
+            <q-select
+              v-model="event.locations[0].venueId"
+              label="Treffpunkt verknüpfen (optional)"
+              use-input
+              input-debounce="250"
+              emit-value
+              map-options
+              clearable
+              :options="venueOptions"
+              @filter="onVenueSearch"
+              @update:model-value="onVenueSelected"
+            />
+            <q-input
+              v-model="event.locations[0].name"
+              label="Treffpunkt-Name *"
+              :rules="[
+                $rules.required('Dieses Feld ist erforderlich.'),
+              ]"
+            />
+            <q-input
+              v-model="event.locations[0].address"
+              label="Adresse"
+            >
+              <template v-slot:prepend>
+                <q-icon name="place" />
+              </template>
+            </q-input>
+            <world-select
+              v-model="event.locations[0].server"
+              label="Welt"
+              :rules="[
+                $rules.required('Dieses Feld ist erforderlich.'),
+              ]"
+            />
+            <q-input
+              v-model="event.locations[0].link"
+              label="Standortlink"
+              :rules="[
+                $rules.url('Bitte hinterlasse eine gültige URL.'),
+              ]"
+            >
+              <template v-slot:prepend>
+                <q-icon name="link" />
+              </template>
+            </q-input>
+            <q-input
+              v-model="event.locations[0].linkText"
+              label="Standort-Linktext (optional)"
+            />
           </section>
           <h6>Details</h6>
           <html-editor v-model="event.details" />
@@ -337,7 +325,7 @@ export default class PageEditEvent extends Vue {
   contentNoteOptions: { label: string; value: string }[] = [];
   readonly eventTypeOptions = EventTypeOptions;
   readonly minDiscordBannerAspectRatio = SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO;
-  venueOptions: VenueOption[][] = [];
+  venueOptions: VenueOption[] = [];
 
   startDateTime: string|null = null;
   endDateTime: string|null = null;
@@ -367,10 +355,7 @@ export default class PageEditEvent extends Vue {
       this.normalizeEvent(this.eventBackup);
       this.eventBackup.discordBanner = this.eventBackup.discordBanner || null;
       this.eventBackup.linkText = this.eventBackup.linkText || '';
-      this.eventBackup.locations = (this.eventBackup.locations || []).map((location) => new EventLocationDto({
-        ...location,
-        linkText: location.linkText || '',
-      }));
+      this.ensureSingleLocation(this.eventBackup);
     } else {
       this.eventId = null;
       this.eventBackup = new EventEditDto({
@@ -398,12 +383,10 @@ export default class PageEditEvent extends Vue {
       });
     }
 
-    this.venueOptions = this.eventBackup.locations.map(() => []);
-    this.eventBackup.locations.forEach((location, index) => {
-      if (location.venueId) {
-        void this.seedVenueOption(index, location.venueId);
-      }
-    });
+    this.venueOptions = [];
+    if (this.eventBackup.locations[0]?.venueId) {
+      void this.seedVenueOption(this.eventBackup.locations[0].venueId);
+    }
 
     // Initialize selected character (default to current active character)
     this.selectedCharacterId = this.$store.getters.characterId || null;
@@ -411,6 +394,7 @@ export default class PageEditEvent extends Vue {
     this.loaded = true;
     this.event = new EventEditDto(this.eventBackup);
     this.normalizeEvent(this.event);
+    this.ensureSingleLocation(this.event);
     this.startDateTime = this.fromMillis(this.event.startDateTime);
     this.endDateTime = this.fromMillis(this.event.endDateTime);
   }
@@ -423,6 +407,23 @@ export default class PageEditEvent extends Vue {
     }
     target.eventType = target.eventType || EventType.RP;
     target.adultOnly = target.adultOnly === true;
+  }
+
+  private ensureSingleLocation(target: EventEditDto) {
+    const location = target.locations && target.locations.length > 0
+      ? target.locations[0]
+      : this.newLocation();
+    target.locations = [
+      new EventLocationDto({
+        id: location.id,
+        name: location.name || '',
+        address: location.address || '',
+        server: location.server || this.$store.getters.character!.server,
+        link: location.link || '',
+        linkText: location.linkText || '',
+        venueId: location.venueId || undefined,
+      }),
+    ];
   }
 
   private fromMillis(value: number|null): string|null {
@@ -484,39 +485,28 @@ export default class PageEditEvent extends Vue {
     this.event.announcements.splice(index, 1);
   }
 
-  addLocation() {
-    this.event.locations.push(this.newLocation());
-    this.venueOptions.push([]);
-  }
-
   newLocation() {
     return new EventLocationDto({
       name: '',
       address: '',
       server: this.$store.getters.character!.server,
-      tags: '',
       link: '',
       linkText: '',
       venueId: undefined,
     });
   }
 
-  removeLocation(index: number) {
-    this.event.locations.splice(index, 1);
-    this.venueOptions.splice(index, 1);
-  }
-
-  async onVenueSearch(value: string, update: (fn: () => void) => void, _abort: () => void, index: number) {
+  async onVenueSearch(value: string, update: (fn: () => void) => void) {
     const query = value.trim();
 
     if (query.length < 2) {
       update(() => {
-        this.venueOptions.splice(index, 1, []);
+        this.venueOptions = [];
       });
       return;
     }
 
-    const server = this.event.locations[index]?.server || undefined;
+    const server = this.event.locations[0]?.server || undefined;
     const venues = await this.$api.venues.searchVenues(query, server || undefined);
 
     const options = venues.map((venue) => ({
@@ -526,12 +516,12 @@ export default class PageEditEvent extends Vue {
     }));
 
     update(() => {
-      this.venueOptions.splice(index, 1, options);
+      this.venueOptions = options;
     });
   }
 
-  async onVenueSelected(venueId: number | null, index: number) {
-    const location = this.event.locations[index];
+  async onVenueSelected(venueId: number | null) {
+    const location = this.event.locations[0];
     if (!location) {
       return;
     }
@@ -543,14 +533,14 @@ export default class PageEditEvent extends Vue {
 
     location.venueId = venueId;
 
-    const option = this.venueOptions[index]?.find((candidate) => candidate.value === venueId);
+    const option = this.venueOptions.find((candidate) => candidate.value === venueId);
     if (option) {
       this.applyVenueToLocation(location, option.venue);
     }
 
     try {
       const venue = await this.$api.venues.getVenue(venueId);
-      const updatedLocation = this.event.locations[index];
+      const updatedLocation = this.event.locations[0];
       if (!updatedLocation || updatedLocation.venueId !== venueId) {
         return;
       }
@@ -559,19 +549,14 @@ export default class PageEditEvent extends Vue {
       const summary = this.toVenueSummary(venue);
 
       if (option) {
-        const options = this.venueOptions[index] || [];
-        this.venueOptions.splice(
-          index,
-          1,
-          options.map((candidate) =>
-            candidate.value === venueId
-              ? {
-                  ...candidate,
-                  label: `${summary.name} (${summary.server})`,
-                  venue: summary,
-                }
-              : candidate,
-          ),
+        this.venueOptions = this.venueOptions.map((candidate) =>
+          candidate.value === venueId
+            ? {
+                ...candidate,
+                label: `${summary.name} (${summary.server})`,
+                venue: summary,
+              }
+            : candidate,
         );
       } else {
         const seededOption = {
@@ -579,7 +564,7 @@ export default class PageEditEvent extends Vue {
           value: summary.id,
           venue: summary,
         };
-        this.venueOptions.splice(index, 1, [seededOption]);
+        this.venueOptions = [seededOption];
       }
 
       this.applyVenueToLocation(updatedLocation, summary);
@@ -588,24 +573,24 @@ export default class PageEditEvent extends Vue {
     }
   }
 
-  private async seedVenueOption(index: number, venueId: number) {
+  private async seedVenueOption(venueId: number) {
     try {
       const venue = await this.$api.venues.getVenue(venueId);
       const summary = this.toVenueSummary(venue);
-      this.venueOptions.splice(index, 1, [
+      this.venueOptions = [
         {
           label: `${summary.name} (${summary.server})`,
           value: summary.id,
           venue: summary,
         },
-      ]);
+      ];
 
-      const backupLocation = this.eventBackup.locations[index];
+      const backupLocation = this.eventBackup.locations[0];
       if (backupLocation && backupLocation.venueId === venueId) {
         this.applyVenueToLocation(backupLocation, summary);
       }
 
-      const currentLocation = this.event.locations[index];
+      const currentLocation = this.event.locations[0];
       if (currentLocation && currentLocation.venueId === venueId) {
         this.applyVenueToLocation(currentLocation, summary);
       }

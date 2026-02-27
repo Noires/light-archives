@@ -15,9 +15,6 @@ export class EventLocationDto {
 	server: string;
 
 	@IsString()
-	tags: string;
-
-	@IsString()
 	link: string;
 
 	@IsString()

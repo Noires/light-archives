@@ -67,7 +67,6 @@
               <q-icon name="public" />
               <div class="event-item__icon-row-text">{{ location.server }}</div>
             </li>
-            <li v-if="location.tags" class="event-item__tags text-caption">{{ location.tags }}</li>
           </ul>
         </section>
       </q-slide-transition>

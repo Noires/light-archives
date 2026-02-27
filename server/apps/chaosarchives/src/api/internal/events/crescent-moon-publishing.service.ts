@@ -104,7 +104,6 @@ export class CrescentMoonPublishingService {
 						name: a.textContent.trim(),
 						address,
 						server,
-						tags: '',
 						link: '',
 					});
 				}

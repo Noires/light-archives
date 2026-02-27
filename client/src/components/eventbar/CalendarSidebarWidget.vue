@@ -595,13 +595,6 @@ export default class CalendarSidebarWidget extends Vue {
   }
 
   summaryLocationType(event: EventSummaryDto): string {
-    if (event.locations && event.locations.length > 0) {
-      const tags = (event.locations[0].tags || '').trim();
-      if (tags.length > 0) {
-        return tags;
-      }
-    }
-
     return this.eventTypeLabel(event);
   }
 }

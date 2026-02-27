@@ -21,11 +21,6 @@ export class EventLocation extends BasicEntity {
 
   @Column({
     nullable: false,
-  })
-  tags: string;
-
-  @Column({
-    nullable: false,
     default: '',
   })
   link: string;

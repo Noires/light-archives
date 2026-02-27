@@ -76,14 +76,12 @@ export class ChocoboChronicleService {
 					const name = divs[0].textContent.trim();
 					const server = divs[3].textContent.trim();
 					const address = divs[5].textContent.trim();
-					const tags = divs[7].textContent.trim();
 
 					return {
 						id: -1,
 						name,
 						address,
 						server,
-						tags,
 						link: '',
 					};
 				} catch (e) {
