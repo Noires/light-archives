@@ -197,14 +197,16 @@ export class AnnouncementService {
 		const event = announcement.event;
 		const eventUrl = `${serverConfiguration.frontendRoot}/event/${event.id}`;
 		const description = this.buildDescription(announcement.content, event.title);
-		const fields = this.buildEventFields(announcement);
+		const summaryFields = this.buildSummaryFields(announcement);
+		const detailFields = this.buildDetailFields(announcement);
 		const [icon, discordBanner, banner] = await Promise.all([
 			event.icon as unknown as Promise<Image | null>,
 			event.discordBanner as unknown as Promise<Image | null>,
 			event.banner as unknown as Promise<Image | null>,
 		]);
-		const embed = new EmbedBuilder()
-			.setColor(announcement.minutesBefore >= 0 ? EVENT_EMBED_COLOR : EVENT_EMBED_COLOR_AFTER_START)
+		const embedColor = announcement.minutesBefore >= 0 ? EVENT_EMBED_COLOR : EVENT_EMBED_COLOR_AFTER_START;
+		const summaryEmbed = new EmbedBuilder()
+			.setColor(embedColor)
 			.setTitle(this.truncate(event.title, 256))
 			.setURL(eventUrl)
 			.setFooter({
@@ -212,27 +214,42 @@ export class AnnouncementService {
 			})
 			.setTimestamp(event.startDateTime);
 
-		if (description) {
-			embed.setDescription(this.truncate(description, EMBED_DESCRIPTION_LIMIT));
+		if (summaryFields.length > 0) {
+			summaryEmbed.addFields(summaryFields);
 		}
 
-		if (fields.length > 0) {
-			embed.addFields(fields);
-		}
-
-		const thumbnailUrl = this.getImageUrl(icon);
+		const thumbnailUrl = this.getImageUrl(icon, 'icon');
 		if (thumbnailUrl) {
-			embed.setThumbnail(thumbnailUrl);
+			summaryEmbed.setThumbnail(thumbnailUrl);
 		}
 
 		const imageUrl = this.getImageUrl(discordBanner || banner);
-		if (imageUrl) {
-			embed.setImage(imageUrl);
+		const embeds = [summaryEmbed];
+
+		if (description || detailFields.length > 0 || imageUrl) {
+			const detailEmbed = new EmbedBuilder()
+				.setColor(embedColor);
+
+			if (description) {
+				detailEmbed.setDescription(this.truncate(description, EMBED_DESCRIPTION_LIMIT));
+			}
+
+			if (detailFields.length > 0) {
+				detailEmbed.addFields(detailFields);
+			}
+
+			if (imageUrl) {
+				detailEmbed.setImage(imageUrl);
+			}
+
+			embeds.push(detailEmbed);
+		} else if (imageUrl) {
+			summaryEmbed.setImage(imageUrl);
 		}
 
 		return {
 			content: this.extractMentionContent(announcement.content),
-			embeds: [embed],
+			embeds,
 		};
 	}
 
@@ -255,7 +272,7 @@ export class AnnouncementService {
 		return trimmed.startsWith(titledPrefix) ? trimmed.slice(titledPrefix.length).trim() : trimmed;
 	}
 
-	private buildEventFields(announcement: EventAnnouncement): Array<{ name: string; value: string; inline?: boolean }> {
+	private buildSummaryFields(announcement: EventAnnouncement): Array<{ name: string; value: string; inline?: boolean }> {
 		const event = announcement.event;
 		const fields: Array<{ name: string; value: string; inline?: boolean }> = [];
 		const location = event.locations?.[0];
@@ -268,8 +285,6 @@ export class AnnouncementService {
 		const warnings = (event.contentNotes || [])
 			.map((note) => CONTENT_NOTE_LABELS[note.name] || note.name)
 			.filter((value) => value.length > 0);
-		const links = this.buildLinkLines(announcement);
-		const registration = this.buildRegistrationText(announcement);
 
 		fields.push({
 			name: 'Zeit',
@@ -304,6 +319,15 @@ export class AnnouncementService {
 				inline: true,
 			});
 		}
+
+		return fields.slice(0, 25);
+	}
+
+	private buildDetailFields(announcement: EventAnnouncement): Array<{ name: string; value: string; inline?: boolean }> {
+		const event = announcement.event;
+		const fields: Array<{ name: string; value: string; inline?: boolean }> = [];
+		const links = this.buildLinkLines(announcement);
+		const registration = this.buildRegistrationText(announcement);
 
 		if (event.contact && event.contact.trim().length > 0) {
 			fields.push({
@@ -444,7 +468,7 @@ export class AnnouncementService {
 		return matches.size > 0 ? Array.from(matches).join(' ') : undefined;
 	}
 
-	private getImageUrl(image: Image | null | undefined): string | null {
+	private getImageUrl(image: Image | null | undefined, variant: 'original' | 'icon' = 'original'): string | null {
 		if (!image?.owner?.id) {
 			return null;
 		}
@@ -452,7 +476,24 @@ export class AnnouncementService {
 		const publicRootUrl = s3Configuration.publicRootUrl.endsWith('/')
 			? s3Configuration.publicRootUrl
 			: `${s3Configuration.publicRootUrl}/`;
-		return `${publicRootUrl}${image.owner.id}/${image.hash}/${image.filename}`;
+		const filename = variant === 'icon' ? `icon_${image.filename}` : image.filename;
+		const path = [
+			String(image.owner.id),
+			image.hash,
+			filename,
+		].map((segment) => encodeURIComponent(segment)).join('/');
+
+		try {
+			return new URL(path, publicRootUrl).toString();
+		} catch (e) {
+			if (e instanceof Error) {
+				this.logger.warn(`Invalid image URL for announcement image ${image.id}: ${e.message}`);
+			} else {
+				this.logger.warn(`Invalid image URL for announcement image ${image.id}`);
+			}
+
+			return null;
+		}
 	}
 
 	private truncate(value: string, maxLength: number): string {
