@@ -222,7 +222,7 @@ export class AnnouncementService {
 			embed.addFields(fields);
 		}
 
-		const thumbnailUrl = this.getImageUrl(icon, 'icon');
+		const thumbnailUrl = this.getImageUrl(icon, 'thumb');
 		if (thumbnailUrl) {
 			embed.setThumbnail(thumbnailUrl);
 		}
@@ -447,7 +447,7 @@ export class AnnouncementService {
 		return matches.size > 0 ? Array.from(matches).join(' ') : undefined;
 	}
 
-	private getImageUrl(image: Image | null | undefined, variant: 'original' | 'icon' = 'original'): string | null {
+	private getImageUrl(image: Image | null | undefined, variant: 'original' | 'icon' | 'thumb' = 'original'): string | null {
 		if (!image?.owner?.id) {
 			return null;
 		}
@@ -455,7 +455,11 @@ export class AnnouncementService {
 		const publicRootUrl = s3Configuration.publicRootUrl.endsWith('/')
 			? s3Configuration.publicRootUrl
 			: `${s3Configuration.publicRootUrl}/`;
-		const filename = variant === 'icon' ? `icon_${image.filename}` : image.filename;
+		const filename = variant === 'icon'
+			? `icon_${image.filename}`
+			: variant === 'thumb'
+				? `thumb_${image.filename}`
+				: image.filename;
 		const path = [
 			String(image.owner.id),
 			image.hash,
