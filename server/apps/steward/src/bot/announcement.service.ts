@@ -196,16 +196,16 @@ export class AnnouncementService {
 	private async buildAnnouncementMessage(announcement: EventAnnouncement): Promise<MessageCreateOptions> {
 		const event = announcement.event;
 		const eventUrl = `${serverConfiguration.frontendRoot}/event/${event.id}`;
-		const description = this.buildDescription(announcement.content, event.title);
-		const summaryFields = this.buildSummaryFields(announcement);
-		const detailFields = this.buildDetailFields(announcement);
+		const body = this.buildDescription(announcement.content, event.title);
+		const description = this.buildEmbedDescription(announcement, body);
+		const fields = this.buildEmbedFields(announcement);
 		const [icon, discordBanner, banner] = await Promise.all([
 			event.icon as unknown as Promise<Image | null>,
 			event.discordBanner as unknown as Promise<Image | null>,
 			event.banner as unknown as Promise<Image | null>,
 		]);
 		const embedColor = announcement.minutesBefore >= 0 ? EVENT_EMBED_COLOR : EVENT_EMBED_COLOR_AFTER_START;
-		const summaryEmbed = new EmbedBuilder()
+		const embed = new EmbedBuilder()
 			.setColor(embedColor)
 			.setTitle(this.truncate(event.title, 256))
 			.setURL(eventUrl)
@@ -214,42 +214,27 @@ export class AnnouncementService {
 			})
 			.setTimestamp(event.startDateTime);
 
-		if (summaryFields.length > 0) {
-			summaryEmbed.addFields(summaryFields);
+		if (description) {
+			embed.setDescription(this.truncate(description, EMBED_DESCRIPTION_LIMIT));
+		}
+
+		if (fields.length > 0) {
+			embed.addFields(fields);
 		}
 
 		const thumbnailUrl = this.getImageUrl(icon, 'icon');
 		if (thumbnailUrl) {
-			summaryEmbed.setThumbnail(thumbnailUrl);
+			embed.setThumbnail(thumbnailUrl);
 		}
 
 		const imageUrl = this.getImageUrl(discordBanner || banner);
-		const embeds = [summaryEmbed];
-
-		if (description || detailFields.length > 0 || imageUrl) {
-			const detailEmbed = new EmbedBuilder()
-				.setColor(embedColor);
-
-			if (description) {
-				detailEmbed.setDescription(this.truncate(description, EMBED_DESCRIPTION_LIMIT));
-			}
-
-			if (detailFields.length > 0) {
-				detailEmbed.addFields(detailFields);
-			}
-
-			if (imageUrl) {
-				detailEmbed.setImage(imageUrl);
-			}
-
-			embeds.push(detailEmbed);
-		} else if (imageUrl) {
-			summaryEmbed.setImage(imageUrl);
+		if (imageUrl) {
+			embed.setImage(imageUrl);
 		}
 
 		return {
 			content: this.extractMentionContent(announcement.content),
-			embeds,
+			embeds: [embed],
 		};
 	}
 
@@ -272,89 +257,61 @@ export class AnnouncementService {
 		return trimmed.startsWith(titledPrefix) ? trimmed.slice(titledPrefix.length).trim() : trimmed;
 	}
 
-	private buildSummaryFields(announcement: EventAnnouncement): Array<{ name: string; value: string; inline?: boolean }> {
+	private buildEmbedDescription(announcement: EventAnnouncement, body: string): string {
 		const event = announcement.event;
-		const fields: Array<{ name: string; value: string; inline?: boolean }> = [];
-		const location = event.locations?.[0];
-		const eventType = EVENT_TYPE_LABELS[event.eventType] || EVENT_TYPE_LABELS[EventType.RP];
-		const typeFlags = [
-			eventType,
-			event.adultOnly ? '18+' : null,
-			event.closedEvent ? 'Geschlossen' : null,
+		const sections: string[] = [];
+		const topLines = [
+			`**Beginn:** ${this.formatDateTime(event.startDateTime)}`,
+			event.endDateTime ? `**Ende:** ${this.formatDateTime(event.endDateTime)}` : null,
 		].filter((value): value is string => !!value);
-		const warnings = (event.contentNotes || [])
-			.map((note) => CONTENT_NOTE_LABELS[note.name] || note.name)
-			.filter((value) => value.length > 0);
-
-		fields.push({
-			name: 'Zeit',
-			value: this.truncate(this.buildScheduleText(announcement), EMBED_FIELD_LIMIT),
-		});
-
-		if (location) {
-			const locationValue = [
-				location.name || '',
-				location.address || '',
-				location.server?.name || '',
-			].filter((value) => value.length > 0).join('\n');
-			if (locationValue.length > 0) {
-				fields.push({
-					name: 'Ort',
-					value: this.truncate(locationValue, EMBED_FIELD_LIMIT),
-					inline: true,
-				});
-			}
+		const locationText = this.buildLocationText(announcement);
+		if (locationText) {
+			topLines.push(`**Ort:** ${locationText}`);
 		}
 
-		fields.push({
-			name: 'Typ',
-			value: this.truncate(typeFlags.join('\n'), EMBED_FIELD_LIMIT),
-			inline: true,
-		});
+		topLines.push(`**Typ:** ${this.buildTypeText(announcement)}`);
 
-		if (warnings.length > 0) {
-			fields.push({
-				name: 'Warnungen',
-				value: this.truncate(warnings.join('\n'), EMBED_FIELD_LIMIT),
-				inline: true,
-			});
+		const warningText = this.buildWarningText(announcement);
+		if (warningText) {
+			topLines.push(`**Warnungen:** ${warningText}`);
 		}
 
-		return fields.slice(0, 25);
-	}
+		if (topLines.length > 0) {
+			sections.push(topLines.join('\n'));
+		}
 
-	private buildDetailFields(announcement: EventAnnouncement): Array<{ name: string; value: string; inline?: boolean }> {
-		const event = announcement.event;
-		const fields: Array<{ name: string; value: string; inline?: boolean }> = [];
-		const links = this.buildLinkLines(announcement);
+		if (body) {
+			sections.push(body);
+		}
+
 		const registration = this.buildRegistrationText(announcement);
-
+		const bottomLines: string[] = [];
 		if (event.contact && event.contact.trim().length > 0) {
-			fields.push({
-				name: 'Kontakt',
-				value: this.truncate(event.contact.trim(), EMBED_FIELD_LIMIT),
-				inline: true,
-			});
+			bottomLines.push(`**Kontakt:** ${event.contact.trim()}`);
 		}
 
-		if (registration) {
-			fields.push({
-				name: 'Anmeldung',
-				value: this.truncate(registration, EMBED_FIELD_LIMIT),
-				inline: true,
-			});
+		if (registration && registration !== 'Geschlossenes Event') {
+			bottomLines.push(`**Anmeldung:** ${registration}`);
 		}
 
 		if (event.extraInfo && event.extraInfo.trim().length > 0) {
-			fields.push({
-				name: 'Hinweis',
-				value: this.truncate(event.extraInfo.trim(), EMBED_FIELD_LIMIT),
-			});
+			bottomLines.push(`**Hinweis:** ${event.extraInfo.trim()}`);
 		}
+
+		if (bottomLines.length > 0) {
+			sections.push(bottomLines.join('\n'));
+		}
+
+		return sections.join('\n\n');
+	}
+
+	private buildEmbedFields(announcement: EventAnnouncement): Array<{ name: string; value: string; inline?: boolean }> {
+		const fields: Array<{ name: string; value: string; inline?: boolean }> = [];
+		const links = this.buildLinkLines(announcement);
 
 		if (links.length > 0) {
 			fields.push({
-				name: 'Links',
+				name: links.length === 1 ? 'Link' : 'Links',
 				value: this.truncate(links.join('\n'), EMBED_FIELD_LIMIT),
 			});
 		}
@@ -362,15 +319,37 @@ export class AnnouncementService {
 		return fields.slice(0, 25);
 	}
 
-	private buildScheduleText(announcement: EventAnnouncement): string {
+	private buildLocationText(announcement: EventAnnouncement): string | null {
 		const event = announcement.event;
-		const start = this.formatDateTime(event.startDateTime);
-		if (!event.endDateTime) {
-			return `Beginn: ${start}`;
+		const location = event.locations?.[0];
+		if (!location) {
+			return null;
 		}
 
-		const end = this.formatDateTime(event.endDateTime);
-		return `Beginn: ${start}\nEnde: ${end}`;
+		const lines = [
+			location.name || '',
+			location.address || '',
+			location.server?.name || '',
+		].filter((value) => value.length > 0);
+
+		return lines.length > 0 ? lines.join('\n') : null;
+	}
+
+	private buildTypeText(announcement: EventAnnouncement): string {
+		const event = announcement.event;
+		const eventType = EVENT_TYPE_LABELS[event.eventType] || EVENT_TYPE_LABELS[EventType.RP];
+		return [
+			eventType,
+			event.adultOnly ? '18+' : null,
+			event.closedEvent ? 'Geschlossen' : null,
+		].filter((value): value is string => !!value).join(' | ');
+	}
+
+	private buildWarningText(announcement: EventAnnouncement): string | null {
+		const warnings = (announcement.event.contentNotes || [])
+			.map((note) => CONTENT_NOTE_LABELS[note.name] || note.name)
+			.filter((value) => value.length > 0);
+		return warnings.length > 0 ? warnings.join(' | ') : null;
 	}
 
 	private buildRegistrationText(announcement: EventAnnouncement): string | null {
