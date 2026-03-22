@@ -1205,20 +1205,34 @@ export default class PageEditVenue extends Vue {
 </script>
 
 <style lang="scss">
-.page-edit-venue {
+.page-edit-venue-layout {
   --edit-venue-select-group-border: rgba(221, 180, 118, 0.25);
   --edit-venue-select-group-bg: rgba(249, 247, 242, 0.95);
   --edit-venue-select-title-color: rgba(35, 35, 35, 0.7);
-  --edit-venue-drawer-bg: #9f848d;
+  --edit-venue-drawer-bg: linear-gradient(180deg, rgba(183, 159, 168, 0.98) 0%, rgba(159, 132, 141, 0.98) 100%);
+  --edit-venue-drawer-border: rgba(97, 80, 86, 0.3);
+  --edit-venue-drawer-top-glow: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, transparent 100%);
   --edit-venue-drawer-text: #1b1b1b;
+  --edit-venue-drawer-hover-bg: rgba(255, 255, 255, 0.2);
+  --edit-venue-drawer-hover-text: #111111;
+  --edit-venue-drawer-active-bg: rgba(255, 255, 255, 0.32);
+  --edit-venue-drawer-active-text: #111111;
+  --edit-venue-drawer-active-border: rgba(27, 27, 27, 0.32);
 }
 
-body.body--dark .page-edit-venue {
+body.body--dark .page-edit-venue-layout {
   --edit-venue-select-group-border: rgba(141, 181, 223, 0.3);
   --edit-venue-select-group-bg: rgba(17, 25, 37, 0.9);
   --edit-venue-select-title-color: rgba(213, 226, 240, 0.76);
-  --edit-venue-drawer-bg: #9f848d;
-  --edit-venue-drawer-text: #1b1b1b;
+  --edit-venue-drawer-bg: linear-gradient(180deg, rgba(31, 45, 64, 0.98) 0%, rgba(17, 25, 37, 0.98) 100%);
+  --edit-venue-drawer-border: rgba(141, 181, 223, 0.3);
+  --edit-venue-drawer-top-glow: linear-gradient(180deg, rgba(141, 181, 223, 0.16) 0%, transparent 100%);
+  --edit-venue-drawer-text: rgba(226, 237, 248, 0.95);
+  --edit-venue-drawer-hover-bg: rgba(141, 181, 223, 0.18);
+  --edit-venue-drawer-hover-text: #f2f7ff;
+  --edit-venue-drawer-active-bg: rgba(141, 181, 223, 0.26);
+  --edit-venue-drawer-active-text: #f2f7ff;
+  --edit-venue-drawer-active-border: rgba(141, 181, 223, 0.9);
 }
 
 .page-edit-venue__form-controls {
@@ -1324,16 +1338,31 @@ body.body--dark .page-edit-venue {
   font-family: $header-font;
 }
 
-.edit-drawer {
-  background-color: var(--edit-venue-drawer-bg);
+.edit-drawer.q-drawer--left {
+  background: var(--edit-venue-drawer-bg);
+  border-right: 1px solid var(--edit-venue-drawer-border);
+}
+
+.edit-drawer.q-drawer--left::before {
+  background: var(--edit-venue-drawer-top-glow);
 }
 
 .edit-drawer .q-item {
   color: var(--edit-venue-drawer-text);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+.edit-drawer .q-item:hover,
+.edit-drawer .q-item:first-child:hover {
+  color: var(--edit-venue-drawer-hover-text);
+  background: var(--edit-venue-drawer-hover-bg);
+}
+
+.edit-drawer .q-item.q-router-link--active,
 .edit-drawer .q-item.q-item--active {
-  background: rgba(255, 255, 255, 0.32);
+  color: var(--edit-venue-drawer-active-text);
+  background: var(--edit-venue-drawer-active-bg);
+  border-left: 3px solid var(--edit-venue-drawer-active-border);
 }
 
 @media screen and (max-width: $breakpoint-sm) {
