@@ -364,7 +364,8 @@
                     />
                   </div>
                   <div class="text-caption page-edit-venue__template-hint">
-                    Beim Erstellen eines Events wird automatisch der nächste passende Wochentag verwendet.
+                    Wenn ein Wochentag gesetzt ist, wird beim Erstellen automatisch der nächste passende Termin verwendet.
+                    Ohne Wochentag werden beim Erstellen nur Uhrzeiten vorbefüllt.
                   </div>
                   <div class="page-edit-venue__template-grid">
                     <q-select
@@ -871,7 +872,7 @@ export default class PageEditVenue extends Vue {
   }
 
   get hasStartTemplate(): boolean {
-    return this.venue.eventStartWeekday !== null && this.venue.eventStartWeekday !== undefined && !!this.venue.eventStartTime;
+    return !!this.venue.eventStartTime;
   }
 
   get registrationDeadlineSummary(): string {
@@ -895,11 +896,13 @@ export default class PageEditVenue extends Vue {
     const endTime = this.venue.eventEndTime;
     const endDurationDays = this.venue.eventEndDurationDays;
 
-    if (!startWeekday || !startTime) {
+    if (!startTime) {
       return 'Kein Beginn gesetzt. Wenn du Beginn leer lässt, wird beim Erstellen kein Zeitpunkt vorbefüllt.';
     }
 
-    const startLabel = `Beginn: ${this.getWeekdayLabel(startWeekday)} um ${startTime} Uhr.`;
+    const startLabel = startWeekday
+      ? `Beginn: ${this.getWeekdayLabel(startWeekday)} um ${startTime} Uhr.`
+      : `Beginn: um ${startTime} Uhr.`;
     if (endTime === null || endTime === undefined || endDurationDays === null || endDurationDays === undefined) {
       return `${startLabel} Kein Ende gesetzt.`;
     }
@@ -990,20 +993,23 @@ export default class PageEditVenue extends Vue {
     target.eventEndTime = this.normalizeOptionalTime(target.eventEndTime);
     target.eventEndDurationDays = this.normalizeOptionalNonNegativeInteger(target.eventEndDurationDays);
 
-    if (target.eventStartWeekday === null || target.eventStartTime === null) {
+    if (target.eventStartTime === null) {
       target.eventStartWeekday = null;
       target.eventStartTime = null;
+      target.eventStartDateTime = null;
+    } else if (target.eventStartWeekday === null) {
       target.eventStartDateTime = null;
     }
 
     if (
-      target.eventStartWeekday === null
-      || target.eventStartTime === null
+      target.eventStartTime === null
       || target.eventEndTime === null
       || target.eventEndDurationDays === null
     ) {
       target.eventEndTime = null;
       target.eventEndDurationDays = null;
+      target.eventEndDateTime = null;
+    } else if (target.eventStartWeekday === null) {
       target.eventEndDateTime = null;
     }
 

@@ -207,28 +207,126 @@
                         </q-icon>
                       </template>
                     </q-input>
-                    <q-date-time-picker
-                      v-if="startDateTimeVisible"
-                      label="Datum/Uhrzeit Beginn *"
-                      v-model="startDateTime"
-                      :display-value="startDateTimeDisplay"
-                      mode="datetime"
-                      first-day-of-week="1"
-                      format24h
-                      :rules="[
-                        $rules.required('Dieses Feld ist erforderlich.'),
-                      ]"
-                    />
-                    <q-date-time-picker
-                      v-if="endDateTimeVisible"
-                      label="Datum/Uhrzeit Ende"
-                      v-model="endDateTime"
-                      :display-value="endDateTimeDisplay"
-                      mode="datetime"
-                      first-day-of-week="1"
-                      format24h
-                      clearable
-                    />
+                    <div class="page-edit-event__date-time-grid">
+                      <q-input
+                        :model-value="startDateDisplay"
+                        readonly
+                        label="Beginn: Datum *"
+                        :rules="[
+                          $rules.required('Dieses Feld ist erforderlich.'),
+                        ]"
+                      >
+                        <template v-slot:append>
+                          <q-icon
+                            v-if="startDate || startTime"
+                            name="clear"
+                            class="cursor-pointer"
+                            @click.stop="clearStartDateTime"
+                          />
+                          <q-icon name="event" class="cursor-pointer">
+                            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                              <q-date
+                                v-model="startDate"
+                                mask="YYYY-MM-DD"
+                                first-day-of-week="1"
+                              >
+                                <div class="row items-center justify-end">
+                                  <q-btn v-close-popup label="Schließen" color="primary" flat />
+                                </div>
+                              </q-date>
+                            </q-popup-proxy>
+                          </q-icon>
+                        </template>
+                      </q-input>
+                      <q-input
+                        :model-value="startTime || ''"
+                        readonly
+                        label="Beginn: Uhrzeit *"
+                        :rules="[
+                          $rules.required('Dieses Feld ist erforderlich.'),
+                        ]"
+                      >
+                        <template v-slot:append>
+                          <q-icon
+                            v-if="startDate || startTime"
+                            name="clear"
+                            class="cursor-pointer"
+                            @click.stop="clearStartDateTime"
+                          />
+                          <q-icon name="access_time" class="cursor-pointer">
+                            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                              <q-time
+                                v-model="startTime"
+                                mask="HH:mm"
+                                format24h
+                              >
+                                <div class="row items-center justify-end">
+                                  <q-btn v-close-popup label="Schließen" color="primary" flat />
+                                </div>
+                              </q-time>
+                            </q-popup-proxy>
+                          </q-icon>
+                        </template>
+                      </q-input>
+                    </div>
+                    <div class="page-edit-event__date-time-grid">
+                      <q-input
+                        :model-value="endDateDisplay"
+                        readonly
+                        label="Ende: Datum"
+                        :rules="[() => validateEndDate()]"
+                      >
+                        <template v-slot:append>
+                          <q-icon
+                            v-if="endDate || endTime"
+                            name="clear"
+                            class="cursor-pointer"
+                            @click.stop="clearEndDateTime"
+                          />
+                          <q-icon name="event" class="cursor-pointer">
+                            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                              <q-date
+                                v-model="endDate"
+                                mask="YYYY-MM-DD"
+                                first-day-of-week="1"
+                              >
+                                <div class="row items-center justify-end">
+                                  <q-btn v-close-popup label="Schließen" color="primary" flat />
+                                </div>
+                              </q-date>
+                            </q-popup-proxy>
+                          </q-icon>
+                        </template>
+                      </q-input>
+                      <q-input
+                        :model-value="endTime || ''"
+                        readonly
+                        label="Ende: Uhrzeit"
+                        :rules="[() => validateEndTime()]"
+                      >
+                        <template v-slot:append>
+                          <q-icon
+                            v-if="endDate || endTime"
+                            name="clear"
+                            class="cursor-pointer"
+                            @click.stop="clearEndDateTime"
+                          />
+                          <q-icon name="access_time" class="cursor-pointer">
+                            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                              <q-time
+                                v-model="endTime"
+                                mask="HH:mm"
+                                format24h
+                              >
+                                <div class="row items-center justify-end">
+                                  <q-btn v-close-popup label="Schließen" color="primary" flat />
+                                </div>
+                              </q-time>
+                            </q-popup-proxy>
+                          </q-icon>
+                        </template>
+                      </q-input>
+                    </div>
                   </section>
                 </div>
               </q-expansion-item>
@@ -518,8 +616,6 @@ import { EventType } from '@app/shared/enums/event-type.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import errors from '@app/shared/errors';
 import SharedConstants from '@app/shared/SharedConstants';
-import { Component as QDateTimePicker } from '@toby.mosque/quasar-ui-qdatetimepicker';
-import '@toby.mosque/quasar-ui-qdatetimepicker/dist/index.css'; // Temp, move somewhere
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
 import { QForm } from 'quasar';
 import { EventTypeOptions } from 'src/common/event-types';
@@ -577,7 +673,6 @@ async function load(params: RouteParams): Promise<{
 
 @Options({
   components: {
-    QDateTimePicker,
     HtmlEditor,
     BannerEditSection,
     CharacterSelector,
@@ -591,33 +686,22 @@ async function load(params: RouteParams): Promise<{
 		const content = await load(to.params);
 		next(vm => (vm as PageEditEvent).setContent(content));
 	},
-	async beforeRouteUpdate(to) {
+  async beforeRouteUpdate(to) {
 		(this as PageEditEvent).setContent(await load(to.params));
 	},
   watch: {
-    startDateTime: {
-      handler(newValue: string, oldValue: string) {
-        // Workaround for validation message bug. Forces the date/time picker to be re-rendered on value change,
-        // thus resetting validation error messages.
-        if (newValue !== oldValue) {
-          const that = this as PageEditEvent;
-          that.event.startDateTime = that.toMillis(newValue)!;
-          that.startDateTimeVisible = false;
-          void that.$nextTick(() => that.startDateTimeVisible = true);
-        }
-      }
+    startDate() {
+      (this as PageEditEvent).syncStartDateTime();
     },
-    endDateTime: {
-      handler(newValue: string, oldValue: string) {
-        // Workaround for display bugs with the clear button
-        if (newValue !== oldValue) {
-          const that = this as PageEditEvent;
-          that.event.endDateTime = that.toMillis(newValue)!;
-          that.endDateTimeVisible = false;
-          void that.$nextTick(() => that.endDateTimeVisible = true);
-        }
-      }
-    }
+    startTime() {
+      (this as PageEditEvent).syncStartDateTime();
+    },
+    endDate() {
+      (this as PageEditEvent).syncEndDateTime();
+    },
+    endTime() {
+      (this as PageEditEvent).syncEndDateTime();
+    },
   }
 })
 export default class PageEditEvent extends Vue {
@@ -641,11 +725,10 @@ export default class PageEditEvent extends Vue {
   readonly minDiscordBannerAspectRatio = SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO;
   venueOptions: VenueOption[] = [];
 
-  startDateTime: string|null = null;
-  endDateTime: string|null = null;
-
-  startDateTimeVisible = true;
-  endDateTimeVisible = true;
+  startDate: string | null = null;
+  startTime: string | null = null;
+  endDate: string | null = null;
+  endTime: string | null = null;
 
   step = this.STEP_LOCATION;
   loaded = false;
@@ -657,6 +740,9 @@ export default class PageEditEvent extends Vue {
   factsBasicsExpanded = true;
   factsTimingExpanded = false;
   eventLinksExpanded = false;
+  private selectedVenueTemplateEndTime: string | null = null;
+  private selectedVenueTemplateEndDurationDays: number | null = null;
+  private syncingDateTimeFields = false;
 
   get canGoBack() {
     return this.step > this.STEP_LOCATION;
@@ -726,6 +812,8 @@ export default class PageEditEvent extends Vue {
     }
 
     this.venueOptions = [];
+    this.selectedVenueTemplateEndTime = null;
+    this.selectedVenueTemplateEndDurationDays = null;
     if (this.eventBackup.locations[0]?.venueId) {
       void this.seedVenueOption(this.eventBackup.locations[0].venueId);
     }
@@ -737,8 +825,8 @@ export default class PageEditEvent extends Vue {
     this.event = new EventEditDto(this.eventBackup);
     this.normalizeEvent(this.event);
     this.ensureSingleLocation(this.event);
-    this.startDateTime = this.fromMillis(this.event.startDateTime);
-    this.endDateTime = this.fromMillis(this.event.endDateTime);
+    this.setStartDateTimeFields(this.event.startDateTime);
+    this.setEndDateTimeFields(this.event.endDateTime);
     this.factsBasicsExpanded = true;
     this.factsTimingExpanded = false;
     this.eventLinksExpanded = (this.event.links?.length || 0) > 0;
@@ -785,52 +873,127 @@ export default class PageEditEvent extends Vue {
     ];
   }
 
-  private fromMillis(value: number|null): string|null {
+  private fromMillisToParts(value: number | null): { date: string | null; time: string | null } {
     if (!value) {
-      return null;
-    } else {
-      return DateTime.fromMillis(value, {
-        zone: SharedConstants.FFXIV_SERVER_TIMEZONE
-      }).toISO().substring(0, 16);
+      return {
+        date: null,
+        time: null,
+      };
     }
+
+    const dateTime = DateTime.fromMillis(value, {
+      zone: SharedConstants.FFXIV_SERVER_TIMEZONE,
+    });
+
+    return {
+      date: dateTime.toISODate(),
+      time: dateTime.toFormat('HH:mm'),
+    };
   }
 
-  private toMillis(value: string|null): number|null {
-    if (!value) {
+  private toMillisFromParts(date: string | null, time: string | null): number | null {
+    if (!date || !time) {
       return null;
     }
 
-    return DateTime.fromISO(value, {
-      zone: SharedConstants.FFXIV_SERVER_TIMEZONE
+    return DateTime.fromISO(`${date}T${time}`, {
+      zone: SharedConstants.FFXIV_SERVER_TIMEZONE,
     }).toMillis();
   }
 
-  get startDateTimeMillis(): number|null {
-    return this.toMillis(this.startDateTime);
+  private setStartDateTimeFields(value: number | null) {
+    this.syncingDateTimeFields = true;
+    const { date, time } = this.fromMillisToParts(value);
+    this.startDate = date;
+    this.startTime = time;
+    this.syncingDateTimeFields = false;
+    this.syncStartDateTime();
   }
 
-  get startDateTimeDisplay() {
-    const millis = this.startDateTimeMillis;
+  private setEndDateTimeFields(value: number | null) {
+    this.syncingDateTimeFields = true;
+    const { date, time } = this.fromMillisToParts(value);
+    this.endDate = date;
+    this.endTime = time;
+    this.syncingDateTimeFields = false;
+    this.syncEndDateTime();
+  }
 
-    if (!millis) {
-      return '';
+  private syncStartDateTime() {
+    if (this.syncingDateTimeFields) {
+      return;
     }
 
-    return this.$display.formatDateTimeServer(millis);
+    this.event.startDateTime = this.toMillisFromParts(this.startDate, this.startTime) as unknown as number;
+    this.applyPendingVenueEndTemplate();
   }
 
-  get endDateTimeMillis(): number|null {
-    return this.toMillis(this.endDateTime);
-  }
-
-  get endDateTimeDisplay() {
-    const millis = this.endDateTimeMillis;
-
-    if (!millis) {
-      return '';
+  private syncEndDateTime() {
+    if (this.syncingDateTimeFields) {
+      return;
     }
 
-    return this.$display.formatDateTimeServer(millis);
+    this.event.endDateTime = this.toMillisFromParts(this.endDate, this.endTime);
+  }
+
+  clearStartDateTime() {
+    this.startDate = null;
+    this.startTime = null;
+  }
+
+  clearEndDateTime() {
+    this.endDate = null;
+    this.endTime = null;
+  }
+
+  private applyPendingVenueEndTemplate() {
+    const startMillis = this.startDateTimeMillis;
+    if (
+      startMillis === null
+      || !this.selectedVenueTemplateEndTime
+      || this.selectedVenueTemplateEndDurationDays === null
+    ) {
+      return;
+    }
+
+    if (this.endDate && this.endTime) {
+      return;
+    }
+
+    if (this.endDate || (this.endTime && this.endTime !== this.selectedVenueTemplateEndTime)) {
+      return;
+    }
+
+    const end = this.resolveEndDateTimeFromTemplate(
+      startMillis,
+      this.selectedVenueTemplateEndTime,
+      this.selectedVenueTemplateEndDurationDays,
+    );
+    this.setEndDateTimeFields(end);
+  }
+
+  validateEndDate() {
+    return !this.endTime || !!this.endDate || 'Bitte wähle auch ein Enddatum.';
+  }
+
+  validateEndTime() {
+    return !this.endDate || !!this.endTime || 'Bitte wähle auch eine Enduhrzeit.';
+  }
+
+  get startDateDisplay() {
+    return this.startDate ? this.$display.formatDate(this.startDate) : '';
+  }
+
+  get endDateDisplay() {
+    return this.endDate ? this.$display.formatDate(this.endDate) : '';
+  }
+
+  get startDateTimeMillis(): number | null {
+    return this.toMillisFromParts(this.startDate, this.startTime);
+  }
+
+  get endDateTimeMillis(): number | null {
+    return this.toMillisFromParts(this.endDate, this.endTime);
   }
 
   private areRequiredDetailsComplete(step: number) {
@@ -1103,6 +1266,8 @@ export default class PageEditEvent extends Vue {
 
     if (!venueId) {
       location.venueId = undefined;
+      this.selectedVenueTemplateEndTime = null;
+      this.selectedVenueTemplateEndDurationDays = null;
       return;
     }
 
@@ -1120,6 +1285,8 @@ export default class PageEditEvent extends Vue {
         return;
       }
 
+      this.selectedVenueTemplateEndTime = venue.eventEndTime || null;
+      this.selectedVenueTemplateEndDurationDays = venue.eventEndDurationDays ?? null;
       this.applyVenueTemplate(venue);
       const summary = this.toVenueSummary(venue);
 
@@ -1246,21 +1413,32 @@ export default class PageEditEvent extends Vue {
       this.event.discordBanner = venue.eventDiscordBanner;
     }
 
-    if (!this.event.startDateTime) {
+    if (!this.startTime && venue.eventStartTime) {
+      if (!this.startDate && venue.eventStartWeekday) {
+        const start = this.resolveTemplateStartDateTime(venue);
+        if (start) {
+          this.setStartDateTimeFields(start);
+        } else {
+          this.startTime = venue.eventStartTime;
+        }
+      } else {
+        this.startTime = venue.eventStartTime;
+      }
+    } else if (!this.startDate && !this.startTime) {
       const start = this.resolveTemplateStartDateTime(venue);
       if (start) {
-        this.event.startDateTime = start;
-        this.startDateTime = this.fromMillis(start);
+        this.setStartDateTimeFields(start);
       }
     }
 
-    if (!this.event.endDateTime) {
-      const end = this.resolveTemplateEndDateTime(venue, this.event.startDateTime || null);
+    if (!this.endDate && !this.endTime && this.startDateTimeMillis !== null) {
+      const end = this.resolveTemplateEndDateTime(venue, this.startDateTimeMillis);
       if (end) {
-        this.event.endDateTime = end;
-        this.endDateTime = this.fromMillis(end);
+        this.setEndDateTimeFields(end);
       }
     }
+
+    this.applyPendingVenueEndTemplate();
 
     if ((!this.event.contentNotes || this.event.contentNotes.length === 0) && venue.eventContentNotes?.length) {
       this.event.contentNotes = [...venue.eventContentNotes];
@@ -1281,18 +1459,7 @@ export default class PageEditEvent extends Vue {
 
   private resolveTemplateEndDateTime(venue: VenueDto, startMillis: number | null): number | null {
     if (startMillis && venue.eventEndTime && venue.eventEndDurationDays !== null && venue.eventEndDurationDays !== undefined) {
-      const [hour, minute] = venue.eventEndTime.split(':').map((part) => parseInt(part, 10));
-      return DateTime.fromMillis(startMillis, {
-        zone: SharedConstants.FFXIV_SERVER_TIMEZONE,
-      })
-        .plus({ days: Math.max(0, Math.floor(venue.eventEndDurationDays)) })
-        .set({
-          hour,
-          minute,
-          second: 0,
-          millisecond: 0,
-        })
-        .toMillis();
+      return this.resolveEndDateTimeFromTemplate(startMillis, venue.eventEndTime, venue.eventEndDurationDays);
     }
 
     if (venue.eventEndDateTime) {
@@ -1300,6 +1467,21 @@ export default class PageEditEvent extends Vue {
     }
 
     return null;
+  }
+
+  private resolveEndDateTimeFromTemplate(startMillis: number, endTime: string, endDurationDays: number): number {
+    const [hour, minute] = endTime.split(':').map((part) => parseInt(part, 10));
+    return DateTime.fromMillis(startMillis, {
+      zone: SharedConstants.FFXIV_SERVER_TIMEZONE,
+    })
+      .plus({ days: Math.max(0, Math.floor(endDurationDays)) })
+      .set({
+        hour,
+        minute,
+        second: 0,
+        millisecond: 0,
+      })
+      .toMillis();
   }
 
   private resolveNextMatchingWeekdayTime(weekday: number, time: string): number {
@@ -1365,7 +1547,7 @@ export default class PageEditEvent extends Vue {
 
   onConfirmRevert() {
     // We use setContent instead of just reassigning from backup
-    // because startDateTime and endDateTime are not part of this.event but are part of form model
+    // because the split start/end date and time fields are managed outside this.event
     if (this.eventId) {
       this.setContent({
         event: this.eventBackup,
@@ -1577,6 +1759,13 @@ body.body--dark .page-edit-event {
   margin: 0;
 }
 
+.page-edit-event__date-time-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
 .page-edit-event__event-link-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
@@ -1600,6 +1789,10 @@ body.body--dark .page-edit-event {
 
 @media screen and (max-width: $breakpoint-sm) {
   .page-edit-event__options-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-edit-event__date-time-grid {
     grid-template-columns: 1fr;
   }
 

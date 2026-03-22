@@ -633,11 +633,20 @@ export class VenuesService {
     );
     const legacyStartDateTime = this.normalizeOptionalDateTime(venueDto.eventStartDateTime, 'eventStartDateTime');
     const legacyEndDateTime = this.normalizeOptionalDateTime(venueDto.eventEndDateTime, 'eventEndDateTime');
-    const effectiveStartWeekday = normalizedStartWeekday ?? this.toWeekdayFromDate(legacyStartDateTime);
-    const effectiveStartTime = normalizedStartTime ?? this.toTimeStringFromDate(legacyStartDateTime);
-    const effectiveEndTime = normalizedEndTime ?? this.toTimeStringFromDate(legacyEndDateTime);
-    const effectiveEndDurationDays = normalizedEndDurationDays
-      ?? (legacyStartDateTime && legacyEndDateTime
+    const hasExplicitStartTemplate = normalizedStartWeekday !== null || normalizedStartTime !== null;
+    const hasExplicitEndTemplate = normalizedEndTime !== null || normalizedEndDurationDays !== null;
+    const effectiveStartWeekday = hasExplicitStartTemplate
+      ? normalizedStartWeekday
+      : this.toWeekdayFromDate(legacyStartDateTime);
+    const effectiveStartTime = hasExplicitStartTemplate
+      ? normalizedStartTime
+      : this.toTimeStringFromDate(legacyStartDateTime);
+    const effectiveEndTime = hasExplicitEndTemplate
+      ? normalizedEndTime
+      : this.toTimeStringFromDate(legacyEndDateTime);
+    const effectiveEndDurationDays = hasExplicitEndTemplate
+      ? normalizedEndDurationDays
+      : (legacyStartDateTime && legacyEndDateTime
         ? Math.max(
             0,
             Math.floor(
@@ -648,16 +657,16 @@ export class VenuesService {
           )
         : null);
 
-    if ((effectiveStartWeekday === null) !== (effectiveStartTime === null)) {
-      throw new BadRequestException('eventStartWeekday and eventStartTime must be set together');
+    if (effectiveStartWeekday !== null && effectiveStartTime === null) {
+      throw new BadRequestException('eventStartTime is required when eventStartWeekday is set');
     }
 
     if ((effectiveEndTime === null) !== (effectiveEndDurationDays === null)) {
       throw new BadRequestException('eventEndTime and eventEndDurationDays must be set together');
     }
 
-    if (effectiveEndTime !== null && (effectiveStartWeekday === null || effectiveStartTime === null)) {
-      throw new BadRequestException('eventEndTime and eventEndDurationDays require eventStartWeekday and eventStartTime');
+    if (effectiveEndTime !== null && effectiveStartTime === null) {
+      throw new BadRequestException('eventEndTime and eventEndDurationDays require eventStartTime');
     }
 
     venue.eventStartWeekday = effectiveStartWeekday;

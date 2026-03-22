@@ -255,6 +255,40 @@ export default class PageCommunity extends Vue {
 </script>
 
 <style lang="scss">
+.page-community {
+  --community-members-surface-bg: rgba(255, 255, 255, 0.92);
+  --community-members-surface-border: rgba(221, 180, 118, 0.25);
+  --community-members-card-bg: #ffffff;
+  --community-members-card-border: rgba(221, 180, 118, 0.2);
+  --community-members-card-border-hover: rgba(221, 180, 118, 0.4);
+  --community-members-surface-shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.12);
+  --community-members-surface-shadow-md: 0 16px 32px rgba(0, 0, 0, 0.12);
+  --community-members-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+  --community-members-card-shadow-hover: 0 18px 32px rgba(0, 0, 0, 0.16);
+  --community-members-count: #20323d;
+  --community-members-name: #1f2c38;
+  --community-members-meta: rgba(35, 35, 35, 0.7);
+  --community-members-meta-muted: rgba(35, 35, 35, 0.65);
+  --community-members-empty: rgba(35, 35, 35, 0.7);
+}
+
+body.body--dark .page-community {
+  --community-members-surface-bg: rgba(17, 24, 34, 0.92);
+  --community-members-surface-border: rgba(141, 181, 223, 0.24);
+  --community-members-card-bg: rgba(21, 30, 43, 0.96);
+  --community-members-card-border: rgba(141, 181, 223, 0.24);
+  --community-members-card-border-hover: rgba(141, 181, 223, 0.4);
+  --community-members-surface-shadow-lg: 0 20px 42px rgba(0, 0, 0, 0.3);
+  --community-members-surface-shadow-md: 0 18px 34px rgba(0, 0, 0, 0.28);
+  --community-members-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
+  --community-members-card-shadow-hover: 0 18px 32px rgba(0, 0, 0, 0.34);
+  --community-members-count: rgba(226, 237, 248, 0.95);
+  --community-members-name: #f2f7ff;
+  --community-members-meta: rgba(213, 226, 240, 0.78);
+  --community-members-meta-muted: rgba(213, 226, 240, 0.68);
+  --community-members-empty: rgba(213, 226, 240, 0.78);
+}
+
 .page-community__edit-bar {
   display: flex;
   align-items: center;
@@ -276,9 +310,9 @@ export default class PageCommunity extends Vue {
   align-items: center;
   margin-bottom: 18px;
   padding: 20px 22px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--community-members-surface-border);
+  background: var(--community-members-surface-bg);
+  box-shadow: var(--community-members-surface-shadow-lg);
 }
 
 .page-community__members-header h3 {
@@ -290,7 +324,7 @@ export default class PageCommunity extends Vue {
 .page-community__members-count {
   font-family: $header-font;
   font-size: 1.05rem;
-  color: #20323d;
+  color: var(--community-members-count);
 }
 
 .page-community__members-grid {
@@ -298,22 +332,22 @@ export default class PageCommunity extends Vue {
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px;
   padding: 12px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--community-members-surface-border);
+  background: var(--community-members-surface-bg);
+  box-shadow: var(--community-members-surface-shadow-md);
 }
 
 .page-community__member-card {
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: #ffffff;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--community-members-card-border);
+  background: var(--community-members-card-bg);
+  box-shadow: var(--community-members-card-shadow);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .page-community__member-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
-  border-color: rgba(221, 180, 118, 0.4);
+  box-shadow: var(--community-members-card-shadow-hover);
+  border-color: var(--community-members-card-border-hover);
 }
 
 .page-community__member-link {
@@ -332,26 +366,26 @@ export default class PageCommunity extends Vue {
 
 .page-community__member-name {
   font-weight: 700;
-  color: #1f2c38;
+  color: var(--community-members-name);
 }
 
 .page-community__member-meta {
-  color: rgba(35, 35, 35, 0.7);
+  color: var(--community-members-meta);
   font-size: 0.85rem;
 }
 
 .page-community__member-profession {
-  color: rgba(35, 35, 35, 0.65);
+  color: var(--community-members-meta-muted);
   font-size: 0.85rem;
 }
 
 .page-community__members-empty {
   margin: 0;
   padding: 18px;
-  color: rgba(35, 35, 35, 0.7);
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  color: var(--community-members-empty);
+  border: 1px solid var(--community-members-card-border);
+  background: var(--community-members-surface-bg);
+  box-shadow: var(--community-members-surface-shadow-md);
   text-align: center;
 }
 
