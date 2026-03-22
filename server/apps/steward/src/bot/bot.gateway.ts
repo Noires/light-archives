@@ -1,6 +1,7 @@
 import { discordConfiguration } from "@app/configuration/discord.config";
 import { DiscordClientProvider, Once } from "@discord-nestjs/core";
 import { Injectable, Logger } from "@nestjs/common";
+import { MessageCreateOptions } from "discord.js";
 
 @Injectable()
 export class BotGateway {
@@ -19,15 +20,15 @@ export class BotGateway {
 		this.ready = true;
   }
 
-	async sendAnnouncement(message: string): Promise<void> {
+	async sendAnnouncement(message: string | MessageCreateOptions): Promise<void> {
 		return this.send(message, discordConfiguration.announcementChannel);
 	}
 
-	async sendNoticeboardItem(message: string): Promise<void> {
+	async sendNoticeboardItem(message: string | MessageCreateOptions): Promise<void> {
 		return this.send(message, discordConfiguration.noticeboardChannel);
 	}
 
-	private async send(message: string, channelId: string): Promise<void> {
+	private async send(message: string | MessageCreateOptions, channelId: string): Promise<void> {
 		if (!this.ready) {
 			throw new Error('Discord bot still initializing');
 		}
@@ -45,6 +46,11 @@ export class BotGateway {
 		if (!channel.isTextBased()) {
 			throw new Error('Cannot send messages to a non-text channel');
 		}
+
+		const messageOptions: MessageCreateOptions = typeof message === 'string'
+			? { content: message }
+			: { ...message };
+		const originalContent = messageOptions.content || '';
 		
 		// Resolve users
 
@@ -54,14 +60,14 @@ export class BotGateway {
 		const regex1 = /@([A-Za-z0-9_-]+)#([0-9]+)/g;
 
 		// eslint-disable-next-line no-cond-assign
-		while ((mention = regex1.exec(message)) !== null) {
+		while ((mention = regex1.exec(originalContent)) !== null) {
 			usersToFind.push(mention[1]);
 		}
 
 		const regex2 = /@\{([^}]+)\}/g;
 
 		// eslint-disable-next-line no-cond-assign
-		while ((mention = regex2.exec(message)) !== null) {
+		while ((mention = regex2.exec(originalContent)) !== null) {
 			usersToFind.push(mention[1]);
 		}
 
@@ -69,7 +75,7 @@ export class BotGateway {
 			query: username
 		})));
 
-		let replacedMessage = message;
+		let replacedMessage = originalContent;
 
 		replacedMessage = replacedMessage.replace(regex1, (substring, username, discriminator) => {
 			const members = guild.members.cache.filter(
@@ -108,11 +114,9 @@ export class BotGateway {
 			return substring;
 		});
 
-		// eslint-disable-next-line no-cond-assign
-		while ((mention = regex2.exec(message)) !== null) {
-			usersToFind.push(mention[1]);
-		}
-
-		await channel.send(replacedMessage);
+		await channel.send({
+			...messageOptions,
+			content: replacedMessage,
+		});
 	}
 }

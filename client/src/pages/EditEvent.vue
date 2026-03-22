@@ -274,14 +274,15 @@
                         :model-value="endDateDisplay"
                         readonly
                         label="Ende: Datum"
+                        :input-class="isEndDateImplicit ? 'page-edit-event__date-time-value--implicit' : ''"
                         :rules="[() => validateEndDate()]"
                       >
                         <template v-slot:append>
                           <q-icon
-                            v-if="endDate || endTime"
+                            v-if="endDate"
                             name="clear"
                             class="cursor-pointer"
-                            @click.stop="clearEndDateTime"
+                            @click.stop="clearEndDateOverride"
                           />
                           <q-icon name="event" class="cursor-pointer">
                             <q-popup-proxy cover transition-show="scale" transition-hide="scale">
@@ -306,10 +307,10 @@
                       >
                         <template v-slot:append>
                           <q-icon
-                            v-if="endDate || endTime"
+                            v-if="endTime"
                             name="clear"
                             class="cursor-pointer"
-                            @click.stop="clearEndDateTime"
+                            @click.stop="clearEndTime"
                           />
                           <q-icon name="access_time" class="cursor-pointer">
                             <q-popup-proxy cover transition-show="scale" transition-hide="scale">
@@ -513,7 +514,7 @@
           <section class="page-edit-event__section">
             <h6>Vorankündigungen</h6>
             <p class="page-edit-event__section-hint">
-              Der Chaos Archives Discord-Bot kann das Event im Kanal <tt>#rp-event-announcements</tt> ankündigen.
+              Der Elpisgarten Discord-Bot kann das Event im Kanal <tt>#rp-event-announcements</tt> ankündigen.
               Leere Texte werden beim Speichern automatisch aus Titel und Beschreibung befüllt.
             </p>
             <div class="page-edit-event__accordion">
@@ -740,8 +741,6 @@ export default class PageEditEvent extends Vue {
   factsBasicsExpanded = true;
   factsTimingExpanded = false;
   eventLinksExpanded = false;
-  private selectedVenueTemplateEndTime: string | null = null;
-  private selectedVenueTemplateEndDurationDays: number | null = null;
   private syncingDateTimeFields = false;
 
   get canGoBack() {
@@ -812,8 +811,6 @@ export default class PageEditEvent extends Vue {
     }
 
     this.venueOptions = [];
-    this.selectedVenueTemplateEndTime = null;
-    this.selectedVenueTemplateEndDurationDays = null;
     if (this.eventBackup.locations[0]?.venueId) {
       void this.seedVenueOption(this.eventBackup.locations[0].venueId);
     }
@@ -913,7 +910,7 @@ export default class PageEditEvent extends Vue {
   private setEndDateTimeFields(value: number | null) {
     this.syncingDateTimeFields = true;
     const { date, time } = this.fromMillisToParts(value);
-    this.endDate = date;
+    this.endDate = date && date !== this.startDate ? date : null;
     this.endTime = time;
     this.syncingDateTimeFields = false;
     this.syncEndDateTime();
@@ -925,7 +922,7 @@ export default class PageEditEvent extends Vue {
     }
 
     this.event.startDateTime = this.toMillisFromParts(this.startDate, this.startTime) as unknown as number;
-    this.applyPendingVenueEndTemplate();
+    this.syncEndDateTime();
   }
 
   private syncEndDateTime() {
@@ -933,7 +930,7 @@ export default class PageEditEvent extends Vue {
       return;
     }
 
-    this.event.endDateTime = this.toMillisFromParts(this.endDate, this.endTime);
+    this.event.endDateTime = this.toMillisFromParts(this.effectiveEndDate, this.endTime);
   }
 
   clearStartDateTime() {
@@ -941,39 +938,17 @@ export default class PageEditEvent extends Vue {
     this.startTime = null;
   }
 
-  clearEndDateTime() {
+  clearEndDateOverride() {
+    this.endDate = null;
+  }
+
+  clearEndTime() {
     this.endDate = null;
     this.endTime = null;
   }
 
-  private applyPendingVenueEndTemplate() {
-    const startMillis = this.startDateTimeMillis;
-    if (
-      startMillis === null
-      || !this.selectedVenueTemplateEndTime
-      || this.selectedVenueTemplateEndDurationDays === null
-    ) {
-      return;
-    }
-
-    if (this.endDate && this.endTime) {
-      return;
-    }
-
-    if (this.endDate || (this.endTime && this.endTime !== this.selectedVenueTemplateEndTime)) {
-      return;
-    }
-
-    const end = this.resolveEndDateTimeFromTemplate(
-      startMillis,
-      this.selectedVenueTemplateEndTime,
-      this.selectedVenueTemplateEndDurationDays,
-    );
-    this.setEndDateTimeFields(end);
-  }
-
   validateEndDate() {
-    return !this.endTime || !!this.endDate || 'Bitte wähle auch ein Enddatum.';
+    return !this.endTime || !!this.effectiveEndDate || 'Bitte wähle zuerst ein Beginndatum.';
   }
 
   validateEndTime() {
@@ -984,8 +959,16 @@ export default class PageEditEvent extends Vue {
     return this.startDate ? this.$display.formatDate(this.startDate) : '';
   }
 
+  get effectiveEndDate() {
+    return this.endDate || this.startDate;
+  }
+
+  get isEndDateImplicit() {
+    return !this.endDate && !!this.startDate;
+  }
+
   get endDateDisplay() {
-    return this.endDate ? this.$display.formatDate(this.endDate) : '';
+    return this.effectiveEndDate ? this.$display.formatDate(this.effectiveEndDate) : '';
   }
 
   get startDateTimeMillis(): number | null {
@@ -993,7 +976,7 @@ export default class PageEditEvent extends Vue {
   }
 
   get endDateTimeMillis(): number | null {
-    return this.toMillisFromParts(this.endDate, this.endTime);
+    return this.toMillisFromParts(this.effectiveEndDate, this.endTime);
   }
 
   private areRequiredDetailsComplete(step: number) {
@@ -1266,8 +1249,6 @@ export default class PageEditEvent extends Vue {
 
     if (!venueId) {
       location.venueId = undefined;
-      this.selectedVenueTemplateEndTime = null;
-      this.selectedVenueTemplateEndDurationDays = null;
       return;
     }
 
@@ -1285,8 +1266,6 @@ export default class PageEditEvent extends Vue {
         return;
       }
 
-      this.selectedVenueTemplateEndTime = venue.eventEndTime || null;
-      this.selectedVenueTemplateEndDurationDays = venue.eventEndDurationDays ?? null;
       this.applyVenueTemplate(venue);
       const summary = this.toVenueSummary(venue);
 
@@ -1436,9 +1415,10 @@ export default class PageEditEvent extends Vue {
       if (end) {
         this.setEndDateTimeFields(end);
       }
+    } else if (!this.endTime && venue.eventEndTime) {
+      this.endDate = null;
+      this.endTime = venue.eventEndTime;
     }
-
-    this.applyPendingVenueEndTemplate();
 
     if ((!this.event.contentNotes || this.event.contentNotes.length === 0) && venue.eventContentNotes?.length) {
       this.event.contentNotes = [...venue.eventContentNotes];
@@ -1764,6 +1744,10 @@ body.body--dark .page-edit-event {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 12px;
+}
+
+.page-edit-event__date-time-value--implicit {
+  color: var(--edit-event-section-hint) !important;
 }
 
 .page-edit-event__event-link-row {

@@ -1,5 +1,5 @@
 export default Object.freeze({
-	FFXIV_SERVER_TIMEZONE: 'UTC',
+	FFXIV_SERVER_TIMEZONE: 'Europe/Berlin',
 	DATACENTERS: [ 'Chaos', 'Light' ],
 	MAX_UPLOAD_SIZE: 1024 * 1024,
 	MIN_BANNER_ASPECT_RATIO: 4 / 1,

@@ -128,7 +128,7 @@ class Display {
 	formatDateTimeServer(timestamp: number) {
 		return DateTime.fromMillis(timestamp).setZone(SharedConstants.FFXIV_SERVER_TIMEZONE).toFormat(DATE_TIME_FORMAT,
 			{ locale: 'de-DE' },
-		) + ' ST';
+		);
 	}
 
 	formatDateTimeLocal(timestamp: number) {
