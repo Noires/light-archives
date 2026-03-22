@@ -2,10 +2,28 @@
   <q-page class="page-edit-event">
     <template v-if="loaded">
       <h2>{{ eventId ? 'Event bearbeiten' : 'Neues Event erstellen' }}</h2>
-      <q-form ref="form" @submit="onSubmit">
-        <template v-if="!preview">
-          <section class="page-edit-event__section">
-            <h6>1. Treffpunkt und Vorlage</h6>
+      <q-stepper
+        v-model="step"
+        class="page-edit-event__stepper"
+        color="secondary"
+        animated
+        bordered
+        flat
+        keep-alive
+        header-nav
+        alternative-labels
+        :contracted="$q.screen.lt.lg"
+        :vertical="$q.screen.lt.md"
+      >
+        <q-step
+          :name="STEP_LOCATION"
+          title="Treffpunkt"
+          icon="place"
+          :header-nav="canHeaderNavigateTo(STEP_LOCATION)"
+          :done="step > STEP_LOCATION"
+        >
+          <q-form ref="locationForm" class="page-edit-event__section">
+            <h6>Treffpunkt und Vorlage</h6>
             <p class="page-edit-event__section-hint">
               Verknüpfe zuerst einen Treffpunkt. So wird die Eventvorlage direkt übernommen und du sparst dir viele manuelle Eingaben.
             </p>
@@ -67,204 +85,402 @@
                 label="Standort-Linktext (optional)"
               />
             </section>
-          </section>
+          </q-form>
+        </q-step>
 
-          <section class="page-edit-event__section">
-            <h6>2. Eckdaten</h6>
-            <section class="page-edit-event__form-controls">
-              <q-input
-                v-model="event.title"
-                label="Titel *"
-                :rules="[
-                  $rules.required('Dieses Feld ist erforderlich.'),
-                ]"
-              />
-              <div class="page-edit-event__select-group">
-                <div class="page-edit-event__select-title">Event-Typ *</div>
-                <q-option-group
-                  v-model="event.eventType"
-                  :options="eventTypeOptions"
-                  type="radio"
-                  color="secondary"
-                  class="page-edit-event__options-grid"
-                  :rules="[
-                    $rules.required('Dieses Feld ist erforderlich.'),
-                  ]"
-                />
-              </div>
-              <div class="page-edit-event__select-group">
-                <div class="page-edit-event__select-title">Nicht jugendfrei (18+)</div>
-                <adult-only-selector v-model="event.adultOnly" />
-                <div class="text-caption">
-                  Markiere das Event als 18+, wenn es Inhalte nur für Erwachsene enthält.
-                </div>
-              </div>
-              <div class="page-edit-event__select-group">
-                <div class="page-edit-event__select-title">Inhaltswarnungen</div>
-                <q-option-group
-                  v-model="event.contentNotes"
-                  :options="contentNoteOptions"
-                  type="checkbox"
-                  color="secondary"
-                  class="page-edit-event__options-grid"
-                />
-              </div>
-              <div class="page-edit-event__select-group">
-                <div class="page-edit-event__select-title">Geschlossenes Event</div>
-                <q-option-group
-                  v-model="event.closedEvent"
-                  :options="yesNoOptions"
-                  type="radio"
-                  color="secondary"
-                  inline
-                />
-                <div class="text-caption">
-                  Teilnahme nur mit Anmeldung bis zur Frist. Nach Ablauf der Frist sind keine Zu- oder Absagen mehr möglich.
-                </div>
-              </div>
-              <q-input
-                v-if="event.closedEvent"
-                v-model.number="event.registrationDeadlineDays"
-                type="number"
-                min="0"
-                label="Anmeldefrist (Tage vor Beginn)"
-              />
-              <q-input
-                v-if="event.closedEvent"
-                :model-value="event.registrationDeadlineTime || ''"
-                readonly
-                label="Anmeldefrist Uhrzeit (optional)"
+        <q-step
+          :name="STEP_FACTS"
+          title="Eckdaten"
+          icon="schedule"
+          :header-nav="canHeaderNavigateTo(STEP_FACTS)"
+          :done="step > STEP_FACTS"
+        >
+          <q-form ref="factsForm" class="page-edit-event__section">
+            <h6>Eckdaten</h6>
+            <div class="page-edit-event__accordion">
+              <q-expansion-item
+                v-model="factsBasicsExpanded"
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-facts"
+                icon="sell"
+                label="Titel und Typ"
               >
-                <template v-slot:append>
-                  <q-icon
-                    v-if="event.registrationDeadlineTime"
-                    name="clear"
-                    class="cursor-pointer"
-                    @click.stop="event.registrationDeadlineTime = null"
-                  />
-                  <q-icon name="access_time" class="cursor-pointer">
-                    <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                      <q-time
-                        v-model="event.registrationDeadlineTime"
-                        mask="HH:mm"
-                        format24h
-                      >
-                        <div class="row items-center justify-end">
-                          <q-btn v-close-popup label="Schließen" color="primary" flat />
-                        </div>
-                      </q-time>
-                    </q-popup-proxy>
-                  </q-icon>
-                </template>
-              </q-input>
-              <q-date-time-picker
-                v-if="startDateTimeVisible"
-                label="Datum/Uhrzeit Beginn *"
-                v-model="startDateTime"
-                :display-value="startDateTimeDisplay"
-                mode="datetime"
-                first-day-of-week="1"
-                format24h
-                :rules="[
-                  $rules.required('Dieses Feld ist erforderlich.'),
-                ]"
-              />
-              <q-date-time-picker
-                v-if="endDateTimeVisible"
-                label="Datum/Uhrzeit Ende"
-                v-model="endDateTime"
-                :display-value="endDateTimeDisplay"
-                mode="datetime"
-                first-day-of-week="1"
-                format24h
-                clearable
-              />
-            </section>
-          </section>
+                <div class="page-edit-event__expansion-body">
+                  <section class="page-edit-event__form-controls">
+                    <q-input
+                      v-model="event.title"
+                      label="Titel *"
+                      :rules="[
+                        $rules.required('Dieses Feld ist erforderlich.'),
+                      ]"
+                    />
+                    <div class="page-edit-event__select-group">
+                      <div class="page-edit-event__select-title">Event-Typ *</div>
+                      <q-option-group
+                        v-model="event.eventType"
+                        :options="eventTypeOptions"
+                        type="radio"
+                        color="secondary"
+                        class="page-edit-event__options-grid"
+                        :rules="[
+                          $rules.required('Dieses Feld ist erforderlich.'),
+                        ]"
+                      />
+                    </div>
+                    <div class="page-edit-event__select-group">
+                      <div class="page-edit-event__select-title">Nicht jugendfrei (18+)</div>
+                      <adult-only-selector v-model="event.adultOnly" />
+                      <div class="text-caption">
+                        Markiere das Event als 18+, wenn es Inhalte nur für Erwachsene enthält.
+                      </div>
+                    </div>
+                    <div class="page-edit-event__select-group">
+                      <div class="page-edit-event__select-title">Inhaltswarnungen</div>
+                      <q-option-group
+                        v-model="event.contentNotes"
+                        :options="contentNoteOptions"
+                        type="checkbox"
+                        color="secondary"
+                        class="page-edit-event__options-grid"
+                      />
+                    </div>
+                  </section>
+                </div>
+              </q-expansion-item>
 
+              <q-expansion-item
+                v-model="factsTimingExpanded"
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-facts"
+                icon="event"
+                label="Zeit und Teilnahme"
+              >
+                <div class="page-edit-event__expansion-body">
+                  <section class="page-edit-event__form-controls">
+                    <div class="page-edit-event__select-group">
+                      <div class="page-edit-event__select-title">Geschlossenes Event</div>
+                      <q-option-group
+                        v-model="event.closedEvent"
+                        :options="yesNoOptions"
+                        type="radio"
+                        color="secondary"
+                        inline
+                      />
+                      <div class="text-caption">
+                        Teilnahme nur mit Anmeldung bis zur Frist. Nach Ablauf der Frist sind keine Zu- oder Absagen mehr möglich.
+                      </div>
+                    </div>
+                    <q-input
+                      v-if="event.closedEvent"
+                      v-model.number="event.registrationDeadlineDays"
+                      type="number"
+                      min="0"
+                      label="Anmeldefrist (Tage vor Beginn)"
+                    />
+                    <q-input
+                      v-if="event.closedEvent"
+                      :model-value="event.registrationDeadlineTime || ''"
+                      readonly
+                      label="Anmeldefrist Uhrzeit (optional)"
+                    >
+                      <template v-slot:append>
+                        <q-icon
+                          v-if="event.registrationDeadlineTime"
+                          name="clear"
+                          class="cursor-pointer"
+                          @click.stop="event.registrationDeadlineTime = null"
+                        />
+                        <q-icon name="access_time" class="cursor-pointer">
+                          <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                            <q-time
+                              v-model="event.registrationDeadlineTime"
+                              mask="HH:mm"
+                              format24h
+                            >
+                              <div class="row items-center justify-end">
+                                <q-btn v-close-popup label="Schließen" color="primary" flat />
+                              </div>
+                            </q-time>
+                          </q-popup-proxy>
+                        </q-icon>
+                      </template>
+                    </q-input>
+                    <q-date-time-picker
+                      v-if="startDateTimeVisible"
+                      label="Datum/Uhrzeit Beginn *"
+                      v-model="startDateTime"
+                      :display-value="startDateTimeDisplay"
+                      mode="datetime"
+                      first-day-of-week="1"
+                      format24h
+                      :rules="[
+                        $rules.required('Dieses Feld ist erforderlich.'),
+                      ]"
+                    />
+                    <q-date-time-picker
+                      v-if="endDateTimeVisible"
+                      label="Datum/Uhrzeit Ende"
+                      v-model="endDateTime"
+                      :display-value="endDateTimeDisplay"
+                      mode="datetime"
+                      first-day-of-week="1"
+                      format24h
+                      clearable
+                    />
+                  </section>
+                </div>
+              </q-expansion-item>
+            </div>
+          </q-form>
+        </q-step>
+
+        <q-step
+          :name="STEP_CONTENT"
+          title="Inhalte"
+          icon="article"
+          :header-nav="canHeaderNavigateTo(STEP_CONTENT)"
+          :done="step > STEP_CONTENT"
+        >
           <section class="page-edit-event__section">
-            <h6>3. Inhalte, Kontakt und Links</h6>
-            <h6>Event-Beschreibung</h6>
-            <html-editor v-model="event.details" />
-            <h6>OOC-Details</h6>
-            <html-editor v-model="event.oocDetails" />
-            <h6>Extra-Infos</h6>
-            <html-editor v-model="event.extraInfo" />
-            <q-input
-              v-model="event.contact"
-              label="Event-Kontakt"
-            />
-            <h6>Event-Links</h6>
-            <template v-for="(_, index) in (event.links || [])" :key="`event-link-${index}`">
-              <div class="page-edit-event__event-link-row">
-                <q-input
-                  v-model="event.links[index].url"
-                  label="Link"
-                  :rules="[
-                    $rules.url('Bitte hinterlasse einen Link.'),
-                  ]"
-                />
-                <q-input
-                  v-model="event.links[index].label"
-                  label="Linktext (optional)"
-                />
-                <q-btn
-                  flat
-                  color="negative"
-                  icon="delete"
-                  aria-label="Event-Link entfernen"
-                  @click="removeEventLink(index)"
-                />
-              </div>
-            </template>
+            <h6>Inhalte</h6>
+            <div class="page-edit-event__accordion">
+              <q-expansion-item
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-content"
+                icon="article"
+                label="Event-Beschreibung"
+                default-opened
+              >
+                <div class="page-edit-event__expansion-body">
+                  <html-editor v-model="event.details" />
+                </div>
+              </q-expansion-item>
+              <q-expansion-item
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-content"
+                icon="info"
+                label="OOC-Details"
+              >
+                <div class="page-edit-event__expansion-body">
+                  <html-editor v-model="event.oocDetails" />
+                </div>
+              </q-expansion-item>
+              <q-expansion-item
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-content"
+                icon="notes"
+                label="Extra-Infos"
+              >
+                <div class="page-edit-event__expansion-body">
+                  <html-editor v-model="event.extraInfo" />
+                </div>
+              </q-expansion-item>
+            </div>
+          </section>
+        </q-step>
+
+        <q-step
+          :name="STEP_CONTACT"
+          title="Kontakt"
+          icon="link"
+          :header-nav="canHeaderNavigateTo(STEP_CONTACT)"
+          :done="step > STEP_CONTACT"
+        >
+          <q-form ref="contactForm" class="page-edit-event__section">
+            <h6>Kontakt und Links</h6>
+            <div class="page-edit-event__accordion">
+              <q-expansion-item
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-contact"
+                icon="contact_mail"
+                label="Kontakt"
+                :default-opened="!eventLinksExpanded"
+              >
+                <div class="page-edit-event__expansion-body">
+                  <q-input
+                    v-model="event.contact"
+                    label="Event-Kontakt"
+                  />
+                </div>
+              </q-expansion-item>
+              <q-expansion-item
+                v-model="eventLinksExpanded"
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-contact"
+                icon="link"
+                label="Event-Links"
+              >
+                <div class="page-edit-event__expansion-body">
+                  <template v-for="(_, index) in (event.links || [])" :key="`event-link-${index}`">
+                    <div class="page-edit-event__event-link-row">
+                      <q-input
+                        v-model="event.links[index].url"
+                        label="Link"
+                        :rules="[
+                          $rules.url('Bitte hinterlasse einen Link.'),
+                        ]"
+                      />
+                      <q-input
+                        v-model="event.links[index].label"
+                        label="Linktext (optional)"
+                      />
+                      <q-btn
+                        flat
+                        color="negative"
+                        icon="delete"
+                        aria-label="Event-Link entfernen"
+                        @click="removeEventLink(index)"
+                      />
+                    </div>
+                  </template>
+                </div>
+              </q-expansion-item>
+            </div>
             <div class="page-edit-event__inline-actions">
               <q-btn flat color="secondary" icon="add" label="Event-Link hinzufügen" @click="addEventLink" />
             </div>
+          </q-form>
+        </q-step>
+
+        <q-step
+          :name="STEP_MEDIA"
+          title="Medien"
+          icon="image"
+          :header-nav="canHeaderNavigateTo(STEP_MEDIA)"
+          :done="step > STEP_MEDIA"
+        >
+          <section class="page-edit-event__section">
+            <h6>Medien</h6>
+            <div class="page-edit-event__accordion">
+              <q-expansion-item
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-media"
+                icon="photo"
+                label="Event-Icon"
+                default-opened
+              >
+                <div class="page-edit-event__expansion-body">
+                  <event-icon-edit-section v-model="event.icon" />
+                </div>
+              </q-expansion-item>
+              <q-expansion-item
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-media"
+                icon="image"
+                label="Banner"
+              >
+                <div class="page-edit-event__expansion-body">
+                  <banner-edit-section v-model="event.banner" />
+                </div>
+              </q-expansion-item>
+              <q-expansion-item
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-media"
+                icon="chat"
+                label="Discord-Banner"
+              >
+                <div class="page-edit-event__expansion-body">
+                  <banner-edit-section
+                    v-model="event.discordBanner"
+                    title="Discord-Banner"
+                    :ratio="5 / 2"
+                    :min-aspect-ratio="minDiscordBannerAspectRatio"
+                    hint="Mindestens 5:2 (Breite:Höhe), empfohlen 1500x600. Formate: JPG/PNG, max. 1 MiB. Beim Hochladen kannst du den Ausschnitt zuschneiden."
+                  />
+                </div>
+              </q-expansion-item>
+            </div>
           </section>
 
-          <section class="page-edit-event__section">
-            <h6>4. Medien</h6>
-            <event-icon-edit-section v-model="event.icon" />
-            <banner-edit-section v-model="event.banner" />
-            <banner-edit-section
-              v-model="event.discordBanner"
-              title="Discord-Banner"
-              :ratio="5 / 2"
-              :min-aspect-ratio="minDiscordBannerAspectRatio"
-              hint="Mindestens 5:2 (Breite:Höhe), empfohlen 1500x600. Formate: JPG/PNG, max. 1 MiB. Beim Hochladen kannst du den Ausschnitt zuschneiden."
-            />
-          </section>
+        </q-step>
+
+        <q-step
+          :name="STEP_DISCORD"
+          title="Discord"
+          icon="campaign"
+          :header-nav="canHeaderNavigateTo(STEP_DISCORD)"
+          :done="step > STEP_DISCORD"
+        >
 
           <section class="page-edit-event__section">
-            <h6>5. Vorankündigungen</h6>
+            <h6>Vorankündigungen</h6>
             <p class="page-edit-event__section-hint">
               Der Chaos Archives Discord-Bot kann das Event im Kanal <tt>#rp-event-announcements</tt> ankündigen.
               Leere Texte werden beim Speichern automatisch aus Titel und Beschreibung befüllt.
             </p>
-            <template v-for="(_, index) in event.announcements" :key="index">
-              <event-announcement-editor v-model="event.announcements[index]" @remove="removeAnnouncement(index)" />
-            </template>
+            <div class="page-edit-event__accordion">
+              <q-expansion-item
+                v-for="(announcement, index) in event.announcements"
+                :key="index"
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-discord"
+                icon="campaign"
+                :label="`Vorankündigung ${index + 1}`"
+                :caption="announcementCaption(announcement.minutesBefore)"
+                :default-opened="index === 0"
+              >
+                <div class="page-edit-event__expansion-body">
+                  <event-announcement-editor v-model="event.announcements[index]" @remove="removeAnnouncement(index)" />
+                </div>
+              </q-expansion-item>
+            </div>
             <div class="page-edit-event__inline-actions">
               <q-btn flat color="secondary" icon="add" label="Vorankündigung hinzufügen" @click="addAnnouncement" />
             </div>
           </section>
+        </q-step>
+
+        <q-step
+          :name="STEP_PREVIEW"
+          title="Vorschau"
+          icon="visibility"
+          :header-nav="canHeaderNavigateTo(STEP_PREVIEW)"
+        >
+          <section class="page-edit-event__preview">
+            <event-view :event="event" :preview="true" />
+          </section>
+        </q-step>
+
+        <template v-slot:navigation>
+          <q-stepper-navigation class="page-edit-event__button-bar">
+            <q-btn label="Zurücksetzen" color="secondary" @click="revert" />
+            <div class="page-edit-event__wizard-actions">
+              <q-btn
+                v-if="canGoBack"
+                flat
+                color="secondary"
+                label="Zurück"
+                @click="goToPreviousStep"
+              />
+              <q-btn
+                v-if="canGoNext"
+                flat
+                color="primary"
+                :label="step === STEP_DISCORD ? 'Zur Vorschau' : 'Weiter'"
+                @click="goToNextStep"
+              />
+              <q-btn
+                v-else
+                label="Änderungen speichern"
+                color="primary"
+                @click="onSubmit"
+              />
+            </div>
+          </q-stepper-navigation>
         </template>
-        <section v-else class="page-edit-event__preview">
-          <event-view :event="event" :preview="true" />
-        </section>
-        <div class="page-edit-event__button-bar">
-          <q-btn-toggle
-            v-model="preview"
-            :options="previewOptions"
-            toggle-color="secondary"
-          />
-          <div class="page-edit-event__revert-submit">
-            <q-btn label="Zurücksetzen" color="secondary" @click="revert" />&nbsp;
-            <q-btn label="Änderungen speichern" type="submit" color="primary" />
-          </div>
-        </div>
-        <q-inner-loading :showing="saving" />
-      </q-form>
+      </q-stepper>
+      <q-inner-loading :showing="saving" />
     </template>
     <q-spinner v-else />
 
@@ -305,6 +521,7 @@ import SharedConstants from '@app/shared/SharedConstants';
 import { Component as QDateTimePicker } from '@toby.mosque/quasar-ui-qdatetimepicker';
 import '@toby.mosque/quasar-ui-qdatetimepicker/dist/index.css'; // Temp, move somewhere
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
+import { QForm } from 'quasar';
 import { EventTypeOptions } from 'src/common/event-types';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
 import EventAnnouncementEditor from 'components/event/EventAnnouncementEditor.vue';
@@ -404,10 +621,13 @@ async function load(params: RouteParams): Promise<{
   }
 })
 export default class PageEditEvent extends Vue {
-  readonly previewOptions = [
-    { label: 'Bearbeitung', value: false },
-    { label: 'Vorschau', value: true },
-  ];
+  readonly STEP_LOCATION = 1;
+  readonly STEP_FACTS = 2;
+  readonly STEP_CONTENT = 3;
+  readonly STEP_CONTACT = 4;
+  readonly STEP_MEDIA = 5;
+  readonly STEP_DISCORD = 6;
+  readonly STEP_PREVIEW = 7;
   readonly yesNoOptions = [
     { label: 'Ja', value: true },
     { label: 'Nein', value: false },
@@ -427,13 +647,38 @@ export default class PageEditEvent extends Vue {
   startDateTimeVisible = true;
   endDateTimeVisible = true;
 
-  preview = false;
+  step = this.STEP_LOCATION;
   loaded = false;
   saving = false;
 
   confirmRevert = false;
 
   selectedCharacterId: number | null = null;
+  factsBasicsExpanded = true;
+  factsTimingExpanded = false;
+  eventLinksExpanded = false;
+
+  get canGoBack() {
+    return this.step > this.STEP_LOCATION;
+  }
+
+  get canGoNext() {
+    return this.step < this.STEP_PREVIEW;
+  }
+
+  canHeaderNavigateTo(targetStep: number) {
+    if (targetStep <= this.step) {
+      return true;
+    }
+
+    for (let step = this.STEP_LOCATION; step < targetStep; step += 1) {
+      if (!this.areRequiredDetailsComplete(step)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 
   setContent(content: { event: EventEditDto | null; eventId: number | null; contentNotes?: { name: string }[] }) {
     if (content.contentNotes) {
@@ -494,6 +739,9 @@ export default class PageEditEvent extends Vue {
     this.ensureSingleLocation(this.event);
     this.startDateTime = this.fromMillis(this.event.startDateTime);
     this.endDateTime = this.fromMillis(this.event.endDateTime);
+    this.factsBasicsExpanded = true;
+    this.factsTimingExpanded = false;
+    this.eventLinksExpanded = (this.event.links?.length || 0) > 0;
   }
 
   private normalizeEvent(target: EventEditDto) {
@@ -585,11 +833,164 @@ export default class PageEditEvent extends Vue {
     return this.$display.formatDateTimeServer(millis);
   }
 
+  private areRequiredDetailsComplete(step: number) {
+    switch (step) {
+      case this.STEP_LOCATION:
+        return this.hasLocationRequiredDetails();
+      case this.STEP_FACTS:
+        return this.hasFactsBasicsRequiredDetails() && this.hasFactsTimingRequiredDetails();
+      default:
+        return true;
+    }
+  }
+
+  private hasLocationRequiredDetails() {
+    const location = this.event.locations[0];
+    return (this.eventId !== null || this.selectedCharacterId !== null)
+      && !!location?.name?.trim()
+      && !!location?.server;
+  }
+
+  private hasFactsBasicsRequiredDetails() {
+    return !!this.event.title?.trim() && !!this.event.eventType;
+  }
+
+  private hasFactsTimingRequiredDetails() {
+    return this.startDateTimeMillis !== null;
+  }
+
+  private hasInvalidEventLinks() {
+    return (this.event.links || []).some((link) => {
+      const url = (link?.url || '').trim();
+      if (url.length === 0) {
+        return false;
+      }
+
+      try {
+        const parsedUrl = new URL(url);
+        return parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:';
+      } catch {
+        return true;
+      }
+    });
+  }
+
+  private expandPanelsForValidation(step: number) {
+    if (step === this.STEP_FACTS) {
+      if (!this.hasFactsBasicsRequiredDetails()) {
+        this.factsBasicsExpanded = true;
+        this.factsTimingExpanded = false;
+      } else if (!this.hasFactsTimingRequiredDetails()) {
+        this.factsBasicsExpanded = false;
+        this.factsTimingExpanded = true;
+      }
+    }
+
+    if (step === this.STEP_CONTACT && this.hasInvalidEventLinks()) {
+      this.eventLinksExpanded = true;
+    }
+  }
+
+  async goToNextStep() {
+    if (!(await this.validateStep(this.step))) {
+      return;
+    }
+
+    if (this.canGoNext) {
+      this.step += 1;
+    }
+  }
+
+  goToPreviousStep() {
+    if (this.canGoBack) {
+      this.step -= 1;
+    }
+  }
+
+  private getValidationRefs(step: number): string[] {
+    switch (step) {
+      case this.STEP_LOCATION:
+        return ['locationForm'];
+      case this.STEP_FACTS:
+        return ['factsForm'];
+      case this.STEP_CONTACT:
+        return ['contactForm'];
+      default:
+        return [];
+    }
+  }
+
+  private getFormRef(refName: string): QForm | null {
+    const form = this.$refs[refName] as QForm | QForm[] | undefined;
+    return Array.isArray(form) ? form[0] || null : form || null;
+  }
+
+  private async validateStep(step: number): Promise<boolean> {
+    this.expandPanelsForValidation(step);
+
+    for (const refName of this.getValidationRefs(step)) {
+      const form = this.getFormRef(refName);
+      if (form && await form.validate() !== true) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private async validateForSubmit(): Promise<boolean> {
+    const currentStep = this.step;
+
+    for (const validationStep of [this.STEP_LOCATION, this.STEP_FACTS, this.STEP_CONTACT]) {
+      if (this.step !== validationStep) {
+        this.step = validationStep;
+        await this.$nextTick();
+      }
+
+      if (!(await this.validateStep(validationStep))) {
+        return false;
+      }
+    }
+
+    if (this.step !== currentStep) {
+      this.step = currentStep;
+      await this.$nextTick();
+    }
+
+    return true;
+  }
+
   addAnnouncement() {
     this.event.announcements.push(new EventAnnouncementDto({
       minutesBefore: 20160,
       content: '',
     }));
+  }
+
+  announcementCaption(minutesBefore: number) {
+    if (minutesBefore === 0) {
+      return 'Zum Eventbeginn';
+    }
+
+    const absoluteMinutes = Math.abs(minutesBefore);
+    const direction = minutesBefore > 0 ? 'vorher' : 'nach Beginn';
+
+    if (absoluteMinutes % 10080 === 0) {
+      const weeks = absoluteMinutes / 10080;
+      return `${weeks} ${weeks === 1 ? 'Woche' : 'Wochen'} ${direction}`;
+    }
+
+    if (absoluteMinutes % 1440 === 0) {
+      const days = absoluteMinutes / 1440;
+      return `${days} ${days === 1 ? 'Tag' : 'Tage'} ${direction}`;
+    }
+
+    if (absoluteMinutes % 60 === 0) {
+      const hours = absoluteMinutes / 60;
+      return `${hours} ${hours === 1 ? 'Stunde' : 'Stunden'} ${direction}`;
+    }
+
+    return `${absoluteMinutes} Minuten ${direction}`;
   }
 
   removeAnnouncement(index: number) {
@@ -605,6 +1006,7 @@ export default class PageEditEvent extends Vue {
       url: '',
       label: '',
     }));
+    this.eventLinksExpanded = true;
   }
 
   removeEventLink(index: number) {
@@ -613,6 +1015,9 @@ export default class PageEditEvent extends Vue {
     }
 
     this.event.links.splice(index, 1);
+    if (this.event.links.length === 0) {
+      this.eventLinksExpanded = false;
+    }
   }
 
   newLocation() {
@@ -738,6 +1143,7 @@ export default class PageEditEvent extends Vue {
       }
 
       this.applyVenueToLocation(updatedLocation, summary);
+      this.eventLinksExpanded = (this.event.links?.length || 0) > 0;
     } catch (e) {
       notifyError(e);
     }
@@ -974,6 +1380,10 @@ export default class PageEditEvent extends Vue {
   }
 
   async onSubmit() {
+    if (!(await this.validateForSubmit())) {
+      return;
+    }
+
     this.saving = true;
 
     try {
@@ -1088,6 +1498,41 @@ body.body--dark .page-edit-event {
   flex-grow: 1;
 }
 
+.page-edit-event__stepper {
+  margin-bottom: 18px;
+  background: transparent;
+}
+
+.page-edit-event__accordion {
+  display: grid;
+  gap: 12px;
+}
+
+.page-edit-event__expansion-item {
+  border: 1px solid var(--edit-event-select-group-border);
+  background: var(--edit-event-select-group-bg);
+}
+
+.page-edit-event__expansion-item .q-expansion-item__container {
+  background: transparent;
+}
+
+.page-edit-event__expansion-header {
+  color: var(--edit-event-select-title-color);
+}
+
+.page-edit-event__expansion-header .q-item__label {
+  font-weight: 700;
+}
+
+.page-edit-event__expansion-header .q-item__label--caption {
+  color: var(--edit-event-section-hint);
+}
+
+.page-edit-event__expansion-body {
+  padding: 0 14px 14px;
+}
+
 .page-edit-event__section {
   margin-bottom: 22px;
   padding: 14px 16px;
@@ -1145,6 +1590,14 @@ body.body--dark .page-edit-event {
   justify-content: flex-end;
 }
 
+.page-edit-event__wizard-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
 @media screen and (max-width: $breakpoint-sm) {
   .page-edit-event__options-grid {
     grid-template-columns: 1fr;
@@ -1161,11 +1614,25 @@ body.body--dark .page-edit-event {
   .page-edit-event__inline-actions {
     justify-content: flex-start;
   }
+
+  .page-edit-event__button-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-edit-event__wizard-actions {
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
 }
 
 .page-edit-event__button-bar {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-top: 16px;
   margin-bottom: 16px;
 }
