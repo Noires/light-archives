@@ -3,10 +3,10 @@ import { EventAnnouncement, Image, NoticeboardItem } from '@app/entity';
 import SharedConstants from '@app/shared/SharedConstants';
 import { EventType } from '@app/shared/enums/event-type.enum';
 import { noticeboardLocations } from '@app/shared/enums/noticeboard-location.enum';
+import { noticeboardTypes, NoticeboardType } from '@app/shared/enums/noticeboard-type.enum';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EmbedBuilder, MessageCreateOptions } from 'discord.js';
-import escape from 'escape-html';
 import { DateTime } from 'luxon';
 import { NodeHtmlMarkdown } from 'node-html-markdown';
 import schedule, { Job } from 'node-schedule';
@@ -16,8 +16,13 @@ import { BotGateway } from './bot.gateway';
 
 const EVENT_EMBED_COLOR = 0x4f7ba6;
 const EVENT_EMBED_COLOR_AFTER_START = 0xb77986;
+const NOTICEBOARD_EMBED_COLOR = 0x8b6b79;
 const EMBED_DESCRIPTION_LIMIT = 4096;
 const EMBED_FIELD_LIMIT = 1024;
+const DISCORD_HTML_ALLOWED_TAGS = [ 'a', 'b', 'i', 'strong', 'em', 'code', 'tt', 'blockquote', 'p', 'br', 'ul', 'ol', 'li' ];
+const DISCORD_HTML_ALLOWED_ATTRIBUTES = {
+  a: [ 'href' ],
+};
 
 const EVENT_TYPE_LABELS: Record<EventType, string> = {
   [EventType.GENERAL]: 'Offenes Rollenspiel',
@@ -85,7 +90,7 @@ export class AnnouncementService {
 			where: {
 				id: noticeboardItemId,
 			},
-			relations: [ 'owner' ],
+			relations: [ 'owner', 'owner.server', 'venue', 'venue.server' ],
 		});
 
 		if (!noticeboardItem) {
@@ -93,21 +98,8 @@ export class AnnouncementService {
 		}
 
 		const subtitle = `${noticeboardLocations[noticeboardItem.location]} — by ${noticeboardItem.owner.name}`
-		const link = `${serverConfiguration.frontendRoot}/noticeboard/${noticeboardItem.id}`;
-		const content = `<strong>${escape(noticeboardItem.title)}</strong><br><em>${escape(subtitle)}</em><br><br>${noticeboardItem.content}`;
-		const contentHtml = sanitizeHtml(content, {
-			allowedTags: [ 'b', 'i', 'strong', 'em', 'code', 'tt', 'blockquote', 'p', 'br' ]
-		});
-		let contentMarkdown = NodeHtmlMarkdown.translate(contentHtml);
-
-		if (!contentMarkdown.endsWith('\n')) {
-			contentMarkdown += '\n';
-		}
-
-		contentMarkdown += `\n${link}`;
-
 		try {
-			await this.botGateway.sendNoticeboardItem(contentMarkdown);
+			await this.botGateway.sendNoticeboardItem(this.buildNoticeboardMessage(noticeboardItem, subtitle));
 		} catch (e) {
 			if (e instanceof Error) {
 				this.logger.error(e.message, e.stack);
@@ -238,6 +230,47 @@ export class AnnouncementService {
 		};
 	}
 
+	private buildNoticeboardMessage(
+		noticeboardItem: NoticeboardItem,
+		subtitle?: string,
+	): MessageCreateOptions {
+		const noticeboardUrl = this.buildNoticeboardUrl(noticeboardItem);
+		const authorUrl = this.buildCharacterUrl(noticeboardItem);
+		const authorText = this.buildNoticeboardAuthorText(noticeboardItem);
+		const body = this.buildNoticeboardBody(noticeboardItem.content);
+		const description = body || (subtitle || '').trim();
+		const fields = this.buildNoticeboardFields(noticeboardItem, noticeboardUrl);
+		const typeLabel = noticeboardTypes[noticeboardItem.type] || noticeboardTypes[NoticeboardType.AUSHANG];
+		const embed = new EmbedBuilder()
+			.setColor(NOTICEBOARD_EMBED_COLOR)
+			.setTitle(this.truncate((noticeboardItem.title || '').trim(), 256))
+			.setURL(noticeboardUrl)
+			.setFooter({
+				text: `Anschlagbrett • ${typeLabel}`,
+			})
+			.setTimestamp(noticeboardItem.createdAt || new Date());
+
+		if (authorText) {
+			embed.setAuthor({
+				name: this.truncate(authorText, 256),
+				url: authorUrl || undefined,
+			});
+		}
+
+		if (description) {
+			embed.setDescription(this.truncate(description, EMBED_DESCRIPTION_LIMIT));
+		}
+
+		if (fields.length > 0) {
+			embed.addFields(fields);
+		}
+
+		return {
+			content: this.extractMentionContent(`${noticeboardItem.title}\n\n${body}`),
+			embeds: [embed],
+		};
+	}
+
 	private buildDescription(content: string, eventTitle: string): string {
 		const trimmed = (content || '').trim();
 		if (!trimmed) {
@@ -308,6 +341,55 @@ export class AnnouncementService {
 	private buildEmbedFields(announcement: EventAnnouncement): Array<{ name: string; value: string; inline?: boolean }> {
 		const fields: Array<{ name: string; value: string; inline?: boolean }> = [];
 		const links = this.buildLinkLines(announcement);
+
+		if (links.length > 0) {
+			fields.push({
+				name: links.length === 1 ? 'Link' : 'Links',
+				value: this.truncate(links.join('\n'), EMBED_FIELD_LIMIT),
+			});
+		}
+
+		return fields.slice(0, 25);
+	}
+
+	private buildNoticeboardBody(content: string): string {
+		const sanitizedHtml = sanitizeHtml(content || '', {
+			allowedTags: DISCORD_HTML_ALLOWED_TAGS,
+			allowedAttributes: DISCORD_HTML_ALLOWED_ATTRIBUTES,
+		});
+
+		return NodeHtmlMarkdown.translate(sanitizedHtml).trim();
+	}
+
+	private buildNoticeboardFields(
+		noticeboardItem: NoticeboardItem,
+		noticeboardUrl: string,
+	): Array<{ name: string; value: string; inline?: boolean }> {
+		const typeLabel = noticeboardTypes[noticeboardItem.type] || noticeboardTypes[NoticeboardType.AUSHANG];
+		const locationLabel = noticeboardLocations[noticeboardItem.location] || noticeboardItem.location;
+		const fields: Array<{ name: string; value: string; inline?: boolean }> = [
+			{
+				name: 'Typ',
+				value: this.truncate(typeLabel, EMBED_FIELD_LIMIT),
+				inline: true,
+			},
+			{
+				name: 'Ort',
+				value: this.truncate(locationLabel, EMBED_FIELD_LIMIT),
+				inline: true,
+			},
+		];
+		const venueText = this.buildNoticeboardVenueText(noticeboardItem);
+
+		if (venueText) {
+			fields.push({
+				name: 'Treffpunkt',
+				value: this.truncate(venueText, EMBED_FIELD_LIMIT),
+				inline: true,
+			});
+		}
+
+		const links = this.buildNoticeboardLinkLines(noticeboardItem, noticeboardUrl);
 
 		if (links.length > 0) {
 			fields.push({
@@ -424,6 +506,39 @@ export class AnnouncementService {
 		return `Erinnerung: ${absoluteMinutes} Minuten ${direction}`;
 	}
 
+	private buildNoticeboardAuthorText(noticeboardItem: NoticeboardItem): string {
+		const authorName = (noticeboardItem.owner?.name || '').trim();
+		const serverName = (noticeboardItem.owner?.server?.name || '').trim();
+
+		if (!authorName) {
+			return '';
+		}
+
+		return serverName ? `${authorName} (${serverName})` : authorName;
+	}
+
+	private buildNoticeboardVenueText(noticeboardItem: NoticeboardItem): string | null {
+		const venueName = (noticeboardItem.venue?.name || '').trim();
+
+		if (!venueName) {
+			return null;
+		}
+
+		const serverName = (noticeboardItem.venue?.server?.name || '').trim();
+		return serverName ? `${venueName} (${serverName})` : venueName;
+	}
+
+	private buildNoticeboardLinkLines(noticeboardItem: NoticeboardItem, noticeboardUrl: string): string[] {
+		const links = [`Aushang: ${noticeboardUrl}`];
+		const venueUrl = this.buildVenueUrl(noticeboardItem);
+
+		if (venueUrl) {
+			links.push(`Treffpunkt: ${venueUrl}`);
+		}
+
+		return links;
+	}
+
 	private extractMentionContent(content: string): string | undefined {
 		const matches = new Set<string>();
 		let match: RegExpExecArray | null = null;
@@ -445,6 +560,31 @@ export class AnnouncementService {
 		}
 
 		return matches.size > 0 ? Array.from(matches).join(' ') : undefined;
+	}
+
+	private buildNoticeboardUrl(noticeboardItem: NoticeboardItem): string {
+		return `${serverConfiguration.frontendRoot}/noticeboard/${noticeboardItem.id}`;
+	}
+
+	private buildCharacterUrl(noticeboardItem: NoticeboardItem): string | null {
+		const serverName = (noticeboardItem.owner?.server?.name || '').trim();
+		const characterName = (noticeboardItem.owner?.name || '').trim();
+
+		if (!serverName || !characterName) {
+			return null;
+		}
+
+		const serverSegment = encodeURIComponent(serverName);
+		const characterSegment = encodeURIComponent(characterName.replace(/ /g, '_'));
+		return `${serverConfiguration.frontendRoot}/${serverSegment}/${characterSegment}`;
+	}
+
+	private buildVenueUrl(noticeboardItem: NoticeboardItem): string | null {
+		if (!noticeboardItem.venue?.id) {
+			return null;
+		}
+
+		return `${serverConfiguration.frontendRoot}/venue/${noticeboardItem.venue.id}`;
 	}
 
 	private getImageUrl(image: Image | null | undefined, variant: 'original' | 'icon' | 'thumb' = 'original'): string | null {
