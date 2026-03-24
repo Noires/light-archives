@@ -190,13 +190,23 @@
           </q-item-section>
         </q-item>
         <q-item
-          v-if="canAccessSupportQueue"
+          v-if="canAccessModerationTools"
           clickable
           v-ripple
           to="/support/queue"
         >
           <q-item-section>
             <q-item-label>Support-Queue</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item
+          v-if="canAccessModerationTools"
+          clickable
+          v-ripple
+          to="/violations"
+        >
+          <q-item-section>
+            <q-item-label>Verstöße</q-item-label>
           </q-item-section>
         </q-item>
       </template>
@@ -233,7 +243,7 @@ export default class UserMenu extends Vue {
   readonly Role = Role;
   readonly sentryConfigured = isSentryConfigured();
 
-  get canAccessSupportQueue(): boolean {
+  get canAccessModerationTools(): boolean {
     const role = this.$store.getters.role;
     return !!role && roleImplies(role, Role.MODERATOR);
   }

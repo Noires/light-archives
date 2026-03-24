@@ -478,14 +478,7 @@ const routes: RouteRecordRaw[] = [
     meta: {
       title: 'Verstöße'
     },    
-    beforeEnter: () => {
-      const store = useStore();
-      const role = store.getters.role;
-      if (role !== 'admin')
-      {
-        return false;
-      }
-    }
+    beforeEnter: () => hasRequiredRole(Role.MODERATOR),
   },
 
   // Communities

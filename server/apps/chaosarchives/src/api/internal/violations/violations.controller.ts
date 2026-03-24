@@ -14,7 +14,7 @@ export class ViolationsController {
 	constructor(private violationsService: ViolationsService) {}
 
 	@Get()
-	@RoleRequired(Role.ADMIN)
+	@RoleRequired(Role.MODERATOR)
 	async getViolationList(@Query() filter: ViolationSummaryFilterDto): Promise<PagingResultDto<ViolationSummaryDto>> {
 		return this.violationsService.getViolationList(filter);
 	}
