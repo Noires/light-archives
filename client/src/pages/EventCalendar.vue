@@ -98,140 +98,159 @@
 
       <aside class="page-event-calendar__sidebar">
         <div class="page-event-calendar__sidebar-header">
-          <span>{{ sidebarTitle }}</span>
-          <q-btn
-            v-if="selectedDate"
-            flat
-            dense
-            size="sm"
-            label="Zurücksetzen"
-            @click="clearSelection"
-          />
-        </div>
-
-        <div v-if="sidebarEvents.length === 0" class="page-event-calendar__empty">
-          Keine Events gefunden.
-        </div>
-
-        <div v-else class="page-event-calendar__sidebar-list">
-          <div
-            v-for="group in sidebarGroups"
-            :key="group.dateKey"
-            class="page-event-calendar__sidebar-group"
-          >
-            <div class="page-event-calendar__date-header">
-              <span class="page-event-calendar__date-label">{{ group.dateLabel }}</span>
-              <span class="page-event-calendar__date-divider">|</span>
-              <span class="page-event-calendar__date-weekday">{{ group.weekday }}</span>
-            </div>
-            <transition-group name="page-event-calendar__cards" tag="div" class="page-event-calendar__sidebar-cards">
-              <div
-                v-for="event in group.events"
-                :key="event.id"
-                class="page-event-calendar__event-card"
-              >
-                <div class="page-event-calendar__event-collapsible">
-                  <div
-                    class="page-event-calendar__event-summary"
-                    role="button"
-                    tabindex="0"
-                    @click="toggleExpanded(event.id)"
-                    @keyup.enter="toggleExpanded(event.id)"
-                  >
-                    <div class="page-event-calendar__event-icon">
-                      <q-img
-                        v-if="event.icon"
-                        :src="eventIconUrl(event)"
-                        :ratio="1"
-                        fit="cover"
-                        class="page-event-calendar__event-icon-img"
-                      />
-                      <q-icon v-else name="event" />
-                    </div>
-                    <div class="page-event-calendar__event-summary-text">
-                      <div class="page-event-calendar__event-time">
-                        <span>{{ formatTimeRange(event) }}</span>
-                        <span
-                          v-if="isAdultEvent(event)"
-                          class="page-event-calendar__event-badge"
-                        >
-                          18+
-                        </span>
-                      </div>
-                      <div class="page-event-calendar__event-title">
-                        {{ event.title }}
-                      </div>
-                    </div>
-                    <q-btn
-                      flat
-                      round
-                      dense
-                      :icon="isExpanded(event.id) ? 'expand_less' : 'expand_more'"
-                      @click.stop="toggleExpanded(event.id)"
-                    />
-                  </div>
-                  <q-slide-transition>
-                    <div v-show="isExpanded(event.id)" class="page-event-calendar__event-details">
-                      <div class="page-event-calendar__event-meta">
-                        <div
-                          v-if="primaryLocation(event)"
-                          class="page-event-calendar__event-row"
-                        >
-                          <q-icon name="place" />
-                          <span>{{ primaryLocation(event) }}</span>
-                        </div>
-                        <div class="page-event-calendar__event-row">
-                          <q-icon name="event" />
-                          <span>{{ formatDate(event.startDateTime) }}</span>
-                        </div>
-                        <div class="page-event-calendar__event-row">
-                          <q-icon name="category" />
-                          <span>{{ eventTypeLabel(event) }}</span>
-                        </div>
-                      </div>
-                      <div class="page-event-calendar__event-warnings">
-                        <div class="page-event-calendar__event-warnings-title">Inhaltswarnungen</div>
-                        <div
-                          v-if="eventWarnings(event).length"
-                          class="page-event-calendar__event-warnings-list"
-                        >
-                          <span
-                            v-for="warning in eventWarnings(event)"
-                            :key="warning"
-                            class="page-event-calendar__event-warning"
-                          >
-                            {{ warning }}
-                          </span>
-                        </div>
-                        <div v-else class="page-event-calendar__event-warnings-empty">Keine Angaben.</div>
-                      </div>
-                      <div class="page-event-calendar__event-actions">
-                        <q-btn
-                          v-if="event.link"
-                          flat
-                          color="secondary"
-                          icon="launch"
-                          :label="eventLinkLabel(event)"
-                          type="a"
-                          target="_blank"
-                          :href="event.link"
-                        />
-                        <q-btn
-                          v-else
-                          flat
-                          color="secondary"
-                          icon="event"
-                          label="Event anzeigen"
-                          :to="`/event/${event.id}`"
-                        />
-                      </div>
-                    </div>
-                  </q-slide-transition>
-                </div>
-              </div>
-            </transition-group>
+          <div class="page-event-calendar__sidebar-heading">
+            <span>{{ sidebarTitle }}</span>
+            <span v-if="sidebarCollapsed" class="page-event-calendar__sidebar-count">
+              {{ sidebarCountLabel }}
+            </span>
+          </div>
+          <div class="page-event-calendar__sidebar-actions">
+            <q-btn
+              v-if="selectedDate && !sidebarCollapsed"
+              flat
+              dense
+              size="sm"
+              label="Zurücksetzen"
+              @click="clearSelection"
+            />
+            <q-btn
+              flat
+              round
+              dense
+              :icon="sidebarCollapsed ? 'expand_more' : 'expand_less'"
+              aria-label="Kalender ein- oder ausklappen"
+              @click="toggleSidebarCollapsed"
+            />
           </div>
         </div>
+
+        <q-slide-transition>
+          <div v-show="!sidebarCollapsed">
+            <div v-if="sidebarEvents.length === 0" class="page-event-calendar__empty">
+              Keine Events gefunden.
+            </div>
+
+            <div v-else class="page-event-calendar__sidebar-list">
+              <div
+                v-for="group in sidebarGroups"
+                :key="group.dateKey"
+                class="page-event-calendar__sidebar-group"
+              >
+                <div class="page-event-calendar__date-header">
+                  <span class="page-event-calendar__date-label">{{ group.dateLabel }}</span>
+                  <span class="page-event-calendar__date-divider">|</span>
+                  <span class="page-event-calendar__date-weekday">{{ group.weekday }}</span>
+                </div>
+                <transition-group name="page-event-calendar__cards" tag="div" class="page-event-calendar__sidebar-cards">
+                  <div
+                    v-for="event in group.events"
+                    :key="event.id"
+                    class="page-event-calendar__event-card"
+                  >
+                    <div class="page-event-calendar__event-collapsible">
+                      <div
+                        class="page-event-calendar__event-summary"
+                        role="button"
+                        tabindex="0"
+                        @click="toggleExpanded(event.id)"
+                        @keyup.enter="toggleExpanded(event.id)"
+                      >
+                        <div class="page-event-calendar__event-icon">
+                          <q-img
+                            v-if="event.icon"
+                            :src="eventIconUrl(event)"
+                            :ratio="1"
+                            fit="cover"
+                            class="page-event-calendar__event-icon-img"
+                          />
+                          <q-icon v-else name="event" />
+                        </div>
+                        <div class="page-event-calendar__event-summary-text">
+                          <div class="page-event-calendar__event-time">
+                            <span>{{ formatTimeRange(event) }}</span>
+                            <span
+                              v-if="isAdultEvent(event)"
+                              class="page-event-calendar__event-badge"
+                            >
+                              18+
+                            </span>
+                          </div>
+                          <div class="page-event-calendar__event-title">
+                            {{ event.title }}
+                          </div>
+                        </div>
+                        <q-btn
+                          flat
+                          round
+                          dense
+                          :icon="isExpanded(event.id) ? 'expand_less' : 'expand_more'"
+                          @click.stop="toggleExpanded(event.id)"
+                        />
+                      </div>
+                      <q-slide-transition>
+                        <div v-show="isExpanded(event.id)" class="page-event-calendar__event-details">
+                          <div class="page-event-calendar__event-meta">
+                            <div
+                              v-if="primaryLocation(event)"
+                              class="page-event-calendar__event-row"
+                            >
+                              <q-icon name="place" />
+                              <span>{{ primaryLocation(event) }}</span>
+                            </div>
+                            <div class="page-event-calendar__event-row">
+                              <q-icon name="event" />
+                              <span>{{ formatDate(event.startDateTime) }}</span>
+                            </div>
+                            <div class="page-event-calendar__event-row">
+                              <q-icon name="category" />
+                              <span>{{ eventTypeLabel(event) }}</span>
+                            </div>
+                          </div>
+                          <div class="page-event-calendar__event-warnings">
+                            <div class="page-event-calendar__event-warnings-title">Inhaltswarnungen</div>
+                            <div
+                              v-if="eventWarnings(event).length"
+                              class="page-event-calendar__event-warnings-list"
+                            >
+                              <span
+                                v-for="warning in eventWarnings(event)"
+                                :key="warning"
+                                class="page-event-calendar__event-warning"
+                              >
+                                {{ warning }}
+                              </span>
+                            </div>
+                            <div v-else class="page-event-calendar__event-warnings-empty">Keine Angaben.</div>
+                          </div>
+                          <div class="page-event-calendar__event-actions">
+                            <q-btn
+                              v-if="event.link"
+                              flat
+                              color="secondary"
+                              icon="launch"
+                              :label="eventLinkLabel(event)"
+                              type="a"
+                              target="_blank"
+                              :href="event.link"
+                            />
+                            <q-btn
+                              v-else
+                              flat
+                              color="secondary"
+                              icon="event"
+                              label="Event anzeigen"
+                              :to="`/event/${event.id}`"
+                            />
+                          </div>
+                        </div>
+                      </q-slide-transition>
+                    </div>
+                  </div>
+                </transition-group>
+              </div>
+            </div>
+          </div>
+        </q-slide-transition>
       </aside>
     </section>
 
@@ -452,6 +471,7 @@ interface EventGroup {
 export default class PageEventCalendar extends Vue {
   Role = Role;
   viewMode: 'calendar' | 'list' = 'calendar';
+  sidebarCollapsed = false;
   selectedDate = '';
   selectedType: EventType | '' = '';
   sortMode: 'time' | 'type' = 'time';
@@ -505,6 +525,10 @@ export default class PageEventCalendar extends Vue {
     this.selectedDate = '';
   }
 
+  toggleSidebarCollapsed() {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+  }
+
   isSelected(dateStr: string) {
     return this.selectedDate === dateStr;
   }
@@ -526,6 +550,11 @@ export default class PageEventCalendar extends Vue {
       return `Events am ${this.formatDateString(this.selectedDate)}`;
     }
     return `Events im ${this.yearMonth}`;
+  }
+
+  get sidebarCountLabel() {
+    const count = this.sidebarEvents.length;
+    return `${count} Event${count === 1 ? '' : 's'}`;
   }
 
   get sortedMonthEvents() {
@@ -964,6 +993,25 @@ export default class PageEventCalendar extends Vue {
   margin-bottom: 12px;
 }
 
+.page-event-calendar__sidebar-heading {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.page-event-calendar__sidebar-count {
+  color: rgba(35, 35, 35, 0.68);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.page-event-calendar__sidebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .page-event-calendar__sidebar-list {
   display: grid;
   gap: 16px;
@@ -1297,6 +1345,10 @@ body.body--dark .page-event-calendar__event-title,
 body.body--dark .page-event-calendar__event-meta,
 body.body--dark .page-event-calendar__sidebar-header {
   color: rgba(213, 226, 240, 0.92);
+}
+
+body.body--dark .page-event-calendar__sidebar-count {
+  color: rgba(213, 226, 240, 0.72);
 }
 
 body.body--dark .page-event-calendar__event-summary:hover {
