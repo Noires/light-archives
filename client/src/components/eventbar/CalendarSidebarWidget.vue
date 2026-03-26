@@ -602,8 +602,9 @@ export default class CalendarSidebarWidget extends Vue {
 
 <style lang="scss">
 .calendar-widget {
-  height: 100%;
+  height: auto;
   min-height: 0;
+  max-height: inherit;
   border-radius: 30px;
   overflow: hidden;
 }
@@ -612,8 +613,8 @@ export default class CalendarSidebarWidget extends Vue {
   border: 1px solid rgba(221, 180, 118, 0.25);
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
-  height: 100%;
-  max-height: 100%;
+  height: auto;
+  max-height: inherit;
   display: flex;
   flex-direction: column;
   overflow: hidden;
