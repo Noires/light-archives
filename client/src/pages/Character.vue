@@ -92,6 +92,16 @@
 							Inventar
 						</q-item-section>
 					</q-item>
+
+					<q-item v-show="hasPenAndPaperSheet" clickable v-ripple @click="onTab('pen-and-paper')">
+						<q-item-section avatar>
+							<q-icon name="casino" />
+						</q-item-section>
+
+						<q-item-section>
+							Pen &amp; Paper
+						</q-item-section>
+					</q-item>
 			
 					<q-item v-if="character.mine" class="edit-profile" clickable v-ripple :to="`/edit-character/${character.id}/profile`">
 						<q-item-section avatar>
@@ -121,7 +131,8 @@
 				<character-rumors v-if="tab==='rumors'" :character="character" />	
 				<character-diary v-if="tab==='diary'" :content="content" :character="character" />	
 				<character-gallery v-if="tab==='gallery'" :content="content" />	
-				<character-inventory v-if="tab==='inventory'" :character="character" />	
+				<character-inventory v-if="tab==='inventory'" :character="character" />
+				<character-pen-and-paper v-if="tab==='pen-and-paper'" :character="character" />
 			</template>
 			<template v-if="content.stories.length > 0 && !displayDrawer()">
 				<h3>{{ name }}'s Geschichten</h3>
@@ -162,6 +173,7 @@ import CharacterRumors from 'src/components/character/CharacterRumors.vue';
 import CharacterDiary from 'src/components/character/CharacterDiary.vue';
 import CharacterGallery from 'src/components/character/CharacterGallery.vue';
 import CharacterInventory from 'src/components/character/CharacterInventory.vue';
+import CharacterPenAndPaper from 'src/components/character/CharacterPenAndPaper.vue';
 
 const $api = useApi();
 const $router = useRouter();
@@ -221,6 +233,7 @@ async function load(params: RouteParams): Promise<Content> {
 		CharacterDiary,
 		CharacterGallery,
 		CharacterInventory,
+		CharacterPenAndPaper,
 		StoryList,
 		ThumbGallery,
 		ReportViolationSection,
@@ -272,6 +285,61 @@ export default class PageCharacter extends Vue {
 		return this.$q.screen.lt.md;
 	}
 
+	get hasPenAndPaperSheet(): boolean {
+		return [
+			this.character.title,
+			this.character.nickname,
+			this.character.profession,
+			this.character.deity,
+			this.character.family,
+			this.character.age,
+			this.character.apparentage,
+			this.character.pronouns,
+			this.character.birthplace,
+			this.character.birthday,
+			this.character.residence,
+			this.character.relationsshipstatus,
+			this.character.background,
+			this.character.personality,
+			this.character.currently,
+			this.character.oocInfo,
+			this.character.openinformation,
+			this.character.commonrumors,
+			this.character.rarerumors,
+			this.character.loves,
+			this.character.hates,
+			this.character.wishes,
+			this.character.fears,
+			this.character.slogan,
+			this.character.motivation,
+			this.character.strengths,
+			this.character.weaknesses,
+			this.character.ticks,
+			this.character.haircolor,
+			this.character.eyecolor,
+			this.character.skintone,
+			this.character.build,
+			this.character.height,
+			this.character.weight,
+			this.character.voice,
+			this.character.specialfeatures,
+			this.character.possession,
+			this.character.specialitems,
+			this.character.partners,
+			this.character.parents,
+			this.character.children,
+			this.character.relatives,
+			this.character.friends,
+			this.character.acquaintances,
+			this.character.enemies,
+			this.character.freecompanies,
+			this.character.meetingplaces,
+			this.character.communities,
+			this.character.mentioned,
+			this.character.past,
+		].some(value => !!value);
+	}
+
 	setContent(content: Content) {
 		if ((content.content.images.length > 0) && (content.character.banner?.url != undefined))  {
 			content.content.images = content.content.images.filter(x => !x.url.includes(content.character.banner!.url));
@@ -296,7 +364,7 @@ export default class PageCharacter extends Vue {
 	}
 
 	displayDrawer(): boolean {
-		return !!this.character.showAppearance || !!this.character.showPersonality || !!this.character.showContacts || !!this.character.showRumors || !!this.character.showDiary || !!this.character.showGallery;
+		return !!this.character.showAppearance || !!this.character.showPersonality || !!this.character.showContacts || !!this.character.showRumors || !!this.character.showDiary || !!this.character.showGallery || !!this.character.showInventory || this.hasPenAndPaperSheet;
 	}
 }
 
