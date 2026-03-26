@@ -189,4 +189,10 @@ export class BaseCharacterProfileDto {
 
   @IsString()
   rarerumors: string;
+
+  @IsString()
+  currently: string;
+
+  @IsString()
+  oocInfo: string;
 }

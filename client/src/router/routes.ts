@@ -242,6 +242,8 @@ const routes: RouteRecordRaw[] = [
           { path: 'gallery', component: () => import('pages/EditCharacterGallery.vue'),
           },
           { path: 'inventory', component: () => import('pages/EditCharacterInventory.vue'),
+          },
+          { path: 'pen-and-paper', component: () => import('pages/EditCharacterPenAndPaper.vue'),
           }],
       }],
     meta: {
