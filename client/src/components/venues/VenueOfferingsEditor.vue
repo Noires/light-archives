@@ -132,8 +132,8 @@
                           <span v-if="off.price" class="offerings-editor__offering-price">{{ off.price }}</span>
                         </template>
                         <div class="offerings-editor__offering-actions">
-                          <q-btn flat dense round icon="edit" size="xs" aria-label="Angebot bearbeiten" @click="off.__expanded = !off.__expanded" />
-                          <q-btn flat dense round icon="delete" size="xs" color="negative" aria-label="Angebot löschen" @click="removeOffering(sub.offerings, offIdx, off)" />
+                          <q-btn flat dense round icon="edit" size="sm" aria-label="Angebot bearbeiten" @click="off.__expanded = !off.__expanded" />
+                          <q-btn flat dense round icon="delete" size="sm" color="negative" aria-label="Angebot löschen" @click="removeOffering(sub.offerings, offIdx, off)" />
                         </div>
                       </div>
                     </template>
@@ -221,8 +221,8 @@
                     <span v-if="off.price" class="offerings-editor__offering-price">{{ off.price }}</span>
                   </template>
                   <div class="offerings-editor__offering-actions">
-                    <q-btn flat dense round icon="edit" size="xs" aria-label="Angebot bearbeiten" @click="off.__expanded = !off.__expanded" />
-                    <q-btn flat dense round icon="delete" size="xs" color="negative" aria-label="Angebot löschen" @click="removeOffering(cat.offerings!, offIdx, off)" />
+                    <q-btn flat dense round icon="edit" size="sm" aria-label="Angebot bearbeiten" @click="off.__expanded = !off.__expanded" />
+                    <q-btn flat dense round icon="delete" size="sm" color="negative" aria-label="Angebot löschen" @click="removeOffering(cat.offerings!, offIdx, off)" />
                   </div>
                 </div>
               </template>

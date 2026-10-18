@@ -1125,7 +1125,9 @@ export default class PageEventCalendar extends Vue {
 
 .page-events__cal-event {
   display: flex;
+  align-items: center;
   gap: 4px;
+  min-height: 24px; // ER2-903
   min-width: 0;
   padding: 2px 6px;
   border-left: 3px solid var(--rule-strong);
@@ -1165,6 +1167,7 @@ export default class PageEventCalendar extends Vue {
 
 .page-events__cal-more {
   align-self: flex-start;
+  min-height: 24px; // ER2-903
   padding: 0 6px;
   border: 0;
   background: transparent;

@@ -628,10 +628,12 @@ export default class PageEditProfile extends Vue {
   padding-left: 8px;
 }
 
+// ER2-903: 24 px minimum target size.
 .page-edit-character__color-picker-btn {
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
   border-radius: 999px;
   border: 1px solid var(--rule-gold);
   // Filled state: user-defined backgroundColor flows in via :style binding.
@@ -663,6 +665,9 @@ export default class PageEditProfile extends Vue {
 }
 
 .page-edit-character__color-clear-btn {
+  // ER2-903: size="xs" would shrink the target below 24 px.
+  min-width: 24px;
+  min-height: 24px;
   color: var(--ink-muted, rgba(0, 0, 0, 0.58));
 }
 
