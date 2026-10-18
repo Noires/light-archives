@@ -51,6 +51,17 @@ Branch `vision/er2` (from `symphony/tr-7`) implements `UI_UX_VISION_REWORK_PLAN.
 - **Deploy notes:** TypeORM `synchronize: true` will add tables `event_series`, `venue_opening_hours`, `venue_opening_exception`, `reaction` and nullable/defaulted columns (event_registration.kind, event.programme/seriesId, character.rpStatus/rpLocation/rpStatusExpiresAt, story.seriesTitle/seriesIndex/published, wiki_page.published, free_company/community.recruiting). Back up the DB first. The client works against the old API (new fields optional), but home fetches venue details for the "Jetzt geöffnet" fallback until the new API is live.
 - **Known content issue:** event 44 OOC text wraps a `[[…]]` link in pasted `<div>`s, so it cannot render as a link.
 
+### Round 2 (2026-10-18) — gaps closed
+
+All round-2 tickets ER2-1001..1027 done on `vision/er2` (ER2-1028 board conformance stays open until the Penpot MCP is reachable; ER2-904/905 user tests stay with the team).
+- **New data:** venue/story/noticeboard/character/FC/community list DTOs enriched; change feed avatars; noticeboard pin (moderators); story cover image.
+- **Social:** follows, notifications (bell, `/benachrichtigungen`, preferences, 90-day retention), event reminders every 5 min, bookmarks (`/gemerkt`), private calendar token feed `/api/calendar/:token.ics`. Discord DM is a no-op `DiscordNotifier` until Steward gets a DM webhook.
+- **Content:** wiki revisions (`/wiki/:title/versionen`), albums (`/album/:id`, `/gallery/alben`), FC applications, accent colour + play style, "Was wir spielen", consent-based image tags (`/my-content`), CW veil on events.
+- **Outlook:** venue map (`/venues/karte`, original SVG district art), relationship constellation on Kontakte, plate PNG export.
+- **Fixes:** community edit/member-management permission checks were missing `await` (any logged-in user could edit) — fixed; server ESLint config loads again (148 legacy errors remain, ER2 files clean); dead components removed; Lifestream `/li` syntax verified (English districts, `W5 P42`, apartments `W5 sub A12`).
+- **Additional schema on deploy (synchronize):** tables `follow`, `notification`, `notification_preference`, `bookmark`, `calendar_token`, `wiki_page_revision`, `album` (+ `album_images`), `free_company_application`, `image_character_tag`; columns `event_registration.remindedAt`, `venue.adultOnly`, `noticeboard_item.pinned/pinnedAt/discordPosted/imageId`, `character.accentColor/playStyleTags`, `free_company.focusItems`, `community.focusItems`, story banner relation. Needs MariaDB 10.2+ (window functions). Back up first.
+- **Verification:** client lint clean, `quasar build` OK, server build OK, Jest 206/206, 81/81 old URLs resolve, fresh dev compile clean.
+
 ## Next ticket
 
 This session shipped **ELPIS-211 (Pen & Paper journal-page reveal) plus a small cleanup** removing two dead keyframes (`navShimmer`, `navGridShift`) flagged in the ELPIS-807 audit from `MainLayout.vue`. **Epic 2 closes 20 / 21 → 21 / 21.** 211 was marked `deps 007, 008` — 008 ✓ is satisfied, and the 007 dependency was satisfiable via the same IntersectionObserver + CSS-keyframes pattern that landed ELPIS-110 (home activity-grid diagonal-wave reveal) since the AC's "5 cards reveal in sequence (turning-page motion)" describes a one-shot-on-mount cascade with per-card stagger that doesn't need Motion One's runtime orchestration. Lint clean (`npx eslint src/components/character/CharacterPenAndPaper.vue src/layouts/MainLayout.vue` exit 0).
