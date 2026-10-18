@@ -31,11 +31,19 @@
       </p>
       <q-inner-loading :showing="loading" />
     </section>
+
+    <!-- ER2 round 2: applications for leaders and members with edit permission (hidden otherwise) -->
+    <free-company-applications
+      v-if="freeCompany"
+      class="page-my-free-company__applications"
+      :free-company-id="freeCompany.id"
+    />
   </q-page>
 </template>
 
 <script lang="ts">
 import { MyFreeCompanySummaryDto } from '@app/shared/dto/fcs/my-free-company-summary.dto';
+import FreeCompanyApplications from 'components/free-company/FreeCompanyApplications.vue';
 import FreeCompanyCrest from 'components/free-company/FreeCompanyCrest.vue';
 import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
@@ -48,6 +56,7 @@ const $store = useStore();
 @Options({
   name: 'PageMyFreeCompany',
   components: {
+    FreeCompanyApplications,
     FreeCompanyCrest,
   },
   async beforeRouteEnter(_, __, next) {
@@ -202,6 +211,10 @@ export default class PageMyFreeCompany extends Vue {
 .page-my-free-company__fc-name {
   font-size: 1.2em;
   font-weight: bold;
+}
+
+.page-my-free-company__applications {
+  margin-top: 32px;
 }
 
 .page-my-free-company__subtitle {

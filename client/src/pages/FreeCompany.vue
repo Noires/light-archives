@@ -23,16 +23,13 @@
 					/>
 				</template>
 				<template #primary>
-					<q-btn
-						v-if="applyUrl"
-						class="elpis-btn elpis-btn--primary"
-						unelevated
-						no-caps
-						icon="how_to_reg"
-						label="Bewerben"
-						:href="applyUrl"
-						target="_blank"
-						rel="noopener noreferrer"
+					<!-- ER2 round 2: application flow with status chips; website link as fallback -->
+					<free-company-apply-action
+						:fc="fc"
+						:fallback-url="applyUrl"
+						:is-member="isMember"
+						on-media
+						@changed="reload"
 					/>
 				</template>
 			</group-plate>
@@ -85,15 +82,12 @@
 								{{ fc.name }} nimmt neue Mitglieder auf.
 								<template v-if="fc.recruitingOfficers"> Sprich am besten {{ fc.recruitingOfficers }} an.</template>
 							</p>
-							<q-btn
-								v-if="applyUrl"
-								class="elpis-btn elpis-btn--primary"
-								unelevated
-								no-caps
-								label="Bewerben"
-								:href="applyUrl"
-								target="_blank"
-								rel="noopener noreferrer"
+							<free-company-apply-action
+								:fc="fc"
+								:fallback-url="applyUrl"
+								:is-member="isMember"
+								apply-only
+								@changed="reload"
 							/>
 						</section>
 
@@ -135,6 +129,13 @@
 						text="Mitglieder erscheinen hier, sobald sie ihr Profil mit der Freien Gesellschaft verknüpfen."
 					/>
 
+					<free-company-applications
+						v-if="fc.canEdit && fc.pendingApplicationCount !== undefined"
+						class="fc-detail__applications"
+						:free-company-id="fc.id"
+						@changed="reload"
+					/>
+
 					<section v-if="fc.mine" class="fc-detail__permissions" aria-labelledby="fc-permissions">
 						<h2 id="fc-permissions" class="fc-detail__heading">Bearbeitungsrechte</h2>
 						<free-company-member-permission-editor :members="memberPermissions" :free-company-id="fc.id" />
@@ -172,6 +173,8 @@ import GroupFacts from 'components/communities/GroupFacts.vue';
 import GroupPlate from 'components/communities/GroupPlate.vue';
 import type { GroupFact, GroupPlateChip } from 'components/communities/group-plate';
 import FreeCompanyMemberPermissionEditor from 'components/free-company/FreeCompanyMemberPermissionEditor.vue';
+import FreeCompanyApplications from 'components/free-company/FreeCompanyApplications.vue';
+import FreeCompanyApplyAction from 'components/free-company/FreeCompanyApplyAction.vue';
 import AvatarStack from 'components/vision/AvatarStack.vue';
 import EmptyState from 'components/vision/EmptyState.vue';
 import MemberCard from 'components/vision/MemberCard.vue';
@@ -251,6 +254,8 @@ async function load(params: RouteParams): Promise<Content> {
 	components: {
 		AvatarStack,
 		EmptyState,
+		FreeCompanyApplications,
+		FreeCompanyApplyAction,
 		FreeCompanyMemberPermissionEditor,
 		GroupFacts,
 		GroupPlate,
@@ -310,10 +315,30 @@ export default class PageFreeCompany extends Vue {
 		Object.assign(this, content);
 	}
 
+	/** ER2 round 2: refresh after applying, withdrawing or deciding. */
+	async reload() {
+		try {
+			this.setContent(await load(this.$route.params));
+		} catch {
+			// load() already notified.
+		}
+	}
+
+	/** The current character is listed as a member. */
+	get isMember(): boolean {
+		const character = this.$store.getters.character;
+		return !!character && this.members.data.some((member) => member.name === character.name && member.server === character.server);
+	}
+
 	get tabs(): SectionTab[] {
 		return [
 			{ key: 'uebersicht', label: 'Übersicht', icon: 'shield' },
-			{ key: 'mitglieder', label: 'Mitglieder', icon: 'group', count: this.members.total },
+			{
+				key: 'mitglieder',
+				label: this.fc.pendingApplicationCount ? `Mitglieder · ${this.fc.pendingApplicationCount} Bewerbungen` : 'Mitglieder',
+				icon: 'group',
+				count: this.members.total,
+			},
 		];
 	}
 
@@ -367,7 +392,7 @@ export default class PageFreeCompany extends Vue {
 		];
 	}
 
-	/** No application flow for free companies; a recruiting FC links its website. */
+	/** Fallback when the API has no application flow: a recruiting FC links its website. */
 	get applyUrl(): string {
 		return this.fc.recruiting ? this.safeUrl(this.fc.website) : '';
 	}
@@ -535,7 +560,9 @@ export default class PageFreeCompany extends Vue {
 	}
 }
 
-.fc-detail__permissions {
+.fc-detail__permissions,
+.fc-detail__applications {
 	margin-top: 40px;
 }
+
 </style>
