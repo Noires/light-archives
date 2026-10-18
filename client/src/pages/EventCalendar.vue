@@ -42,6 +42,86 @@
         </div>
       </div>
 
+      <div class="page-events__filters" role="group" aria-label="Filter">
+        <button
+          type="button"
+          class="page-events__chip"
+          :class="{ 'page-events__chip--active': !!filterType }"
+          aria-haspopup="menu"
+        >
+          <q-icon name="category" aria-hidden="true" />
+          <span>{{ typeChipLabel }}</span>
+          <q-icon name="arrow_drop_down" aria-hidden="true" />
+          <q-menu anchor="bottom left" self="top left" class="page-events__menu">
+            <q-list dense>
+              <q-item
+                v-for="option in typeOptions"
+                :key="option.value || 'all'"
+                v-close-popup
+                clickable
+                :active="filterType === option.value"
+                @click="filterType = option.value"
+              >
+                <q-item-section>{{ option.label }}</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </button>
+        <button
+          v-if="serverOptions.length > 2"
+          type="button"
+          class="page-events__chip"
+          :class="{ 'page-events__chip--active': !!filterServer }"
+          aria-haspopup="menu"
+        >
+          <q-icon name="dns" aria-hidden="true" />
+          <span>{{ filterServer ? `Server: ${filterServer}` : 'Server' }}</span>
+          <q-icon name="arrow_drop_down" aria-hidden="true" />
+          <q-menu anchor="bottom left" self="top left" class="page-events__menu">
+            <q-list dense>
+              <q-item
+                v-for="option in serverOptions"
+                :key="option.value || 'all'"
+                v-close-popup
+                clickable
+                :active="filterServer === option.value"
+                @click="filterServer = option.value"
+              >
+                <q-item-section>{{ option.label }}</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </button>
+        <button
+          type="button"
+          class="page-events__chip"
+          :class="{ 'page-events__chip--active': sfwOnly }"
+          :aria-pressed="sfwOnly ? 'true' : 'false'"
+          @click="sfwOnly = !sfwOnly"
+        >
+          <q-icon :name="sfwOnly ? 'check' : 'shield'" aria-hidden="true" />
+          <span>Nur SFW</span>
+        </button>
+        <button
+          type="button"
+          class="page-events__chip"
+          :class="{ 'page-events__chip--active': liveOnly }"
+          :aria-pressed="liveOnly ? 'true' : 'false'"
+          @click="liveOnly = !liveOnly"
+        >
+          <span class="page-events__live-dot" aria-hidden="true"></span>
+          <span>Läuft jetzt</span>
+        </button>
+        <button
+          v-if="hasActiveFilters"
+          type="button"
+          class="page-events__chip page-events__chip--ghost"
+          @click="resetFilters"
+        >
+          <q-icon name="close" aria-hidden="true" />
+          <span>Filter zurücksetzen</span>
+        </button>
+      </div>
     </page-head>
 
     <div class="page-events__grid">
