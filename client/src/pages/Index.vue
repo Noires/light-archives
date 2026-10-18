@@ -54,6 +54,28 @@
       </div>
     </header>
 
+    <section id="heute" class="home-hub" aria-labelledby="home-hub-title" tabindex="-1">
+      <div class="home-hub__head">
+        <p class="home-eyebrow">Heute in Eorzea</p>
+        <h1 id="home-hub-title" class="home-hub__title">Was läuft heute Abend?</h1>
+        <p class="home-hub__meta">{{ todayLabel }} · alle Zeiten in Serverzeit ({{ zoneAbbreviation }})</p>
+      </div>
+
+      <section-tabs v-model="timelineView" :tabs="timelineTabs" aria-label="Zeitraum der Zeitleiste" />
+
+      <div class="home-card home-hub__timeline">
+        <timeline-strip
+          v-if="eventsAvailable"
+          :events="timelineEvents"
+          :days="timelineView === 'week' ? 7 : 1"
+          :dim-non-live="timelineView === 'now'"
+          :aria-label="timelineAriaLabel"
+          :empty-text="timelineEmptyText"
+        />
+        <p v-else class="home-hub__unavailable">Die Events konnten gerade nicht geladen werden.</p>
+      </div>
+    </section>
+
     <section class="page-index__grid">
       <section id="neueste-aenderungen" class="page-index__panel mat-vellum page-index__panel--wide page-index__section--changes">
         <div class="page-index__panel-header">
@@ -222,7 +244,22 @@ import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { MainPageContentDto } from '@app/shared/dto/main-page/main-page-content.dto';
 import { ChangeArea } from '@app/shared/enums/change-area.enum';
 import { ChangeType } from '@app/shared/enums/change-type.enum';
+import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
 import ThumbGallery from 'components/images/ThumbGallery.vue';
+import {
+  eveningWindow,
+  eveningWindows,
+  isEventLive,
+  loadHomeEvents,
+  overlaps,
+  SERVER_ZONE,
+  toTimelineEvent,
+} from 'components/mainpage/home-data';
+import SectionTabs from 'components/vision/SectionTabs.vue';
+import TimelineStrip from 'components/vision/TimelineStrip.vue';
+import type { TimelineView } from 'components/vision/timeline';
+import type { SectionTab } from 'components/vision/types';
+import { DateTime } from 'luxon';
 import NoticeboardItemList from 'components/noticeboard/NoticeboardItemList.vue';
 import VenueList from 'components/venues/VenueList.vue';
 import { useApi } from 'src/boot/axios';
@@ -241,20 +278,33 @@ interface MainPageChangesApiClient {
   };
 }
 
-async function load(): Promise<{ content: MainPageContentDto; recentChanges: ChangeItemDto[] }> {
+interface HomeData {
+  content: MainPageContentDto;
+  recentChanges: ChangeItemDto[];
+  events: EventSummaryDto[] | null;
+}
+
+async function load(): Promise<HomeData> {
   try {
     const api = $api as MainPageChangesApiClient;
-    const [content, recentChangesResult]: [MainPageContentDto, PagingResultDto<ChangeItemDto>] = await Promise.all([
+    // Events are optional for the page: a failure only hides the hub data.
+    const eventsPromise = loadHomeEvents($api).catch((e) => {
+      console.log(e);
+      return null;
+    });
+    const [content, recentChangesResult, events]: [MainPageContentDto, PagingResultDto<ChangeItemDto>, EventSummaryDto[] | null] = await Promise.all([
       api.getMainPageContent(),
       api.changes.getChanges({
         offset: 0,
         limit: RECENT_CHANGES_LIMIT,
       }),
+      eventsPromise,
     ]);
 
     return {
       content,
       recentChanges: recentChangesResult.data,
+      events,
     };
   } catch (e) {
     console.log(e);
@@ -271,10 +321,12 @@ async function load(): Promise<{ content: MainPageContentDto; recentChanges: Cha
     VenueList,
     CommunityList,
     ThumbGallery,
+    SectionTabs,
+    TimelineStrip,
   },
   async beforeRouteEnter(_, __, next) {
-    const { content, recentChanges } = await load();
-    next(vm => (vm as PageIndex).setContent(content, recentChanges));
+    const data = await load();
+    next(vm => (vm as PageIndex).setContent(data));
   }
 })
 export default class PageIndex extends Vue {
@@ -291,6 +343,12 @@ export default class PageIndex extends Vue {
     newNoticeboardItems: [],
   };
   recentChanges: ChangeItemDto[] = [];
+  events: EventSummaryDto[] = [];
+  eventsAvailable = true;
+  timelineView: TimelineView = 'tonight';
+  now = Date.now();
+
+  private clock: number | null = null;
 
   loaded = false;
   revealEnabled = false;
@@ -317,6 +375,10 @@ export default class PageIndex extends Vue {
   }
 
   mounted() {
+    this.clock = window.setInterval(() => {
+      this.now = Date.now();
+    }, 60000);
+
     if (!this.revealEnabled) {
       return;
     }
@@ -355,6 +417,10 @@ export default class PageIndex extends Vue {
   }
 
   beforeUnmount() {
+    if (this.clock !== null) {
+      window.clearInterval(this.clock);
+      this.clock = null;
+    }
     this.revealObserver?.disconnect();
     this.revealObserver = null;
   }
@@ -364,9 +430,72 @@ export default class PageIndex extends Vue {
     panels.forEach((panel) => panel.classList.add('page-index__panel--revealed'));
   }
 
-  setContent(content: MainPageContentDto, recentChanges: ChangeItemDto[]) {
+  setContent({ content, recentChanges, events }: HomeData) {
     this.content = content;
     this.recentChanges = recentChanges;
+    this.events = events || [];
+    this.eventsAvailable = events !== null;
+    this.now = Date.now();
+    if (this.liveEvents.length > 0) {
+      this.timelineView = 'now';
+    }
+  }
+
+  // --- ER2-302: "Heute in Eorzea" ------------------------------------------
+
+  get todayLabel(): string {
+    return DateTime.fromMillis(this.now, { zone: SERVER_ZONE }).setLocale('de').toFormat('cccc, d. LLLL');
+  }
+
+  get zoneAbbreviation(): string {
+    // MESZ in summer, MEZ in winter.
+    return DateTime.fromMillis(this.now, { zone: SERVER_ZONE }).isInDST ? 'MESZ' : 'MEZ';
+  }
+
+  get liveEvents(): EventSummaryDto[] {
+    return this.events.filter((event) => isEventLive(event, this.now));
+  }
+
+  get tonightEvents(): EventSummaryDto[] {
+    const window = eveningWindow(this.now);
+    return this.events.filter((event) => overlaps(event, window));
+  }
+
+  /** Events on one of the next seven evenings (what the week timeline shows). */
+  get weekEvents(): EventSummaryDto[] {
+    const windows = eveningWindows(this.now, 7);
+    return this.events.filter((event) => windows.some((window) => overlaps(event, window)));
+  }
+
+  get timelineTabs(): SectionTab[] {
+    const available = this.eventsAvailable;
+    return [
+      { key: 'now', label: 'Jetzt', icon: 'sensors', count: available ? this.liveEvents.length : undefined, dimmed: available && this.liveEvents.length === 0 },
+      { key: 'tonight', label: 'Heute Abend', icon: 'nights_stay', count: available ? this.tonightEvents.length : undefined },
+      { key: 'week', label: 'Diese Woche', icon: 'date_range', count: available ? this.weekEvents.length : undefined },
+    ];
+  }
+
+  get timelineEvents() {
+    const source = this.timelineView === 'week' ? this.weekEvents : this.tonightEvents;
+    return source.map(toTimelineEvent);
+  }
+
+  get timelineAriaLabel(): string {
+    switch (this.timelineView) {
+      case 'now':
+        return 'Zeitleiste heute Abend, laufende Events hervorgehoben';
+      case 'week':
+        return 'Zeitleiste der nächsten sieben Abende';
+      default:
+        return 'Zeitleiste heute Abend';
+    }
+  }
+
+  get timelineEmptyText(): string {
+    return this.timelineView === 'now' && this.tonightEvents.length === 0
+      ? 'Gerade läuft nichts und für heute Abend ist noch nichts eingetragen.'
+      : 'Für heute Abend ist noch nichts eingetragen.';
   }
 
   get isLoggedIn() {
@@ -1256,6 +1385,86 @@ body.body--dark .page-index .page-stories__card-link:focus-visible {
     opacity: 1;
     animation: none;
     transform: none;
+  }
+}
+</style>
+
+<style lang="scss" scoped>
+// Elpis Reborn 2 home hub (ER2-301 … ER2-306). Tokens only; every role token
+// flips with body.body--dark, so no theme overrides are needed here.
+
+.home-eyebrow {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-link);
+}
+
+.home-card {
+  background-color: var(--vision-card);
+  border: 1px solid var(--rule-soft);
+  border-radius: 16px;
+  color: var(--ink-primary);
+}
+
+.home-hub {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 48px;
+  scroll-margin-top: 88px;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.home-hub__head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.home-hub__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--type-scale-6);
+  font-weight: 600;
+  line-height: var(--lh-display);
+  letter-spacing: var(--ls-display);
+  color: var(--ink-primary);
+}
+
+.home-hub__meta {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink-muted);
+}
+
+.home-hub__timeline {
+  padding: 16px 12px 18px;
+}
+
+.home-hub__unavailable {
+  margin: 0;
+  padding: 24px 12px;
+  font-family: var(--font-section);
+  font-style: italic;
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+@media (max-width: 599px) {
+  .home-hub__title {
+    font-size: var(--type-scale-5);
   }
 }
 </style>
