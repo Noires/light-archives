@@ -62,9 +62,10 @@ export class NoticeboardService {
       venueName: noticeboardItem.venue ? noticeboardItem.venue.name : undefined,
       venueServer: noticeboardItem.venue ? noticeboardItem.venue.server.name : undefined,
       imageId: noticeboardItem.image ? noticeboardItem.image.id : null,
-      imageUrl: noticeboardItem.image ? this.imagesService.getUrl(noticeboardItem.image) : null,
+      imageUrl: noticeboardItem.image ? this.imagesService.getUrl(noticeboardItem.image) : undefined,
       pinned: noticeboardItem.pinned,
       discordPosted: noticeboardItem.discordPosted,
+      postedToDiscord: noticeboardItem.discordPosted,
     });
   }
 
@@ -252,7 +253,8 @@ export class NoticeboardService {
       venueServer: noticeboardItem.venue ? noticeboardItem.venue.server.name : undefined,
       pinned: noticeboardItem.pinned,
       discordPosted: noticeboardItem.discordPosted,
-      imageUrl: noticeboardItem.image ? this.imagesService.getUrl(noticeboardItem.image) : null,
+      postedToDiscord: noticeboardItem.discordPosted,
+      imageUrl: noticeboardItem.image ? this.imagesService.getUrl(noticeboardItem.image) : undefined,
       excerpt: excerpts.get(noticeboardItem.id) || '',
     }));
   }

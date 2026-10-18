@@ -213,7 +213,7 @@ export default class PageEditNoticeboardItem extends Vue {
 
   onImageChanged(banner: BannerDto | null) {
     this.noticeboardItem.imageId = banner ? banner.id : null;
-    this.noticeboardItem.imageUrl = banner ? banner.url : null;
+    this.noticeboardItem.imageUrl = banner ? banner.url : undefined;
   }
 
   get canLinkVenueType(): boolean {

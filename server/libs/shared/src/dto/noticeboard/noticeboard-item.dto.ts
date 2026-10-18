@@ -60,15 +60,19 @@ export class NoticeboardItemDto {
 	@IsOptional()
 	imageId?: number | null;
 
-	// Read only (optional)
+	// Read only (optional); imageUrl is omitted when the item has no image
 	@IsOptional()
-	imageUrl?: string | null;
+	imageUrl?: string;
 
 	@IsOptional()
 	pinned?: boolean;
 
 	@IsOptional()
 	discordPosted?: boolean;
+
+	/** alias of discordPosted (read by NoticeboardItemView) */
+	@IsOptional()
+	postedToDiscord?: boolean;
 
 	constructor(properties?: Readonly<NoticeboardItemDto>) {
     if (properties) {
