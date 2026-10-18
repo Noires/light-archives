@@ -74,6 +74,15 @@
         />
         <p v-else class="home-hub__unavailable">Die Events konnten gerade nicht geladen werden.</p>
       </div>
+
+      <div class="home-hub__columns">
+        <home-up-next
+          :events="events"
+          :now="now"
+          :tonight-count="tonightEvents.length"
+          :available="eventsAvailable"
+        />
+      </div>
     </section>
 
     <section class="page-index__grid">
@@ -255,6 +264,7 @@ import {
   SERVER_ZONE,
   toTimelineEvent,
 } from 'components/mainpage/home-data';
+import HomeUpNext from 'components/mainpage/HomeUpNext.vue';
 import SectionTabs from 'components/vision/SectionTabs.vue';
 import TimelineStrip from 'components/vision/TimelineStrip.vue';
 import type { TimelineView } from 'components/vision/timeline';
@@ -321,6 +331,7 @@ async function load(): Promise<HomeData> {
     VenueList,
     CommunityList,
     ThumbGallery,
+    HomeUpNext,
     SectionTabs,
     TimelineStrip,
   },
@@ -1451,6 +1462,20 @@ body.body--dark .page-index .page-stories__card-link:focus-visible {
 
 .home-hub__timeline {
   padding: 16px 12px 18px;
+}
+
+.home-hub__columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  margin-top: 8px;
+}
+
+@media (max-width: 1023px) {
+  .home-hub__columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .home-hub__unavailable {
