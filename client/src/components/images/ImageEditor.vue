@@ -2,6 +2,8 @@
 	<div>
 		<a class="thumb-link" :href="modelValue.url" target="_blank"><img :src="modelValue.thumbUrl" alt="Vorschau" /></a>
 		<step-image-details v-model="imageDetails" :album-character-id="ownerCharacterId" />
+		<!-- ER2 round 2: character tags with consent (only when the API sends taggedCharacters) -->
+		<image-tag-editor v-if="tagsSupported" :image-id="modelValue.id" :initial-tags="ownerTags" />
 		<div class="image-editor__button-bar">
 			<q-btn v-if="!fullPage" flat color="secondary" label="Abbrechen" @click="onCancelClick" />
 			<q-btn :flat="!fullPage" :disable="!isValid" color="primary" label="Änderungen speichern" @click="onSaveClick" />
@@ -18,6 +20,8 @@ import { notifyError } from 'src/common/notify';
 import { Options, prop, Vue } from 'vue-class-component';
 import { ImageDetailsModel } from '../upload/image-details-model';
 import StepImageDetails from '../upload/StepImageDetails.vue';
+import type { ImageTagDto } from '@app/shared/dto/image/image-tag.dto';
+import ImageTagEditor from './ImageTagEditor.vue';
 
 class Props {
 	modelValue = prop<ImageDto>({
@@ -31,6 +35,7 @@ class Props {
 @Options({
 	name: 'ImageEditor',
 	components: {
+		ImageTagEditor,
 		StepImageDetails,
 	},
 	emits: [ 'update:model-value', 'cancel' ]
@@ -38,6 +43,8 @@ class Props {
 export default class ImageEditor extends Vue.with(Props) {
 	imageDetails = {} as ImageDetailsModel;
 	saving = false;
+	tagsSupported = false;
+	ownerTags: ImageTagDto[] = [];
 
 	created() {
 		this.imageDetails = {
@@ -74,10 +81,17 @@ export default class ImageEditor extends Vue.with(Props) {
 		void this.loadOwnerDetails();
 	}
 
-	/** ER2 round 2: album membership is only on GET /images/:id (owner only). */
+	/** ER2 round 2: album membership and tag states are only on GET /images/:id (owner only). */
 	async loadOwnerDetails() {
 		try {
-			const full = this.modelValue.albumIds ? this.modelValue : await this.$api.images.getImage(this.modelValue.id);
+			const full = this.modelValue.albumIds && this.modelValue.taggedCharacters
+				? this.modelValue
+				: await this.$api.images.getImage(this.modelValue.id);
+
+			if (Array.isArray(full.taggedCharacters)) {
+				this.ownerTags = full.tags || [];
+				this.tagsSupported = true;
+			}
 
 			if (full.albumIds && !this.imageDetails.albumIds) {
 				this.imageDetails = { ...this.imageDetails, albumIds: [...full.albumIds] };

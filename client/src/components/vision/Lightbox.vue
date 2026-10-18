@@ -113,6 +113,20 @@
 					</router-link>
 				</div>
 
+				<!-- ER2 round 2: approved character tags only -->
+				<div v-if="taggedCharacters.length" class="vision-lightbox__people">
+					<p class="vision-lightbox__people-label">Auf dem Bild</p>
+					<ul class="vision-lightbox__tags" aria-label="Markierte Charaktere">
+						<li v-for="character in taggedCharacters" :key="character.id">
+							<router-link class="vision-lightbox__tag vision-lightbox__tag--person" :to="characterLink(character)" @click="hide">
+								<img v-if="character.avatar" class="vision-lightbox__tag-avatar" :src="character.avatar" alt="" />
+								<q-icon v-else name="person" aria-hidden="true" />
+								<span>{{ character.name }}</span>
+							</router-link>
+						</li>
+					</ul>
+				</div>
+
 				<div v-if="reactions.length" class="vision-lightbox__reactions" role="group" aria-label="Reaktionen">
 					<button
 						v-for="reaction in reactions"
@@ -154,6 +168,7 @@
 <script lang="ts">
 import type { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 import type { ImageDto } from '@app/shared/dto/image/image.dto';
+import type { TaggedCharacterDto } from '@app/shared/dto/image/image-tag.dto';
 import { REACTION_KINDS_BY_TARGET, REACTION_LABELS, ReactionKind, ReactionTargetType } from '@app/shared/enums/reaction.enum';
 import { wikify } from '@common/common/wikilinks';
 import { copyToClipboard } from 'quasar';
@@ -167,8 +182,9 @@ import type { RouteLocationRaw } from 'vue-router';
 // strip, info panel. QDialog provides Esc, the focus trap and refocusing the
 // trigger; ←/→ are handled here. Details (credits, linked event/venue,
 // reactions) come from GET /images/:id when available.
-// ER2-704 — linked event and venue are shown as chips. The image DTOs have
-// no tagged characters, so there are none to show.
+// ER2-704 — linked event and venue are shown as chips.
+// ER2 round 2 — approved character tags (ImageDto.taggedCharacters) appear
+// under "Auf dem Bild" as linked chips; pending or declined tags never do.
 
 interface DialogRef {
 	show(): void;
@@ -369,6 +385,15 @@ export default class Lightbox extends Vue.with(Props) {
 			tags.push({ key: `venue-${detail.venueId}`, label: detail.venueName, icon: 'storefront', to: `/venue/${detail.venueId}` });
 		}
 		return tags;
+	}
+
+	get taggedCharacters(): TaggedCharacterDto[] {
+		const tagged = this.detail?.taggedCharacters;
+		return Array.isArray(tagged) ? tagged : [];
+	}
+
+	characterLink(character: TaggedCharacterDto): string {
+		return `/${character.server}/${character.name.replace(/ /g, '_')}`;
 	}
 
 	// --- Reactions (ER2-807; hidden while the API has none) --------------------
@@ -694,6 +719,35 @@ export default class Lightbox extends Vue.with(Props) {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
+}
+
+.vision-lightbox__people {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+
+	.vision-lightbox__tags {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+}
+
+.vision-lightbox__people-label {
+	margin: 0;
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--lb-muted);
+}
+
+.vision-lightbox__tag-avatar {
+	width: 20px;
+	height: 20px;
+	margin-left: -6px;
+	border-radius: 50%;
+	object-fit: cover;
 }
 
 .vision-lightbox__tag {

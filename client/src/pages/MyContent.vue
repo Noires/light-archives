@@ -3,6 +3,9 @@
     <h2>Meine Inhalte</h2>
     <div class="page-my-content__subtitle">for {{ $store.getters.character?.name }}</div>
 
+    <!-- ER2 round 2: image tags awaiting my consent (notification target) -->
+    <pending-image-tags />
+
     <q-tabs v-model="tab" dense align="justify" narrow-indicator>
       <q-tab :name="PageType.EVENT" label="Events" />
       <q-tab :name="PageType.STORY" label="Geschichten" />
@@ -55,6 +58,7 @@ import { MyContentDto } from '@app/shared/dto/characters/my-content.dto';
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 import { PageType } from '@app/shared/enums/page-type.enum';
 import MyImages from 'components/images/MyImages.vue';
+import PendingImageTags from 'components/images/PendingImageTags.vue';
 import { useApi } from 'src/boot/axios';
 import { notifyError } from 'src/common/notify';
 import MyContentList from 'src/components/common/MyContentList.vue';
@@ -84,6 +88,7 @@ async function load(): Promise<MyContentDto> {
   components: {
     MyContentList,
     MyImages,
+    PendingImageTags,
   },
   watch: {
     tab: {
