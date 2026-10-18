@@ -17,6 +17,8 @@ export class Story extends BasicEntity {
   })
   owner: Character;
 
+  // ER2-809: plain index for prefix autocomplete
+  @Index()
   @Column({
     nullable: false,
   })

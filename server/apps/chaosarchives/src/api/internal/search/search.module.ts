@@ -4,6 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ImagesModule } from '../images/images.module';
 import { SearchController } from './search.controller';
 import { SearchService } from './search.service';
+import { SearchSuggestController } from './search-suggest.controller';
+import { SearchSuggestService } from './search-suggest.service';
 
 @Module({
   imports: [
@@ -20,8 +22,8 @@ import { SearchService } from './search.service';
     ]),
     ImagesModule,
   ],
-  controllers: [SearchController],
-  providers: [SearchService]
+  controllers: [SearchSuggestController, SearchController],
+  providers: [SearchService, SearchSuggestService]
 })
 export class SearchModule {
 

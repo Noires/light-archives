@@ -17,6 +17,8 @@ export class Event extends BasicEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
+  // ER2-809: plain index for prefix autocomplete
+  @Index()
   @Column({
     nullable: false,
   })
