@@ -22,16 +22,7 @@
           </div>
         </section>
 
-        <iframe
-          v-if="venue.carrdProfile"
-          v-iframe-resize
-          :src="carrdLink"
-          width="100%"
-          height="500px"
-          class="venue-profile__carrd-iframe"
-          title="Carrd-Seite des Treffpunkts"
-        >
-        </iframe>
+        <venue-external-page v-if="venue.carrdProfile" :profile="venue.carrdProfile" />
       </div>
 
       <aside class="venue-profile__aside" aria-label="Öffnungszeiten, Ort und Team">
@@ -91,6 +82,7 @@ import EventCard from 'components/vision/EventCard.vue';
 import type { EventCardEvent } from 'components/vision/types';
 import HtmlViewer from '../common/HtmlViewer.vue';
 import { effectiveEnd, isEventLive, locationLabel } from '../event/event-display';
+import VenueExternalPage from './VenueExternalPage.vue';
 import VenueHero from './VenueHero.vue';
 import VenueHoursCard from './VenueHoursCard.vue';
 import VenueLocationCard from './VenueLocationCard.vue';
@@ -123,6 +115,7 @@ class Props {
   components: {
     EventCard,
     HtmlViewer,
+    VenueExternalPage,
     VenueHero,
     VenueHoursCard,
     VenueLocationCard,
@@ -141,10 +134,6 @@ export default class VenueProfile extends Vue.with(Props) {
 
   get staff(): VenueStaffMemberDto[] {
     return this.venue.staff || [];
-  }
-
-  get carrdLink(): string {
-    return `${this.$api.prefix}carrd/character/preview/${this.venue.carrdProfile}`;
   }
 
   get ownerLink(): string {
@@ -309,7 +298,4 @@ export default class VenueProfile extends Vue.with(Props) {
   }
 }
 
-.venue-profile__carrd-iframe {
-  border: none;
-}
 </style>
