@@ -1,76 +1,96 @@
 <template>
   <div class="venue-profile">
-    <banner-view :banner="venue.banner" />
-    <header class="venue-profile__header mat-aetherglass">
-      <glyph-corner size="md" position="tl" class="venue-profile__corner" />
-      <glyph-corner size="md" position="tr" class="venue-profile__corner" />
-      <glyph-corner size="md" position="br" class="venue-profile__corner" />
-      <glyph-corner size="md" position="bl" class="venue-profile__corner" />
-      <div class="venue-profile__header-names">
-        <h2 class="venue-profile__header-title">{{ venue.name }}</h2>
-        <div class="venue-profile__header-subtitle">{{ address }}</div>
+    <venue-hero v-if="preview" :venue="venue" preview />
+
+    <div class="venue-profile__grid">
+      <div class="venue-profile__main">
+        <section class="venue-profile__about mat-parchment" aria-labelledby="venue-about">
+          <h2 id="venue-about" class="venue-profile__heading">Über {{ venue.name || 'diesen Treffpunkt' }}</h2>
+          <html-viewer v-if="hasDescription" class="venue-profile__description" :content="venue.description" />
+          <p v-else class="venue-profile__muted">Noch keine Beschreibung.</p>
+        </section>
+
+        <section v-if="hasOfferings" class="venue-profile__section" aria-labelledby="venue-offerings">
+          <h2 id="venue-offerings" class="venue-profile__heading">Angebote</h2>
+          <venue-offerings-view :offerings="offerings" />
+        </section>
+
+        <section v-if="plannedEvents.length" class="venue-profile__section" aria-labelledby="venue-events">
+          <h2 id="venue-events" class="venue-profile__heading">Nächste Abende</h2>
+          <div class="venue-profile__events">
+            <event-card v-for="event in plannedEvents" :key="event.id" :event="toCard(event)" :state="isLive(event) ? 'live' : 'default'" />
+          </div>
+        </section>
+
+        <venue-external-page v-if="venue.carrdProfile" :profile="venue.carrdProfile" />
       </div>
-    </header>
-    <character-details-box class="venue-profile__infobox">
-      <character-detail label="Welt" :value="venue.server" v-if="venue.server" />
-      <character-detail label="Besitzer" :value="venue.owner" :router-link="ownerLink" />
-      <character-detail label="Gründung" :value="$display.formatDate(venue.foundedAt)" v-if="venue.foundedAt" />
-      <character-detail label="Webseite" :value="venue.website" :link="venue.website" v-if="venue.website" />
-      <character-detail label="Zweck" :value="venue.purpose" v-if="venue.purpose" />
-      <character-detail label="Status" :value="venue.status" v-if="venue.status" />
-    </character-details-box>
-    <template v-if="venue.description">
-      <triskelion-divider class="venue-profile__divider" />
-      <section class="venue-profile__description-body mat-parchment">
-        <html-viewer class="venue-profile__description" :content="venue.description" />
-      </section>
-    </template>
-    <section v-if="plannedEvents.length" class="venue-profile__events">
-      <h3>Geplante Events</h3>
-      <div class="venue-profile__events-list">
-        <div
-          v-for="event in plannedEvents"
-          :key="event.id"
-          class="venue-profile__event-card"
-        >
-          <div class="venue-profile__event-time">{{ formatTimeRange(event) }}</div>
-          <router-link :to="`/event/${event.id}`" class="venue-profile__event-title">
-            {{ event.title }}
-          </router-link>
+
+      <aside class="venue-profile__aside" aria-label="Öffnungszeiten, Ort und Team">
+        <div class="venue-profile__card">
+          <venue-hours-card :venue="venue" />
         </div>
-      </div>
-    </section>
-    <iframe
-      v-if="venue.carrdProfile"
-      v-iframe-resize
-      :src="carrdLink"
-      width="100%"
-      height="500px"
-      class="venue-profile__carrd-iframe"
-    >
-    </iframe>
-    <template v-if="!venue.description && !venue.carrdProfile">
-      Keine Beschreibung.
-    </template>
-    <template v-if="venue.tags.length > 0">
-      <hr />
-      <strong>Schlagworte:</strong> {{ venue.tags.join(', ') }}
-    </template>
+        <div class="venue-profile__card">
+          <venue-location-card :venue="venue" />
+        </div>
+        <section v-if="staff.length" class="venue-profile__card" aria-labelledby="venue-team">
+          <h2 id="venue-team" class="venue-profile__card-title">Team</h2>
+          <ul class="venue-profile__team">
+            <li v-for="member in staff" :key="`${member.server}_${member.name}`">
+              <router-link class="venue-profile__member" :to="`/${member.server}/${member.name.replace(/ /g, '_')}`">
+                <q-avatar size="36px" class="venue-profile__member-avatar">
+                  <img v-if="member.avatar" :src="member.avatar" alt="" />
+                  <q-icon v-else name="person" aria-hidden="true" />
+                </q-avatar>
+                <span>{{ member.name }}</span>
+              </router-link>
+            </li>
+          </ul>
+        </section>
+        <section class="venue-profile__card" aria-labelledby="venue-facts">
+          <h2 id="venue-facts" class="venue-profile__card-title">Steckbrief</h2>
+          <dl class="venue-profile__facts">
+            <template v-if="venue.owner">
+              <dt>Besitzer</dt>
+              <dd><router-link :to="ownerLink">{{ venue.owner }}</router-link></dd>
+            </template>
+            <template v-if="venue.foundedAt">
+              <dt>Gründung</dt>
+              <dd>{{ $display.formatDate(venue.foundedAt) }}</dd>
+            </template>
+            <template v-if="venue.status">
+              <dt>Status</dt>
+              <dd>{{ venue.status }}</dd>
+            </template>
+            <template v-if="venue.website">
+              <dt>Webseite</dt>
+              <dd><a :href="venue.website" target="_blank" rel="noopener">{{ websiteLabel }}</a></dd>
+            </template>
+          </dl>
+        </section>
+      </aside>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
+import { VenueOfferingsDto } from '@app/shared/dto/venues/venue-offering.dto';
+import { VenueStaffMemberDto } from '@app/shared/dto/venues/venue-staff-member.dto';
 import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
-import html from '@app/shared/html';
 import { Options, prop, Vue } from 'vue-class-component';
-import BannerView from '../common/BannerView.vue';
-import CharacterDetail from 'components/character/CharacterDetail.vue';
-import CharacterDetailsBox from 'components/character/CharacterDetailsBox.vue';
-import { VenueLocation } from '@app/shared/enums/venue-location.enum';
+import EventCard from 'components/vision/EventCard.vue';
+import type { EventCardEvent } from 'components/vision/types';
 import HtmlViewer from '../common/HtmlViewer.vue';
-import GlyphCorner from '../aetherium/GlyphCorner.vue';
-import TriskelionDivider from '../aetherium/TriskelionDivider.vue';
+import { effectiveEnd, isEventLive, locationLabel } from '../event/event-display';
+import VenueExternalPage from './VenueExternalPage.vue';
+import VenueHero from './VenueHero.vue';
+import VenueHoursCard from './VenueHoursCard.vue';
+import VenueLocationCard from './VenueLocationCard.vue';
+import VenueOfferingsView from './VenueOfferingsView.vue';
+
+// ER2-509 — venue overview: "Über …" parchment with drop cap, offerings and
+// next evenings on the left; opening hours, location, team and facts on the
+// right. In `preview` (EditVenue) the hero renders here too.
 
 class Props {
   venue = prop<VenueDto>({
@@ -81,6 +101,10 @@ class Props {
     default: () => [],
   });
 
+  offerings = prop<VenueOfferingsDto | null>({
+    default: null,
+  });
+
   preview = prop<boolean>({
     default: false,
   });
@@ -89,42 +113,27 @@ class Props {
 @Options({
   name: 'VenueProfile',
   components: {
-    CharacterDetail,
-    CharacterDetailsBox,
-    BannerView,
+    EventCard,
     HtmlViewer,
-    GlyphCorner,
-    TriskelionDivider,
+    VenueExternalPage,
+    VenueHero,
+    VenueHoursCard,
+    VenueLocationCard,
+    VenueOfferingsView,
   },
 })
 export default class VenueProfile extends Vue.with(Props) {
-	get editVenueLink(): string {
-		return `/edit-venue/${this.venue.id}`;
-	}
-
-  get address(): string {
-    let address: string;
-
-		if (this.venue.location === VenueLocation.OPEN_WORLD) {
-			address = this.venue.address;
-		} else {
-			const plot = this.venue.location === VenueLocation.HOUSE ? `Grundstück ${this.venue.plot!}` : `Wohnung ${this.venue.room!}`;
-			address = `${this.$display.housingAreas[this.venue.housingArea!]}, Bezirk ${this.venue.ward!}, ${plot}`;
-
-			if (this.venue.subdivision) {
-				address += ' (Erweiterung)';
-			}
-		}
-
-    return address;
+  get hasDescription(): boolean {
+    const text = (this.venue.description || '').replace(/<[^>]*>/g, '').trim();
+    return text.length > 0 || /<img/i.test(this.venue.description || '');
   }
 
-  get description(): string {
-    return html.sanitize(this.venue.description);
+  get hasOfferings(): boolean {
+    return !!this.offerings && this.offerings.categories.length > 0;
   }
 
-  get carrdLink(): string {
-    return `${this.$api.prefix}carrd/character/preview/${this.venue.carrdProfile}`;
+  get staff(): VenueStaffMemberDto[] {
+    return this.venue.staff || [];
   }
 
   get ownerLink(): string {
@@ -133,181 +142,160 @@ export default class VenueProfile extends Vue.with(Props) {
     return `/${server}/${character}`;
   }
 
-  formatTimeRange(event: EventSummaryDto) {
-    const start = this.$display.formatDateTimeServer(event.startDateTime);
-    if (event.endDateTime) {
-      const end = this.$display.formatDateTimeServer(event.endDateTime);
-      return `${start} – ${end}`;
-    }
-    return start;
+  get websiteLabel(): string {
+    return (this.venue.website || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+  }
+
+  isLive(event: EventSummaryDto): boolean {
+    return isEventLive(event);
+  }
+
+  toCard(event: EventSummaryDto): EventCardEvent {
+    return {
+      id: event.id,
+      title: event.title,
+      startDateTime: event.startDateTime,
+      endDateTime: effectiveEnd(event),
+      imageSrc: event.icon?.thumbUrl || event.icon?.url || null,
+      locationLabel: locationLabel((event.locations || [])[0], false),
+      recurringLabel: event.seriesLabel || null,
+      live: this.isLive(event),
+    };
   }
 }
 </script>
 
-<style lang="scss">
-@import url($extraGoogleFonts);
+<style lang="scss" scoped>
+.venue-profile__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 28px;
+  align-items: start;
 
-// ELPIS-407: ornamental Aetherglass hero with corner-glyph stamps. Cinzel
-// display title + Spectral italic subtitle, mirroring the EventView (305) and
-// CharacterProfile (204) header idioms.
-.venue-profile__header {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 22px 28px;
-  margin-bottom: 18px;
-  text-align: center;
-  border-radius: 8px;
-}
-
-.venue-profile__corner {
-  position: absolute;
-  z-index: 1;
-}
-
-.venue-profile__corner.glyph-corner--tl { top: 8px;    left: 8px;    }
-.venue-profile__corner.glyph-corner--tr { top: 8px;    right: 8px;   }
-.venue-profile__corner.glyph-corner--br { bottom: 8px; right: 8px;   }
-.venue-profile__corner.glyph-corner--bl { bottom: 8px; left: 8px;    }
-
-.venue-profile__header-title {
-  margin: 0;
-  font-family: 'Cinzel Eorzea', var(--font-display);
-  font-size: var(--type-scale-6); // 39 px per ELPIS-407 AC
-  line-height: var(--lh-display);
-  letter-spacing: var(--ls-display);
-  color: var(--surface-ink);
-}
-
-.venue-profile__header-names {
-  text-align: center;
-}
-
-.venue-profile__header-subtitle {
-  margin-top: 6px;
-  font-family: var(--font-section);
-  font-style: italic;
-  font-weight: 500;
-  font-size: var(--type-scale-2);
-  color: var(--ink-muted);
-}
-
-body.body--dark .venue-profile__header-title {
-  color: var(--ink-luminous);
-}
-
-body.body--dark .venue-profile__header-subtitle {
-  color: rgba(236, 227, 247, 0.74);
-}
-
-@media screen and (max-width: 600px) {
-  .venue-profile__header {
-    padding: 18px 18px;
-  }
-
-  .venue-profile__header-title {
-    font-size: var(--type-scale-5);
-  }
-
-  .venue-profile__header-subtitle {
-    font-size: var(--type-scale-1);
+  @media (max-width: 1023px) {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
-.venue-profile__details td {
-  padding: 4px 8px;
+.venue-profile__main,
+.venue-profile__aside {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
 }
 
-.venue-profile__details tr > td:first-child {
-  font-weight: bold;
+.venue-profile__aside {
+  gap: 16px;
 }
 
-// ELPIS-408: description body lifts onto Parchment with a TriskelionDivider
-// seal between the infobox and the prose. Same idiom Story / Wiki / Noticeboard
-// already use.
-.venue-profile__divider {
-  margin: 8px auto 16px;
-}
-
-.venue-profile__description-body {
-  margin-bottom: 24px;
+.venue-profile__about {
   padding: 28px 32px;
-  border-radius: 6px;
-}
+  border-radius: 12px;
 
-.venue-profile__description-body .venue-profile__description {
-  margin-bottom: 0;
-}
-
-@media screen and (max-width: 600px) {
-  .venue-profile__description-body {
+  @media (max-width: 599px) {
     padding: 20px 18px;
   }
 }
 
-.venue-profile__description {
-  margin-bottom: 24px;
+.venue-profile__heading {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: var(--ink-primary);
+}
+
+// Illuminated first letter, like the story and wiki parchments.
+.venue-profile__description :deep(p:first-of-type)::first-letter {
+  float: left;
+  margin: 6px 10px 0 0;
+  font-family: 'Cinzel Eorzea', var(--font-display);
+  font-size: 3.4em;
+  line-height: 0.85;
+  color: var(--ink-link);
+}
+
+.venue-profile__muted {
+  margin: 0;
+  font-style: italic;
+  color: var(--ink-muted);
 }
 
 .venue-profile__events {
-  margin: 24px 0;
-}
-
-.venue-profile__events-list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
-.venue-profile {
-  --venue-event-card-border: rgba(221, 180, 118, 0.25);
-  --venue-event-card-bg: rgba(255, 255, 255, 0.92);
-  --venue-event-card-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
-  --venue-event-time-color: rgba(35, 35, 35, 0.7);
-  --venue-event-title-color: #1f2c38;
+.venue-profile__card {
+  padding: 18px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 12px;
+  background-color: var(--vision-card);
+  color: var(--ink-primary);
 }
 
-body.body--dark .venue-profile {
-  --venue-event-card-border: rgba(141, 181, 223, 0.35);
-  --venue-event-card-bg: rgba(17, 26, 39, 0.88);
-  --venue-event-card-shadow: 0 12px 26px rgba(0, 0, 0, 0.34);
-  --venue-event-time-color: rgba(213, 226, 240, 0.72);
-  --venue-event-title-color: rgba(226, 237, 248, 0.96);
+.venue-profile__card-title {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: var(--ink-primary);
 }
 
-.venue-profile__event-card {
-  border: 1px solid var(--venue-event-card-border);
-  background: var(--venue-event-card-bg);
-  padding: 12px 16px;
-  box-shadow: var(--venue-event-card-shadow);
+.venue-profile__team {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.venue-profile__event-time {
-  font-size: 0.85rem;
+.venue-profile__member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 14px;
   font-weight: 600;
-  color: var(--venue-event-time-color);
-  margin-bottom: 4px;
+  color: var(--ink-primary) !important;
+  text-decoration: none !important;
+
+  &:hover {
+    background-color: var(--rule-tint);
+  }
 }
 
-.venue-profile__event-title {
-  font-weight: 700;
-  color: var(--venue-event-title-color);
-  text-decoration: none;
+.venue-profile__member-avatar {
+  background-color: var(--rule-tint);
+  color: var(--ink-muted);
 }
 
-.venue-profile__event-title:hover {
-  text-decoration: underline;
+.venue-profile__facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 14px;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 14px;
+
+  dt {
+    color: var(--ink-muted);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  a {
+    color: var(--ink-link) !important;
+  }
 }
 
-.venue-profile__description_no-header {
-  margin-top: 24px;
-}
-
-.venue-profile__infobox {
-  margin-bottom: 24px;
-}
-
-.venue-profile__carrd-iframe {
-  border: none;
-}
 </style>
