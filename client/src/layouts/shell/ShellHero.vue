@@ -38,7 +38,8 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
 
-// Logo block above the page content (theme-aware picture sources).
+// Logo block above the page content (theme-aware picture sources). Rendered
+// on the home page only (ER2-202); the top bar carries the small logo.
 
 @Options({
   name: 'ShellHero',
@@ -62,7 +63,9 @@ export default class ShellHero extends Vue {
   border-bottom: none;
 }
 
-.q-toolbar__title {
+// Scoped to the hero so other q-toolbar-title uses do not inherit the 50px
+// hero padding.
+.layout__toolbar-title.q-toolbar__title {
   font-family: Michroma, sans-serif;
   font-weight: bold;
   padding-top: 50px;

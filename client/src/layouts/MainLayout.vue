@@ -5,7 +5,7 @@
     <shell-drawer v-model="leftDrawerOpen" />
 
     <q-page-container>
-      <shell-hero />
+      <shell-hero v-if="isHome" />
 
       <div class="layout__page-shell">
         <div class="layout__page-container">
@@ -52,6 +52,11 @@ export default class MainLayout extends Vue {
 
   mounted() {
     void this.promptTelemetryConsentIfRequired();
+  }
+
+  // ER2-202 — the logo hero renders on the home page only.
+  get isHome(): boolean {
+    return this.$route.path === '/';
   }
 
   toggleLeftDrawer() {
@@ -168,7 +173,7 @@ body.body--dark {
   width: 100%;
   max-width: calc(var(--page-shell-max) + 2 * var(--page-shell-gutter, 24px));
   margin: 0 auto;
-  padding: 0 var(--page-shell-gutter, 24px);
+  padding: var(--page-shell-top, 24px) var(--page-shell-gutter, 24px) 0;
 }
 
 @media screen and (max-width: $breakpoint-xs) {
