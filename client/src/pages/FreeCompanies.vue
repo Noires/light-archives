@@ -1,20 +1,12 @@
 <template>
   <q-page class="page-free-companies">
-    <header class="page-free-companies__hero">
-      <div class="page-free-companies__hero-text">
-        <span class="page-free-companies__eyebrow">Community</span>
-        <h2>Freie Gesellschaften</h2>
-        <p class="page-free-companies__lead">
-          Entdecke freie Gesellschaften, ihre Ziele und Geschichten.
-        </p>
-      </div>
-      <div class="page-free-companies__hero-meta">
-        <div class="page-free-companies__count">
-          <span class="page-free-companies__count-number">{{ freeCompanies.length }}</span>
-          <span class="page-free-companies__count-label">Einträge</span>
-        </div>
-      </div>
-    </header>
+    <page-head
+      :eyebrow="`Charaktere · ${freeCompanies.length} Freie Gesellschaften`"
+      title="Freie Gesellschaften"
+      lead="Gruppen, ihre Ziele und ihr Sitz auf Light."
+    >
+      <directory-area-tabs />
+    </page-head>
 
     <section class="page-free-companies__content">
       <div class="page-free-companies__toolbar elpis-directory-toolbar">
@@ -63,6 +55,8 @@
 <script lang="ts">
 import { FreeCompanySummaryDto } from '@app/shared/dto/fcs/free-company-summary.dto';
 import { useApi } from 'src/boot/axios';
+import PageHead from 'components/vision/PageHead.vue';
+import DirectoryAreaTabs from 'components/character/DirectoryAreaTabs.vue';
 import { notifyError } from 'src/common/notify';
 import FreeCompanyNameList from 'src/components/free-company/FreeCompanyNameList.vue';
 import { Options, Vue } from 'vue-class-component';
@@ -72,7 +66,9 @@ const $api = useApi();
 @Options({
 	name: 'PageFreeCompanies',
 	components: {
-		FreeCompanyNameList
+		DirectoryAreaTabs,
+		FreeCompanyNameList,
+		PageHead,
 	},
   async beforeRouteEnter(_, __, next) {
     try {

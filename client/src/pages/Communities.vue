@@ -1,20 +1,12 @@
 <template>
   <q-page class="page-communities">
-    <header class="page-communities__hero">
-      <div class="page-communities__hero-text">
-        <span class="page-communities__eyebrow">Community</span>
-        <h2>Communities</h2>
-        <p class="page-communities__lead">
-          Finde Gruppen, Netzwerke und gemeinsame Ziele im Elpisgarten.
-        </p>
-      </div>
-      <div class="page-communities__hero-meta">
-        <div class="page-communities__count">
-          <span class="page-communities__count-number">{{ communities.length }}</span>
-          <span class="page-communities__count-label">Einträge</span>
-        </div>
-      </div>
-    </header>
+    <page-head
+      :eyebrow="`Charaktere · ${communities.length} Communities`"
+      title="Communities"
+      lead="Gruppen, Netzwerke und gemeinsame Ziele im Elpisgarten."
+    >
+      <directory-area-tabs />
+    </page-head>
 
     <section class="page-communities__content">
       <div class="page-communities__toolbar elpis-directory-toolbar">
@@ -52,6 +44,8 @@
 <script lang="ts">
 import { CommunitySummaryDto } from '@app/shared/dto/communities/community-summary.dto';
 import { useApi } from 'src/boot/axios';
+import PageHead from 'components/vision/PageHead.vue';
+import DirectoryAreaTabs from 'components/character/DirectoryAreaTabs.vue';
 import { notifyError } from 'src/common/notify';
 import CommunityList from 'components/communities/CommunityList.vue';
 import { Options, Vue } from 'vue-class-component';
@@ -61,7 +55,9 @@ const $api = useApi();
 @Options({
 	name: 'PageCommunities',
 	components: {
-		CommunityList
+		CommunityList,
+		DirectoryAreaTabs,
+		PageHead,
 	},
   async beforeRouteEnter(_, __, next) {
     try {

@@ -1,20 +1,11 @@
 <template>
   <q-page class="page-characters">
-    <header class="page-characters__hero">
-      <div class="page-characters__hero-text">
-        <span class="page-characters__eyebrow">Archiv</span>
-        <h2>Die Bevölkerung Hydaelyns</h2>
-        <p class="page-characters__lead">
-          Entdecke Charakterprofile und ihre Geschichten.
-        </p>
-      </div>
-      <div class="page-characters__hero-meta">
-        <div class="page-characters__count">
-          <span class="page-characters__count-number">{{ pagination.rowsNumber }}</span>
-          <span class="page-characters__count-label">Profile</span>
-        </div>
-      </div>
-    </header>
+    <page-head
+      :eyebrow="`Charaktere · ${pagination.rowsNumber} Profile auf Light`"
+      title="Wer ist unterwegs?"
+    >
+      <directory-area-tabs />
+    </page-head>
 
     <section class="page-characters__content">
       <div class="page-characters__alphabet-nav">
@@ -128,6 +119,8 @@ import { ServerDto } from '@app/shared/dto/servers/server-dto';
 import { Race } from '@app/shared/enums/race.enum';
 import SharedConstants from '@app/shared/SharedConstants';
 import { useApi } from 'src/boot/axios';
+import PageHead from 'components/vision/PageHead.vue';
+import DirectoryAreaTabs from 'components/character/DirectoryAreaTabs.vue';
 import { Options, Vue } from 'vue-class-component';
 
 const $api = useApi();
@@ -135,6 +128,8 @@ const $api = useApi();
 @Options({
   name: 'PageCharacters',
   components: {
+    DirectoryAreaTabs,
+    PageHead,
   },
   async beforeRouteEnter(to, __, next) {
     const searchQuery = to.query.searchQuery as string || '';
