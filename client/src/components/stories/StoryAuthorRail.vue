@@ -9,6 +9,14 @@
       <router-link :to="authorLink" class="author-rail__name">{{ author }}</router-link>
       <p v-if="meta" class="author-rail__meta">{{ meta }}</p>
       <status-badge v-if="rpBadge" :type="rpBadge" class="author-rail__status" />
+      <!-- ER2 social: follow -->
+      <follow-button
+        v-if="authorKey"
+        class="author-rail__follow"
+        target-type="author"
+        :target-key="authorKey"
+      />
+      <!-- /ER2 social: follow -->
     </section>
 
     <section v-if="otherStories.length" class="author-rail__block" aria-labelledby="author-rail-more">
@@ -40,11 +48,13 @@ import { StorySummaryDto } from '@app/shared/dto/stories/story-summary.dto';
 import { RpStatus } from '@app/shared/enums/rp-status.enum';
 import { Options, prop, Vue } from 'vue-class-component';
 import StatusBadge from '../vision/StatusBadge.vue';
+import FollowButton from '../social/FollowButton.vue'; // ER2 social: follow
 import type { StatusBadgeType } from '../vision/types';
 
 // ER2-601 — right reader rail: author card (avatar ring, name, people and
-// world, RP status if the profile carries one), "Auch von …" and tags. No
-// "Folgen" button: there is no follow concept yet.
+// world, RP status if the profile carries one), "Auch von …" and tags.
+// ER2 social: "Folgen" for the author (key = author character id from the
+// profile); FollowButton hides itself for guests or without the endpoint.
 
 const RP_BADGES: { [status: string]: StatusBadgeType } = {
   [RpStatus.IC]: 'rp-ic',
@@ -63,6 +73,7 @@ class Props {
 @Options({
   name: 'StoryAuthorRail',
   components: {
+    FollowButton, // ER2 social: follow
     StatusBadge,
   },
 })
@@ -73,6 +84,11 @@ export default class StoryAuthorRail extends Vue.with(Props) {
 
   get avatar(): string {
     return this.profile && this.profile.showAvatar !== false ? this.profile.avatar || '' : '';
+  }
+
+  // ER2 social: follow
+  get authorKey(): string {
+    return this.profile?.id && !this.profile.mine ? String(this.profile.id) : '';
   }
 
   get firstName(): string {
@@ -169,6 +185,11 @@ export default class StoryAuthorRail extends Vue.with(Props) {
 
 .author-rail__status {
   margin-top: 8px;
+}
+
+// ER2 social: follow
+.author-rail__follow {
+  margin-top: 12px;
 }
 
 .author-rail__list,

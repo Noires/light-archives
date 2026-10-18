@@ -24,7 +24,38 @@
           </router-link>
         </li>
       </ol>
+      <!-- ER2 social: series follow -->
+      <follow-button
+        v-if="seriesFollowKey"
+        class="reader-rail__follow"
+        target-type="story-series"
+        :target-key="seriesFollowKey"
+        label="Benachrichtigen"
+        active-label="Wirst benachrichtigt"
+        icon="notifications_none"
+        active-icon="notifications_active"
+      />
+      <!-- /ER2 social: series follow -->
     </nav>
+    <!-- ER2 social: series follow (series with one part so far) -->
+    <section
+      v-else-if="seriesFollowKey"
+      class="reader-rail__block reader-rail__series"
+      aria-labelledby="reader-rail-series-follow"
+    >
+      <h2 id="reader-rail-series-follow" class="reader-rail__label">Reihe</h2>
+      <p class="reader-rail__series-title">{{ series && series.seriesTitle }}</p>
+      <follow-button
+        class="reader-rail__follow"
+        target-type="story-series"
+        :target-key="seriesFollowKey"
+        label="Benachrichtigen"
+        active-label="Wirst benachrichtigt"
+        icon="notifications_none"
+        active-icon="notifications_active"
+      />
+    </section>
+    <!-- /ER2 social: series follow -->
 
     <section class="reader-rail__block" aria-labelledby="reader-rail-read">
       <h2 id="reader-rail-read" class="reader-rail__label">Lesen</h2>
@@ -75,6 +106,7 @@
 <script lang="ts">
 import type { StorySeriesDto } from '@app/shared/dto/stories/story-series.dto';
 import { Options, prop, Vue } from 'vue-class-component';
+import FollowButton from '../social/FollowButton.vue'; // ER2 social: series follow
 import { getReadingProgress, READER_DEFAULT_FONT_SIZE, READER_FONT_SIZES, ReaderSurface } from './reader-storage';
 
 // ER2-601 / ER2-603 — left reader rail: series parts (when the API provides
@@ -88,10 +120,13 @@ class Props {
   progress = prop<number>({ default: 0 });
   fontSize = prop<number>({ default: READER_DEFAULT_FONT_SIZE });
   surface = prop<ReaderSurface | null>({ default: null });
+  /** ER2 social: author character id for the series follow key; 0 hides "Benachrichtigen". */
+  authorCharacterId = prop<number>({ default: 0 });
 }
 
 @Options({
   name: 'StoryReaderRail',
+  components: { FollowButton }, // ER2 social: series follow
   emits: [ 'update:fontSize', 'update:surface' ],
 })
 export default class StoryReaderRail extends Vue.with(Props) {
@@ -104,6 +139,12 @@ export default class StoryReaderRail extends Vue.with(Props) {
 
   get hasSeries(): boolean {
     return !!this.series && !!this.series.seriesTitle && this.series.parts.length > 1;
+  }
+
+  // ER2 social: series follow key `${authorCharacterId}:${seriesTitle}`
+  get seriesFollowKey(): string {
+    const title = this.series?.seriesTitle;
+    return title && this.authorCharacterId ? `${this.authorCharacterId}:${title}` : '';
   }
 
   get effectiveSurface(): ReaderSurface {
@@ -157,6 +198,11 @@ export default class StoryReaderRail extends Vue.with(Props) {
   text-transform: uppercase;
   color: var(--ink-muted);
   line-height: 1.4;
+}
+
+// ER2 social: series follow
+.reader-rail__follow {
+  margin-top: 12px;
 }
 
 .reader-rail__series-title {

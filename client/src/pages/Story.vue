@@ -18,6 +18,7 @@
             :progress="progress"
             :font-size="fontSize"
             :surface="surface"
+            :author-character-id="authorProfile && !story.mine ? authorProfile.id : 0"
             @update:font-size="onFontSize"
             @update:surface="onSurface"
           />

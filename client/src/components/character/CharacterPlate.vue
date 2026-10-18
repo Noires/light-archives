@@ -80,6 +80,11 @@
 					label="Teilen"
 					@click="share"
 				/>
+				<!-- ER2 social: follow/bookmark -->
+				<template v-if="!character.mine && character.id">
+					<follow-button target-type="character" :target-key="String(character.id)" variant="on-media" />
+				</template>
+				<!-- /ER2 social: follow/bookmark -->
 				<!-- ER2 outlook: plate export -->
 				<plate-export-button :character="character" />
 				<!-- /ER2 outlook: plate export -->
@@ -116,6 +121,7 @@ import { notifyError, notifySuccess } from 'src/common/notify';
 import { Options, prop, Vue } from 'vue-class-component';
 import CharacterRpStatusSetter from './CharacterRpStatusSetter.vue';
 import PlateExportButton from '../outlook/PlateExportButton.vue'; // ER2 outlook: plate export
+import FollowButton from '../social/FollowButton.vue'; // ER2 social: follow/bookmark
 import { isEmptyFieldValue } from './empty-field';
 import { stripWikilinks } from './profile-sections';
 import { activeRpStatus, formatRpUntil, RP_STATUS_LABELS, supportsRpStatus } from './rp-status';
@@ -134,6 +140,7 @@ class Props {
 		Breadcrumbs,
 		CharacterRpStatusSetter,
 		PlateExportButton, // ER2 outlook: plate export
+		FollowButton, // ER2 social: follow/bookmark
 	},
 	emits: [ 'rp-change' ],
 })
