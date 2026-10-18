@@ -29,6 +29,13 @@ export class EventRegistration {
   })
   kind: EventRegistrationKind;
 
+  // ER2 social: set when the 'event-reminder' notification was handled for this registration
+  @Column({
+    type: 'datetime',
+    nullable: true,
+  })
+  remindedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }
