@@ -131,6 +131,7 @@ export default class StoryAuthorRail extends Vue.with(Props) {
 
 .author-rail__eyebrow,
 .author-rail__label {
+  text-align: left;
   margin: 0;
   font-size: var(--type-scale-0);
   font-weight: 700;

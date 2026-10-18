@@ -536,6 +536,7 @@ export default class CharacterPenAndPaper extends Vue.with(Props) {
 }
 
 .character-sheet__title {
+  text-align: left;
   margin: 10px 0 0;
   font-size: clamp(1.8rem, 4vw, 2.7rem);
   line-height: 1.05;

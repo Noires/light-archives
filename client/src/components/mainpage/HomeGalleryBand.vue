@@ -108,6 +108,7 @@ export default class HomeGalleryBand extends Vue.with(Props) {
 }
 
 .home-gallery__title {
+	text-align: left;
 	margin: 0;
 	font-family: var(--font-display);
 	font-size: var(--type-scale-5);

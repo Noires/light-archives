@@ -321,6 +321,7 @@ body.body--dark .shell-sheet {
 }
 
 .shell-sheet__title {
+  text-align: left;
   flex: 1;
   margin: 0;
   font: 600 16px/24px var(--font-ui);

@@ -151,6 +151,7 @@ export default class EventLocationCard extends Vue.with(Props) {
 }
 
 .event-location__title {
+  text-align: left;
   margin: 0;
   font-family: var(--font-display);
   font-size: 17px;

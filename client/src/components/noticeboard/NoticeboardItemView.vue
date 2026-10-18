@@ -328,6 +328,7 @@ body.body--dark .nb-view__body--drop-cap .nb-view__content > :deep(p:first-of-ty
 }
 
 .nb-view__contact-title {
+  text-align: left;
   margin: 0 0 4px;
   font-family: var(--font-display);
   font-size: var(--type-scale-3);
@@ -356,6 +357,7 @@ body.body--dark .nb-view__body--drop-cap .nb-view__content > :deep(p:first-of-ty
 }
 
 .nb-view__rail-label {
+  text-align: left;
   margin: 0 0 10px;
   font-family: var(--font-ui);
   font-size: var(--type-scale-0);

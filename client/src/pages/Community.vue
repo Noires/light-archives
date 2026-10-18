@@ -508,6 +508,7 @@ export default class PageCommunity extends Vue {
 }
 
 .community-detail__heading {
+  text-align: left;
   margin: 0 0 14px;
   font-family: var(--font-display);
   font-weight: 500;
@@ -551,6 +552,7 @@ export default class PageCommunity extends Vue {
 }
 
 .community-detail__card-title {
+  text-align: left;
   margin: 0;
   font-family: var(--font-display);
   font-weight: 500;

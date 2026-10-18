@@ -972,6 +972,7 @@ export default class PageEventCalendar extends Vue {
 }
 
 .page-events__day-title {
+  text-align: left;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -1024,6 +1025,7 @@ export default class PageEventCalendar extends Vue {
 }
 
 .page-events__card-title {
+  text-align: left;
   margin: 0 0 8px;
   font-family: var(--font-display);
   font-size: 17px;
@@ -1095,6 +1097,7 @@ export default class PageEventCalendar extends Vue {
 }
 
 .page-events__calendar-title {
+  text-align: left;
   margin: 0;
   font-family: var(--font-display);
   font-size: 22px;

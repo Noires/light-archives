@@ -61,6 +61,7 @@ export default class VenueLocationCard extends Vue.with(Props) {
 
 <style lang="scss" scoped>
 .venue-location__title {
+  text-align: left;
   margin: 0 0 10px;
   font-family: var(--font-display);
   font-size: 17px;

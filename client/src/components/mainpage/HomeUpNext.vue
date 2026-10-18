@@ -92,6 +92,7 @@ export default class HomeUpNext extends Vue.with(Props) {
 }
 
 .home-up-next__title {
+	text-align: left;
 	margin: 0;
 	font-family: var(--font-display);
 	font-size: var(--type-scale-3);

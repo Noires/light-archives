@@ -436,6 +436,7 @@ export default class CharacterOverview extends Vue.with(Props) {
 }
 
 .character-overview__heading {
+	text-align: left;
 	margin: 0 0 14px;
 	font-family: var(--font-display);
 	font-weight: 500;
@@ -475,6 +476,7 @@ export default class CharacterOverview extends Vue.with(Props) {
 }
 
 .character-overview__completeness-title {
+	text-align: left;
 	margin: 0 0 2px;
 	font-family: var(--font-ui);
 	font-weight: 600;
@@ -740,6 +742,7 @@ export default class CharacterOverview extends Vue.with(Props) {
 }
 
 .character-overview__card-title {
+	text-align: left;
 	margin: 0;
 	font-family: var(--font-display);
 	font-weight: 500;

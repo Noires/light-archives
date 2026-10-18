@@ -182,6 +182,7 @@ export default class PageWikiIndex extends Vue {
 }
 
 .page-wiki-index__label {
+  text-align: left;
   margin: 0 0 12px;
   font-family: var(--font-ui);
   font-size: var(--type-scale-0);

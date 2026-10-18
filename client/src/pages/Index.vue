@@ -771,6 +771,7 @@ export default class PageIndex extends Vue {
 }
 
 .home-section-head__title {
+  text-align: left;
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--type-scale-5);

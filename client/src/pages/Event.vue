@@ -471,6 +471,7 @@ export default class PageEvent extends Vue {
 }
 
 .page-event__card-title {
+  text-align: left;
   margin: 0 0 12px;
   font-family: var(--font-display);
   font-size: 17px;
@@ -542,6 +543,7 @@ export default class PageEvent extends Vue {
 }
 
 .page-event__gallery-title {
+  text-align: left;
   margin: 0 0 12px;
   font-family: var(--font-display);
   font-size: 22px;

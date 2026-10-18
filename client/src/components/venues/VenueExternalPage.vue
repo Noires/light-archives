@@ -109,6 +109,7 @@ export default class VenueExternalPage extends Vue.with(Props) {
 }
 
 .venue-external__title {
+  text-align: left;
   margin: 0;
   font-family: var(--font-display);
   font-size: 17px;

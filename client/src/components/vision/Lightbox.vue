@@ -646,6 +646,7 @@ export default class Lightbox extends Vue.with(Props) {
 }
 
 .vision-lightbox__title {
+	text-align: left;
 	margin: 0;
 	font-family: var(--font-display);
 	font-size: 22px;

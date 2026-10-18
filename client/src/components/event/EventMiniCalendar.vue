@@ -130,6 +130,7 @@ export default class EventMiniCalendar extends Vue.with(Props) {
 }
 
 .mini-cal__title {
+	text-align: left;
 	margin: 0;
 	font-family: var(--font-display);
 	font-size: 17px;
