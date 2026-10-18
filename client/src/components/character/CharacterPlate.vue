@@ -80,6 +80,9 @@
 					label="Teilen"
 					@click="share"
 				/>
+				<!-- ER2 outlook: plate export -->
+				<plate-export-button :character="character" />
+				<!-- /ER2 outlook: plate export -->
 				<q-btn
 					v-if="contactUrl"
 					class="elpis-btn elpis-btn--primary"
@@ -112,6 +115,7 @@ import { copyToClipboard } from 'quasar';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import { Options, prop, Vue } from 'vue-class-component';
 import CharacterRpStatusSetter from './CharacterRpStatusSetter.vue';
+import PlateExportButton from '../outlook/PlateExportButton.vue'; // ER2 outlook: plate export
 import { isEmptyFieldValue } from './empty-field';
 import { stripWikilinks } from './profile-sections';
 import { activeRpStatus, formatRpUntil, RP_STATUS_LABELS, supportsRpStatus } from './rp-status';
@@ -129,6 +133,7 @@ class Props {
 	components: {
 		Breadcrumbs,
 		CharacterRpStatusSetter,
+		PlateExportButton, // ER2 outlook: plate export
 	},
 	emits: [ 'rp-change' ],
 })
