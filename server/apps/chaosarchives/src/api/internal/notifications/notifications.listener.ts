@@ -156,7 +156,7 @@ export class NotificationsListener {
         type: 'image-tag',
         title: `${payload.byCharacterName} möchte ${character.name} auf einem Bild markieren`,
         body: null,
-        link: '/meine-inhalte',
+        link: '/my-content',
       });
     });
   }

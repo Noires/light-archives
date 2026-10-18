@@ -146,7 +146,7 @@ describe('NotificationsListener', () => {
 
     await listener.onImageTagRequested({ taggedCharacterId: 50, imageId: 3, byCharacterName: 'Tifa' });
 
-    expect(notificationsService.notify).toHaveBeenCalledWith(9, expect.objectContaining({ type: 'image-tag', link: '/meine-inhalte' }));
+    expect(notificationsService.notify).toHaveBeenCalledWith(9, expect.objectContaining({ type: 'image-tag', link: '/my-content' }));
   });
 
   it('skips self-tags', async () => {
