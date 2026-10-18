@@ -1,6 +1,8 @@
 import { UserInfo } from '@app/auth/model/user-info';
 import { Character, Event, NoticeboardItem, Story, WikiPage } from '@app/entity';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
+import { WikiMentionItemDto, WikiMentionsDto } from '@app/shared/dto/wiki/wiki-mentions.dto';
+import { WikiPageListItemDto } from '@app/shared/dto/wiki/wiki-page-list-item.dto';
 import { WikiPageDto } from '@app/shared/dto/wiki/wiki-page.dto';
 import { EditPermission } from '@app/shared/enums/edit-permission.enum';
 import html from '@app/shared/html';
@@ -10,18 +12,7 @@ import crypto from 'crypto';
 import { Connection, IsNull, Not, Repository } from 'typeorm';
 import { getVerifiedCharacter } from '../../../common/api-checks';
 import { excludeTestContentSql } from '../test-content.filter';
-import {
-  buildWikiMentionLikePatterns,
-  contentMentionsWikiTitle,
-  WikiMentionItemDto,
-  WikiMentionsDto,
-} from './wiki-mentions';
-
-/** ER2-609: entry of GET /wiki */
-export interface WikiPageListItemDto {
-  title: string;
-  updatedAt: number;
-}
+import { buildWikiMentionLikePatterns, contentMentionsWikiTitle } from './wiki-mentions';
 
 const MENTIONS_PER_TYPE = 10;
 // Candidates fetched per type before the exact match; keeps the query bounded.
@@ -190,10 +181,8 @@ export class WikiService {
   }
 
   private toWikiPageDto(wikiPage: WikiPage, user?: UserInfo): WikiPageDto {
-    // ER2-607: `updatedAt` (read only) feeds "Zuletzt bearbeitet" in the wiki
-    // rail; it is not part of WikiPageDto in libs/shared yet, so it is added
-    // to the response object here.
-    const dto = new WikiPageDto({
+    // ER2-607: `updatedAt` (read only) feeds "Zuletzt bearbeitet" in the wiki rail.
+    return new WikiPageDto({
       id: wikiPage.id,
       mine: user ? wikiPage.owner.user.id === user.id : false,
       author: wikiPage.owner.name,
@@ -203,9 +192,8 @@ export class WikiService {
       createdAt: wikiPage.createdAt!.getTime(),
       editPermission: wikiPage.editPermission,
       published: wikiPage.published,
+      updatedAt: wikiPage.updatedAt ? wikiPage.updatedAt.getTime() : undefined,
     });
-
-    return Object.assign(dto, { updatedAt: wikiPage.updatedAt ? wikiPage.updatedAt.getTime() : undefined });
   }
 
   async createWikiPage(wikiPageDto: WikiPageDto & { id: undefined }, user: UserInfo): Promise<IdWrapper> {

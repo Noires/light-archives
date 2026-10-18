@@ -10,17 +10,8 @@
 // Matching is case-insensitive and ignores surrounding/duplicate whitespace,
 // mirroring how the client resolves links.
 
-export interface WikiMentionItemDto {
-  id: number;
-  title: string;
-  link: string;
-}
-
-export interface WikiMentionsDto {
-  stories: WikiMentionItemDto[];
-  noticeboardItems: WikiMentionItemDto[];
-  events: WikiMentionItemDto[];
-}
+// The response types (WikiMentionItemDto, WikiMentionsDto) live in
+// libs/shared/src/dto/wiki/wiki-mentions.dto.ts, shared with the client.
 
 const WIKILINK_REGEX = /(?:\[\[|(?:&#91;|&#x5b;|&lbrack;){2})([^[\]]{1,200}?)(?:\]\]|(?:&#93;|&#x5d;|&rbrack;){2})/gi;
 // Path segment after /link/: anything up to a quote, whitespace, tag, query or
