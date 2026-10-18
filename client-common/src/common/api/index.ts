@@ -1,5 +1,6 @@
 import { MainPageContentDto } from '@app/shared/dto/main-page/main-page-content.dto';
 import { NewsDto } from '@app/shared/dto/news/news.dto';
+import AlbumsAPI from './albums-api';
 import APITransport from './api-transport';
 import CharactersAPI from './characters-api';
 import ChangesAPI from './changes-api';
@@ -39,6 +40,7 @@ export default class API {
   // Sub-APIs
 
   readonly user = new UserAPI(this.transport);
+  readonly albums = new AlbumsAPI(this.transport);
   readonly characters = new CharactersAPI(this.transport);
   readonly changes = new ChangesAPI(this.transport);
   readonly contentNotes = new ContentNotesAPI(this.transport);

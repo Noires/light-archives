@@ -1,20 +1,25 @@
 import { UserInfo } from '@app/auth/model/user-info';
-import { Character, FreeCompany, FreeCompanyMemberPermission, Image } from '@app/entity';
+import { Character, FreeCompany, FreeCompanyApplication, FreeCompanyMemberPermission, Image } from '@app/entity';
 import { CharacterIdWrapper } from '@app/shared/dto/common/character-id-wrapper.dto';
+import { FreeCompanyApplicationDto, FreeCompanyApplyRequestDto } from '@app/shared/dto/fcs/free-company-application.dto';
 import { FreeCompanyMemberEditFlagDto } from '@app/shared/dto/fcs/free-company-member-edit-flag.dto';
 import { FreeCompanyMemberPermissionDto } from '@app/shared/dto/fcs/free-company-member-permission.dto';
 import { FreeCompanySummaryDto } from '@app/shared/dto/fcs/free-company-summary.dto';
 import { FreeCompanyDto } from '@app/shared/dto/fcs/free-company.dto';
 import { MyFreeCompanySummaryDto } from '@app/shared/dto/fcs/my-free-company-summary.dto';
+import { FreeCompanyApplicationStatus } from '@app/shared/enums/free-company-application-status.enum';
 import SharedConstants from '@app/shared/SharedConstants';
+import { normalizeFocusItems } from '@app/shared/validation/profile-fields';
 import { BadRequestException, ConflictException, ForbiddenException, GoneException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime } from 'luxon';
 import { Connection, IsNull, Not, Repository } from 'typeorm';
-import { checkCarrdProfile } from '../../../common/api-checks';
+import { checkCarrdProfile, getVerifiedCharacter } from '../../../common/api-checks';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import { ImagesService } from '../images/images.service';
+import { loadGroupSummaryExtras } from '../../../common/group-summary';
 import { LodestoneService } from '../lodestone/lodestone.service';
+import { canApplyToFreeCompany, decideFcApplication, FcApplicationDecision } from './fc-applications';
 
 @Injectable()
 export class FreeCompaniesService {
@@ -26,6 +31,8 @@ export class FreeCompaniesService {
     @InjectRepository(FreeCompany) private freeCompanyRepo: Repository<FreeCompany>,
     @InjectRepository(FreeCompanyMemberPermission)
     private freeCompanyMemberPermissionRepo: Repository<FreeCompanyMemberPermission>,
+    @InjectRepository(FreeCompanyApplication)
+    private applicationRepo: Repository<FreeCompanyApplication>,
   ) {}
 
   async getMyFreeCompany(
@@ -187,16 +194,20 @@ export class FreeCompaniesService {
       .where('fc.claimedAt IS NOT NULL')
       .orderBy('fc.name', 'ASC')
       .innerJoinAndSelect('fc.server', 'server')
-      .select(['fc.id', 'fc.name', 'fc.crest', 'fc.goal', 'fc.recruiting', 'server.name']);
+      .select(['fc.id', 'fc.name', 'fc.tag', 'fc.crest', 'fc.goal', 'fc.recruiting', 'server.name']);
 
     const fcs = await query.getMany();
+    const extras = await loadGroupSummaryExtras(this.connection.manager, 'freeCompany', fcs.map((fc) => fc.id));
 
     return fcs.map((fc) => ({
+      id: fc.id,
+      tag: fc.tag,
       name: fc.name,
       crest: fc.getCrest(),
       goal: fc.goal,
       server: fc.server.name,
       recruiting: fc.recruiting ?? null,
+      ...extras.get(fc.id),
     }));
   }
 
@@ -263,6 +274,10 @@ export class FreeCompaniesService {
         fc.recruiting = fcDto.recruiting;
       }
       fc.carrdProfile = checkCarrdProfile(fcDto.carrdProfile, user);
+
+      if (fcDto.focusItems !== undefined) {
+        fc.focusItems = normalizeFocusItems(fcDto.focusItems);
+      }
 
       // Set banner
       if (fcDto.banner && fcDto.banner.id) {
@@ -494,10 +509,19 @@ export class FreeCompaniesService {
         || (await this.hasMemberEditPermission(fc.id, characterId))
       );
 
+    const applicationInfo = characterId ? await this.getApplicationInfo(fc, characterId) : null;
+    const pendingApplicationCount = canEdit
+      ? await this.applicationRepo.count({
+        where: { freeCompany: { id: fc.id }, status: FreeCompanyApplicationStatus.PENDING },
+      })
+      : undefined;
+
     return {
       id: fc.id,
       mine: !!fc.leader && !!user && userCharacterIds.includes(fc.leader.id),
       canEdit,
+      ...(applicationInfo || {}),
+      pendingApplicationCount,
       claimed: !!fc.claimedAt,
       foundedAt: fc.foundedAt.getTime(),
       name: fc.name,
@@ -513,6 +537,7 @@ export class FreeCompaniesService {
       recruitingOfficers: fc.recruitingOfficers,
       recruiting: fc.recruiting ?? null,
       carrdProfile: fc.carrdProfile,
+      focusItems: fc.focusItems || [],
       banner: !banner
         ? null
         : {
@@ -522,5 +547,166 @@ export class FreeCompaniesService {
             height: banner.height,
           },
     };
+  }
+
+  // ER2 round 2: applications ("Bewerben")
+
+  private async getApplicationInfo(
+    fc: FreeCompany,
+    characterId: number,
+  ): Promise<{ canApply: boolean; myApplicationStatus: FreeCompanyApplicationStatus | null }> {
+    const [membership, application] = await Promise.all([
+      this.characterRepo
+        .createQueryBuilder('character')
+        .leftJoin('character.freeCompany', 'fc')
+        .where('character.id = :characterId', { characterId })
+        .select('fc.id', 'fcId')
+        .getRawOne<{ fcId: number | null }>(),
+      this.applicationRepo.findOne({
+        where: { freeCompany: { id: fc.id }, character: { id: characterId } },
+        select: ['id', 'status'],
+      }),
+    ]);
+
+    const existingStatus = application ? application.status : null;
+
+    return {
+      canApply: canApplyToFreeCompany({
+        claimed: !!fc.claimedAt && !!fc.leader,
+        recruiting: fc.recruiting ?? null,
+        alreadyMember: !!membership && Number(membership.fcId) === fc.id,
+        existingStatus,
+      }),
+      myApplicationStatus: existingStatus,
+    };
+  }
+
+  async applyToFreeCompany(freeCompanyId: number, request: FreeCompanyApplyRequestDto, user: UserInfo): Promise<void> {
+    await this.connection.transaction(async (em) => {
+      const character = await getVerifiedCharacter(em, request.characterId, user);
+      const fc = await em.getRepository(FreeCompany).findOne({
+        where: { id: freeCompanyId },
+        relations: ['leader'],
+      });
+
+      if (!fc) {
+        throw new NotFoundException('Free Company not found');
+      }
+
+      const repo = em.getRepository(FreeCompanyApplication);
+      const existing = await repo.findOne({
+        where: { freeCompany: { id: fc.id }, character: { id: character.id } },
+      });
+      const memberFc = await character.freeCompany;
+
+      if (!canApplyToFreeCompany({
+        claimed: !!fc.claimedAt && !!fc.leader,
+        recruiting: fc.recruiting ?? null,
+        alreadyMember: !!memberFc && memberFc.id === fc.id,
+        existingStatus: existing ? existing.status : null,
+      })) {
+        if (existing && existing.status === FreeCompanyApplicationStatus.PENDING) {
+          return; // idempotent, like community applications
+        }
+
+        throw new ConflictException('You cannot apply to this Free Company');
+      }
+
+      const message = (request.message || '').trim();
+      await repo.save(repo.create({
+        freeCompany: { id: fc.id },
+        character: { id: character.id },
+        status: FreeCompanyApplicationStatus.PENDING,
+        message: message || null,
+      }));
+    });
+  }
+
+  async getApplications(freeCompanyId: number, user: UserInfo): Promise<FreeCompanyApplicationDto[]> {
+    await this.assertEditRights(freeCompanyId, user);
+
+    const applications = await this.applicationRepo.find({
+      where: { freeCompany: { id: freeCompanyId } },
+      relations: ['character', 'character.server', 'decidedBy'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return applications.map((application) => ({
+      id: application.id,
+      characterId: application.character.id,
+      name: application.character.name,
+      server: application.character.server.name,
+      avatar: application.character.avatar,
+      message: application.message,
+      status: application.status,
+      createdAt: application.createdAt.getTime(),
+      decidedAt: application.decidedAt ? application.decidedAt.getTime() : null,
+      decidedBy: application.decidedBy ? application.decidedBy.name : null,
+    }));
+  }
+
+  async decideApplication(
+    freeCompanyId: number,
+    applicationId: number,
+    decision: FcApplicationDecision,
+    user: UserInfo,
+  ): Promise<void> {
+    await this.assertEditRights(freeCompanyId, user);
+
+    await this.connection.transaction(async (em) => {
+      const repo = em.getRepository(FreeCompanyApplication);
+      const application = await repo.findOne({
+        where: { id: applicationId, freeCompany: { id: freeCompanyId } },
+      });
+
+      if (!application) {
+        throw new NotFoundException('Application not found');
+      }
+
+      const status = decideFcApplication(application.status, decision);
+
+      if (status === null) {
+        throw new ConflictException('This application has already been decided');
+      }
+
+      // Recorded decider: one of the user's characters in this FC, else their first character
+      const fcCharacters = await em.getRepository(Character)
+        .createQueryBuilder('character')
+        .innerJoin('character.freeCompany', 'fc')
+        .where('fc.id = :freeCompanyId', { freeCompanyId })
+        .andWhere('character.id IN (:...ids)', { ids: user.characters.map((ch) => ch.id) })
+        .select(['character.id'])
+        .getMany();
+      const deciderId = fcCharacters.length > 0 ? fcCharacters[0].id : user.characters[0]?.id;
+
+      application.status = status;
+      application.decidedAt = new Date();
+      application.decidedBy = deciderId ? ({ id: deciderId } as Character) : null;
+      await repo.save(application);
+    });
+  }
+
+  /** The applicant withdraws (deletes) a pending or accepted application. */
+  async withdrawApplication(freeCompanyId: number, characterIdWrapper: CharacterIdWrapper, user: UserInfo): Promise<void> {
+    const characterId = characterIdWrapper.characterId;
+
+    if (!user.characters.some((ch) => ch.id === characterId)) {
+      throw new ForbiddenException('Invalid character id');
+    }
+
+    const application = await this.applicationRepo.findOne({
+      where: { freeCompany: { id: freeCompanyId }, character: { id: characterId } },
+    });
+
+    if (!application) {
+      throw new NotFoundException('Application not found');
+    }
+
+    // A rejected application stays as a block against re-applying
+    if (application.status === FreeCompanyApplicationStatus.REJECTED) {
+      throw new ConflictException('A rejected application cannot be withdrawn');
+    }
+
+    await this.applicationRepo.remove(application);
   }
 }

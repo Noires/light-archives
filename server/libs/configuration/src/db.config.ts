@@ -10,6 +10,8 @@ import { Notification } from '@app/entity/notification.entity';
 import { NotificationPreference } from '@app/entity/notification-preference.entity';
 import { Bookmark } from '@app/entity/bookmark.entity';
 import { CalendarToken } from '@app/entity/calendar-token.entity';
+// ER2 round 2 (content features)
+import { Album, FreeCompanyApplication, ImageCharacterTag, WikiPageRevision } from '@app/entity';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import config from 'config';
 import { DbConfigInterface } from './interfaces/db-config.interface';
@@ -68,6 +70,11 @@ export const dbConfiguration: TypeOrmModuleOptions = {
     NotificationPreference,
     Bookmark,
     CalendarToken,
+    // ER2 round 2 (content features)
+    Album,
+    FreeCompanyApplication,
+    ImageCharacterTag,
+    WikiPageRevision,
   ],
   synchronize: dbConfig.synchronize,
   // Logging can be: true (all), false (none), or array of types: 'query', 'error', 'schema', 'warn', 'info', 'log', 'migration'

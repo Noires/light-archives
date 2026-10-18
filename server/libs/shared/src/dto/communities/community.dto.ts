@@ -1,6 +1,7 @@
 import { MembershipStatus } from '@app/shared/enums/membership-status.enum';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { FOCUS_ITEMS_MAX, FocusItemDto } from '../../validation/profile-fields';
 import { BannerDto } from '../characters/banner.dto';
 
 export class CommunityDto {
@@ -79,6 +80,14 @@ export class CommunityDto {
   @IsString({ each: true })
   tags: string[];
 	
+  // ER2 round 2 (optional): "Was wir spielen" cards. Omit to keep, [] or null clears.
+  @IsArray()
+  @ArrayMaxSize(FOCUS_ITEMS_MAX)
+  @ValidateNested({ each: true })
+  @Type(() => FocusItemDto)
+  @IsOptional()
+  focusItems?: FocusItemDto[] | null;
+
 	constructor(properties?: Readonly<CommunityDto>) {
     if (properties) {
       Object.assign(this, properties);

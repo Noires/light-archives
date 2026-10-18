@@ -25,6 +25,8 @@
             />
             <wikilink-hint note="Wikilinks funktionieren in allen Feldern außer Webseite." />
           </section>
+          <!-- ER2 round 2: "Was wir spielen" -->
+          <focus-items-edit-section v-model="fc.focusItems" />
           <h6>Beschreibung</h6>
           <html-editor v-model="fc.description" />
           <carrd-edit-section
@@ -72,6 +74,7 @@ import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
 import CarrdEditSection from 'src/components/common/CarrdEditSection.vue';
 import WikilinkHint from 'src/components/common/WikilinkHint.vue';
+import FocusItemsEditSection from 'src/components/common/FocusItemsEditSection.vue';
 import { useRouter } from 'src/router';
 import { useStore } from 'src/store';
 import { Options, Vue } from 'vue-class-component';
@@ -114,6 +117,7 @@ async function load(params: RouteParams): Promise<FreeCompanyDto> {
     BannerEditSection,
     CarrdEditSection,
     WikilinkHint,
+    FocusItemsEditSection,
   },
   async beforeRouteEnter(to, __, next) {
     const fc = await load(to.params);

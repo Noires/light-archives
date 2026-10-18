@@ -1,6 +1,7 @@
 import { ImageCategory } from "@app/shared/enums/image-category.enum";
 import { ReactionKind } from "@app/shared/enums/reaction.enum";
 import { ReactionCountsDto } from "../reactions/reaction.dto";
+import { ImageTagDto, TaggedCharacterDto } from "./image-tag.dto";
 
 export interface ImageDto {
   id: number;
@@ -25,4 +26,10 @@ export interface ImageDto {
   // ER2-807 (optional)
   reactionCounts?: ReactionCountsDto;
   myReactions?: ReactionKind[];
+  // ER2 round 2 (optional): albums containing the image, only for the owner
+  albumIds?: number[];
+  // ER2 round 2 (optional): approved character tags (public)
+  taggedCharacters?: TaggedCharacterDto[];
+  // ER2 round 2 (optional): tags incl. consent state; only for the image owner (all) or a tagged owner (own)
+  tags?: ImageTagDto[];
 }

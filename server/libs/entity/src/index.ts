@@ -43,3 +43,8 @@ export { Notification } from './notification.entity';
 export { NotificationPreference } from './notification-preference.entity';
 export { Bookmark } from './bookmark.entity';
 export { CalendarToken } from './calendar-token.entity';
+// ER2 round 2 (content features)
+export { Album } from './album.entity';
+export { FreeCompanyApplication } from './free-company-application.entity';
+export { ImageCharacterTag } from './image-character-tag.entity';
+export { WikiPageRevision } from './wiki-page-revision.entity';
