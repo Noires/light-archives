@@ -121,16 +121,16 @@ Conventions follow `UI_UX_REWORK_BACKLOG.md`: sizes **XS** (≤ 0.5 d) · **S** 
 
 | ID | Title | Size | Deps | AC |
 |---|---|---|---|---|
-| ER2-001 | `[IA]` Consolidate routes under one `MainLayout` parent | M | – | `router/routes.ts` has a single `{ path: '/', component: MainLayout, children: [...] }`; every existing path, param regex, guard and redirect preserved; shell no longer re-mounts between sections (verified via a mounted-counter log); smoke list of all routes passes |
-| ER2-002 | Split `MainLayout.vue` into `layouts/shell/` parts | M | 001 | `ShellHeader.vue`, `ShellHero.vue`, `ShellFooter.vue`, `ShellDrawer.vue` extracted; behaviour unchanged; dark variables move with their component |
-| ER2-003 | Vision tokens in Aetherium | S | – | §3.1 tokens in `css/aetherium/color.scss` for both themes; documented in `AETHERIUM.md`; contrast table (AA) recorded |
-| ER2-004 | Button hierarchy classes | S | 003 | `elpis-btn--primary/secondary/ghost/danger` + hover/focus/disabled in `app.scss`; focus ring `--glow-aether`; sentence case globally (`text-transform: none` on `q-btn`) |
-| ER2-005 | `StatusBadge`, `AvatarStack`, `EmptyState` | M | 003 | components in `components/vision/`; all badge types from §3.2; EmptyState supports visitor/owner copy |
-| ER2-006 | `SectionTabs` with route sync | M | 001 | labelled tabs, counts, icons; v-model ↔ child route **or** `?tab=`; arrow-key navigation; `aria-selected`; mobile horizontal scroll |
-| ER2-007 | `PageHead`, `Breadcrumbs`, `DirectoryCard`, `EventCard` | L | 005 | match Penpot boards in both themes; breadcrumbs read `route.meta.breadcrumb` (string or function) |
-| ER2-008 | German locale everywhere | S | – | `boot/display.ts` `DATE_FORMAT = 'd. MMMM yyyy'` (+ datetime variant); Luxon `Settings.defaultLocale = 'de'`; `<q-calendar-month locale="de-DE">` in `pages/EventCalendar.vue`; no English weekday left (grep) |
-| ER2-009 | Search fixes | S | – | `search/search.service.ts:194` uses a WikiPage repository; hidden events excluded; unit test for both in `server/` |
-| ER2-010 | Wikilink rendering in character fields | M | – | Contacts, Personality, Appearance and P&P text blocks render through `LinkField.vue` / `HtmlViewer.vue`; `wikilinks.ts` regex handles line breaks inside `[[…]]`; no raw `[[` on the sample profiles from the audit |
+| ER2-001 | **[done 2026-10-18]** `[IA]` Consolidate routes under one `MainLayout` parent | M | – | `router/routes.ts` has a single `{ path: '/', component: MainLayout, children: [...] }`; every existing path, param regex, guard and redirect preserved; shell no longer re-mounts between sections (verified via a mounted-counter log); smoke list of all routes passes |
+| ER2-002 | **[done 2026-10-18]** Split `MainLayout.vue` into `layouts/shell/` parts | M | 001 | `ShellHeader.vue`, `ShellHero.vue`, `ShellFooter.vue`, `ShellDrawer.vue` extracted; behaviour unchanged; dark variables move with their component |
+| ER2-003 | **[done 2026-10-18]** Vision tokens in Aetherium | S | – | §3.1 tokens in `css/aetherium/color.scss` for both themes; documented in `AETHERIUM.md`; contrast table (AA) recorded |
+| ER2-004 | **[done 2026-10-18]** Button hierarchy classes | S | 003 | `elpis-btn--primary/secondary/ghost/danger` + hover/focus/disabled in `app.scss`; focus ring `--glow-aether`; sentence case globally (`text-transform: none` on `q-btn`) |
+| ER2-005 | **[done 2026-10-18]** `StatusBadge`, `AvatarStack`, `EmptyState` | M | 003 | components in `components/vision/`; all badge types from §3.2; EmptyState supports visitor/owner copy |
+| ER2-006 | **[done 2026-10-18]** `SectionTabs` with route sync | M | 001 | labelled tabs, counts, icons; v-model ↔ child route **or** `?tab=`; arrow-key navigation; `aria-selected`; mobile horizontal scroll |
+| ER2-007 | **[done 2026-10-18]** `PageHead`, `Breadcrumbs`, `DirectoryCard`, `EventCard` | L | 005 | match Penpot boards in both themes; breadcrumbs read `route.meta.breadcrumb` (string or function) |
+| ER2-008 | **[done 2026-10-18]** German locale everywhere | S | – | `boot/display.ts` `DATE_FORMAT = 'd. MMMM yyyy'` (+ datetime variant); Luxon `Settings.defaultLocale = 'de'`; `<q-calendar-month locale="de-DE">` in `pages/EventCalendar.vue`; no English weekday left (grep) |
+| ER2-009 | **[done 2026-10-18]** Search fixes | S | – | `search/search.service.ts:194` uses a WikiPage repository; hidden events excluded; unit test for both in `server/` |
+| ER2-010 | **[done 2026-10-18]** Wikilink rendering in character fields | M | – | Contacts, Personality, Appearance and P&P text blocks render through `LinkField.vue` / `HtmlViewer.vue`; `wikilinks.ts` regex handles line breaks inside `[[…]]`; no raw `[[` on the sample profiles from the audit |
 
 ### EPIC 1 — Quick wins (Vision tier S)
 > *Fix what hurts today; valid inside the current Elpis Reborn rules (no `[IA]`).*
@@ -138,18 +138,18 @@ Conventions follow `UI_UX_REWORK_BACKLOG.md`: sizes **XS** (≤ 0.5 d) · **S** 
 
 | ID | Title | Size | Deps | AC |
 |---|---|---|---|---|
-| ER2-101 | Content-warning chips readable in Zodiark | XS | 003 | story/event CW chips use `--vision-cw-*`; warning icon; contrast ≥ 4.5:1 both themes (Vision #1, S1) |
-| ER2-102 | Link and meta contrast in Hydaelyn | XS | – | links ≥ 4.5:1 on parchment (bronze `#8A5A14` or `--ink-link`), underline on hover/focus; meta text ≥ `#6B6B6B` equivalent (Vision #8, S2) |
-| ER2-103 | Apply button hierarchy | S | 004 | lilac/orange/pink one-offs replaced; Discord blurple only on Discord login; ALL-CAPS removed (Vision #7, #9, S3) |
-| ER2-104 | Remove hard-coded dark colours | XS | – | `#616161` byline, `#555` dialog hint, `#1D1D1D` tab panel tokenised; dark table dividers `rgba(255,255,255,.08)` (Vision #10, S4, live bugs) |
-| ER2-105 | Copy fixes | XS | – | consent dialog umlauts; "Gallerie" → "Galerie"; "Edit/Preview/Description" German; MyContent `color="danger"` → defined colour, "Confirm Delete" → "Löschen bestätigen" (Vision #15, S6, live bugs) |
-| ER2-106 | Consent dialog choice parity | XS | 004 | both options same weight (DSGVO), scrim 60 % |
-| ER2-107 | Hyphenation and language | XS | – | `lang="de"` on `<html>`; `hyphens: auto` on body copy; P&P empty values dimmed (Vision #17, S7) |
-| ER2-108 | Header indent alignment | XS | – | all directory hero titles align to the content grid (Vision #12, S8) |
-| ER2-109 | Skip link | XS | – | "Zum Inhalt springen" first focusable element, visible on focus, targets `<main>` (§5, S9) |
+| ER2-101 | **[done 2026-10-18]** Content-warning chips readable in Zodiark | XS | 003 | story/event CW chips use `--vision-cw-*`; warning icon; contrast ≥ 4.5:1 both themes (Vision #1, S1) |
+| ER2-102 | **[done 2026-10-18]** Link and meta contrast in Hydaelyn | XS | – | links ≥ 4.5:1 on parchment (bronze `#8A5A14` or `--ink-link`), underline on hover/focus; meta text ≥ `#6B6B6B` equivalent (Vision #8, S2) |
+| ER2-103 | **[done 2026-10-18]** Apply button hierarchy | S | 004 | lilac/orange/pink one-offs replaced; Discord blurple only on Discord login; ALL-CAPS removed (Vision #7, #9, S3) |
+| ER2-104 | **[done 2026-10-18]** Remove hard-coded dark colours | XS | – | `#616161` byline, `#555` dialog hint, `#1D1D1D` tab panel tokenised; dark table dividers `rgba(255,255,255,.08)` (Vision #10, S4, live bugs) |
+| ER2-105 | **[done 2026-10-18]** Copy fixes | XS | – | consent dialog umlauts; "Gallerie" → "Galerie"; "Edit/Preview/Description" German; MyContent `color="danger"` → defined colour, "Confirm Delete" → "Löschen bestätigen" (Vision #15, S6, live bugs) |
+| ER2-106 | **[done 2026-10-18]** Consent dialog choice parity | XS | 004 | both options same weight (DSGVO), scrim 60 % |
+| ER2-107 | **[done 2026-10-18]** Hyphenation and language | XS | – | `lang="de"` on `<html>`; `hyphens: auto` on body copy; P&P empty values dimmed (Vision #17, S7) |
+| ER2-108 | **[done 2026-10-18]** Header indent alignment | XS | – | all directory hero titles align to the content grid (Vision #12, S8) |
+| ER2-109 | **[done 2026-10-18]** Skip link | XS | – | "Zum Inhalt springen" first focusable element, visible on focus, targets `<main>` (§5, S9) |
 | ER2-110 | Character drawer active state | XS | – | interim fix until ER2-401: active item indicator like ELPIS-406 |
-| ER2-111 | Hide test content from public lists | S | – | stories/wiki titled as tests or with empty body excluded from main page, changes and directory queries (server filter); `/test-*` routes admin-guarded (Vision #6, L6 partial) |
-| ER2-112 | Hide empty fields for visitors | S | – | "(FOLGT)" and empty detail rows not rendered for non-owners on all character tabs (Vision #6) |
+| ER2-111 | **[done 2026-10-18]** Hide test content from public lists | S | – | stories/wiki titled as tests or with empty body excluded from main page, changes and directory queries (server filter); `/test-*` routes admin-guarded (Vision #6, L6 partial) |
+| ER2-112 | **[done 2026-10-18]** Hide empty fields for visitors | S | – | "(FOLGT)" and empty detail rows not rendered for non-owners on all character tabs (Vision #6) |
 
 ### EPIC 2 — Shell & navigation
 > *Visible wayfinding on every page.* Penpot: **A · Shell & Home-Hub**, **E · Komponenten › Shell**.
@@ -157,14 +157,14 @@ Conventions follow `UI_UX_REWORK_BACKLOG.md`: sizes **XS** (≤ 0.5 d) · **S** 
 
 | ID | Title | Size | Deps | AC |
 |---|---|---|---|---|
-| ER2-201 | `[IA]` New top bar | L | 002, 004 | compact logo (≤ 40 px high) links home; 7 primary areas visible from `lg` (Charaktere · Treffpunkte · Events · Geschichten · Anschlagbrett · Galerie · Wiki) with active underline; search field + "Strg K" hint; notifications slot; theme toggle; account pill with avatar (+ RP status once ER2-806 lands); remaining `navGroups` items move into the account menu or a "Mehr" menu |
-| ER2-202 | `[IA]` Logo hero on Home only | S | 002 | `ShellHero` renders only on `/`; all other routes start with content (≥ 200 px gained) |
-| ER2-203 | `[IA]` Remove calendar widget from page shell | S | 002 | page-shell grid single-column on every route; `/calendar` empty column gone; widget component kept for ER2-302 |
-| ER2-204 | Breadcrumbs on detail routes | S | 007 | `meta.breadcrumb` on character, venue, event, story, noticeboard item, wiki, FC, community routes |
-| ER2-205 | Mobile navigation | M | 201 | below 1024 px: bottom bar with 5 targets (Start, Events, Charaktere, Suche, Profil) + "Mehr" sheet; replaces hamburger-only; safe-area insets |
-| ER2-206 | Command palette v1 | L | 001, 005 | `CommandPalette.vue` opens on Ctrl/Cmd+K and from the search field; debounced (≥ 3 chars) call to `GET /search`; results grouped by type; actions (Event erstellen, Zu meinem Profil, Charakter wechseln); ↑↓/↵/Esc; focus trap; lazy-loaded chunk |
-| ER2-207 | Command palette v2 | S | 206, 809 | switches to the autocomplete endpoint; prefix matches from 2 chars; recent items |
-| ER2-208 | Hover cards | L | 005 | `HoverCard.vue` on every rendered wikilink, character/venue/event link in prose and lists; hover + focus; long-press on touch; data cached per session |
+| ER2-201 | **[done 2026-10-18]** `[IA]` New top bar | L | 002, 004 | compact logo (≤ 40 px high) links home; 7 primary areas visible from `lg` (Charaktere · Treffpunkte · Events · Geschichten · Anschlagbrett · Galerie · Wiki) with active underline; search field + "Strg K" hint; notifications slot; theme toggle; account pill with avatar (+ RP status once ER2-806 lands); remaining `navGroups` items move into the account menu or a "Mehr" menu |
+| ER2-202 | **[done 2026-10-18]** `[IA]` Logo hero on Home only | S | 002 | `ShellHero` renders only on `/`; all other routes start with content (≥ 200 px gained) |
+| ER2-203 | **[done 2026-10-18]** `[IA]` Remove calendar widget from page shell | S | 002 | page-shell grid single-column on every route; `/calendar` empty column gone; widget component kept for ER2-302 |
+| ER2-204 | **[done 2026-10-18]** Breadcrumbs on detail routes | S | 007 | `meta.breadcrumb` on character, venue, event, story, noticeboard item, wiki, FC, community routes |
+| ER2-205 | **[done 2026-10-18 — done; safe-area needs viewport-fit (ER2-polish)]** Mobile navigation | M | 201 | below 1024 px: bottom bar with 5 targets (Start, Events, Charaktere, Suche, Profil) + "Mehr" sheet; replaces hamburger-only; safe-area insets |
+| ER2-206 | **[done 2026-10-18]** Command palette v1 | L | 001, 005 | `CommandPalette.vue` opens on Ctrl/Cmd+K and from the search field; debounced (≥ 3 chars) call to `GET /search`; results grouped by type; actions (Event erstellen, Zu meinem Profil, Charakter wechseln); ↑↓/↵/Esc; focus trap; lazy-loaded chunk |
+| ER2-207 | **[done 2026-10-18]** Command palette v2 | S | 206, 809 | switches to the autocomplete endpoint; prefix matches from 2 chars; recent items |
+| ER2-208 | **[done 2026-10-18]** Hover cards | L | 005 | `HoverCard.vue` on every rendered wikilink, character/venue/event link in prose and lists; hover + focus; long-press on touch; data cached per session |
 
 ### EPIC 3 — Home hub
 > *"Heute in Eorzea" replaces nine "Neue …" tiles.* Penpot: **A · Shell & Home-Hub**.
@@ -172,12 +172,12 @@ Conventions follow `UI_UX_REWORK_BACKLOG.md`: sizes **XS** (≤ 0.5 d) · **S** 
 
 | ID | Title | Size | Deps | AC |
 |---|---|---|---|---|
-| ER2-301 | `[IA]` Home hero with today strip | M | 202 | hero keeps the large logo + tagline; "Heute-Leiste": events live now, tonight, venues open, characters in RP (last two fall back gracefully until 805/806); CTAs "Was läuft heute?" / "Event eintragen" |
-| ER2-302 | `TimelineStrip` "Heute Abend" | L | 007 | 18:00–02:00 lanes from today's events (`events-api`), live bars, now marker updating each minute, tabs Jetzt / Heute Abend / Diese Woche; reduced-motion safe |
-| ER2-303 | "Gleich & gerade" list | S | 007, 302 | next 3 events as `EventCard` (Live state when running) |
-| ER2-304 | "Jetzt geöffnet" panel | M | 007 | venues open now / opening soon computed client-side from the weekly template (`eventStartWeekday/Time/EndTime/EndDurationDays`, server TZ); switches to ER2-805 data when available |
-| ER2-305 | Activity feed | M | 005 | `GET /changes` rendered as a feed with avatars, previews (diary excerpt, image thumbs, rumour quote, event card) and area filter chips; replaces "Neueste Änderungen" |
-| ER2-306 | Side modules + gallery band | S | 305 | "Neueste Geschichten" (with CW badges), "Neue Gesichter" (`newProfiles`), gallery band (`newScreenshots`/`newArtwork`); equal module heights |
+| ER2-301 | **[done 2026-10-18]** `[IA]` Home hero with today strip | M | 202 | hero keeps the large logo + tagline; "Heute-Leiste": events live now, tonight, venues open, characters in RP (last two fall back gracefully until 805/806); CTAs "Was läuft heute?" / "Event eintragen" |
+| ER2-302 | **[done 2026-10-18]** `TimelineStrip` "Heute Abend" | L | 007 | 18:00–02:00 lanes from today's events (`events-api`), live bars, now marker updating each minute, tabs Jetzt / Heute Abend / Diese Woche; reduced-motion safe |
+| ER2-303 | **[done 2026-10-18]** "Gleich & gerade" list | S | 007, 302 | next 3 events as `EventCard` (Live state when running) |
+| ER2-304 | **[done 2026-10-18]** "Jetzt geöffnet" panel | M | 007 | venues open now / opening soon computed client-side from the weekly template (`eventStartWeekday/Time/EndTime/EndDurationDays`, server TZ); switches to ER2-805 data when available |
+| ER2-305 | **[done 2026-10-18]** Activity feed | M | 005 | `GET /changes` rendered as a feed with avatars, previews (diary excerpt, image thumbs, rumour quote, event card) and area filter chips; replaces "Neueste Änderungen" |
+| ER2-306 | **[done 2026-10-18]** Side modules + gallery band | S | 305 | "Neueste Geschichten" (with CW badges), "Neue Gesichter" (`newProfiles`), gallery band (`newScreenshots`/`newArtwork`); equal module heights |
 
 ### EPIC 4 — Characters & communities
 > *Profiles become calling cards; "Charaktere" becomes the home of every "who".* Penpot: **B · Charakterprofil**, **F · Charaktere**, **L · Gemeinschaften**, **L · Freie Gesellschaft**.
@@ -185,16 +185,16 @@ Conventions follow `UI_UX_REWORK_BACKLOG.md`: sizes **XS** (≤ 0.5 d) · **S** 
 
 | ID | Title | Size | Deps | AC |
 |---|---|---|---|---|
-| ER2-401 | `[IA]` Character tabs as `SectionTabs` + child routes | M | 006 | `/:server/:character/:tab` (profil, aussehen, persoenlichkeit, kontakte, geruechte, tagebuch, galerie, inventar, pen-and-paper); old URL lands on profile; tabs with counts; empty tabs hidden for visitors, dimmed "+" for owners; drawer removed from `pages/Character.vue` |
-| ER2-402 | `[IA]` Adventurer-plate header | L | 401 | full-bleed banner with scrim, `AetheryteBadge` overlapping, title above name (IM Fell), "World [Light]", race/clan, FC crest chip, play-style chips, share + contact actions in the header; profile accent colour slot (optional field later) |
-| ER2-403 | Profile overview with previews | M | 402, 010 | fact tiles (3 columns, empty hidden), background with initial, latest diary entry, rumours excerpt, contacts as linked avatar rows, 4 gallery thumbs |
-| ER2-404 | Owner view | S | 403 | owner sees dashed "Ergänzen" tiles, profile completeness bar and owner empty states (`EmptyState` owner copy) |
-| ER2-405 | `[IA]` "Charaktere" area tabs | S | 006 | `/profiles`, `/free-companies`, `/communities` share a `PageHead` + `SectionTabs` (Personen · Freie Gesellschaften · Communities) linking the existing URLs; top-nav "Charaktere" active on all three |
-| ER2-406 | Characters directory cards | M | 007, 405 | `pages/Characters.vue` card grid (banner, avatar, title, meta, tags, last active); filters (Volk, Welt, Mit Galerie); "Mehr laden" |
-| ER2-407 | "Gerade im RP" strip | S | 406, 806 | strip of characters with active RP status; hidden when none |
-| ER2-408 | FC & community directory cards | M | 007, 405 | crest, tag, seat, focus sentence, "Nimmt Mitglieder auf" badge (from existing recruiting/status data or new flag, see 810), member stack, next event |
-| ER2-409 | Shared member card | S | 005 | extracted from `Community.vue:30–64` / `FreeCompany.vue:6–44`; rank + RP status dot |
-| ER2-410 | `[IA]` FC / community detail | L | 006, 409 | hero with crest, "Bewerben"/"Beitreten" primary action, `SectionTabs` (Übersicht · Mitglieder · Events · Galerie · Geschichten), "Was wir spielen", key-facts card |
+| ER2-401 | **[done 2026-10-18]** `[IA]` Character tabs as `SectionTabs` + child routes | M | 006 | `/:server/:character/:tab` (profil, aussehen, persoenlichkeit, kontakte, geruechte, tagebuch, galerie, inventar, pen-and-paper); old URL lands on profile; tabs with counts; empty tabs hidden for visitors, dimmed "+" for owners; drawer removed from `pages/Character.vue` |
+| ER2-402 | **[done 2026-10-18]** `[IA]` Adventurer-plate header | L | 401 | full-bleed banner with scrim, `AetheryteBadge` overlapping, title above name (IM Fell), "World [Light]", race/clan, FC crest chip, play-style chips, share + contact actions in the header; profile accent colour slot (optional field later) |
+| ER2-403 | **[done 2026-10-18]** Profile overview with previews | M | 402, 010 | fact tiles (3 columns, empty hidden), background with initial, latest diary entry, rumours excerpt, contacts as linked avatar rows, 4 gallery thumbs |
+| ER2-404 | **[done 2026-10-18]** Owner view | S | 403 | owner sees dashed "Ergänzen" tiles, profile completeness bar and owner empty states (`EmptyState` owner copy) |
+| ER2-405 | **[done 2026-10-18]** `[IA]` "Charaktere" area tabs | S | 006 | `/profiles`, `/free-companies`, `/communities` share a `PageHead` + `SectionTabs` (Personen · Freie Gesellschaften · Communities) linking the existing URLs; top-nav "Charaktere" active on all three |
+| ER2-406 | **[done 2026-10-18 — partial: list API has no banner/lore title/last-active]** Characters directory cards | M | 007, 405 | `pages/Characters.vue` card grid (banner, avatar, title, meta, tags, last active); filters (Volk, Welt, Mit Galerie); "Mehr laden" |
+| ER2-407 | **[done 2026-10-18]** "Gerade im RP" strip | S | 406, 806 | strip of characters with active RP status; hidden when none |
+| ER2-408 | **[done 2026-10-18 — partial: summaries lack tag, member stack, next event]** FC & community directory cards | M | 007, 405 | crest, tag, seat, focus sentence, "Nimmt Mitglieder auf" badge (from existing recruiting/status data or new flag, see 810), member stack, next event |
+| ER2-409 | **[done 2026-10-18]** Shared member card | S | 005 | extracted from `Community.vue:30–64` / `FreeCompany.vue:6–44`; rank + RP status dot |
+| ER2-410 | **[done 2026-10-18 — partial: no "Was wir spielen"/events/gallery tabs (no data); FC "Bewerben" links to website]** `[IA]` FC / community detail | L | 006, 409 | hero with crest, "Bewerben"/"Beitreten" primary action, `SectionTabs` (Übersicht · Mitglieder · Events · Galerie · Geschichten), "Was wir spielen", key-facts card |
 
 ### EPIC 5 — Events & venues
 > *Answer "what's on and where" in one glance.* Penpot: **C · Events**, **C · Event-Detail**, **C · Treffpunkte**, **G · Treffpunkt-Detail**.
@@ -202,16 +202,16 @@ Conventions follow `UI_UX_REWORK_BACKLOG.md`: sizes **XS** (≤ 0.5 d) · **S** 
 
 | ID | Title | Size | Deps | AC |
 |---|---|---|---|---|
-| ER2-501 | `[IA]` Events list-first | L | 007, 008 | `pages/EventCalendar.vue` default view = list grouped by day (Heute / Morgen / date), tabs Heute · Diese Woche · Monat; month grid becomes the secondary "Kalender" view + mini calendar; `/calendar/:year/:month` still works |
-| ER2-502 | Event filter chips | S | 501 | type, server, SFW, "Läuft jetzt" as chips; replace the two dropdowns |
-| ER2-503 | Recurring evenings panel | S | 501 | groups events by venue template / series; shows rule + next 3 dates (uses 804 when available) |
-| ER2-504 | `[IA]` Event detail hero + action bar | M | 007 | `pages/Event.vue`: hero with date block, live status, title, chips; sticky action bar; "Ich bin dabei" wired to existing `POST/DELETE /events/:id/registrations` for closed events, "Interessiert" + .ics after 801/802; participants as `AvatarStack` |
-| ER2-505 | Structured event location | S | 504 | when `EventLocation.venue` is set: Welt › Wohngebiet › Bezirk › Haus from venue fields + copyable teleport command; free-text address otherwise |
-| ER2-506 | Event programme | S | 504 | optional schedule rendered as a timeline when the description contains a list of times (or a field after 803) |
-| ER2-507 | Venue directory cards + status | M | 007, 304 | `pages/Venues.vue` banner cards with Open / Opens at / Closed badge (status logic shared with 304), tags, next event, regulars; filter "Heute geöffnet", SFW, category; server tag hidden when filtered |
-| ER2-508 | `[IA]` Venue detail tabs with URL write-back | M | 006 | `pages/Venue.vue` drawer → `SectionTabs` driven by `visibleSections`; clicking updates `/venue/:server/:name/:section` |
-| ER2-509 | Venue hero, hours card, location card | M | 508 | hero with status + motto + teleport copy; weekly opening-hours card (today highlighted); team card |
-| ER2-510 | Carrd embed collapsed | XS | 508 | Carrd profile shown as collapsed "Externe Seite" card; expands on demand; no white block in Zodiark |
+| ER2-501 | **[done 2026-10-18]** `[IA]` Events list-first | L | 007, 008 | `pages/EventCalendar.vue` default view = list grouped by day (Heute / Morgen / date), tabs Heute · Diese Woche · Monat; month grid becomes the secondary "Kalender" view + mini calendar; `/calendar/:year/:month` still works |
+| ER2-502 | **[done 2026-10-18]** Event filter chips | S | 501 | type, server, SFW, "Läuft jetzt" as chips; replace the two dropdowns |
+| ER2-503 | **[done 2026-10-18]** Recurring evenings panel | S | 501 | groups events by venue template / series; shows rule + next 3 dates (uses 804 when available) |
+| ER2-504 | **[done 2026-10-18]** `[IA]` Event detail hero + action bar | M | 007 | `pages/Event.vue`: hero with date block, live status, title, chips; sticky action bar; "Ich bin dabei" wired to existing `POST/DELETE /events/:id/registrations` for closed events, "Interessiert" + .ics after 801/802; participants as `AvatarStack` |
+| ER2-505 | **[done 2026-10-18]** Structured event location | S | 504 | when `EventLocation.venue` is set: Welt › Wohngebiet › Bezirk › Haus from venue fields + copyable teleport command; free-text address otherwise |
+| ER2-506 | **[done 2026-10-18]** Event programme | S | 504 | optional schedule rendered as a timeline when the description contains a list of times (or a field after 803) |
+| ER2-507 | **[done 2026-10-18 — partial: venue list lacks banner, tags, SFW flag, next event]** Venue directory cards + status | M | 007, 304 | `pages/Venues.vue` banner cards with Open / Opens at / Closed badge (status logic shared with 304), tags, next event, regulars; filter "Heute geöffnet", SFW, category; server tag hidden when filtered |
+| ER2-508 | **[done 2026-10-18]** `[IA]` Venue detail tabs with URL write-back | M | 006 | `pages/Venue.vue` drawer → `SectionTabs` driven by `visibleSections`; clicking updates `/venue/:server/:name/:section` |
+| ER2-509 | **[done 2026-10-18]** Venue hero, hours card, location card | M | 508 | hero with status + motto + teleport copy; weekly opening-hours card (today highlighted); team card |
+| ER2-510 | **[done 2026-10-18]** Carrd embed collapsed | XS | 508 | Carrd profile shown as collapsed "Externe Seite" card; expands on demand; no white block in Zodiark |
 
 ### EPIC 6 — Long-form: stories, noticeboard, wiki
 > *Reading as a pleasure, warnings as protection.* Penpot: **D · Leseansicht**, **H · Geschichten**, **I · Anschlagbrett**, **I · Aushang**, **K · Wiki**.
@@ -219,15 +219,15 @@ Conventions follow `UI_UX_REWORK_BACKLOG.md`: sizes **XS** (≤ 0.5 d) · **S** 
 
 | ID | Title | Size | Deps | AC |
 |---|---|---|---|---|
-| ER2-601 | Story reader layout | M | 007 | `pages/Story.vue`: 68ch column, title block (eyebrow, title, lede, byline, reading time + word count), reuse `ScrollProgressRule`, drop cap (ELPIS-502) kept; left rail with font size and Pergament/Nacht switch (persisted) |
-| ER2-602 | `CwVeil` before content | S | 101 | stories/events with content notes show the veil until confirmed; "nicht mehr fragen" per session; screen-reader announces warnings first |
-| ER2-603 | Chapter navigation | S | 601, 808 | Teil n von m rail + previous/next cards; "Benachrichtigen" for the next part (after 808) |
-| ER2-604 | `[IA]` Stories directory | M | 007, 006 | type tabs (Alle · Geschichten · Tagebücher · Gedichte · Serien), featured module, "Weiterlesen" from localStorage progress, cards with type, reading time, excerpt, CW badge, series chip; filters "Ohne Inhaltswarnung", "Unter 5 Min." |
-| ER2-605 | `[IA]` Noticeboard masonry | M | 007 | `pages/Noticeboard.vue`: pinned row, `[Typ]` prefix in type colour + top rule, three-column masonry, type and location chips, "auf Discord" indicator |
-| ER2-606 | Noticeboard item + Discord preview | M | 605 | `NoticeboardItemView.vue` parchment layout with image + caption, contact box, related notices; Discord-embed preview component mirroring `announcement.service.ts` output (closes ELPIS-511 clause) |
-| ER2-607 | `[IA]` Wiki three-column layout | M | 010 | `components/wiki/WikiPageView.vue`: TOC from headings (active section on scroll), article column, infobox (from a leading table in content, optional), "Erwähnt in" populated from link back-references, edit/version actions in the rail |
-| ER2-608 | Wiki "Erwähnt in" endpoint | S | – | server: list stories/noticeboard/events whose content links `/link/<title>`; cached |
-| ER2-609 | Wiki index | S | 607 | `/wiki` landing (new route, additive) listing categories and recent pages |
+| ER2-601 | **[done 2026-10-18]** Story reader layout | M | 007 | `pages/Story.vue`: 68ch column, title block (eyebrow, title, lede, byline, reading time + word count), reuse `ScrollProgressRule`, drop cap (ELPIS-502) kept; left rail with font size and Pergament/Nacht switch (persisted) |
+| ER2-602 | **[done 2026-10-18]** `CwVeil` before content | S | 101 | stories/events with content notes show the veil until confirmed; "nicht mehr fragen" per session; screen-reader announces warnings first |
+| ER2-603 | **[done 2026-10-18 — done without "Benachrichtigen" (no follow concept)]** Chapter navigation | S | 601, 808 | Teil n von m rail + previous/next cards; "Benachrichtigen" for the next part (after 808) |
+| ER2-604 | **[done 2026-10-18]** `[IA]` Stories directory | M | 007, 006 | type tabs (Alle · Geschichten · Tagebücher · Gedichte · Serien), featured module, "Weiterlesen" from localStorage progress, cards with type, reading time, excerpt, CW badge, series chip; filters "Ohne Inhaltswarnung", "Unter 5 Min." |
+| ER2-605 | **[done 2026-10-18 — partial: no pinned/image/Discord-posted fields in data]** `[IA]` Noticeboard masonry | M | 007 | `pages/Noticeboard.vue`: pinned row, `[Typ]` prefix in type colour + top rule, three-column masonry, type and location chips, "auf Discord" indicator |
+| ER2-606 | **[done 2026-10-18]** Noticeboard item + Discord preview | M | 605 | `NoticeboardItemView.vue` parchment layout with image + caption, contact box, related notices; Discord-embed preview component mirroring `announcement.service.ts` output (closes ELPIS-511 clause) |
+| ER2-607 | **[done 2026-10-18]** `[IA]` Wiki three-column layout | M | 010 | `components/wiki/WikiPageView.vue`: TOC from headings (active section on scroll), article column, infobox (from a leading table in content, optional), "Erwähnt in" populated from link back-references, edit/version actions in the rail |
+| ER2-608 | **[done 2026-10-18]** Wiki "Erwähnt in" endpoint | S | – | server: list stories/noticeboard/events whose content links `/link/<title>`; cached |
+| ER2-609 | **[done 2026-10-18]** Wiki index | S | 607 | `/wiki` landing (new route, additive) listing categories and recent pages |
 
 ### EPIC 7 — Media
 > *The gallery as a showcase.* Penpot: **J · Galerie**, **J · Lightbox**.
@@ -235,10 +235,10 @@ Conventions follow `UI_UX_REWORK_BACKLOG.md`: sizes **XS** (≤ 0.5 d) · **S** 
 
 | ID | Title | Size | Deps | AC |
 |---|---|---|---|---|
-| ER2-701 | `[IA]` Gallery tabs + grid | M | 006 | `pages/Gallery.vue`: Screenshots · Kunstwerke · Alben tabs (existing `/gallery/:category`), filter chips, large tiles with hover caption (title, author, reactions after 807), keyboard focus ring |
-| ER2-702 | `Lightbox` replaces `ImageSlidesDialog` | M | 005 | full-bleed dark stage, prev/next, counter, close, thumbnail strip, Esc/←/→, info panel (description, tagged characters, location, download, share); same props as `ImageSlidesDialog` for drop-in use |
-| ER2-703 | Character gallery alignment | XS | 701 | last row left-aligned; optional album grouping |
-| ER2-704 | Tagged characters on images | S | 702 | display existing character/venue references as chips; server field only if missing (check `images` module first) |
+| ER2-701 | **[done 2026-10-18]** `[IA]` Gallery tabs + grid | M | 006 | `pages/Gallery.vue`: Screenshots · Kunstwerke · Alben tabs (existing `/gallery/:category`), filter chips, large tiles with hover caption (title, author, reactions after 807), keyboard focus ring |
+| ER2-702 | **[done 2026-10-18]** `Lightbox` replaces `ImageSlidesDialog` | M | 005 | full-bleed dark stage, prev/next, counter, close, thumbnail strip, Esc/←/→, info panel (description, tagged characters, location, download, share); same props as `ImageSlidesDialog` for drop-in use |
+| ER2-703 | **[done 2026-10-18]** Character gallery alignment | XS | 701 | last row left-aligned; optional album grouping |
+| ER2-704 | **[done 2026-10-18 — partial: image DTO has no tagged characters; shows linked event/venue]** Tagged characters on images | S | 702 | display existing character/venue references as chips; server field only if missing (check `images` module first) |
 
 ### EPIC 8 — Backend features (Vision tier L)
 > *Data the new UI needs. Additive schema only (`synchronize: true`).* Each ticket: entity in `server/libs/entity/src`, DTO in `server/libs/shared`, endpoint under `server/apps/chaosarchives/src/api/internal/`, client call in `client-common/src/common/api/`, registered in `db.config.ts`, Jest test.
@@ -246,16 +246,16 @@ Conventions follow `UI_UX_REWORK_BACKLOG.md`: sizes **XS** (≤ 0.5 d) · **S** 
 
 | ID | Title | Size | Deps | AC |
 |---|---|---|---|---|
-| ER2-801 | Interest + open-event RSVP | L | – | `EventRegistration` gains `kind` (`going` / `interested`, default `going`); open events accept both; counts + participant list in `EventDto`; `EventCard`/`Event.vue` actions wired |
-| ER2-802 | `.ics` export | S | – | `GET /events/:id.ics` and a per-user feed of registered events; correct Europe/Berlin TZ |
-| ER2-803 | Event programme field (optional) | S | – | nullable `programme` JSON (time, title, note[]) on Event; editor support in `EditEvent.vue` |
-| ER2-804 | Recurring events / series | XL → split | – | split into 804-A `EventSeries` entity + rule (weekly/biweekly/monthly-nth), 804-B generation of occurrences, 804-C editor UI; directory shows one card per series with next dates |
-| ER2-805 | Venue opening hours | L | – | `VenueOpeningHours` (weekday, open, close, overnight flag) + exceptions; editor in `EditVenue.vue`; `isOpenNow`/`opensAt` computed server-side in server TZ; weekly template used as migration seed |
-| ER2-806 | RP presence status | L | – | character fields `rpStatus` (IC / LFRP / OOC / null), `rpLocation`, `rpStatusExpiresAt`; set from account menu; auto-expire; opt-in; broadcast on a new socket.io namespace (separate from `updates`); DSGVO note in privacy text |
-| ER2-807 | Story & image reactions | L | – | `Reaction` entity (target type/id, character, kind from a fixed German set); counts in DTOs; one reaction per kind per character; moderation hook (report → hide) |
-| ER2-808 | Story series | M | – | nullable `seriesId`, `seriesIndex` on Story; series DTO for chapter nav; "Benachrichtigen" via Discord/webhook later |
-| ER2-809 | Autocomplete endpoint | M | 009 | `GET /search/suggest?q=` prefix match (`word*`), titles only, ≤ 5 per type, from 2 chars, < 100 ms p95 on prod data |
-| ER2-810 | Draft / published + recruiting flags | M | – | `published` (default true) on Story and WikiPage, excluded when false from public lists; `recruiting` boolean on FreeCompany/Community if no equivalent exists |
+| ER2-801 | **[done 2026-10-18]** Interest + open-event RSVP | L | – | `EventRegistration` gains `kind` (`going` / `interested`, default `going`); open events accept both; counts + participant list in `EventDto`; `EventCard`/`Event.vue` actions wired |
+| ER2-802 | **[done 2026-10-18]** `.ics` export | S | – | `GET /events/:id.ics` and a per-user feed of registered events; correct Europe/Berlin TZ |
+| ER2-803 | **[done 2026-10-18]** Event programme field (optional) | S | – | nullable `programme` JSON (time, title, note[]) on Event; editor support in `EditEvent.vue` |
+| ER2-804 | **[done 2026-10-18]** Recurring events / series | XL → split | – | split into 804-A `EventSeries` entity + rule (weekly/biweekly/monthly-nth), 804-B generation of occurrences, 804-C editor UI; directory shows one card per series with next dates |
+| ER2-805 | **[done 2026-10-18]** Venue opening hours | L | – | `VenueOpeningHours` (weekday, open, close, overnight flag) + exceptions; editor in `EditVenue.vue`; `isOpenNow`/`opensAt` computed server-side in server TZ; weekly template used as migration seed |
+| ER2-806 | **[done 2026-10-18]** RP presence status | L | – | character fields `rpStatus` (IC / LFRP / OOC / null), `rpLocation`, `rpStatusExpiresAt`; set from account menu; auto-expire; opt-in; broadcast on a new socket.io namespace (separate from `updates`); DSGVO note in privacy text |
+| ER2-807 | **[done 2026-10-18]** Story & image reactions | L | – | `Reaction` entity (target type/id, character, kind from a fixed German set); counts in DTOs; one reaction per kind per character; moderation hook (report → hide) |
+| ER2-808 | **[done 2026-10-18]** Story series | M | – | nullable `seriesId`, `seriesIndex` on Story; series DTO for chapter nav; "Benachrichtigen" via Discord/webhook later |
+| ER2-809 | **[done 2026-10-18]** Autocomplete endpoint | M | 009 | `GET /search/suggest?q=` prefix match (`word*`), titles only, ≤ 5 per type, from 2 chars, < 100 ms p95 on prod data |
+| ER2-810 | **[done 2026-10-18]** Draft / published + recruiting flags | M | – | `published` (default true) on Story and WikiPage, excluded when false from public lists; `recruiting` boolean on FreeCompany/Community if no equivalent exists |
 
 ### EPIC 9 — Accessibility & validation
 > *Prove it works for people.* Sprint: continuous, sign-off in F.
