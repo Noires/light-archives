@@ -46,8 +46,8 @@ import { isSentryConfigured } from 'src/common/sentry';
 // App shell. Mounted once by the single '/' parent route (see
 // router/routes.ts). Owns the command palette state, the single-column page shell
 // and the telemetry consent prompt. ER2-203 removed the calendar widget from
-// the shell; components/eventbar/CalendarSidebarWidget.vue stays for the home
-// hub (ER2-302). The visible chrome lives
+// the shell; the home hub uses TimelineStrip instead (ER2-302). The visible
+// chrome lives
 // in ./shell/*: ShellHeader (top bar, nav model in nav.ts), ShellHero,
 // ShellFooter and ShellMobileNav (bottom bar + "Mehr" sheet below 1024px).
 
