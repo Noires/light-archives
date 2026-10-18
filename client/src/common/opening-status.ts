@@ -1,4 +1,10 @@
-// ER2-304 — shared "Geöffnet / Bald" helper for venues.
+// ER2-304 / ER2-507 / ER2-509 — the one opening-status helper for venues.
+//
+// Two front ends share one interval engine (computeOpeningStatus):
+// - getVenueOpenInfo (home hub): epoch millis, "Bald" within a time window.
+// - getVenueStatus / weekRows / shortHours / isOpenToday (venue directory,
+//   venue page, event location card): badge label + detail and the weekly
+//   hours table. components/venues/venue-status.ts re-exports these.
 //
 // Uses the server-computed status (ER2-805: openNow / opensAt / closesAt /
 // openingHours) when the API delivers it, and otherwise falls back to the
@@ -18,6 +24,7 @@ import type {
 	VenueEventTemplate,
 } from '@app/shared/opening-hours';
 import SharedConstants from '@app/shared/SharedConstants';
+import type { StatusBadgeType } from 'components/vision/types';
 import { DateTime } from 'luxon';
 
 export type { OpeningHoursException, OpeningHoursSlot, OpeningStatus, VenueEventTemplate };
@@ -251,3 +258,218 @@ export function getVenueOpenInfo(
 		label: opensAt ? opensLabel(opensAt, nowMillis) : 'Geschlossen',
 	};
 }
+
+// ---------------------------------------------------------------------------
+// Venue directory / venue page API (formerly components/venues/venue-status.ts)
+//
+// Differences to getVenueOpenInfo, kept on purpose because the venue pages
+// were designed around them:
+// - The weekly template only yields a slot when it has an end time (no
+//   assumed 3 h duration), so the hours table never shows invented times.
+// - A closed venue is "soon" when it opens later the same (server) day.
+// - Labels read "Geöffnet · bis 02:00", "Öffnet um 20:00", "Geschlossen".
+// Both share computeOpeningStatus, which merges overlapping or touching
+// slots, so "bis" is the end of the merged opening (the old venue helper
+// reported the end of the first slot; otherwise the results are identical).
+// ---------------------------------------------------------------------------
+
+export const WEEKDAYS_SHORT = [ 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So' ];
+export const WEEKDAYS_LONG = [ 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag' ];
+
+export interface VenueHoursSource {
+	openNow?: boolean;
+	opensAt?: string;
+	closesAt?: string;
+	openingHours?: { weekday: number; openTime: string; closeTime: string; overnight?: boolean }[];
+	eventStartWeekday?: number | null;
+	eventStartTime?: string | null;
+	eventEndTime?: string | null;
+	eventEndDurationDays?: number | null;
+}
+
+export interface VenueStatus {
+	state: VenueOpenState;
+	/** Badge text: "Geöffnet · bis 02:00", "Öffnet um 20:00", "Geschlossen". */
+	label: string;
+	/** Optional longer hint, e.g. "Öffnet Sa., 20:00". */
+	detail: string;
+}
+
+export interface WeeklySlot {
+	weekday: number;
+	openTime: string;
+	closeTime: string;
+	overnight: boolean;
+}
+
+export interface WeekRow {
+	weekday: number;
+	label: string;
+	short: string;
+	ranges: string[];
+	today: boolean;
+}
+
+function parseZonedIso(value?: string): DateTime | null {
+	if (!value) {
+		return null;
+	}
+	const dt = DateTime.fromISO(value, { zone: ZONE });
+	return dt.isValid ? dt : null;
+}
+
+/** Weekly slots from explicit opening hours, else from the event template (only with an end time). */
+export function weeklySlots(source: VenueHoursSource): WeeklySlot[] {
+	if (source.openingHours && source.openingHours.length > 0) {
+		return source.openingHours
+			.filter((slot) => slot.weekday >= 1 && slot.weekday <= 7 && parseTime(slot.openTime) && parseTime(slot.closeTime))
+			.map((slot) => ({
+				weekday: slot.weekday,
+				openTime: slot.openTime,
+				closeTime: slot.closeTime,
+				overnight: !!slot.overnight || slot.closeTime <= slot.openTime,
+			}))
+			.sort((a, b) => a.weekday - b.weekday || a.openTime.localeCompare(b.openTime));
+	}
+
+	const weekday = source.eventStartWeekday;
+	const start = source.eventStartTime || '';
+	const end = source.eventEndTime || '';
+	if (weekday && weekday >= 1 && weekday <= 7 && parseTime(start) && parseTime(end)) {
+		return [ {
+			weekday,
+			openTime: start,
+			closeTime: end,
+			overnight: (source.eventEndDurationDays || 0) > 0 || end <= start,
+		} ];
+	}
+	return [];
+}
+
+function openStatus(closes: DateTime | null): VenueStatus {
+	return {
+		state: 'open',
+		label: closes ? `Geöffnet · bis ${closes.toFormat('HH:mm')}` : 'Geöffnet',
+		detail: '',
+	};
+}
+
+function closedStatus(opens: DateTime | null, now: DateTime): VenueStatus {
+	if (opens && opens.hasSame(now, 'day') && opens > now) {
+		return { state: 'soon', label: `Öffnet um ${opens.toFormat('HH:mm')}`, detail: '' };
+	}
+	let detail = '';
+	if (opens && opens > now) {
+		const days = opens.startOf('day').diff(now.startOf('day'), 'days').days;
+		detail = days <= 1
+			? `Öffnet morgen, ${opens.toFormat('HH:mm')}`
+			: `Öffnet ${opens.setLocale('de').toFormat('ccc., HH:mm')}`;
+	}
+	return { state: 'closed', label: 'Geschlossen', detail };
+}
+
+/** Badge state, label and detail for the venue pages. 'unknown' without any data. */
+export function getVenueStatus(source: VenueHoursSource | null | undefined, at?: DateTime): VenueStatus {
+	const unknown: VenueStatus = { state: 'unknown', label: '', detail: '' };
+	if (!source) {
+		return unknown;
+	}
+	const now = (at || DateTime.now()).setZone(ZONE);
+
+	if (typeof source.openNow === 'boolean') {
+		return source.openNow
+			? openStatus(parseZonedIso(source.closesAt))
+			: closedStatus(parseZonedIso(source.opensAt), now);
+	}
+
+	const slots = weeklySlots(source);
+	if (slots.length === 0) {
+		return unknown;
+	}
+	const status = computeOpeningStatus(slots, [], now.toMillis(), ZONE);
+	return status.openNow
+		? openStatus(parseZonedIso(status.closesAt))
+		: closedStatus(parseZonedIso(status.opensAt), now);
+}
+
+/** True when the venue is open now, opens later today or has a slot today. */
+export function isOpenToday(source: VenueHoursSource | null | undefined, at?: DateTime): boolean {
+	if (!source) {
+		return false;
+	}
+	const status = getVenueStatus(source, at);
+	if (status.state === 'open' || status.state === 'soon') {
+		return true;
+	}
+	const today = (at || DateTime.now()).setZone(ZONE).weekday;
+	return weeklySlots(source).some((slot) => slot.weekday === today);
+}
+
+export function statusBadgeType(state: VenueOpenState): StatusBadgeType {
+	switch (state) {
+		case 'open': return 'open';
+		case 'soon': return 'soon';
+		default: return 'server';
+	}
+}
+
+function rangeLabel(slot: WeeklySlot): string {
+	return `${slot.openTime}–${slot.closeTime}`;
+}
+
+/** Short opening hours, e.g. "Fr, Sa · 20:00–02:00". Empty without data. */
+export function shortHours(source: VenueHoursSource | null | undefined): string {
+	if (!source) {
+		return '';
+	}
+	const groups = new Map<string, number[]>();
+	for (const slot of weeklySlots(source)) {
+		const key = rangeLabel(slot);
+		groups.set(key, [ ...(groups.get(key) || []), slot.weekday ]);
+	}
+	return Array.from(groups.entries())
+		.map(([ range, days ]) => `${days.map((day) => WEEKDAYS_SHORT[day - 1]).join(', ')} · ${range}`)
+		.join('; ');
+}
+
+/** Monday to Sunday rows for the opening-hours card. */
+export function weekRows(source: VenueHoursSource | null | undefined, at?: DateTime): WeekRow[] {
+	const slots = source ? weeklySlots(source) : [];
+	const today = (at || DateTime.now()).setZone(ZONE).weekday;
+	return WEEKDAYS_LONG.map((label, index) => {
+		const weekday = index + 1;
+		return {
+			weekday,
+			label,
+			short: WEEKDAYS_SHORT[index],
+			ranges: slots.filter((slot) => slot.weekday === weekday).map(rangeLabel),
+			today: weekday === today,
+		};
+	});
+}
+
+/*
+ * Sanity checks (dev only; the client has no test runner). Run them in the
+ * browser console of a dev build, or re-check by hand when changing the
+ * engine. Server time is Europe/Berlin; 2026-10-16 is a Friday.
+ *
+ *   const fri = DateTime.fromISO('2026-10-16T21:00', { zone: 'Europe/Berlin' });
+ *   const slots = { openingHours: [ { weekday: 5, openTime: '20:00', closeTime: '02:00' } ] };
+ *
+ *   getVenueStatus(slots, fri)                          -> open, 'Geöffnet · bis 02:00'
+ *   getVenueStatus(slots, fri.set({ hour: 18 }))        -> soon, 'Öffnet um 20:00'
+ *   getVenueStatus(slots, fri.plus({ days: 1 }).set({ hour: 1 })) -> open (overnight from Friday)
+ *   getVenueStatus(slots, fri.plus({ days: 2 }))        -> closed, detail 'Öffnet Fr., 20:00'
+ *   getVenueStatus({ eventStartWeekday: 5, eventStartTime: '20:00' }, fri) -> unknown (no end time)
+ *   getVenueStatus({ openNow: false, opensAt: fri.plus({ hours: 1 }).toISO() }, fri) -> soon
+ *   getVenueStatus(null)                                -> unknown, ''
+ *
+ *   getVenueOpenInfo(slots, fri.toMillis()).label                    -> 'Geöffnet bis 02:00'
+ *   getVenueOpenInfo(slots, fri.set({ hour: 19 }).toMillis()).state  -> 'soon' (within 120 min)
+ *   getVenueOpenInfo(slots, fri.set({ hour: 17 }).toMillis()).state  -> 'closed', 'Öffnet um 20:00'
+ *   getVenueOpenInfo({ eventStartWeekday: 5, eventStartTime: '20:00' }, fri.toMillis()).label
+ *                                                       -> 'Geöffnet bis 23:00' (assumed 3 h)
+ *
+ *   weekRows(slots, fri)[4]  -> { label: 'Freitag', ranges: [ '20:00–02:00' ], today: true }
+ *   shortHours(slots)        -> 'Fr · 20:00–02:00'
+ */
