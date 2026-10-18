@@ -68,6 +68,24 @@
             <status-badge type="open" label="Nimmt Mitglieder auf" />
           </template>
           <p v-if="community.goal" class="communities-dir__goal">{{ community.goal }}</p>
+          <template v-if="hasGroupFooter(community)" #footer>
+            <div class="communities-dir__footer">
+              <avatar-stack
+                v-if="typeof community.memberCount === 'number'"
+                :avatars="memberAvatarItems(community)"
+                :max="3"
+                :label="memberLabel(community.memberCount)"
+              />
+              <p v-if="community.nextEvent" class="communities-dir__next">
+                <q-icon name="event" aria-hidden="true" />
+                <span>
+                  Nächstes Event:
+                  <router-link class="communities-dir__next-link" :to="`/event/${community.nextEvent.id}`">{{ community.nextEvent.title }}</router-link>
+                  · {{ eventDate(community.nextEvent.startDateTime) }}
+                </span>
+              </p>
+            </div>
+          </template>
         </directory-card>
       </li>
     </ul>
@@ -90,6 +108,10 @@
 
 <script lang="ts">
 import { CommunitySummaryDto } from '@app/shared/dto/communities/community-summary.dto';
+import type { GroupSummaryExtrasDto } from '@app/shared/dto/common/group-summary-extras.dto';
+import { formatEventStart } from 'components/mainpage/home-data';
+import AvatarStack from 'components/vision/AvatarStack.vue';
+import type { AvatarItem } from 'components/vision/types';
 import DirectoryAreaTabs from 'components/character/DirectoryAreaTabs.vue';
 import DirectoryCard from 'components/vision/DirectoryCard.vue';
 import EmptyState from 'components/vision/EmptyState.vue';
@@ -106,6 +128,7 @@ const PER_PAGE = 24;
 @Options({
   name: 'PageCommunities',
   components: {
+    AvatarStack,
     DirectoryAreaTabs,
     DirectoryCard,
     EmptyState,
@@ -163,6 +186,24 @@ export default class PageCommunities extends Vue {
 
   get hasMore(): boolean {
     return this.filteredCount > this.shownCount;
+  }
+
+  // ER2 round 2: member count, member avatars and next event are optional.
+  hasGroupFooter(group: GroupSummaryExtrasDto): boolean {
+    return typeof group.memberCount === 'number' || !!group.nextEvent;
+  }
+
+  memberAvatarItems(group: GroupSummaryExtrasDto): AvatarItem[] {
+    return (group.memberAvatars || []).filter((src) => !!src).map((src) => ({ src, alt: '' }));
+  }
+
+  memberLabel(count: number | undefined): string {
+    const value = count || 0;
+    return `${value.toLocaleString('de-DE')} ${value === 1 ? 'Mitglied' : 'Mitglieder'}`;
+  }
+
+  eventDate(startDateTime: number): string {
+    return formatEventStart(startDateTime);
   }
 
   getLink(community: CommunitySummaryDto): string {
@@ -281,6 +322,45 @@ export default class PageCommunities extends Vue {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.communities-dir__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.communities-dir__next {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ink-muted);
+
+  .q-icon {
+    margin-top: 1px;
+    font-size: 15px;
+  }
+}
+
+.communities-dir__next-link {
+  color: var(--ink-link);
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-radius: 2px;
+    box-shadow: 0 0 0 2px var(--glow-aether), 0 0 0 3px var(--vision-focus-edge);
+  }
 }
 
 .communities-dir__more {
