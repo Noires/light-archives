@@ -1,6 +1,6 @@
 import { UserInfo } from '@app/auth/model/user-info';
 import { serverConfiguration } from '@app/configuration';
-import { Character, Event, Image, Venue, VenueMembership } from '@app/entity';
+import { Album, Character, Event, Image, Venue, VenueMembership } from '@app/entity';
 import { hashFile } from '@app/security';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { ImageDescriptionDto } from '@app/shared/dto/image/image-desciption.dto';
@@ -24,7 +24,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { escapeForLike } from 'apps/chaosarchives/src/common/db';
 import utils from 'apps/chaosarchives/src/common/utils';
-import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
+import { Connection, EntityManager, In, IsNull, Not, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import sharp from 'sharp';
 import {
@@ -96,7 +96,13 @@ export class ImagesService {
       throw new NotFoundException('Image not found');
     }
 
-    return this.toImageDto(image, user);
+    const dto = this.toImageDto(image, user);
+
+    if (dto.mine) {
+      dto.albumIds = await this.getImageAlbumIds(this.connection.manager, image.id);
+    }
+
+    return dto;
   }
 
   async getImages(filter: ImagesFilterDto): Promise<PagingResultDto<ImageSummaryDto>> {
@@ -332,6 +338,10 @@ export class ImagesService {
         await this.assignImageVenue(em, image, request, user);
         await em.getRepository(Image).save(image);
 
+        if (request.albumIds && request.albumIds.length > 0) {
+          await this.syncImageAlbums(em, image.id, character.id, request.albumIds, false);
+        }
+
         return {
           id: image.id,
           url: this.storageService.getUrl(path),
@@ -373,7 +383,7 @@ export class ImagesService {
         .innerJoinAndSelect('character.user', 'user')
         .where('image.id = :id', { id } )
         .andWhere('user.id = :userId', { userId: user.id })
-        .select([ 'image', 'event', 'venue' ])
+        .select([ 'image', 'event', 'venue', 'character.id' ])
         .getOne();
 
       if (!image) {
@@ -394,7 +404,55 @@ export class ImagesService {
       await this.assignImageEvent(em, image, request);
       await this.assignImageVenue(em, image, request, user);
       await imageRepo.save(image);
+
+      if (request.albumIds !== undefined) {
+        await this.syncImageAlbums(em, image.id, image.owner.id, request.albumIds, true);
+      }
     });
+  }
+
+  // ER2 round 2: album membership from the image side
+
+  private async getImageAlbumIds(em: EntityManager, imageId: number): Promise<number[]> {
+    const rows: { albumId: number | string }[] = await em.query(
+      'SELECT ai.`albumId` AS albumId FROM `album_images` ai INNER JOIN `album` a ON a.`id` = ai.`albumId` AND a.`deletedAt` IS NULL WHERE ai.`imageId` = ?',
+      [imageId],
+    );
+    return rows.map((row) => Number(row.albumId));
+  }
+
+  /**
+   * Adds the image to `albumIds` (all must belong to `ownerId`); with `replace`
+   * also removes it from the owner's other albums.
+   */
+  private async syncImageAlbums(
+    em: EntityManager,
+    imageId: number,
+    ownerId: number,
+    albumIds: number[],
+    replace: boolean,
+  ): Promise<void> {
+    const wanted = Array.from(new Set(albumIds));
+
+    if (wanted.length > 0) {
+      const count = await em.getRepository(Album).count({ where: { id: In(wanted), owner: { id: ownerId } } });
+
+      if (count !== wanted.length) {
+        throw new BadRequestException('Images can only be added to albums of the image owner');
+      }
+    }
+
+    const current = await this.getImageAlbumIds(em, imageId);
+    const toAdd = wanted.filter((id) => !current.includes(id));
+    const toRemove = replace ? current.filter((id) => !wanted.includes(id)) : [];
+
+    for (const albumId of toAdd) {
+      await em.createQueryBuilder().relation(Album, 'images').of(albumId).add(imageId);
+    }
+
+    for (const albumId of toRemove) {
+      await em.createQueryBuilder().relation(Album, 'images').of(albumId).remove(imageId);
+    }
   }
 
   private async assignImageEvent(em: EntityManager, image: Image, request: ImageDescriptionDto) {

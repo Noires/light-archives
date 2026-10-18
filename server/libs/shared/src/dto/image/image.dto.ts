@@ -25,4 +25,6 @@ export interface ImageDto {
   // ER2-807 (optional)
   reactionCounts?: ReactionCountsDto;
   myReactions?: ReactionKind[];
+  // ER2 round 2 (optional): albums containing the image, only for the owner
+  albumIds?: number[];
 }

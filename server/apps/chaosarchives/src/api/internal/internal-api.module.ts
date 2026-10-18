@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { RouterModule } from "@nestjs/core";
+import { AlbumsModule } from './albums/albums.module';
 import { CarrdModule } from './carrd/carrd.module';
 import { CharactersModule } from './characters/characters.module';
 import { ChangesModule } from './changes/changes.module';
@@ -53,7 +54,8 @@ const controllerModules = [
 	StatisticsModule,
 	WeatherModule,
 	WikiModule,
-	LodestoneModule
+	LodestoneModule,
+	AlbumsModule,
 ];
 
 @Module({

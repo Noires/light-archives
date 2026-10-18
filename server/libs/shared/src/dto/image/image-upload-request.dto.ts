@@ -1,6 +1,7 @@
 import { ImageCategory } from "@app/shared/enums/image-category.enum";
-import { Type } from "class-transformer";
-import { IsEnum, IsNumber, IsOptional, IsString, MinLength } from "class-validator";
+import { Transform, Type } from "class-transformer";
+import { ArrayMaxSize, IsArray, IsEnum, IsInt, IsNumber, IsOptional, IsString, MinLength } from "class-validator";
+import { toIdArray } from "./image-desciption.dto";
 
 export class ImageUploadRequestDto {
 	@Type(() => Number)
@@ -41,6 +42,14 @@ export class ImageUploadRequestDto {
 	@Type(() => Number)
 	@IsNumber()
 	readonly thumbWidth: number;
+
+	// ER2 round 2: albums (of the uploading character) to add the image to; "1,2" in multipart
+	@Transform(toIdArray)
+	@IsArray()
+	@ArrayMaxSize(50)
+	@IsInt({ each: true })
+	@IsOptional()
+	readonly albumIds?: number[];
 
 	constructor(properties?: Readonly<ImageUploadRequestDto>) {
     if (properties) {
