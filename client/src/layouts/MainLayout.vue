@@ -269,6 +269,9 @@ body.body--dark {
   max-width: calc(var(--page-shell-max) + 2 * var(--page-shell-gutter, 24px));
   margin: 0 auto;
   padding: var(--page-shell-top, 24px) var(--page-shell-gutter, 24px) 0;
+  // viewport-fit=cover (index.template.html): keep clear of the notch in landscape.
+  padding-left: max(var(--page-shell-gutter, 24px), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--page-shell-gutter, 24px), env(safe-area-inset-right, 0px));
 }
 
 @media screen and (max-width: $breakpoint-xs) {
