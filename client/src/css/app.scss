@@ -343,6 +343,27 @@ h2 {
 	margin-bottom: 24px;
 }
 
+// ER2-108 — directory hero titles sit on the content grid. The global h2 is
+// centred, and inside the hero text column (whose width follows the lead
+// paragraph) that pushed short titles inwards by different amounts per page
+// (Communities ~137px, Freie Gesellschaften 66px). Left-align them so every
+// title starts at the hero's 22px inner edge.
+.page-characters__hero-text > h2,
+.page-venues__hero-text > h2,
+.page-communities__hero-text > h2,
+.page-free-companies__hero-text > h2,
+.page-noticeboard__hero-text > h2,
+.page-stories__hero-text > h2,
+.page-changes__hero-text > h2,
+.page-gallery__hero-text > h2,
+.page-support-tickets__hero-text > h2,
+.page-support-queue__hero-text > h2,
+.page-support-ticket__hero-text > h2,
+.page-support-ticket-admin__hero-text > h2,
+.page-new-support-ticket__hero-text > h2 {
+	text-align: left;
+}
+
 h2.with-subtitle {
 	margin-bottom: 0;
 }
