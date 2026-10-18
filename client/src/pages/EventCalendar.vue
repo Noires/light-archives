@@ -267,6 +267,9 @@
           <p class="page-events__card-text">
             Viele Veranstalter kündigen ihre Events zusätzlich auf Discord an.
           </p>
+          <!-- ER2 social: calendar subscription -->
+          <calendar-subscription />
+          <!-- /ER2 social: calendar subscription -->
         </div>
       </aside>
     </div>
@@ -294,6 +297,7 @@ import EmptyState from 'components/vision/EmptyState.vue';
 import type { EventCardEvent, SectionTab } from 'components/vision/types';
 import EventMiniCalendar from 'components/event/EventMiniCalendar.vue';
 import RecurringEventsCard from 'components/event/RecurringEventsCard.vue';
+import CalendarSubscription from 'components/social/CalendarSubscription.vue'; // ER2 social: calendar subscription
 import {
   SERVER_ZONE,
   countLabel,
@@ -372,6 +376,7 @@ function sameMonthParams(to: RouteLocationNormalized, from: RouteLocationNormali
     EmptyState,
     EventMiniCalendar,
     RecurringEventsCard,
+    CalendarSubscription, // ER2 social: calendar subscription
   },
   async beforeRouteEnter(to, _, next) {
     const { date, events } = await load(to.params);
