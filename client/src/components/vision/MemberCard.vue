@@ -16,8 +16,8 @@
 			</h3>
 			<p v-if="meta" class="vision-member__meta">{{ meta }}</p>
 			<p v-if="subtitle" class="vision-member__subtitle">{{ subtitle }}</p>
-			<p v-if="rank || rpStatus" class="vision-member__tags">
-				<span v-if="rank" class="vision-member__rank">{{ rank }}</span>
+			<p v-if="rankLabel || rpStatus" class="vision-member__tags">
+				<span v-if="rankLabel" class="vision-member__rank" :class="role ? `vision-member__rank--${role}` : ''">{{ rankLabel }}</span>
 				<span v-if="rpStatus" class="vision-member__rp">{{ rpLabel }}</span>
 			</p>
 		</div>
@@ -32,8 +32,19 @@ import AetheryteBadge from '../aetherium/AetheryteBadge.vue';
 // ER2-409 — member tile for free company and community member grids:
 // round AetheryteBadge with an RP status dot, name (stretched link), meta,
 // profession and an optional rank pill.
+// ER2 round 2: `role` (community role) renders as the rank pill with a German
+// label; an explicit `rank` text wins.
 
 type MemberRpStatus = 'ic' | 'lfrp' | 'ooc';
+type MemberRole = 'owner' | 'manager' | 'editor' | 'member' | 'applicant';
+
+const ROLE_LABELS: Record<MemberRole, string> = {
+	owner: 'Gründer:in',
+	manager: 'Leitung',
+	editor: 'Redaktion',
+	member: 'Mitglied',
+	applicant: 'Bewerbung offen',
+};
 
 const RP_LABELS: Record<MemberRpStatus, string> = {
 	ic: 'Im RP',
@@ -49,6 +60,7 @@ class Props {
 	meta = prop<string>({ default: '' });
 	subtitle = prop<string>({ default: '' });
 	rank = prop<string>({ default: '' });
+	role = prop<MemberRole | null>({ default: null });
 	rpStatus = prop<MemberRpStatus | null>({ default: null });
 }
 
@@ -59,6 +71,10 @@ class Props {
 	},
 })
 export default class MemberCard extends Vue.with(Props) {
+	get rankLabel(): string {
+		return this.rank || (this.role ? ROLE_LABELS[this.role] || '' : '');
+	}
+
 	get rpLabel(): string {
 		return this.rpStatus ? RP_LABELS[this.rpStatus] || '' : '';
 	}
@@ -209,6 +225,21 @@ export default class MemberCard extends Vue.with(Props) {
 	background-color: var(--rule-tint);
 	color: var(--ink-primary);
 	border: 1px solid var(--rule-soft);
+}
+
+.vision-member__rank--owner {
+	border-color: var(--rule-strong);
+	background-color: var(--vision-primary);
+	color: var(--vision-on-primary);
+}
+
+.vision-member__rank--manager {
+	border-color: var(--rule-strong);
+}
+
+.vision-member__rank--applicant {
+	border-style: dashed;
+	background-color: transparent;
 }
 
 .vision-member__rp {

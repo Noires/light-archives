@@ -160,7 +160,8 @@
                   :name="profile.name"
                   :meta="`${$display.races[profile.race]} · ${profile.server}`"
                   :subtitle="profession(profile)"
-                  :rank="rank(profile)"
+                  :rank="profile.communityRole ? '' : rank(profile)"
+                  :role="profile.communityRole || null"
                   :rp-status="rpStatus(profile)"
                 />
               </li>
@@ -420,7 +421,7 @@ export default class PageCommunity extends Vue {
   /** Only the founder is known without the management endpoint. */
   rank(profile: CharacterSummaryDto): string {
     const c = this.community;
-    return c.owner && profile.name === c.owner && (!c.ownerServer || profile.server === c.ownerServer) ? 'Gründung' : '';
+    return c.owner && profile.name === c.owner && (!c.ownerServer || profile.server === c.ownerServer) ? 'Gründer:in' : '';
   }
 
   rpStatus(profile: CharacterSummaryDto): RpStatus | null {
