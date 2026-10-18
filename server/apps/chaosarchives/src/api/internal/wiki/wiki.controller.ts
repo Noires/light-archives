@@ -6,11 +6,18 @@ import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { WikiPageDto } from '@app/shared/dto/wiki/wiki-page.dto';
 import { Role } from '@app/shared/enums/role.enum';
 import { BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, UseGuards } from '@nestjs/common';
+import { WikiMentionsDto } from './wiki-mentions';
 import { WikiService } from './wiki.service';
 
 @Controller('wiki')
 export class WikiController {
 	constructor(private wikiService: WikiService) { }
+
+	// ER2-608: published content linking to this page ("Erwähnt in")
+	@Get(':title/mentions')
+	async getWikiPageMentions(@Param('title') title: string): Promise<WikiMentionsDto> {
+		return this.wikiService.getWikiPageMentions(title);
+	}
 
 	@Get('by-title/:title')
 	@UseGuards(OptionalJwtAuthGuard)

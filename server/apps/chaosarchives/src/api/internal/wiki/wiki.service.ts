@@ -1,5 +1,5 @@
 import { UserInfo } from '@app/auth/model/user-info';
-import { Character, WikiPage } from '@app/entity';
+import { Character, Event, NoticeboardItem, Story, WikiPage } from '@app/entity';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { WikiPageDto } from '@app/shared/dto/wiki/wiki-page.dto';
 import { EditPermission } from '@app/shared/enums/edit-permission.enum';
@@ -9,13 +9,130 @@ import { InjectRepository } from '@nestjs/typeorm';
 import crypto from 'crypto';
 import { Connection, IsNull, Not, Repository } from 'typeorm';
 import { getVerifiedCharacter } from '../../../common/api-checks';
+import {
+  buildWikiMentionLikePatterns,
+  contentMentionsWikiTitle,
+  WikiMentionItemDto,
+  WikiMentionsDto,
+} from './wiki-mentions';
+
+const MENTIONS_PER_TYPE = 10;
+// Candidates fetched per type before the exact match; keeps the query bounded.
+const MENTION_CANDIDATES = 200;
+const MENTIONS_CACHE_TTL_MS = 5 * 60 * 1000;
+const MENTIONS_CACHE_MAX = 500;
 
 @Injectable()
 export class WikiService {
   constructor(
     private connection: Connection,
     @InjectRepository(WikiPage) private wikiPageRepo: Repository<WikiPage>,
+    @InjectRepository(Story) private storyRepo: Repository<Story>,
+    @InjectRepository(NoticeboardItem) private noticeboardItemRepo: Repository<NoticeboardItem>,
+    @InjectRepository(Event) private eventRepo: Repository<Event>,
   ) {}
+
+  private readonly mentionsCache = new Map<string, { expiresAt: number; value: WikiMentionsDto }>();
+
+  /**
+   * ER2-608: published stories, noticeboard items and visible events whose
+   * content links to the wiki page `title` (wikilink or /link/ URL). Cached
+   * in memory for a few minutes.
+   */
+  async getWikiPageMentions(title: string): Promise<WikiMentionsDto> {
+    const key = (title || '').replace(/_/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+    const now = Date.now();
+    const cached = this.mentionsCache.get(key);
+
+    if (cached && cached.expiresAt > now) {
+      return cached.value;
+    }
+
+    const value = await this.findMentions((title || '').replace(/_/g, ' '));
+
+    if (this.mentionsCache.size >= MENTIONS_CACHE_MAX) {
+      this.mentionsCache.clear();
+    }
+
+    this.mentionsCache.set(key, { expiresAt: now + MENTIONS_CACHE_TTL_MS, value });
+    return value;
+  }
+
+  private async findMentions(title: string): Promise<WikiMentionsDto> {
+    const patterns = buildWikiMentionLikePatterns(title);
+
+    if (patterns.length === 0) {
+      return { stories: [], noticeboardItems: [], events: [] };
+    }
+
+    const likeClause = (columns: string[]) => {
+      const parts: string[] = [];
+      const params: { [k: string]: string } = {};
+
+      columns.forEach((column, columnIndex) => {
+        patterns.forEach((pattern, patternIndex) => {
+          const name = `p${columnIndex}_${patternIndex}`;
+          parts.push(`${column} LIKE :${name}`);
+          params[name] = pattern;
+        });
+      });
+
+      return { sql: `(${parts.join(' OR ')})`, params };
+    };
+
+    const storyLike = likeClause(['story.content']);
+    const noticeLike = likeClause(['item.content']);
+    const eventLike = likeClause(['event.details', 'event.oocDetails']);
+
+    const [ stories, noticeboardItems, events ] = await Promise.all([
+      this.storyRepo
+        .createQueryBuilder('story')
+        .where('story.published = :published', { published: true })
+        .andWhere(storyLike.sql, storyLike.params)
+        .orderBy('story.createdAt', 'DESC')
+        .select(['story.id', 'story.title', 'story.content'])
+        .limit(MENTION_CANDIDATES)
+        .getMany(),
+      this.noticeboardItemRepo
+        .createQueryBuilder('item')
+        .where(noticeLike.sql, noticeLike.params)
+        .orderBy('item.createdAt', 'DESC')
+        .select(['item.id', 'item.title', 'item.content'])
+        .limit(MENTION_CANDIDATES)
+        .getMany(),
+      this.eventRepo
+        .createQueryBuilder('event')
+        .where('event.hidden = :hidden', { hidden: false })
+        .andWhere(eventLike.sql, eventLike.params)
+        .orderBy('event.startDateTime', 'DESC')
+        .select(['event.id', 'event.title', 'event.details', 'event.oocDetails'])
+        .limit(MENTION_CANDIDATES)
+        .getMany(),
+    ]);
+
+    const pick = <T extends { id: number; title: string }>(
+      items: T[],
+      matches: (item: T) => boolean,
+      link: (item: T) => string,
+    ): WikiMentionItemDto[] => items
+      .filter(matches)
+      .slice(0, MENTIONS_PER_TYPE)
+      .map((item) => ({ id: item.id, title: item.title, link: link(item) }));
+
+    return {
+      stories: pick(stories, (story) => contentMentionsWikiTitle(story.content, title), (story) => `/story/${story.id}`),
+      noticeboardItems: pick(
+        noticeboardItems,
+        (item) => contentMentionsWikiTitle(item.content, title),
+        (item) => `/noticeboard/${item.id}`,
+      ),
+      events: pick(
+        events,
+        (event) => contentMentionsWikiTitle(event.details, title) || contentMentionsWikiTitle(event.oocDetails, title),
+        (event) => `/event/${event.id}`,
+      ),
+    };
+  }
 
   async getWikiPageById(id: number, user?: UserInfo): Promise<WikiPageDto> {
     return this.getWikiPageInternal('wp.id = :id', { id }, user);
@@ -48,7 +165,10 @@ export class WikiService {
   }
 
   private toWikiPageDto(wikiPage: WikiPage, user?: UserInfo): WikiPageDto {
-    return new WikiPageDto({
+    // ER2-607: `updatedAt` (read only) feeds "Zuletzt bearbeitet" in the wiki
+    // rail; it is not part of WikiPageDto in libs/shared yet, so it is added
+    // to the response object here.
+    const dto = new WikiPageDto({
       id: wikiPage.id,
       mine: user ? wikiPage.owner.user.id === user.id : false,
       author: wikiPage.owner.name,
@@ -59,6 +179,8 @@ export class WikiService {
       editPermission: wikiPage.editPermission,
       published: wikiPage.published,
     });
+
+    return Object.assign(dto, { updatedAt: wikiPage.updatedAt ? wikiPage.updatedAt.getTime() : undefined });
   }
 
   async createWikiPage(wikiPageDto: WikiPageDto & { id: undefined }, user: UserInfo): Promise<IdWrapper> {
