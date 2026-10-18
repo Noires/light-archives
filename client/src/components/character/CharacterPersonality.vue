@@ -1,20 +1,32 @@
 <template>
   <div class="character-personality">
     <section class="page-edit-character__form-controls">
-      <h6>Vorlieben und Abneigungen</h6>
-            <q-input readonly v-model="character.loves" label="Liebt" />
-            <q-input readonly v-model="character.hates" label="Hass" />
-            <q-input readonly v-model="character.wishes" label="Wünsche" />
-            <q-input readonly v-model="character.fears" label="Ängste" />
-            <q-input readonly v-model="character.slogan" label="Motto" />
-            <q-input readonly v-model="character.motivation" label="Motivation" />
-            <h6>Charakteristika</h6>
-            <q-input readonly v-model="character.strengths" label="Stärken" />
-            <q-input readonly v-model="character.weaknesses" label="Schwächen" />
-            <q-input readonly v-model="character.ticks" label="Eigenheiten" />
+      <template v-if="showSection(preferenceFields)">
+        <h6>Vorlieben und Abneigungen</h6>
+        <character-text-field
+          v-for="field in preferenceFields"
+          :key="field.label"
+          :label="field.label"
+          :value="field.value"
+          :owner="owner"
+        />
+      </template>
+      <template v-if="showSection(traitFields)">
+        <h6>Charakteristika</h6>
+        <character-text-field
+          v-for="field in traitFields"
+          :key="field.label"
+          :label="field.label"
+          :value="field.value"
+          :owner="owner"
+        />
+      </template>
     </section>
-    <h6>Persönlichkeit</h6>
-    <html-viewer :content="character.personality" />
+    <template v-if="!personalityEmpty || owner">
+      <h6>Persönlichkeit</h6>
+      <p v-if="personalityEmpty" class="character-personality__empty">{{ emptyLabel }}</p>
+      <html-viewer v-else :content="character.personality" />
+    </template>
   </div>
 </template>
 
@@ -27,6 +39,10 @@ import HtmlViewer from '../common/HtmlViewer.vue';
 import ReportViolationSection from '../common/ReportViolationSection.vue';
 import CharacterDetail from './CharacterDetail.vue';
 import CharacterDetailsBox from './CharacterDetailsBox.vue';
+import CharacterTextField from './CharacterTextField.vue';
+import { EMPTY_FIELD_LABEL, isEmptyFieldValue } from './empty-field';
+
+type PersonalityField = { label: string; value?: string };
 
 class Props {
   character = prop<CharacterProfileDto>({
@@ -42,6 +58,7 @@ class Props {
   components: {
     CharacterDetail,
     CharacterDetailsBox,
+    CharacterTextField,
     BannerView,
     HtmlViewer,
     ReportViolationSection,
@@ -49,8 +66,40 @@ class Props {
 })
 export default class CharacterPersonality extends Vue.with(Props) {
   PageType = PageType;
+  readonly emptyLabel = EMPTY_FIELD_LABEL;
 
+  get owner(): boolean {
+    return this.preview || !!this.character.mine;
+  }
 
+  get preferenceFields(): PersonalityField[] {
+    const c = this.character;
+    return [
+      { label: 'Liebt', value: c.loves },
+      { label: 'Hasst', value: c.hates },
+      { label: 'Wünsche', value: c.wishes },
+      { label: 'Ängste', value: c.fears },
+      { label: 'Motto', value: c.slogan },
+      { label: 'Motivation', value: c.motivation },
+    ];
+  }
+
+  get traitFields(): PersonalityField[] {
+    const c = this.character;
+    return [
+      { label: 'Stärken', value: c.strengths },
+      { label: 'Schwächen', value: c.weaknesses },
+      { label: 'Eigenheiten', value: c.ticks },
+    ];
+  }
+
+  get personalityEmpty(): boolean {
+    return isEmptyFieldValue(this.character.personality);
+  }
+
+  showSection(fields: PersonalityField[]): boolean {
+    return this.owner || fields.some((field) => !isEmptyFieldValue(field.value));
+  }
 }
 </script>
 
@@ -70,33 +119,13 @@ export default class CharacterPersonality extends Vue.with(Props) {
   margin-top: 0;
 }
 
-.character-personality .q-field--readonly .q-field__control,
-.character-personality .q-field--readonly .q-field__control::before {
-  background-color: var(--surface-vellum);
-}
-
-.character-personality .q-field--readonly .q-field__control::before {
-  border: 1px solid var(--rule-gold-soft);
-}
-
-.character-personality .q-field--readonly:hover .q-field__control::before {
-  border-color: var(--rule-gold);
+.character-personality__empty {
+  color: var(--ink-muted);
+  font-style: italic;
 }
 
 body.body--dark .character-personality h6 {
   color: var(--ink-luminous);
 }
 
-body.body--dark .character-personality .q-field--readonly .q-field__control,
-body.body--dark .character-personality .q-field--readonly .q-field__control::before {
-  background-color: var(--surface-lift);
-}
-
-body.body--dark .character-personality .q-field--readonly .q-field__control::before {
-  border-color: var(--rule-arcane-soft);
-}
-
-body.body--dark .character-personality .q-field--readonly:hover .q-field__control::before {
-  border-color: var(--rule-arcane);
-}
 </style>

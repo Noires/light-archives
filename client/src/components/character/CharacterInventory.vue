@@ -1,10 +1,19 @@
 <template>
   <div class="character-inventory">
     <section>
-      <h6>Besitz</h6>
-      <html-viewer :content="character.possession" />
-      <h6>Besondere Gegenstände</h6>
-      <html-viewer :content="character.specialitems" />
+      <template v-if="owner || !isEmpty(character.possession)">
+        <h6>Besitz</h6>
+        <p v-if="isEmpty(character.possession)" class="character-inventory__empty">{{ emptyLabel }}</p>
+        <html-viewer v-else :content="character.possession" />
+      </template>
+      <template v-if="owner || !isEmpty(character.specialitems)">
+        <h6>Besondere Gegenstände</h6>
+        <p v-if="isEmpty(character.specialitems)" class="character-inventory__empty">{{ emptyLabel }}</p>
+        <html-viewer v-else :content="character.specialitems" />
+      </template>
+      <p v-if="!owner && isEmpty(character.possession) && isEmpty(character.specialitems)" class="character-inventory__empty">
+        Noch kein Inventar eingetragen.
+      </p>
     </section>
   </div>
 </template>
@@ -13,6 +22,7 @@
 import { CharacterProfileDto } from '@app/shared/dto/characters/character-profile.dto';
 import { Options, prop, Vue } from 'vue-class-component';
 import HtmlViewer from '../common/HtmlViewer.vue';
+import { EMPTY_FIELD_LABEL, isEmptyFieldValue } from './empty-field';
 
 class Props {
   character = prop<CharacterProfileDto>({
@@ -30,6 +40,15 @@ class Props {
   },
 })
 export default class CharacterInventory extends Vue.with(Props) {
+  readonly emptyLabel = EMPTY_FIELD_LABEL;
+
+  get owner(): boolean {
+    return this.preview || !!this.character.mine;
+  }
+
+  isEmpty(value?: string): boolean {
+    return isEmptyFieldValue(value);
+  }
 }
 </script>
 
@@ -78,5 +97,10 @@ export default class CharacterInventory extends Vue.with(Props) {
 
 .character-profile__carrd-iframe {
   border: none;
+}
+
+.character-inventory__empty {
+  color: var(--ink-muted);
+  font-style: italic;
 }
 </style>

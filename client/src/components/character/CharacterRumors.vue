@@ -8,18 +8,24 @@
           man nur unter speziellen Voraussetzungen kennen kann. Diese sollten nur in gemeinsamer Absprache genutzt werden.
         </p>
     </section>
-    <section class="character-rumors__section character-rumors__section--open mat-parchment">
+    <section v-if="owner || !isEmpty(character.openinformation)" class="character-rumors__section character-rumors__section--open mat-parchment">
       <h6 class="character-rumors__heading">Offene Informationen</h6>
-      <html-viewer :content="character.openinformation" />
+      <p v-if="isEmpty(character.openinformation)" class="character-rumors__empty">{{ emptyLabel }}</p>
+      <html-viewer v-else :content="character.openinformation" />
     </section>
-    <section class="character-rumors__section character-rumors__section--common mat-parchment">
+    <section v-if="owner || !isEmpty(character.commonrumors)" class="character-rumors__section character-rumors__section--common mat-parchment">
       <h6 class="character-rumors__heading">Häufige Gerüchte</h6>
-      <html-viewer :content="character.commonrumors" />
+      <p v-if="isEmpty(character.commonrumors)" class="character-rumors__empty">{{ emptyLabel }}</p>
+      <html-viewer v-else :content="character.commonrumors" />
     </section>
-    <section class="character-rumors__section character-rumors__section--rare mat-parchment">
+    <section v-if="owner || !isEmpty(character.rarerumors)" class="character-rumors__section character-rumors__section--rare mat-parchment">
       <h6 class="character-rumors__heading">Seltene Gerüchte</h6>
-      <html-viewer :content="character.rarerumors" />
+      <p v-if="isEmpty(character.rarerumors)" class="character-rumors__empty">{{ emptyLabel }}</p>
+      <html-viewer v-else :content="character.rarerumors" />
     </section>
+    <p v-if="!owner && isEmpty(character.openinformation) && isEmpty(character.commonrumors) && isEmpty(character.rarerumors)" class="character-rumors__empty">
+      Noch keine Gerüchte eingetragen.
+    </p>
   </div>
 </template>
 
@@ -32,6 +38,7 @@ import HtmlViewer from '../common/HtmlViewer.vue';
 import ReportViolationSection from '../common/ReportViolationSection.vue';
 import CharacterDetail from './CharacterDetail.vue';
 import CharacterDetailsBox from './CharacterDetailsBox.vue';
+import { EMPTY_FIELD_LABEL, isEmptyFieldValue } from './empty-field';
 
 class Props {
   character = prop<CharacterProfileDto>({
@@ -54,8 +61,15 @@ class Props {
 })
 export default class CharacterRumors extends Vue.with(Props) {
   PageType = PageType;
+  readonly emptyLabel = EMPTY_FIELD_LABEL;
 
+  get owner(): boolean {
+    return this.preview || !!this.character.mine;
+  }
 
+  isEmpty(value?: string): boolean {
+    return isEmptyFieldValue(value);
+  }
 }
 </script>
 
@@ -159,5 +173,10 @@ body.body--dark .character-rumors__section--rare {
   .character-rumors__section {
     padding: 16px 18px;
   }
+}
+
+.character-rumors__empty {
+  color: var(--ink-muted);
+  font-style: italic;
 }
 </style>

@@ -35,32 +35,14 @@
       </aside>
     </header>
 
-    <section class="character-sheet__summary character-sheet__page">
-      <article class="character-sheet__summary-card">
-        <span class="character-sheet__summary-label">Kernprofil</span>
-        <div class="character-sheet__summary-value">
-          {{ summaryValue(character.title, character.profession, character.nickname) }}
-        </div>
-      </article>
-
-      <article class="character-sheet__summary-card">
-        <span class="character-sheet__summary-label">Auftreten</span>
-        <div class="character-sheet__summary-value">
-          {{ summaryValue(character.age, character.apparentage, character.voice) }}
-        </div>
-      </article>
-
-      <article class="character-sheet__summary-card">
-        <span class="character-sheet__summary-label">Verortung</span>
-        <div class="character-sheet__summary-value">
-          {{ summaryValue(character.birthplace, character.residence, character.relationsshipstatus) }}
-        </div>
-      </article>
-
-      <article class="character-sheet__summary-card">
-        <span class="character-sheet__summary-label">Spielhaken</span>
-        <div class="character-sheet__summary-value">
-          {{ summaryValue(character.motivation, character.currently, character.wishes) }}
+    <section v-if="summaryCards.length > 0" class="character-sheet__summary character-sheet__page">
+      <article v-for="card in summaryCards" :key="card.label" class="character-sheet__summary-card">
+        <span class="character-sheet__summary-label">{{ card.label }}</span>
+        <div
+          class="character-sheet__summary-value"
+          :class="{ 'character-sheet__summary-value--empty': card.empty }"
+        >
+          <link-field :content="card.value" />
         </div>
       </article>
     </section>
@@ -75,7 +57,10 @@
         <div class="character-sheet__facts">
           <div v-for="entry in section.entries" :key="entry.label" class="character-sheet__fact">
             <span class="character-sheet__fact-label">{{ entry.label }}</span>
-            <span class="character-sheet__fact-value">{{ entry.value }}</span>
+            <span
+              class="character-sheet__fact-value"
+              :class="{ 'character-sheet__fact-value--empty': entry.empty }"
+            ><link-field :content="entry.value" /></span>
           </div>
         </div>
       </article>
@@ -89,7 +74,7 @@
         </div>
 
         <html-viewer v-if="block.html" :content="block.content" />
-        <div v-else class="character-sheet__plain-text">{{ block.content }}</div>
+        <div v-else class="character-sheet__plain-text"><link-field :content="block.content" /></div>
       </article>
     </section>
 
@@ -107,10 +92,19 @@ import { CharacterProfileDto } from '@app/shared/dto/characters/character-profil
 import { Options, prop, Vue } from 'vue-class-component';
 import GlyphCorner from '../aetherium/GlyphCorner.vue';
 import HtmlViewer from '../common/HtmlViewer.vue';
+import LinkField from '../common/LinkField.vue';
+import { EMPTY_FIELD_LABEL, isEmptyFieldValue } from './empty-field';
 
 type SheetEntry = {
   label: string;
   value: string;
+  empty?: boolean;
+};
+
+type SummaryCard = {
+  label: string;
+  value: string;
+  empty: boolean;
 };
 
 type FactSection = {
@@ -136,6 +130,7 @@ class Props {
   components: {
     GlyphCorner,
     HtmlViewer,
+    LinkField,
   },
 })
 export default class CharacterPenAndPaper extends Vue.with(Props) {
@@ -195,6 +190,22 @@ export default class CharacterPenAndPaper extends Vue.with(Props) {
 
   get maxDiceValue(): number {
     return this.diceLabel === 'W20' ? 20 : 6;
+  }
+
+  get owner(): boolean {
+    return !!this.character.mine;
+  }
+
+  // ER2-107 / ER2-112 — empty summary cards are dimmed "Noch leer" for the
+  // owner and not rendered for visitors.
+  get summaryCards(): SummaryCard[] {
+    const c = this.character;
+    return [
+      this.summaryCard('Kernprofil', c.title, c.profession, c.nickname),
+      this.summaryCard('Auftreten', c.age, c.apparentage, c.voice),
+      this.summaryCard('Verortung', c.birthplace, c.residence, c.relationsshipstatus),
+      this.summaryCard('Spielhaken', c.motivation, c.currently, c.wishes),
+    ].filter((card) => this.owner || !card.empty);
   }
 
   get factSections(): FactSection[] {
@@ -287,9 +298,11 @@ export default class CharacterPenAndPaper extends Vue.with(Props) {
     ].filter((block): block is TextBlock => !!block);
   }
 
-  summaryValue(...values: Array<string | undefined>): string {
-    const resolved = values.filter((value): value is string => !!value && value.trim().length > 0);
-    return resolved.length > 0 ? resolved.join(' · ') : 'Nicht ausgefüllt';
+  summaryCard(label: string, ...values: Array<string | undefined>): SummaryCard {
+    const resolved = values.filter((value): value is string => !isEmptyFieldValue(value));
+    return resolved.length > 0
+      ? { label, value: resolved.join(' · '), empty: false }
+      : { label, value: EMPTY_FIELD_LABEL, empty: true };
   }
 
   rollDie(sides: number, label: string): void {
@@ -392,20 +405,29 @@ export default class CharacterPenAndPaper extends Vue.with(Props) {
   }
 
   private htmlBlock(title: string, kind: string, content?: string): TextBlock | null {
-    return content ? { title, kind, content, html: true } : null;
+    return content && !isEmptyFieldValue(content) ? { title, kind, content, html: true } : null;
   }
 
+  // ER2-010 — plain-text blocks render through LinkField (escaped, with
+  // wikilinks) instead of raw text.
   private textBlock(title: string, kind: string, content?: string, accent = false): TextBlock | null {
-    return content ? { title, kind, content, html: false, accent } : null;
+    return content && !isEmptyFieldValue(content) ? { title, kind, content, html: false, accent } : null;
   }
 
+  // Blank values stay out of the ledger; placeholders such as "(FOLGT)" are
+  // hidden for visitors and shown dimmed as "Noch leer" to the owner.
   private entries(source: Array<[string, string | undefined]>): SheetEntry[] {
     return source
       .filter(([, value]) => !!value && value.trim().length > 0)
-      .map(([label, value]) => ({
-        label,
-        value: value as string,
-      }));
+      .filter(([, value]) => this.owner || !isEmptyFieldValue(value))
+      .map(([label, value]) => {
+        const empty = isEmptyFieldValue(value);
+        return {
+          label,
+          value: empty ? EMPTY_FIELD_LABEL : value as string,
+          empty,
+        };
+      });
   }
 }
 </script>
@@ -632,10 +654,24 @@ export default class CharacterPenAndPaper extends Vue.with(Props) {
   gap: 12px;
 }
 
+// ER2-107 — break long German compounds at syllables (lang="de" + hyphens)
+// instead of mid-word ("Hä ndlerin").
 .character-sheet__summary-value {
   font-size: 1rem;
   line-height: 1.6;
-  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.character-sheet__summary-value--empty,
+.character-sheet__fact-value--empty {
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+body.body--dark .character-sheet__summary-value--empty,
+body.body--dark .character-sheet__fact-value--empty {
+  color: var(--ink-muted);
 }
 
 .character-sheet__ledger {
@@ -684,6 +720,7 @@ export default class CharacterPenAndPaper extends Vue.with(Props) {
 
 .character-sheet__fact-value,
 .character-sheet__plain-text {
+  hyphens: auto;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   line-height: 1.6;

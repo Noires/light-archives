@@ -16,15 +16,15 @@
       <character-detail label="Welt" :value="character.server" v-if="character.server" />
       <character-detail label="Volk" :value="$display.races[character.race]" v-if="character.race" />
       <character-detail label="Untervolk" :value="$display.tribes[character.tribe]" v-if="character.tribe" />
-      <character-detail label="Familie" :value="character.family" v-if="character.family" /> 
-      <character-detail label="Schutzgottheit" :value="character.deity" v-if="character.deity" /> 
-      <character-detail label="Profession" :value="character.profession" v-if="character.profession" />   
-      <character-detail label="Alter" :value="character.age" v-if="character.age" />
-      <character-detail label="Namenstag" :value="character.birthday" v-if="character.birthday" /> 
-      <character-detail label="Geschlecht" :value="character.pronouns" v-if="character.pronouns" />
-      <character-detail label="Geburtsort" :value="character.birthplace" v-if="character.birthplace" />
-      <character-detail label="Wohnort" :value="character.residence" v-if="character.residence" />
-      <character-detail label="Beziehungsstatus" :value="character.relationsshipstatus" v-if="character.relationsshipstatus" />
+      <character-detail label="Familie" :value="detailValue(character.family)" v-if="showDetail(character.family)" /> 
+      <character-detail label="Schutzgottheit" :value="detailValue(character.deity)" v-if="showDetail(character.deity)" /> 
+      <character-detail label="Profession" :value="detailValue(character.profession)" v-if="showDetail(character.profession)" />   
+      <character-detail label="Alter" :value="detailValue(character.age)" v-if="showDetail(character.age)" />
+      <character-detail label="Namenstag" :value="detailValue(character.birthday)" v-if="showDetail(character.birthday)" /> 
+      <character-detail label="Geschlecht" :value="detailValue(character.pronouns)" v-if="showDetail(character.pronouns)" />
+      <character-detail label="Geburtsort" :value="detailValue(character.birthplace)" v-if="showDetail(character.birthplace)" />
+      <character-detail label="Wohnort" :value="detailValue(character.residence)" v-if="showDetail(character.residence)" />
+      <character-detail label="Beziehungsstatus" :value="detailValue(character.relationsshipstatus)" v-if="showDetail(character.relationsshipstatus)" />
       <character-detail label="Freie&nbsp;Gesellschaft" :value="character.freeCompany.name" :router-link="fcLink" v-if="character.freeCompany" />
     </character-details-box>
     <template v-if="character.background">
@@ -58,6 +58,7 @@ import ReportViolationSection from '../common/ReportViolationSection.vue';
 import AetheryteBadge from '../aetherium/AetheryteBadge.vue';
 import TriskelionDivider from '../aetherium/TriskelionDivider.vue';
 import CharacterDetail from './CharacterDetail.vue';
+import { EMPTY_FIELD_LABEL, isEmptyFieldValue } from './empty-field';
 import CharacterDetailsBox from './CharacterDetailsBox.vue';
 
 class Props {
@@ -83,6 +84,23 @@ class Props {
 })
 export default class CharacterProfile extends Vue.with(Props) {
   PageType = PageType;
+
+  // ER2-112 — free-text details: blank ones stay hidden as before; placeholders
+  // such as "(FOLGT)" are hidden for visitors and read "Noch leer" for the owner.
+  showDetail(value?: string): boolean {
+    if (!value || !value.trim()) {
+      return false;
+    }
+    return this.isOwner || !isEmptyFieldValue(value);
+  }
+
+  detailValue(value: string): string {
+    return isEmptyFieldValue(value) ? EMPTY_FIELD_LABEL : value;
+  }
+
+  get isOwner(): boolean {
+    return this.preview || !!this.character.mine;
+  }
 
   get fcLink() {
     const fc = this.character.freeCompany;
