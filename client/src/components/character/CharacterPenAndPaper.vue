@@ -27,9 +27,9 @@
           :class="{ 'character-sheet__oracle-reading--w100': diceLabel === 'W100' && diceResult !== null }"
         >{{ diceReading }}</p>
         <div class="character-sheet__oracle-actions">
-          <q-btn class="character-sheet__oracle-die" unelevated label="W6" @click="rollDie(6, 'W6')" />
-          <q-btn class="character-sheet__oracle-die" unelevated label="W20" @click="rollDie(20, 'W20')" />
-          <q-btn class="character-sheet__oracle-die character-sheet__oracle-die--percentile" unelevated label="W100" @click="rollPercentile" />
+          <q-btn class="elpis-btn elpis-btn--secondary character-sheet__oracle-die" flat label="W6" @click="rollDie(6, 'W6')" />
+          <q-btn class="elpis-btn elpis-btn--secondary character-sheet__oracle-die" flat label="W20" @click="rollDie(20, 'W20')" />
+          <q-btn class="elpis-btn elpis-btn--primary character-sheet__oracle-die" unelevated label="W100" @click="rollPercentile" />
         </div>
         <p class="character-sheet__oracle-note">Lokaler Zufallswurf als kleines Runden-Gimmick. Es werden keine Werte gespeichert.</p>
       </aside>
@@ -573,65 +573,10 @@ export default class CharacterPenAndPaper extends Vue.with(Props) {
   }
 }
 
-// ELPIS-212 — Crystal-facet dice buttons. Three faceted gold crystals with a
-// hover lift; the W100 percentile die wears the cooler arcane gradient so it
-// reads as the heavier oracle pull.
+// ER2-103 — dice use the shared button hierarchy (W100 = primary, W6/W20 =
+// secondary) instead of the one-off gold/lilac crystal gradients.
 .character-sheet__oracle-die.q-btn {
-  position: relative;
-  z-index: 1;
-  border-radius: 10px;
-  font-family: var(--font-display, 'Cinzel', serif);
-  letter-spacing: var(--ls-display, 0.04em);
-  font-weight: 600;
-  color: var(--surface-ink, #2a2317);
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, #f5d585 0%, #ba9b5b 50%, #8a6a2c 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -1px 0 rgba(120, 80, 24, 0.5),
-    0 0 0 1px rgba(186, 155, 91, 0.55),
-    0 6px 14px rgba(110, 76, 30, 0.22);
-  transition:
-    transform var(--motion-fast, 160ms) var(--ease-elpis, ease-out),
-    box-shadow var(--motion-fast, 160ms) var(--ease-elpis, ease-out);
-}
-
-.character-sheet__oracle-die.q-btn:hover,
-.character-sheet__oracle-die.q-btn:focus-visible {
-  transform: translateY(-2px) scale(1.03);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 0 rgba(120, 80, 24, 0.55),
-    0 0 0 1px rgba(245, 213, 133, 0.85),
-    0 0 14px rgba(245, 213, 133, 0.45),
-    0 10px 20px rgba(110, 76, 30, 0.26);
-}
-
-.character-sheet__oracle-die.q-btn:active {
-  transform: translateY(0) scale(0.98);
-}
-
-.character-sheet__oracle-die--percentile.q-btn {
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, #d5c4ff 0%, #9f84bd 50%, #5d3f96 100%);
-  color: rgba(28, 18, 56, 0.92);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -1px 0 rgba(56, 38, 100, 0.5),
-    0 0 0 1px rgba(159, 132, 189, 0.55),
-    0 6px 14px rgba(64, 40, 110, 0.22);
-}
-
-.character-sheet__oracle-die--percentile.q-btn:hover,
-.character-sheet__oracle-die--percentile.q-btn:focus-visible {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 0 rgba(56, 38, 100, 0.55),
-    0 0 0 1px rgba(213, 196, 255, 0.85),
-    0 0 16px rgba(184, 165, 255, 0.5),
-    0 10px 20px rgba(64, 40, 110, 0.28);
+  min-height: 40px;
 }
 
 .character-sheet__oracle-reading--w100 {
@@ -824,14 +769,6 @@ body.body--dark .character-sheet__oracle::after {
   background-repeat: no-repeat, no-repeat;
   background-position: center 26%, center 26%;
   background-size: 100% 100%, 110px 110px;
-}
-
-body.body--dark .character-sheet__oracle-die.q-btn {
-  color: rgba(40, 26, 12, 0.92);
-}
-
-body.body--dark .character-sheet__oracle-die--percentile.q-btn {
-  color: rgba(28, 18, 56, 0.96);
 }
 
 body.body--dark .character-sheet__panel-head {
