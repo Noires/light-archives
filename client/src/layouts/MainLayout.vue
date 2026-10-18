@@ -15,10 +15,14 @@
     </q-page-container>
 
     <shell-footer />
+
+    <!-- ER2-206: command palette, loaded on first open -->
+    <command-palette v-if="paletteLoaded" v-model="paletteOpen" />
   </q-layout>
 </template>
 
 <script lang="ts">
+import { defineAsyncComponent } from 'vue';
 import { Vue, Options } from 'vue-class-component';
 import ShellHeader from './shell/ShellHeader.vue';
 import ShellDrawer from './shell/ShellDrawer.vue';
@@ -43,15 +47,48 @@ import { isSentryConfigured } from 'src/common/sentry';
     ShellDrawer,
     ShellHero,
     ShellFooter,
+    CommandPalette: defineAsyncComponent(() => import('components/vision/CommandPalette.vue')),
   },
 })
 export default class MainLayout extends Vue {
   leftDrawerOpen = false;
   rightDrawerOpen = false;
   telemetryConsentDialogShown = false;
+  paletteLoaded = false;
+  paletteOpen = false;
+  private keydownHandler: ((event: KeyboardEvent) => void) | null = null;
 
   mounted() {
+    this.keydownHandler = (event: KeyboardEvent) => this.onGlobalKeydown(event);
+    window.addEventListener('keydown', this.keydownHandler);
     void this.promptTelemetryConsentIfRequired();
+  }
+
+  beforeUnmount() {
+    if (this.keydownHandler) {
+      window.removeEventListener('keydown', this.keydownHandler);
+    }
+  }
+
+  // ER2-206 — Ctrl+K / Cmd+K toggles the palette everywhere. Editors that
+  // bind the shortcut themselves (and call preventDefault) keep it.
+  onGlobalKeydown(event: KeyboardEvent) {
+    if (event.defaultPrevented || event.altKey || event.shiftKey) {
+      return;
+    }
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      if (this.paletteOpen) {
+        this.paletteOpen = false;
+      } else {
+        this.openPalette();
+      }
+    }
+  }
+
+  openPalette() {
+    this.paletteLoaded = true;
+    this.paletteOpen = true;
   }
 
   // ER2-202 — the logo hero renders on the home page only.
