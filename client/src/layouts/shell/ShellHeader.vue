@@ -195,7 +195,6 @@
 import { Vue, Options } from 'vue-class-component';
 import AetheryteBadge from 'src/components/aetherium/AetheryteBadge.vue';
 import UserMenu from 'src/components/sidebar/UserMenu.vue';
-import { ThemeMode, getNextThemeMode, getStoredThemeMode, toggleThemeMode } from 'src/common/theme';
 import ShellLogo from './ShellLogo.vue';
 import {
   MORE_GROUPS,
@@ -206,6 +205,7 @@ import {
   isAreaActive,
   isLinkActive,
 } from './nav';
+import { shellTheme, themeAriaLabel, themeIcon, themeTooltip, toggleShellTheme } from './theme-state';
 
 // ER2-201 — compact top bar: logo, seven primary areas (the seventh, Wiki,
 // is a menu because there is no wiki index route), "Mehr", search pill,
@@ -236,7 +236,6 @@ export default class ShellHeader extends Vue {
   readonly wikiLinks = WIKI_LINKS;
   readonly moreGroups = MORE_GROUPS;
 
-  themeMode: ThemeMode = getStoredThemeMode();
   wikiMenuOpen = false;
   moreMenuOpen = false;
   accountMenuOpen = false;
@@ -281,42 +280,20 @@ export default class ShellHeader extends Vue {
     }
   }
 
-  get isEffectiveDarkMode(): boolean {
-    return this.$q.dark.isActive;
-  }
-
   get themeIcon(): string {
-    if (this.themeMode === 'system') {
-      return 'brightness_auto';
-    }
-
-    return this.isEffectiveDarkMode ? 'dark_mode' : 'light_mode';
+    return themeIcon(shellTheme.mode, this.$q.dark.isActive);
   }
 
   get themeTooltipLabel(): string {
-    const currentThemeLabel = this.themeModeLabel(this.themeMode);
-    const nextThemeLabel = this.themeModeLabel(getNextThemeMode(this.themeMode));
-    return `Darstellung: ${currentThemeLabel} (aktiv: ${this.isEffectiveDarkMode ? 'dunkel' : 'hell'}). Klick: ${nextThemeLabel}`;
+    return themeTooltip(shellTheme.mode, this.$q.dark.isActive);
   }
 
   get themeAriaLabel(): string {
-    const nextThemeLabel = this.themeModeLabel(getNextThemeMode(this.themeMode));
-    return `Darstellung wechseln. Als Nächstes: ${nextThemeLabel}`;
+    return themeAriaLabel(shellTheme.mode);
   }
 
   onThemeToggleClick() {
-    this.themeMode = toggleThemeMode(this.themeMode);
-  }
-
-  private themeModeLabel(mode: ThemeMode): string {
-    if (mode === 'light') {
-      return 'Hell';
-    }
-    if (mode === 'dark') {
-      return 'Dunkel';
-    }
-
-    return 'System';
+    toggleShellTheme();
   }
 }
 </script>
@@ -723,6 +700,16 @@ body.body--dark .shell-menu.q-menu {
 
   .shell-bar__search-label {
     display: block;
+  }
+
+  // ER2-205: notifications and theme move into the mobile "Mehr" sheet.
+  .shell-bar__notifications,
+  .shell-bar__theme {
+    display: none;
+  }
+
+  .shell-bar__search {
+    margin-left: auto;
   }
 }
 

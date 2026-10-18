@@ -14,6 +14,9 @@
 
     <shell-footer />
 
+    <!-- ER2-205: bottom bar and "Mehr" sheet below 1024px -->
+    <shell-mobile-nav @open-search="openPalette" />
+
     <!-- ER2-206: command palette, loaded on first open -->
     <command-palette v-if="paletteLoaded" v-model="paletteOpen" />
   </q-layout>
@@ -25,6 +28,7 @@ import { Vue, Options } from 'vue-class-component';
 import ShellHeader from './shell/ShellHeader.vue';
 import ShellHero from './shell/ShellHero.vue';
 import ShellFooter from './shell/ShellFooter.vue';
+import ShellMobileNav from './shell/ShellMobileNav.vue';
 import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
 import { TelemetryConsentStatus } from '@app/shared/enums/telemetry-consent-status.enum';
 import { notifyError, notifySuccess } from 'src/common/notify';
@@ -37,13 +41,14 @@ import { isSentryConfigured } from 'src/common/sentry';
 // the shell; components/eventbar/CalendarSidebarWidget.vue stays for the home
 // hub (ER2-302). The visible chrome lives
 // in ./shell/*: ShellHeader (top bar, nav model in nav.ts), ShellHero,
-// ShellFooter.
+// ShellFooter and ShellMobileNav (bottom bar + "Mehr" sheet below 1024px).
 
 @Options({
   components: {
     ShellHeader,
     ShellHero,
     ShellFooter,
+    ShellMobileNav,
     CommandPalette: defineAsyncComponent(() => import('components/vision/CommandPalette.vue')),
   },
 })
