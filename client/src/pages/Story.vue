@@ -37,6 +37,7 @@
               :initial-mine="story.myReactions || null"
               :mine="story.mine"
             />
+            <story-part-nav :series="series" :current-id="story.id" />
           </div>
 
           <story-author-rail
@@ -63,6 +64,7 @@ import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import { PageType } from '@app/shared/enums/page-type.enum';
 import errors from '@app/shared/errors';
 import StoryAuthorRail from 'components/stories/StoryAuthorRail.vue';
+import StoryPartNav from 'components/stories/StoryPartNav.vue';
 import StoryReactions from 'components/stories/StoryReactions.vue';
 import StoryReaderRail from 'components/stories/StoryReaderRail.vue';
 import StoryView from 'components/stories/StoryView.vue';
@@ -125,6 +127,7 @@ const PROGRESS_SAVE_INTERVAL_MS = 2000;
     ReportViolationSection,
     ScrollProgressRule,
     StoryAuthorRail,
+    StoryPartNav,
     StoryReactions,
     StoryReaderRail,
     StoryView,
