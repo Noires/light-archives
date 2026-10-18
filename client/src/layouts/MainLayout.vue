@@ -11,10 +11,6 @@
         <div class="layout__page-container">
           <router-view />
         </div>
-        <calendar-sidebar-widget
-          v-if="showCalendarWidget"
-          class="layout__calendar-outer"
-        />
       </div>
     </q-page-container>
 
@@ -24,9 +20,6 @@
 
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
-// CalendarSidebarWidget is imported before the shell parts so its CSS keeps
-// loading ahead of the layout rules, as it did before the split.
-import CalendarSidebarWidget from '../components/eventbar/CalendarSidebarWidget.vue';
 import ShellHeader from './shell/ShellHeader.vue';
 import ShellDrawer from './shell/ShellDrawer.vue';
 import ShellHero from './shell/ShellHero.vue';
@@ -38,13 +31,14 @@ import { persistTelemetryConsent } from 'src/common/telemetry-consent-actions';
 import { isSentryConfigured } from 'src/common/sentry';
 
 // App shell. Mounted once by the single '/' parent route (see
-// router/routes.ts). Owns the drawer open state, the page-shell grid with the
-// calendar widget, and the telemetry consent prompt. The visible chrome lives
+// router/routes.ts). Owns the drawer open state, the single-column page shell
+// and the telemetry consent prompt. ER2-203 removed the calendar widget from
+// the shell; components/eventbar/CalendarSidebarWidget.vue stays for the home
+// hub (ER2-302). The visible chrome lives
 // in ./shell/*: ShellHeader, ShellDrawer, ShellHero, ShellFooter.
 
 @Options({
   components: {
-    CalendarSidebarWidget,
     ShellHeader,
     ShellDrawer,
     ShellHero,
@@ -85,11 +79,6 @@ export default class MainLayout extends Vue {
     this.$api.setAccessToken(null);
     notifySuccess('Du hast dich ausgeloggt.');
     void this.$router.push('/');
-  }
-
-  get showCalendarWidget() {
-    const path = this.$route.path;
-    return !path.startsWith('/calendar');
   }
 
   async promptTelemetryConsentIfRequired() {
@@ -136,8 +125,8 @@ export default class MainLayout extends Vue {
 </script>
 
 <style lang="scss">
-// Layout-level styles only: q-layout outline, page-shell grid, calendar
-// widget column and q-page padding. Header, drawer, hero and footer styles
+// Layout-level styles only: q-layout outline, the single-column page shell
+// and q-page padding. Header, drawer, hero and footer styles
 // live with their components in ./shell/.
 $max-layout-width: auto;
 $color-primary: #ddb476;
@@ -174,29 +163,18 @@ body.body--dark {
 }
 
 .layout__page-shell {
-  --calendar-width: 320px;
+  // ER2-203 — one centred column on every route (no calendar column).
+  --page-shell-max: 1200px;
   width: 100%;
-  display: grid;
-  grid-template-columns: 1fr minmax(0, 1300px) var(--calendar-width) 1fr;
-  gap: 24px;
-  align-items: start;
+  max-width: calc(var(--page-shell-max) + 2 * var(--page-shell-gutter, 24px));
   margin: 0 auto;
+  padding: 0 var(--page-shell-gutter, 24px);
 }
 
-.layout__page-container {
-  grid-column: 2;
-}
-
-.layout__calendar-outer {
-  --calendar-sticky-top: 180px;
-  grid-column: 3;
-  position: sticky;
-  top: var(--calendar-sticky-top);
-  width: 100%;
-  max-height: calc(100vh - var(--calendar-sticky-top) - 16px);
-  overflow: hidden;
-  z-index: 5;
-  align-self: start;
+@media screen and (max-width: $breakpoint-xs) {
+  .layout__page-shell {
+    --page-shell-gutter: 8px;
+  }
 }
 
 .q-page {
@@ -225,25 +203,6 @@ body.body--dark {
 
   .q-drawer--left {
     left: calc((100% - #{$max-layout-width}) / 2);
-  }
-}
-
-@media screen and (max-width: 1200px) {
-  .layout__page-shell {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .layout__page-container {
-    grid-column: 1;
-  }
-
-  .layout__calendar-outer {
-    grid-column: 1;
-    position: static;
-    width: auto;
-    max-height: none;
-    overflow: visible;
-    margin: 0 24px 24px;
   }
 }
 </style>
