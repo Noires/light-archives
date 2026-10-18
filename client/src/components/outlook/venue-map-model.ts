@@ -34,7 +34,7 @@ export const DISTRICT_ORDER: HousingArea[] = [
 ];
 
 export const DISTRICT_LABELS: Record<string, string> = {
-	[HousingArea.MIST]: 'Nebeldorf',
+	[HousingArea.MIST]: 'Dorf des Nebels',
 	[HousingArea.LAVENDER_BEDS]: 'Lavendelbeete',
 	[HousingArea.GOBLET]: 'Kelchkuppe',
 	[HousingArea.SHIROGANE]: 'Shirogane',
