@@ -294,7 +294,7 @@ export default class VenueProfile extends Vue.with(Props) {
   }
 
   a {
-    color: var(--ink-link);
+    color: var(--ink-link) !important;
   }
 }
 

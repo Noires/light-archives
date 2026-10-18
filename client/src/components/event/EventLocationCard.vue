@@ -167,7 +167,7 @@ export default class EventLocationCard extends Vue.with(Props) {
   font-weight: 600;
 
   a {
-    color: var(--ink-primary);
+    color: var(--ink-primary) !important;
   }
 }
 
@@ -219,7 +219,7 @@ export default class EventLocationCard extends Vue.with(Props) {
   font-size: 14px;
 
   a {
-    color: var(--ink-link);
+    color: var(--ink-link) !important;
     overflow-wrap: anywhere;
   }
 }

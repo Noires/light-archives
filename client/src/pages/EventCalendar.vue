@@ -488,14 +488,19 @@ export default class PageEventCalendar extends Vue {
     return this.date.toISODate() || '';
   }
 
+  /** Month links keep the Kalender view. */
+  private get viewQuery(): string {
+    return this.viewMode === 'kalender' ? '?ansicht=kalender' : '';
+  }
+
   get prevLink(): string {
     const prev = this.date.minus({ months: 1 });
-    return `/calendar/${prev.year}/${prev.month}`;
+    return `/calendar/${prev.year}/${prev.month}${this.viewQuery}`;
   }
 
   get nextLink(): string {
     const next = this.date.plus({ months: 1 });
-    return `/calendar/${next.year}/${next.month}`;
+    return `/calendar/${next.year}/${next.month}${this.viewQuery}`;
   }
 
   get selectedDateLabel(): string {

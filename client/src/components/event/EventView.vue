@@ -17,18 +17,18 @@
           </time>
           <div class="event-view__hero-text">
             <div class="event-view__chips">
-              <span v-if="live" class="event-view__chip event-view__chip--live">
+              <span v-if="live" class="event-view__badge event-view__badge--live">
                 <span class="event-view__live-dot" aria-hidden="true"></span>
                 Live
               </span>
-              <span class="event-view__chip">
+              <span class="event-view__badge">
                 <q-icon :name="eventTypeIcon" aria-hidden="true" />
                 {{ eventTypeLabel }}
               </span>
-              <span class="event-view__chip" :class="{ 'event-view__chip--adult': adult }">
+              <span class="event-view__badge" :class="{ 'event-view__badge--adult': adult }">
                 {{ adult ? '18+' : 'SFW' }}
               </span>
-              <span v-if="seriesLabel" class="event-view__chip">
+              <span v-if="seriesLabel" class="event-view__badge">
                 <q-icon name="repeat" aria-hidden="true" />
                 {{ seriesLabel }}
               </span>
@@ -499,7 +499,7 @@ $hero-ink-soft: rgba(255, 255, 255, 0.86);
   gap: 8px;
 }
 
-.event-view__chip {
+.event-view__badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -515,12 +515,12 @@ $hero-ink-soft: rgba(255, 255, 255, 0.86);
   color: $hero-ink;
 }
 
-.event-view__chip--live {
+.event-view__badge--live {
   border-color: #6EDCA8;
   color: #B9F2D6;
 }
 
-.event-view__chip--adult {
+.event-view__badge--adult {
   border-color: #FF8FA0;
   color: #FFC7D0;
 }
