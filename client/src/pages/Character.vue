@@ -78,6 +78,7 @@ import { PageType } from '@app/shared/enums/page-type.enum';
 import errors from '@app/shared/errors';
 import CharacterOverview from 'components/character/CharacterOverview.vue';
 import CharacterPlate from 'components/character/CharacterPlate.vue';
+import { keepTabsInView } from 'components/character/keep-tabs-in-view';
 import {
 	CHARACTER_SECTIONS,
 	CharacterSection,
@@ -303,24 +304,8 @@ export default class PageCharacter extends Vue {
 		Object.assign(this.character, presence);
 	}
 
-	/**
-	 * The router scrolls to the top on every navigation; for a tab switch below
-	 * the header that hides the content the reader asked for, so scroll back
-	 * to the tab bar afterwards.
-	 */
 	keepTabsInView() {
-		const plate = (this.$refs.plate as Vue | undefined)?.$el as HTMLElement | undefined;
-		if (!plate) {
-			return;
-		}
-		const navHeight = parseFloat(getComputedStyle(document.body).getPropertyValue('--nav-height')) || 68;
-		const plateBottom = plate.getBoundingClientRect().bottom + window.scrollY;
-		const target = Math.max(0, plateBottom - navHeight);
-		if (window.scrollY < target - 1) {
-			return;
-		}
-		// After the router's own scroll-to-top has run.
-		window.setTimeout(() => window.scrollTo({ top: target, left: 0 }), 0);
+		keepTabsInView((this.$refs.plate as Vue | undefined)?.$el as HTMLElement | undefined);
 	}
 
 	setContent(content: Content) {
