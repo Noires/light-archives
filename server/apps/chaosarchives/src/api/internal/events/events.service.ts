@@ -10,6 +10,7 @@ import { EventIconDto } from '@app/shared/dto/events/event-icon.dto';
 import { EventLinkDto } from '@app/shared/dto/events/event-link.dto';
 import { EventLocationDto } from '@app/shared/dto/events/event-location.dto';
 import { EventParticipantDto } from '@app/shared/dto/events/event-participant.dto';
+import { EventProgrammeItemDto } from '@app/shared/dto/events/event-programme-item.dto';
 import { EventSearchResultDto } from '@app/shared/dto/events/event-search-result.dto';
 import { EventSummariesDto } from '@app/shared/dto/events/event-summaries.dto';
 import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
@@ -168,6 +169,9 @@ export class EventsService {
       ? this.normalizeOptionalTime(eventDto.registrationDeadlineTime, 'registrationDeadlineTime')
       : null;
     event.extraInfo = html.sanitize(eventDto.extraInfo || '');
+    if (eventDto.programme !== undefined) {
+      event.programme = this.normalizeProgramme(eventDto.programme);
+    }
     if (eventDto.contentNotes !== undefined) {
       event.contentNotes = eventDto.contentNotes
         .filter(note => note !== '')
@@ -1040,6 +1044,7 @@ export class EventsService {
       registrationDeadlineTime: event.registrationDeadlineTime || null,
       contentNotes: (event.contentNotes || []).map((note) => note.name),
       extraInfo: event.extraInfo || '',
+      programme: (event.programme || []).map((item) => new EventProgrammeItemDto(item)),
       banner: !banner
         ? null
         : new BannerDto({
@@ -1136,6 +1141,21 @@ export class EventsService {
     }
 
     return normalized;
+  }
+
+  private normalizeProgramme(
+    programme: EventProgrammeItemDto[] | null,
+  ): { time: string; title: string; note?: string }[] | null {
+    const items = (programme || [])
+      .map((item) => ({
+        time: (item.time || '').trim(),
+        title: (item.title || '').trim(),
+        note: (item.note || '').trim(),
+      }))
+      .filter((item) => item.title.length > 0)
+      .map((item) => (item.note ? item : { time: item.time, title: item.title }));
+
+    return items.length > 0 ? items : null;
   }
 
   private normalizeRegistrationDeadlineDays(value: number | null | undefined): number | null {

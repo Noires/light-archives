@@ -393,6 +393,40 @@
                   <html-editor v-model="event.extraInfo" />
                 </div>
               </q-expansion-item>
+              <!-- ER2-803: optional programme -->
+              <q-expansion-item
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-content"
+                icon="schedule"
+                label="Programm (optional)"
+                :caption="programmeCaption"
+              >
+                <div class="page-edit-event__expansion-body">
+                  <p class="page-edit-event__section-hint">
+                    Ein kurzer Ablauf hilft Gästen bei der Planung, z. B. „20:00 – Einlass“.
+                  </p>
+                  <div
+                    v-for="(item, index) in (event.programme || [])"
+                    :key="`programme-${index}`"
+                    class="page-edit-event__programme-row"
+                  >
+                    <q-input v-model="item.time" label="Uhrzeit" maxlength="20" placeholder="20:00" />
+                    <q-input v-model="item.title" label="Programmpunkt" maxlength="120" />
+                    <q-input v-model="item.note" label="Hinweis (optional)" maxlength="300" />
+                    <q-btn
+                      flat
+                      color="negative"
+                      icon="delete"
+                      aria-label="Programmpunkt entfernen"
+                      @click="removeProgrammeItem(index)"
+                    />
+                  </div>
+                  <div class="page-edit-event__inline-actions">
+                    <q-btn flat color="secondary" icon="add" label="Programmpunkt hinzufügen" @click="addProgrammeItem" />
+                  </div>
+                </div>
+              </q-expansion-item>
             </div>
           </section>
         </q-step>
@@ -865,6 +899,8 @@ export default class PageEditEvent extends Vue {
       target.registrationDeadlineTime = null;
     }
     target.extraInfo = target.extraInfo || '';
+    // ER2-803: copy so that edits never leak into the backup
+    target.programme = (target.programme || []).map((item) => ({ ...item }));
     target.links = this.normalizeLinks(target.links, target.link, target.linkText);
     target.link = target.links[0]?.url || '';
     target.linkText = target.links[0]?.label || '';
@@ -1158,6 +1194,24 @@ export default class PageEditEvent extends Vue {
 
   removeAnnouncement(index: number) {
     this.event.announcements.splice(index, 1);
+  }
+
+  // ER2-803: programme
+  get programmeCaption() {
+    const count = this.event.programme?.length || 0;
+    return count > 0 ? `${count} ${count === 1 ? 'Programmpunkt' : 'Programmpunkte'}` : 'Kein Programm';
+  }
+
+  addProgrammeItem() {
+    if (!this.event.programme) {
+      this.event.programme = [];
+    }
+
+    this.event.programme.push({ time: '', title: '', note: '' });
+  }
+
+  removeProgrammeItem(index: number) {
+    this.event.programme?.splice(index, 1);
   }
 
   addEventLink() {
@@ -1888,6 +1942,20 @@ body.body--dark .page-edit-event__type-tile--active .page-edit-event__type-tile-
   gap: 10px;
   align-items: center;
   margin-bottom: 8px;
+}
+
+.page-edit-event__programme-row {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 599px) {
+  .page-edit-event__programme-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .page-edit-event__inline-actions {

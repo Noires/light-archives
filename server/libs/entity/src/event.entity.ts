@@ -75,6 +75,13 @@ export class Event extends BasicEntity {
   })
   contact: string;
 
+  // ER2-803: optional programme, e.g. [{ time: '20:00', title: 'Einlass' }]
+  @Column({
+    type: 'simple-json',
+    nullable: true,
+  })
+  programme: { time: string; title: string; note?: string }[] | null;
+
   @Column({
     nullable: true,
     unique: true,
