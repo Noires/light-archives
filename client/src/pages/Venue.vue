@@ -20,6 +20,12 @@
         />
       </section>
 
+      <venue-hero :venue="venue">
+        <template v-if="canJoin" #actions>
+          <q-btn flat class="elpis-btn elpis-btn--secondary" icon="group_add" label="Treffpunkt beitreten" @click="onJoinClick" />
+        </template>
+      </venue-hero>
+
       <section-tabs
         v-if="hasSectionMenu"
         :model-value="activeSection"
@@ -30,10 +36,7 @@
         @update:model-value="onSectionClick"
       />
 
-      <section v-if="!$store.getters.characterId"><!-- Not logged in --></section>
-      <section v-else-if="!venue.canEdit && !venue.membershipStatus" class="page-venue__join-button-bar">
-        <q-btn flat class="elpis-btn elpis-btn--secondary" icon="group_add" label="Treffpunkt beitreten" @click="onJoinClick" />
-      </section>
+      <template v-if="!$store.getters.characterId"><!-- Not logged in --></template>
       <section
         v-else-if="!venue.canEdit && venue.membershipStatus === MembershipStatus.APPLIED"
         class="page-venue__membership-status elpis-membership-banner elpis-membership-banner--applied"
@@ -54,28 +57,28 @@
       </section>
 
       <template v-if="activeSection === VenueSection.OVERVIEW">
-        <venue-profile :venue="venue" :planned-events="overviewEvents" />
+        <venue-profile :venue="venue" :planned-events="overviewEvents" :offerings="venueOfferings" />
       </template>
 
       <section v-else-if="activeSection === VenueSection.RULES" class="page-venue__content-box">
-        <h3>Regeln</h3>
+        <h2>Regeln</h2>
         <html-viewer v-if="venue.rules" :content="venue.rules" />
         <p v-else>Keine Regeln eingetragen.</p>
       </section>
 
       <section v-else-if="activeSection === VenueSection.PREMISES" class="page-venue__content-box">
-        <h3>Räumlichkeiten</h3>
+        <h2>Räumlichkeiten</h2>
         <html-viewer v-if="venue.premises" :content="venue.premises" />
         <p v-else>Keine Beschreibung der Räumlichkeiten vorhanden.</p>
       </section>
 
       <section v-else-if="activeSection === VenueSection.MENU" class="page-venue__content-box">
-        <h3>Angebote</h3>
+        <h2>Angebote</h2>
         <venue-offerings-view :offerings="venueOfferings" />
       </section>
 
       <section v-else-if="activeSection === VenueSection.STAFF" class="page-venue__content-box">
-        <h3>Mitarbeiter</h3>
+        <h2>Mitarbeiter</h2>
         <div v-if="venue.staff && venue.staff.length" class="page-venue__staff-grid">
           <router-link
             v-for="member in venue.staff"
@@ -97,7 +100,7 @@
 
       <section v-else-if="activeSection === VenueSection.JOBS" class="page-venue__content-box">
         <div class="page-venue__section-header">
-          <h3>Stellenangebote</h3>
+          <h2>Stellenangebote</h2>
           <q-btn
             v-if="venue.canEdit"
             flat
@@ -111,19 +114,19 @@
       </section>
 
       <section v-else-if="activeSection === VenueSection.OOC" class="page-venue__content-box">
-        <h3>OOC</h3>
+        <h2>OOC</h2>
         <html-viewer v-if="venue.ooc" :content="venue.ooc" />
         <p v-else>Keine OOC-Informationen vorhanden.</p>
       </section>
 
       <section v-else-if="activeSection === VenueSection.MEDIA" class="page-venue__content-box">
-        <h3>Medien</h3>
+        <h2>Medien</h2>
         <thumb-gallery v-if="mediaItems.length" :images="mediaItems" />
         <p v-else>Keine verknüpften Bilder vorhanden.</p>
       </section>
 
       <section v-else-if="activeSection === VenueSection.EVENTS" class="page-venue__content-box">
-        <h3>Aktuelle und kommende Events</h3>
+        <h2>Aktuelle und kommende Events</h2>
         <div v-if="upcomingEvents.length" class="page-venue__event-list">
           <div v-for="event in upcomingEvents" :key="event.id" class="page-venue__event-item">
             <router-link :to="`/event/${event.id}`">{{ event.title }}</router-link>
@@ -132,7 +135,7 @@
         </div>
         <p v-else>Keine aktuellen oder kommenden Events.</p>
 
-        <h3 class="page-venue__past-events-title">Vergangene Events</h3>
+        <h2 class="page-venue__past-events-title">Vergangene Events</h2>
         <div v-if="pastEvents.length" class="page-venue__event-list">
           <div v-for="event in pastEvents" :key="`past_${event.id}`" class="page-venue__event-item">
             <router-link :to="`/event/${event.id}`">{{ event.title }}</router-link>
@@ -143,17 +146,17 @@
       </section>
 
       <section v-else-if="activeSection === VenueSection.NETWORK" class="page-venue__content-box">
-        <h3>Vernetzung</h3>
+        <h2>Vernetzung</h2>
         <html-viewer v-if="venue.network" :content="venue.network" />
         <p v-else>Keine Vernetzungsinformationen vorhanden.</p>
       </section>
 
       <template v-if="venue.canManageMembers">
         <template v-if="applicants.length > 0">
-          <h3>Bewerber</h3>
+          <h2>Bewerber</h2>
           <venue-applicant-editor :venue-id="venue.id" :members="applicants" @updated="refreshEditableMembers" />
         </template>
-        <h3>Mitglieder</h3>
+        <h2>Mitglieder</h2>
         <venue-member-editor :venue="venue" :members="confirmedMembers" @updated="refreshEditableMembers" />
       </template>
 
@@ -182,6 +185,7 @@ import NoticeboardItemList from 'src/components/noticeboard/NoticeboardItemList.
 import VenueApplicantEditor from 'src/components/venues/VenueApplicantEditor.vue';
 import VenueMemberEditor from 'src/components/venues/VenueMemberEditor.vue';
 import VenueProfile from 'components/venues/VenueProfile.vue';
+import VenueHero from 'components/venues/VenueHero.vue';
 import VenueOfferingsView from 'src/components/venues/VenueOfferingsView.vue';
 import SectionTabs from 'components/vision/SectionTabs.vue';
 import type { SectionTab } from 'components/vision/types';
@@ -302,6 +306,7 @@ async function load(params: RouteParams): Promise<PageData> {
 @Options({
   components: {
     VenueProfile,
+    VenueHero,
     VenueApplicantEditor,
     VenueMemberEditor,
     ReportViolationSection,
@@ -442,6 +447,10 @@ export default class PageVenue extends Vue {
     }
 
     return sections;
+  }
+
+  get canJoin(): boolean {
+    return !!this.$store.getters.characterId && !this.venue.canEdit && !this.venue.membershipStatus;
   }
 
   get sectionTabs(): SectionTab[] {
@@ -616,12 +625,6 @@ export default class PageVenue extends Vue {
   margin: 0 0 20px;
 }
 
-.page-venue__join-button-bar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 12px;
-}
-
 // `.page-venue__membership-status` chrome lives in app.scss under
 // `.elpis-membership-banner` (ELPIS-411).
 
@@ -633,7 +636,7 @@ export default class PageVenue extends Vue {
   background-color: var(--vision-card);
   color: var(--ink-primary);
 
-  h3 {
+  h2 {
     margin: 0 0 14px;
     font-family: var(--font-display);
     font-size: 22px;
