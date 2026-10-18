@@ -964,14 +964,13 @@ body.body--dark .event-view__subtitle {
 	color: rgba(213, 226, 240, 0.72);
 }
 
+// Content warnings (title + chips) are themed by --vision-cw-* in EventView.vue.
 body.body--dark .event-view__type,
-body.body--dark .event-view__meta-label,
-body.body--dark .event-view__warnings-title {
+body.body--dark .event-view__meta-label {
 	color: rgba(213, 226, 240, 0.62);
 }
 
-body.body--dark .event-view__chip,
-body.body--dark .event-view__warning-chip {
+body.body--dark .event-view__chip {
 	background: rgba(141, 181, 223, 0.2);
 	color: rgba(213, 226, 240, 0.92);
 }

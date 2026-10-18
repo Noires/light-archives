@@ -89,12 +89,16 @@
     </section>
 
     <section v-if="contentNotes.length" class="event-view__warnings">
-      <div class="event-view__warnings-title">Inhaltswarnungen</div>
+      <div class="event-view__warnings-title">
+        <q-icon name="warning" size="16px" aria-hidden="true" />
+        Inhaltswarnungen
+      </div>
       <div class="event-view__warnings-chips">
         <q-chip
           v-for="item in contentNotes"
           :key="item"
           dense
+          icon="warning"
           class="event-view__warning-chip"
         >
           {{ item }}
@@ -424,11 +428,15 @@ export default class EventView extends Vue.with(Props) {
   margin: 12px 0 18px;
 }
 
+// ER2-101 — content warnings use the dedicated CW tokens in both themes.
 .event-view__warnings-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.75rem;
-  color: rgba(35, 35, 35, 0.6);
+  color: var(--vision-cw-text);
   font-weight: 600;
   margin-bottom: 6px;
 }
@@ -439,10 +447,15 @@ export default class EventView extends Vue.with(Props) {
   gap: 8px;
 }
 
-.event-view__warning-chip {
-  background: rgba(221, 180, 118, 0.22);
-  color: #6b4c21;
+.q-chip.event-view__warning-chip {
+  background: var(--vision-cw-bg);
+  color: var(--vision-cw-text);
   font-weight: 600;
+  border: 1px solid var(--vision-cw-border);
+
+  .q-icon {
+    color: inherit;
+  }
 }
 
 .event-view__locations {

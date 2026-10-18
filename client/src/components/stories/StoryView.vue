@@ -17,12 +17,16 @@
       </div>
     </section>
     <div v-if="contentNotes.length" class="story-view__warnings">
-      <div class="story-view__warnings-title">Inhaltswarnungen</div>
+      <div class="story-view__warnings-title">
+        <q-icon name="warning" size="16px" aria-hidden="true" />
+        Inhaltswarnungen
+      </div>
       <div class="story-view__warnings-chips">
         <q-chip
           v-for="item in contentNotes"
           :key="item"
           dense
+          icon="warning"
           class="story-view__warning-chip"
         >
           {{ item }}
@@ -151,11 +155,16 @@ export default class StoryView extends Vue.with(Props) {
   margin: 12px 0 16px;
 }
 
+// ER2-101 — the content-warning title and chips use the dedicated CW tokens
+// (amber in Hydaelyn, pale gold in Zodiark); both pairs pass AA.
 .story-view__warnings-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   text-transform: uppercase;
   letter-spacing: var(--ls-eyebrow);
   font-size: var(--type-scale-0);
-  color: var(--ink-muted);
+  color: var(--vision-cw-text);
   font-family: var(--font-ui);
   font-weight: 600;
   margin-bottom: 6px;
@@ -167,22 +176,22 @@ export default class StoryView extends Vue.with(Props) {
   gap: 8px;
 }
 
-.story-view__warning-chip {
-  background: rgba(221, 180, 118, 0.22);
-  color: var(--rule-gold);
+// Doubled class beats Quasar's .q-chip / .q-chip--dark fills (#616161 in dark).
+.q-chip.story-view__warning-chip {
+  background: var(--vision-cw-bg);
+  color: var(--vision-cw-text);
   font-weight: 600;
-  border: 1px solid var(--rule-gold-soft);
+  border: 1px solid var(--vision-cw-border);
+
+  .q-icon {
+    color: inherit;
+  }
 }
 
-body.body--dark .story-view__subtitle,
-body.body--dark .story-view__warnings-title {
-  color: rgba(236, 227, 247, 0.74);
-}
-
-body.body--dark .story-view__warning-chip {
-  background: rgba(193, 155, 255, 0.18);
-  color: var(--ink-luminous);
-  border-color: var(--rule-arcane-soft);
+// ER2-104 — byline follows the theme's muted ink (was unthemed #616161 in dark).
+.story-view__subtitle,
+.story-view__subtitle.text-caption {
+  color: var(--ink-muted);
 }
 
 body.body--dark .story-view__body--drop-cap .story-view__content > p:first-of-type::first-letter {
