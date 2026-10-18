@@ -75,6 +75,10 @@ class Props {
 	name: 'SectionTabs',
 	emits: [ 'update:modelValue' ],
 	watch: {
+		// Parent-driven changes in query mode are written back to the URL.
+		modelValue(key: string) {
+			(this as SectionTabs).onModelValueChange(key);
+		},
 		activeKey: {
 			handler(key: string) {
 				(this as SectionTabs).onActiveKeyChange(key);
@@ -125,8 +129,7 @@ export default class SectionTabs extends Vue.with(Props) {
 	}
 
 	get activeKey(): string {
-		const fromRoute = this.sync === 'route' || this.routeKey !== null ? this.routeKey : null;
-		const key = fromRoute || this.queryValue || this.modelValue;
+		const key = this.routeKey || this.queryValue || this.modelValue;
 		if (this.visibleTabs.some((tab) => tab.key === key)) {
 			return key;
 		}
@@ -138,6 +141,16 @@ export default class SectionTabs extends Vue.with(Props) {
 			this.$emit('update:modelValue', key);
 		}
 		void this.$nextTick(() => this.scrollIntoView(key));
+	}
+
+	onModelValueChange(key: string) {
+		if (this.sync !== 'query' || key === this.queryValue) {
+			return;
+		}
+		const tab = this.visibleTabs.find((t) => t.key === key);
+		if (tab && !tab.to) {
+			this.writeQuery(key);
+		}
 	}
 
 	hasCount(tab: SectionTab): boolean {
@@ -156,9 +169,13 @@ export default class SectionTabs extends Vue.with(Props) {
 			this.$emit('update:modelValue', tab.key);
 		}
 		if (this.sync === 'query' && !tab.to && this.queryValue !== tab.key) {
-			const query: LocationQueryRaw = { ...this.$route.query, [this.queryKey]: tab.key };
-			void this.$router.replace({ query });
+			this.writeQuery(tab.key);
 		}
+	}
+
+	private writeQuery(key: string) {
+		const query: LocationQueryRaw = { ...this.$route.query, [this.queryKey]: key };
+		void this.$router.replace({ query });
 	}
 
 	onKeydown(event: KeyboardEvent) {
