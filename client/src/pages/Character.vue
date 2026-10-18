@@ -11,6 +11,12 @@
 			/>
 		</template>
 		<template v-else-if="character && character.id">
+			<character-plate
+				ref="plate"
+				:character="character"
+				:base-path="basePath"
+				@rp-change="onRpChange"
+			/>
 			<section-tabs
 				class="page-character__tabs"
 				glass
@@ -42,7 +48,7 @@
 						action-label="Ergänzen"
 						:action-to="editLink(activeSection.editPath)"
 					/>
-					<character-profile v-if="tab === 'profil'" :character="character" />
+					<character-profile v-if="tab === 'profil'" :character="character" plate />
 					<character-appearance v-else-if="tab === 'aussehen'" :character="character" />
 					<character-personality v-else-if="tab === 'persoenlichkeit'" :character="character" />
 					<character-contacts v-else-if="tab === 'kontakte'" :character="character" />
@@ -62,8 +68,10 @@
 <script lang="ts">
 import { CharacterContentDto } from '@app/shared/dto/characters/character-content.dto';
 import { CharacterProfileDto } from '@app/shared/dto/characters/character-profile.dto';
+import { RpPresenceFieldsDto } from '@app/shared/dto/characters/rp-presence.dto';
 import { PageType } from '@app/shared/enums/page-type.enum';
 import errors from '@app/shared/errors';
+import CharacterPlate from 'components/character/CharacterPlate.vue';
 import CharacterProfile from 'components/character/CharacterProfile.vue';
 import {
 	CHARACTER_SECTIONS,
@@ -165,6 +173,7 @@ async function load(params: RouteParams): Promise<Content> {
 
 @Options({
 	components: {
+		CharacterPlate,
 		CharacterProfile,
 		CharacterAppearance,
 		CharacterPersonality,
@@ -188,8 +197,10 @@ async function load(params: RouteParams): Promise<Content> {
 	async beforeRouteUpdate(to, from) {
 		const vm = this as PageCharacter;
 		if (sameCharacter(to, from) && vm.character.id) {
-			// ER2-401 — switching sections keeps the loaded profile.
+			// ER2-401 — switching sections keeps the loaded profile and, once the
+			// reader has scrolled past the header, the tab bar in view.
 			vm.tab = tabFromRoute(to);
+			vm.keepTabsInView();
 			return;
 		}
 		const content = await load(to.params);
@@ -283,6 +294,30 @@ export default class PageCharacter extends Vue {
 		return this.isOwner || this.tab === DEFAULT_CHARACTER_TAB || this.isPublic(this.activeSection);
 	}
 
+	onRpChange(presence: RpPresenceFieldsDto) {
+		Object.assign(this.character, presence);
+	}
+
+	/**
+	 * The router scrolls to the top on every navigation; for a tab switch below
+	 * the header that hides the content the reader asked for, so scroll back
+	 * to the tab bar afterwards.
+	 */
+	keepTabsInView() {
+		const plate = (this.$refs.plate as Vue | undefined)?.$el as HTMLElement | undefined;
+		if (!plate) {
+			return;
+		}
+		const navHeight = parseFloat(getComputedStyle(document.body).getPropertyValue('--nav-height')) || 68;
+		const plateBottom = plate.getBoundingClientRect().bottom + window.scrollY;
+		const target = Math.max(0, plateBottom - navHeight);
+		if (window.scrollY < target - 1) {
+			return;
+		}
+		// After the router's own scroll-to-top has run.
+		window.setTimeout(() => window.scrollTo({ top: target, left: 0 }), 0);
+	}
+
 	setContent(content: Content) {
 		if ((content.content.images.length > 0) && (content.character.banner?.url != undefined))  {
 			content.content.images = content.content.images.filter(x => !x.url.includes(content.character.banner!.url));
@@ -305,6 +340,11 @@ export default class PageCharacter extends Vue {
 	position: sticky;
 	top: var(--nav-height, 68px);
 	z-index: 5;
+}
+
+// "Teilen" in the header replaces the copy-link button of the report row.
+.page-character__body :deep(.report-violation-section > .q-btn:first-child) {
+	display: none;
 }
 
 .page-character__body {
