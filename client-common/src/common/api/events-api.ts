@@ -52,6 +52,19 @@ export default class EventsAPI {
     return this.transport.authDelete<void>(`${id}/registrations/${characterId}`);
   }
 
+  /** Public download URL of a single event as iCalendar (text/calendar). Usable directly as an <a href>. */
+  getEventIcsUrl(id: number): string {
+    return `${this.transport.prefix}${id}/ics`;
+  }
+
+  /**
+   * iCalendar feed (as text) of all events the current user's characters registered for.
+   * Requires a token, so it cannot be used as a plain link; wrap the result in a Blob to download.
+   */
+  async getMyEventsIcs(): Promise<string> {
+    return this.transport.authGet<string>('my.ics');
+  }
+
   async searchEvents(query: string): Promise<EventSearchResultDto[]> {
     return this.transport.authGet<EventSearchResultDto[]>('search', { query });
   }

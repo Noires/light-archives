@@ -36,6 +36,7 @@ import { ImagesService } from '../images/images.service';
 import { ChocoboChronicleService } from './chocobo-chronicle.service';
 import { CrescentMoonPublishingService } from './crescent-moon-publishing.service';
 import { ExternalEvent } from './model/external-event';
+import { buildIcsCalendar, htmlToIcsPlainText, IcsEvent } from './ics';
 import { Redis } from 'ioredis';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 
@@ -475,6 +476,75 @@ export class EventsService {
 
       await registrationRepo.remove(registration);
     });
+  }
+
+  async getEventIcs(eventId: number): Promise<string> {
+    const event = await this.eventRepo.findOne({
+      where: { id: eventId },
+      relations: ['locations', 'locations.server', 'locations.venue'],
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    return buildIcsCalendar([this.toIcsEvent(event)], {
+      timezone: SharedConstants.FFXIV_SERVER_TIMEZONE,
+    });
+  }
+
+  async getMyEventsIcs(user: UserInfo): Promise<string> {
+    const characterIds = user.characters.map((character) => character.id);
+    let events: Event[] = [];
+
+    if (characterIds.length > 0) {
+      const since = DateTime.now().minus({ days: 30 }).toJSDate();
+      events = await this.eventRepo
+        .createQueryBuilder('event')
+        .innerJoin('event.registrations', 'registration')
+        .leftJoinAndSelect('event.locations', 'location')
+        .leftJoinAndSelect('location.server', 'server')
+        .leftJoinAndSelect('location.venue', 'venue')
+        .where('registration.characterId IN (:...characterIds)', { characterIds })
+        .andWhere('event.hidden = :hidden', { hidden: false })
+        .andWhere('(event.startDateTime >= :since OR event.endDateTime >= :since)', { since })
+        .orderBy('event.startDateTime', 'ASC')
+        .distinct(true)
+        .take(500)
+        .getMany();
+    }
+
+    return buildIcsCalendar(events.map((event) => this.toIcsEvent(event)), {
+      name: 'Elpisgarten – Meine Veranstaltungen',
+      timezone: SharedConstants.FFXIV_SERVER_TIMEZONE,
+    });
+  }
+
+  private toIcsEvent(event: Event): IcsEvent {
+    const frontendRoot = (serverConfiguration.frontendRoot || '').replace(/\/+$/, '');
+    let host = 'elpisgarten';
+
+    try {
+      host = new URL(frontendRoot).host || host;
+    } catch {
+      // keep fallback host
+    }
+
+    const location = (event.locations || [])
+      .map((loc) => [loc.name, loc.address, loc.server?.name].filter((part) => !!part && part.trim()).join(', '))
+      .filter((loc) => loc.length > 0)
+      .join(' / ');
+
+    return {
+      uid: `event-${event.id}@${host}`,
+      start: event.startDateTime,
+      end: event.endDateTime,
+      summary: event.title,
+      location: location || null,
+      url: frontendRoot ? `${frontendRoot}/event/${event.id}` : null,
+      description: htmlToIcsPlainText(event.details || '') || null,
+      lastModified: event.updatedAt || null,
+    };
   }
 
   private async notifySteward(event: Event): Promise<void> {
