@@ -106,11 +106,28 @@
           </router-link>
         </section>
 
-        <section class="shell-sheet__section" aria-labelledby="shell-sheet-notifications">
-          <h3 id="shell-sheet-notifications" class="shell-sheet__label">Benachrichtigungen</h3>
-          <slot name="notifications">
-            <p class="shell-sheet__empty">Keine neuen Benachrichtigungen.</p>
-          </slot>
+        <section v-if="showSocial" class="shell-sheet__section" aria-labelledby="shell-sheet-notifications">
+          <h3 id="shell-sheet-notifications" class="shell-sheet__label">Für dich</h3>
+          <router-link
+            v-if="showNotifications"
+            to="/benachrichtigungen"
+            class="shell-sheet__row"
+            active-class="shell-sheet__row--active"
+            :aria-label="notificationsAriaLabel"
+          >
+            <q-icon :name="unreadCount > 0 ? 'notifications' : 'notifications_none'" size="20px" aria-hidden="true" />
+            <span class="shell-sheet__row-label">Benachrichtigungen</span>
+            <span v-if="unreadCount > 0" class="shell-sheet__count" aria-hidden="true">{{ unreadBadge }}</span>
+          </router-link>
+          <router-link
+            v-if="showBookmarks"
+            to="/gemerkt"
+            class="shell-sheet__row"
+            active-class="shell-sheet__row--active"
+          >
+            <q-icon name="bookmark_border" size="20px" aria-hidden="true" />
+            <span class="shell-sheet__row-label">Gemerkt</span>
+          </router-link>
         </section>
       </div>
     </div>
@@ -121,10 +138,12 @@
 import { Options, Vue } from 'vue-class-component';
 import { MORE_GROUPS, PRIMARY_AREAS, ShellNavArea, WIKI_AREA, WIKI_LINKS, isAreaActive } from './nav';
 import { shellTheme, themeAriaLabel, themeIcon, toggleShellTheme } from './theme-state';
+import { canUseSocial, socialState } from 'src/components/social/social-state';
 
 // ER2-205 — below 1024px: fixed bottom bar (Start, Events, Charaktere,
 // Suche, Mehr) and the "Mehr" bottom sheet with every other nav link, the
-// theme toggle and the notifications placeholder. Account actions stay in
+// theme toggle and (ER2 social) links to notifications with the unread count
+// and to bookmarks. ShellHeader polls the count; this reads the shared state. Account actions stay in
 // the top bar's account pill. Emits `open-search` for the command palette.
 
 const BAR_KEYS = ['events', 'characters'];
@@ -143,6 +162,34 @@ export default class ShellMobileNav extends Vue {
   readonly moreGroups = MORE_GROUPS;
 
   sheetOpen = false;
+
+  get socialEnabled(): boolean {
+    return canUseSocial(this.$store.getters.realRole);
+  }
+
+  get showNotifications(): boolean {
+    return this.socialEnabled && !socialState.unavailable.notifications;
+  }
+
+  get showBookmarks(): boolean {
+    return this.socialEnabled && !socialState.unavailable.bookmarks;
+  }
+
+  get showSocial(): boolean {
+    return this.showNotifications || this.showBookmarks;
+  }
+
+  get unreadCount(): number {
+    return socialState.unreadCount;
+  }
+
+  get unreadBadge(): string {
+    return this.unreadCount > 99 ? '99+' : String(this.unreadCount);
+  }
+
+  get notificationsAriaLabel(): string {
+    return this.unreadCount > 0 ? `Benachrichtigungen, ${this.unreadCount} ungelesen` : 'Benachrichtigungen';
+  }
 
   get linkTargets() {
     const path = this.$route.path;
@@ -418,6 +465,22 @@ body.body--dark .shell-sheet {
 .shell-sheet__row--active {
   background: var(--rule-tint);
   box-shadow: inset 2px 0 0 var(--rule-strong);
+}
+
+.shell-sheet__row-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.shell-sheet__count {
+  flex: none;
+  min-width: 22px;
+  padding: 0 7px;
+  font: 700 12px/22px var(--font-ui);
+  color: var(--vision-on-now);
+  text-align: center;
+  background: var(--vision-now);
+  border-radius: 999px;
 }
 
 .shell-sheet__empty {

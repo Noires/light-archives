@@ -85,19 +85,24 @@
       </button>
 
       <q-btn
+        v-if="showNotifications"
         flat
         round
         dense
         class="shell-bar__icon-btn shell-bar__notifications"
-        icon="notifications_none"
-        aria-label="Benachrichtigungen"
+        :icon="unreadCount > 0 ? 'notifications' : 'notifications_none'"
+        :aria-label="notificationsAriaLabel"
       >
-        <q-menu anchor="bottom right" self="top right" :offset="[0, 6]" class="shell-menu">
-          <div class="shell-menu__panel">
-            <slot name="notifications">
-              <p class="shell-menu__empty">Keine neuen Benachrichtigungen.</p>
-            </slot>
-          </div>
+        <span v-if="unreadCount > 0" class="shell-bar__badge" aria-hidden="true">{{ unreadBadge }}</span>
+        <q-menu
+          v-model="notificationsMenuOpen"
+          anchor="bottom right"
+          self="top right"
+          :offset="[0, 6]"
+          class="shell-menu shell-notifications-menu"
+          @show="refreshUnread(true)"
+        >
+          <notification-menu @close="notificationsMenuOpen = false" />
         </q-menu>
       </q-btn>
 
@@ -168,6 +173,8 @@
 import { Vue, Options } from 'vue-class-component';
 import AetheryteBadge from 'src/components/aetherium/AetheryteBadge.vue';
 import UserMenu from 'src/components/sidebar/UserMenu.vue';
+import NotificationMenu from 'src/components/social/NotificationMenu.vue';
+import { canUseSocial, markUnavailable, resetSocialState, socialState } from 'src/components/social/social-state';
 import ShellLogo from './ShellLogo.vue';
 import {
   MORE_GROUPS,
@@ -186,11 +193,19 @@ import { shellTheme, themeAriaLabel, themeIcon, themeTooltip, toggleShellTheme }
 // notifications slot, theme toggle and the account pill (UserMenu in a
 // q-menu). Emits `open-search` for the command palette. The nav model lives
 // in ./nav.ts. Unscoped styles: the q-menu content is teleported.
+//
+// ER2 social: the bell polls the unread count every 60 s and on route
+// change while the tab is visible (logged-in, verified accounts only). It
+// disappears for guests and when the API has no notifications endpoint.
+
+const UNREAD_POLL_MS = 60000;
+const UNREAD_MIN_GAP_MS = 5000;
 
 @Options({
   name: 'ShellHeader',
   components: {
     AetheryteBadge,
+    NotificationMenu,
     ShellLogo,
     UserMenu,
   },
@@ -200,6 +215,16 @@ import { shellTheme, themeAriaLabel, themeIcon, themeTooltip, toggleShellTheme }
       const self = this as ShellHeader;
       self.accountMenuOpen = false;
       self.moreMenuOpen = false;
+      self.notificationsMenuOpen = false;
+      self.refreshUnread();
+    },
+    socialEnabled(enabled: boolean) {
+      const self = this as ShellHeader;
+      resetSocialState();
+      self.stopPolling();
+      if (enabled) {
+        self.startPolling();
+      }
     },
   },
 })
@@ -215,6 +240,92 @@ export default class ShellHeader extends Vue {
 
   moreMenuOpen = false;
   accountMenuOpen = false;
+  notificationsMenuOpen = false;
+
+  private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private lastUnreadFetch = 0;
+  private readonly onVisibilityChange = () => {
+    if (document.hidden) {
+      this.stopTimer();
+    } else if (this.socialEnabled) {
+      this.startPolling();
+    }
+  };
+
+  get socialEnabled(): boolean {
+    return canUseSocial(this.$store.getters.realRole);
+  }
+
+  get showNotifications(): boolean {
+    return this.socialEnabled && !socialState.unavailable.notifications;
+  }
+
+  get unreadCount(): number {
+    return socialState.unreadCount;
+  }
+
+  get unreadBadge(): string {
+    return this.unreadCount > 99 ? '99+' : String(this.unreadCount);
+  }
+
+  get notificationsAriaLabel(): string {
+    if (this.unreadCount === 1) {
+      return 'Benachrichtigungen, 1 ungelesen';
+    }
+    return this.unreadCount > 0 ? `Benachrichtigungen, ${this.unreadCount} ungelesen` : 'Benachrichtigungen';
+  }
+
+  mounted() {
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
+    if (this.socialEnabled) {
+      this.startPolling();
+    }
+  }
+
+  beforeUnmount() {
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    this.stopPolling();
+  }
+
+  startPolling() {
+    this.stopTimer();
+    if (typeof document !== 'undefined' && document.hidden) {
+      return;
+    }
+    this.refreshUnread(true);
+    this.pollTimer = setInterval(() => this.refreshUnread(true), UNREAD_POLL_MS);
+  }
+
+  private stopTimer() {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+    }
+  }
+
+  stopPolling() {
+    this.stopTimer();
+  }
+
+  refreshUnread(force = false) {
+    if (!this.showNotifications || (typeof document !== 'undefined' && document.hidden)) {
+      return;
+    }
+    const now = Date.now();
+    if (!force && now - this.lastUnreadFetch < UNREAD_MIN_GAP_MS) {
+      return;
+    }
+    this.lastUnreadFetch = now;
+    this.$api.notifications.getUnreadCount()
+      .then((result) => {
+        socialState.unreadCount = Math.max(0, result?.count || 0);
+      })
+      .catch((e) => {
+        if (markUnavailable('notifications', e)) {
+          this.stopTimer();
+        }
+      });
+  }
 
   get character() {
     return this.$store.getters.character;
@@ -453,6 +564,32 @@ body.body--dark .q-header.shell-bar {
   &:hover {
     color: var(--ink-primary);
   }
+}
+
+.shell-bar__notifications.q-btn {
+  position: relative;
+}
+
+// Unread badge: --vision-now with --vision-on-now (6.4:1 Hydaelyn, AA Zodiark).
+.shell-bar__badge {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font: 700 11px/18px var(--font-ui);
+  color: var(--vision-on-now);
+  text-align: center;
+  background: var(--vision-now);
+  border: 2px solid var(--surface-raised);
+  border-radius: 999px;
+  box-sizing: content-box;
+  pointer-events: none;
+}
+
+.shell-notifications-menu.q-menu {
+  padding: 4px;
 }
 
 .shell-bar__account {
