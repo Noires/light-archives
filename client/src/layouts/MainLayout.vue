@@ -1,5 +1,8 @@
 <template>
   <q-layout view="hHh Lpr fff">
+    <!-- ER2-109 — first focusable element; jumps past header and drawer. -->
+    <a class="layout__skip-link" href="#inhalt" @click="onSkipLinkClick">Zum Inhalt springen</a>
+
     <shell-header @toggle-drawer="toggleLeftDrawer" />
 
     <shell-drawer v-model="leftDrawerOpen" />
@@ -8,9 +11,9 @@
       <shell-hero />
 
       <div class="layout__page-shell">
-        <div class="layout__page-container">
+        <main id="inhalt" class="layout__page-container" tabindex="-1">
           <router-view />
-        </div>
+        </main>
         <calendar-sidebar-widget
           v-if="showCalendarWidget"
           class="layout__calendar-outer"
@@ -60,7 +63,19 @@ export default class MainLayout extends Vue {
     void this.promptTelemetryConsentIfRequired();
   }
 
-  toggleLeftDrawer() {
+  // Move focus programmatically instead of following the #inhalt hash, so the
+  // router never sees a hash navigation and keyboard focus really lands in main.
+  onSkipLinkClick(event: Event) {
+    const main = document.getElementById('inhalt');
+    if (!main) {
+      return;
+    }
+    event.preventDefault();
+    main.focus({ preventScroll: true });
+    main.scrollIntoView({ block: 'start' });
+  }
+
+    toggleLeftDrawer() {
     this.leftDrawerOpen = !this.leftDrawerOpen;
   }
 
@@ -162,6 +177,36 @@ body.body--dark {
 .layout__create-content-list {
   padding-left: 12px;
   background: #016097;
+}
+
+// ER2-109 — skip link: off-screen until focused, then pinned top-left above
+// the header. No transition, so reduced motion needs no extra handling.
+.layout__skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 7000;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--ink-primary);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  text-decoration: underline;
+  transform: translateY(-200%);
+}
+
+.layout__skip-link:focus,
+.layout__skip-link:focus-visible {
+  transform: none;
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--glow-aether),
+    0 0 0 3px var(--vision-focus-edge);
+}
+
+.layout__page-container:focus {
+  outline: none;
 }
 
 .layout__page-container {
