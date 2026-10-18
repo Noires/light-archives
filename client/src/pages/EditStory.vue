@@ -65,6 +65,18 @@
               class="page-edit-story__options-grid"
             />
           </div>
+          <!-- ER2 round 2: optional cover image (diary preview); hidden when the API lacks it -->
+          <banner-edit-section
+            v-if="coverSupported"
+            class="page-edit-story__cover"
+            :model-value="story.banner || undefined"
+            title="Titelbild (optional)"
+            hint="Erscheint als Vorschaubild im Tagebuch und auf dem Profil. Wähle eines deiner Bilder oder lade ein neues hoch."
+            :ratio="16 / 9"
+            :min-aspect-ratio="1"
+            :character-id="coverCharacterId"
+            @update:model-value="story.banner = $event || null"
+          />
           <h6>Inhalt *</h6>
           <html-editor v-model="story.content" />
         </template>
@@ -114,6 +126,7 @@
 import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import { StoryType } from '@app/shared/enums/story-type.enum';
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
+import BannerEditSection from 'components/common/BannerEditSection.vue';
 import CharacterSelector from 'components/common/CharacterSelector.vue';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
 import StoryView from 'components/stories/StoryView.vue';
@@ -124,6 +137,7 @@ import { RouteParams } from 'vue-router';
 
 @Options({
   components: {
+    BannerEditSection,
     CharacterSelector,
     HtmlEditor,
     StoryView,
@@ -163,6 +177,39 @@ export default class PageEditStory extends Vue {
   confirmRevert = false;
 
   selectedCharacterId: number | null = null;
+  /** ER2 round 2: the API knows story cover images (it sends `imageUrl`). */
+  coverSupported = false;
+
+  /** Owner of the cover image: the chosen character, or the author of an existing story. */
+  get coverCharacterId(): number | null {
+    if (!this.story.id) {
+      return this.selectedCharacterId;
+    }
+
+    const author = this.$store.getters.characters.find(
+      (character) => character.name === this.story.author && character.server === this.story.authorServer,
+    );
+    return author ? author.id : null;
+  }
+
+  private async detectCoverSupport(story: StoryDto) {
+    if ('imageUrl' in story) {
+      this.coverSupported = true;
+      return;
+    }
+
+    if (story.id) {
+      this.coverSupported = false;
+      return;
+    }
+
+    try {
+      const list = await this.$api.stories.getStories({ offset: 0, limit: 1 });
+      this.coverSupported = list.data.length > 0 && 'imageUrl' in list.data[0];
+    } catch {
+      this.coverSupported = false;
+    }
+  }
 
   private async load(params: RouteParams) {
     const contentNotes = await this.$api.contentNotes.getContentNotes();
@@ -200,6 +247,7 @@ export default class PageEditStory extends Vue {
     this.selectedCharacterId = this.$store.getters.characterId || null;
 
     this.story = new StoryDto(this.storyBackup);
+    void this.detectCoverSupport(this.storyBackup);
   }
 
   revert() {
@@ -287,7 +335,12 @@ body.body--dark .page-edit-story {
   margin-bottom: 24px;
 }
 
+.page-edit-story__cover {
+  margin-top: 16px;
+}
+
 .page-edit-story__button-bar {
+
   display: flex;
   justify-content: space-between;
   margin-top: 16px;

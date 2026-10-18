@@ -18,4 +18,8 @@ export interface StorySummaryDto {
 	/** words in the content with HTML stripped */
 	wordCount?: number;
 	reactionCounts?: ReactionCountsDto;
+	/** cover image (full size); null when none */
+	imageUrl?: string|null;
+	/** cover image thumbnail */
+	imageThumbUrl?: string|null;
 }

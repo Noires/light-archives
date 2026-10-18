@@ -77,7 +77,18 @@
 
 			<section v-if="latestStory" class="character-overview__section" aria-labelledby="co-diary">
 				<h2 id="co-diary" class="character-overview__heading">Aus dem Tagebuch</h2>
-				<article class="character-overview__diary mat-parchment">
+				<article
+					class="character-overview__diary mat-parchment"
+					:class="{ 'character-overview__diary--image': !!latestStoryImage }"
+				>
+					<!-- ER2 round 2: story cover image (optional) -->
+					<img
+						v-if="latestStoryImage"
+						class="character-overview__diary-image"
+						:src="latestStoryImage"
+						alt=""
+						loading="lazy"
+					/>
 					<p class="character-overview__eyebrow">
 						{{ $display.storyTypes[latestStory.type] }} · {{ $display.relativeTime(latestStory.createdAt) }}
 					</p>
@@ -140,7 +151,14 @@
 				</header>
 				<ul v-if="contacts.length > 0" class="character-overview__contacts">
 					<li v-for="contact in contacts" :key="contact.target" class="character-overview__contact">
-						<span class="character-overview__monogram" aria-hidden="true">{{ contact.initial }}</span>
+						<img
+							v-if="contactAvatars[contact.target]"
+							class="character-overview__monogram character-overview__monogram--avatar"
+							:src="contactAvatars[contact.target]"
+							alt=""
+							loading="lazy"
+						/>
+						<span v-else class="character-overview__monogram" aria-hidden="true">{{ contact.initial }}</span>
 						<span class="character-overview__contact-text">
 							<router-link class="character-overview__contact-name" :to="contact.to">{{ contact.label }}</router-link>
 							<span class="character-overview__contact-relation">{{ contact.relation }}</span>
@@ -290,16 +308,70 @@ class Props {
 		'character.id'() {
 			void (this as CharacterOverview).loadAlbums();
 		},
+		contactTargets() {
+			void (this as CharacterOverview).loadContactAvatars();
+		},
 	},
 })
 export default class CharacterOverview extends Vue.with(Props) {
 	private unbindHoverCards: (() => void) | null = null;
 	albums: AlbumSummaryDto[] = [];
+	/** ER2 round 2: contact target → avatar URL from POST /characters/lookup. */
+	contactAvatars: Record<string, string> = {};
+	private contactsToken = 0;
 
 	mounted() {
 		this.unbindHoverCards = bindHoverCards(this.$el as HTMLElement);
 		void this.loadAlbums();
+		void this.loadContactAvatars();
 	}
+
+	get contactTargets(): string {
+		return this.contacts.map((contact) => contact.target).join('\n');
+	}
+
+	/** One lookup call for the shown contacts; initials stay when it fails or finds nobody. */
+	async loadContactAvatars() {
+		const contacts = this.showContacts ? this.contacts : [];
+		const token = ++this.contactsToken;
+
+		if (contacts.length === 0) {
+			this.contactAvatars = {};
+			return;
+		}
+
+		try {
+			const results = await this.$api.characters.lookupCharacters(
+				contacts.map((contact) => {
+					const at = contact.target.lastIndexOf('@');
+					return at > 0
+						? { name: contact.target.substring(0, at).trim(), server: contact.target.substring(at + 1).trim() }
+						: { name: contact.target };
+				}),
+			);
+
+			if (token !== this.contactsToken) {
+				return;
+			}
+
+			const avatars: Record<string, string> = {};
+			contacts.forEach((contact) => {
+				const at = contact.target.lastIndexOf('@');
+				const query = at > 0 ? contact.target.substring(0, at).trim() : contact.target;
+				const hit = results.find((result) => result.query === query && !!result.avatar);
+				if (hit) {
+					avatars[contact.target] = hit.avatar;
+				}
+			});
+			this.contactAvatars = avatars;
+		} catch {
+			// Older API without the lookup endpoint: keep the initials.
+			if (token === this.contactsToken) {
+				this.contactAvatars = {};
+			}
+		}
+	}
+
 
 	/** ER2 round 2: GET /albums?characterId=; the production API may lack it. */
 	async loadAlbums() {
@@ -377,6 +449,11 @@ export default class CharacterOverview extends Vue.with(Props) {
 
 	get latestStory(): StorySummaryDto | null {
 		return this.stories.length > 0 ? this.stories[0] : null;
+	}
+
+	get latestStoryImage(): string {
+		const story = this.latestStory;
+		return story ? story.imageUrl || story.imageThumbUrl || '' : '';
 	}
 
 	get rumors(): RumorPreview[] {
@@ -762,6 +839,24 @@ export default class CharacterOverview extends Vue.with(Props) {
 	}
 }
 
+.character-overview__diary--image {
+	overflow: hidden;
+}
+
+.character-overview__diary-image {
+	display: block;
+	width: calc(100% + 48px);
+	max-width: none;
+	height: 200px;
+	margin: -20px -24px 16px;
+	object-fit: cover;
+	border-bottom: 1px solid var(--rule-soft);
+
+	@media (max-width: 599px) {
+		height: 150px;
+	}
+}
+
 .character-overview__diary-title {
 	margin: 0;
 	font-family: var(--font-display);
@@ -957,6 +1052,10 @@ export default class CharacterOverview extends Vue.with(Props) {
 	color: var(--ink-primary);
 	font-family: var(--font-display);
 	font-size: 16px;
+}
+
+.character-overview__monogram--avatar {
+	object-fit: cover;
 }
 
 .character-overview__contact-text {

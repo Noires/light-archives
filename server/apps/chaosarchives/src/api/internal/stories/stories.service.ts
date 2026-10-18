@@ -1,5 +1,6 @@
 import { UserInfo } from '@app/auth/model/user-info';
-import { Character, ContentNote, Story, StoryTag } from '@app/entity';
+import { Character, ContentNote, Image, Story, StoryTag } from '@app/entity';
+import { BannerDto } from '@app/shared/dto/characters/banner.dto';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { StoryFilterDto } from '@app/shared/dto/stories/story-filter.dto';
@@ -10,11 +11,12 @@ import html from '@app/shared/html';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter'; // ER2 social
 import { InjectRepository } from '@nestjs/typeorm';
-import { Connection, In, IsNull, Not, Repository } from 'typeorm';
+import { Connection, EntityManager, In, IsNull, Not, Repository } from 'typeorm';
 import { getVerifiedCharacter } from '../../../common/api-checks';
 import { escapeForLike } from '../../../common/db';
 import { buildExcerpt, countWords } from '../../../common/plain-text';
 import { ReactionTargetType } from '@app/shared/enums/reaction.enum';
+import { ImagesService } from '../images/images.service';
 import { ReactionsService } from '../reactions/reactions.service';
 import { excludeTestContentSql } from '../test-content.filter';
 
@@ -29,6 +31,7 @@ export class StoriesService {
     @InjectRepository(Story) private storyRepo: Repository<Story>,
     @InjectRepository(StoryTag) private storyTagRepo: Repository<StoryTag>,
     private reactionsService: ReactionsService,
+    private imagesService: ImagesService,
     private eventEmitter: EventEmitter2, // ER2 social
   ) {}
 
@@ -39,8 +42,11 @@ export class StoriesService {
       .innerJoinAndSelect('character.user', 'user')
       .innerJoinAndSelect('character.server', 'server')
       .leftJoinAndSelect('story.contentNotes','notes')
+      .leftJoinAndSelect('story.banner', 'banner')
+      .leftJoinAndSelect('banner.owner', 'bannerOwner')
       .where('story.id = :id', { id })
-      .select(['story', 'character.id', 'character.name', 'user.id', 'server.name', 'notes.name'])
+      .select(['story', 'character.id', 'character.name', 'user.id', 'server.name', 'notes.name',
+        'banner.id', 'banner.hash', 'banner.filename', 'banner.width', 'banner.height', 'bannerOwner.id'])
       .getOne();
 
     const mine = !!story && !!user && story.owner.user.id === user.id;
@@ -86,8 +92,44 @@ export class StoriesService {
       createdAt: story.createdAt!.getTime(),
       type: story.type,
       tags: story.tags.map((tag) => tag.name),
-      contentNotes: story.contentNotes.map((note) => note.name)
+      contentNotes: story.contentNotes.map((note) => note.name),
+      banner: this.toBannerDto(story.banner),
+      imageUrl: story.banner && story.banner.owner ? this.imagesService.getUrl(story.banner) : null,
     });
+  }
+
+  // ER2 round 2: story cover image
+  private toBannerDto(image: Image | null | undefined): BannerDto | null {
+    if (!image || !image.owner) {
+      return null;
+    }
+
+    return new BannerDto({
+      id: image.id,
+      url: this.imagesService.getUrl(image),
+      width: image.width,
+      height: image.height,
+    });
+  }
+
+  /** The cover must be one of the story owner's images; null clears it. */
+  private async resolveBanner(em: EntityManager, ownerId: number, banner: BannerDto | null): Promise<Image | null> {
+    if (!banner || !banner.id) {
+      return null;
+    }
+
+    const image = await em.getRepository(Image).findOne({
+      where: {
+        id: banner.id,
+        owner: { id: ownerId },
+      },
+    });
+
+    if (!image) {
+      throw new BadRequestException('Image not found');
+    }
+
+    return image;
   }
 
   async createStory(storyDto: StoryDto & { id: undefined }, user: UserInfo): Promise<IdWrapper> {
@@ -131,6 +173,7 @@ export class StoriesService {
         seriesTitle: this.normalizeSeriesTitle(storyDto.seriesTitle),
         seriesIndex: storyDto.seriesIndex ?? null,
         published: storyDto.published ?? true,
+        banner: storyDto.banner ? await this.resolveBanner(em, character.id, storyDto.banner) : null,
       });
 
       story.tags = storyDto.tags.filter(tag => tag !== '').map(
@@ -168,7 +211,7 @@ export class StoriesService {
         .innerJoinAndSelect('character.user', 'user')
         .where('story.id = :id', { id: storyDto.id })
         .andWhere('user.id = :userId', { userId: user.id })
-        .select(['story'])
+        .select(['story', 'character.id'])
         .getOne();
 
       if (!story) {
@@ -187,6 +230,10 @@ export class StoriesService {
 
       if (storyDto.seriesIndex !== undefined) {
         story.seriesIndex = storyDto.seriesIndex ?? null;
+      }
+
+      if (storyDto.banner !== undefined) {
+        story.banner = await this.resolveBanner(em, story.owner.id, storyDto.banner);
       }
 
       if (storyDto.published !== undefined) {
@@ -262,9 +309,12 @@ export class StoriesService {
       .createQueryBuilder('story')
       .innerJoinAndSelect('story.owner', 'character')
       .innerJoinAndSelect('character.server', 'server')
+      .leftJoinAndSelect('story.banner', 'banner')
+      .leftJoinAndSelect('banner.owner', 'bannerOwner')
       .orderBy('story.createdAt', 'DESC')
       .select(['story.id', 'character.name', 'server.name', 'story.title', 'story.content', 'story.createdAt', 'story.type',
-        'story.published', 'story.seriesTitle', 'story.seriesIndex'])
+        'story.published', 'story.seriesTitle', 'story.seriesIndex',
+        'banner.id', 'banner.hash', 'banner.filename', 'bannerOwner.id'])
       .offset(filter.offset)
       .limit(filter.limit);
 
@@ -328,6 +378,8 @@ export class StoriesService {
         seriesIndex: story.seriesIndex,
         wordCount: countWords(story.content),
         reactionCounts: reactions.get(story.id)?.reactionCounts || {},
+        imageUrl: story.banner && story.banner.owner ? this.imagesService.getUrl(story.banner) : null,
+        imageThumbUrl: story.banner && story.banner.owner ? this.imagesService.getThumbUrl(story.banner) : null,
       }))
     };
   }

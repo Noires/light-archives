@@ -1,6 +1,7 @@
 import { StoryType } from "@app/shared/enums/story-type.enum";
 import { Type } from "class-transformer";
-import { IsBoolean, IsEnum, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
+import { IsBoolean, IsEnum, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min, ValidateNested } from "class-validator";
+import { BannerDto } from "../characters/banner.dto";
 import { ReactionCountsDto } from "../reactions/reaction.dto";
 import { ReactionKind } from "../../enums/reaction.enum";
 
@@ -62,6 +63,16 @@ export class StoryDto {
   @IsBoolean()
   @IsOptional()
   published?: boolean;
+
+  // ER2 round 2: optional cover image (one of the author's images). Omit to keep, null to remove.
+  @Type(() => BannerDto)
+  @ValidateNested()
+  @IsOptional()
+  banner?: BannerDto | null;
+
+  // ER2 round 2 (read only): URL of the cover image
+  @IsOptional()
+  imageUrl?: string | null;
 
   // Read only: number of visible parts in the series
   @IsOptional()
