@@ -8,6 +8,7 @@ import { ImageCategory } from '@app/shared/enums/image-category.enum';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { isTestContent } from '../test-content.filter';
 
 @Injectable()
 export class ChangesService {
@@ -159,13 +160,16 @@ export class ChangesService {
       return [];
     }
 
-    return this.storyRepo.find({
+    const stories = await this.storyRepo.find({
       relations: ['owner'],
       order: {
         updatedAt: 'DESC',
       },
       take: limit,
     });
+
+    // ER2-111 — stories titled "Test" or without a body stay out of the feed.
+    return stories.filter((story) => !isTestContent(story));
   }
 
   private async fetchNoticeboardItems(area: ChangeArea | undefined, limit: number): Promise<NoticeboardItem[]> {
