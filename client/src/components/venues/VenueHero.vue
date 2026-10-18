@@ -40,6 +40,7 @@
         <!-- ER2 social: follow/bookmark -->
         <template v-if="showSocial">
           <follow-button target-type="venue" :target-key="String(venue.id)" variant="on-media" />
+          <bookmark-button target-type="venue" :target-id="venue.id" variant="on-media" />
         </template>
         <!-- /ER2 social: follow/bookmark -->
       </div>
@@ -53,6 +54,7 @@ import { copyToClipboard } from 'quasar';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import Breadcrumbs from 'components/vision/Breadcrumbs.vue';
 import FollowButton from 'components/social/FollowButton.vue'; // ER2 social: follow/bookmark
+import BookmarkButton from 'components/social/BookmarkButton.vue'; // ER2 social: follow/bookmark
 import { canUseSocial, socialState } from 'components/social/social-state'; // ER2 social: follow/bookmark
 import { Options, prop, Vue } from 'vue-class-component';
 import { addressText, teleportCommand } from './venue-location';
@@ -72,6 +74,7 @@ class Props {
   components: {
     Breadcrumbs,
     FollowButton, // ER2 social: follow/bookmark
+    BookmarkButton, // ER2 social: follow/bookmark
   },
 })
 export default class VenueHero extends Vue.with(Props) {

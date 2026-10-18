@@ -410,6 +410,14 @@ const routes: RouteRecordRaw[] = [
           breadcrumb: 'Benachrichtigungen',
         },
       },
+      {
+        path: 'gemerkt',
+        component: () => import('pages/Bookmarks.vue'),
+        meta: {
+          title: 'Gemerkt',
+          breadcrumb: 'Gemerkt',
+        },
+      },
 
       {
         path: 'edit-image/:id',

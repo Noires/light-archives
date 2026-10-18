@@ -174,7 +174,7 @@ import { Vue, Options } from 'vue-class-component';
 import AetheryteBadge from 'src/components/aetherium/AetheryteBadge.vue';
 import UserMenu from 'src/components/sidebar/UserMenu.vue';
 import NotificationMenu from 'src/components/social/NotificationMenu.vue';
-import { canUseSocial, markUnavailable, resetSocialState, socialState } from 'src/components/social/social-state';
+import { canUseSocial, ensureBookmarkKeys, markUnavailable, resetSocialState, socialState } from 'src/components/social/social-state';
 import ShellLogo from './ShellLogo.vue';
 import {
   MORE_GROUPS,
@@ -289,6 +289,8 @@ export default class ShellHeader extends Vue {
 
   startPolling() {
     this.stopTimer();
+    // Also probes the bookmarks endpoint once, so "Gemerkt" links hide on APIs without it.
+    void ensureBookmarkKeys(this.$api);
     if (typeof document !== 'undefined' && document.hidden) {
       return;
     }
