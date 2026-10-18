@@ -10,7 +10,7 @@
         <span>{{ eyebrow }}</span>
         <span v-if="story.published === false" class="story-view__draft">Entwurf · nur für dich sichtbar</span>
       </p>
-      <h1 :id="titleId" class="story-view__title">{{ story.title || 'Ohne Titel' }}</h1>
+      <component :is="preview ? 'h2' : 'h1'" :id="titleId" class="story-view__title">{{ story.title || 'Ohne Titel' }}</component>
       <p v-if="lede" class="story-view__lede">{{ lede }}</p>
 
       <div class="story-view__byline">
