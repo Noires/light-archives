@@ -1,18 +1,27 @@
 import { UserInfo } from '@app/auth/model/user-info';
-import { Character, Event, NoticeboardItem, Story, WikiPage } from '@app/entity';
+import { Character, Event, NoticeboardItem, Story, WikiPage, WikiPageRevision } from '@app/entity';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { WikiMentionItemDto, WikiMentionsDto } from '@app/shared/dto/wiki/wiki-mentions.dto';
 import { WikiPageListItemDto } from '@app/shared/dto/wiki/wiki-page-list-item.dto';
+import { WikiPageRevisionDto, WikiPageRevisionSummaryDto } from '@app/shared/dto/wiki/wiki-page-revision.dto';
 import { WikiPageDto } from '@app/shared/dto/wiki/wiki-page.dto';
 import { EditPermission } from '@app/shared/enums/edit-permission.enum';
 import html from '@app/shared/html';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import crypto from 'crypto';
-import { Connection, IsNull, Not, Repository } from 'typeorm';
+import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
 import { getVerifiedCharacter } from '../../../common/api-checks';
 import { excludeTestContentSql } from '../test-content.filter';
 import { buildWikiMentionLikePatterns, contentMentionsWikiTitle } from './wiki-mentions';
+import {
+  buildRevisionFields,
+  canEditWikiPage,
+  pickEditorCharacterId,
+  restoreChangeNote,
+  revisionSize,
+  wikiTitleVariants,
+} from './wiki-revisions';
 
 const MENTIONS_PER_TYPE = 10;
 // Candidates fetched per type before the exact match; keeps the query bounded.
@@ -28,6 +37,7 @@ export class WikiService {
     @InjectRepository(Story) private storyRepo: Repository<Story>,
     @InjectRepository(NoticeboardItem) private noticeboardItemRepo: Repository<NoticeboardItem>,
     @InjectRepository(Event) private eventRepo: Repository<Event>,
+    @InjectRepository(WikiPageRevision) private revisionRepo: Repository<WikiPageRevision>,
   ) {}
 
   private readonly mentionsCache = new Map<string, { expiresAt: number; value: WikiMentionsDto }>();
@@ -241,7 +251,9 @@ export class WikiService {
         published: wikiPageDto.published ?? true,
       });
 
-      return wikiPageRepo.save(wikiPage);
+      const saved = await wikiPageRepo.save(wikiPage);
+      await this.writeRevision(em, saved, character.id, wikiPageDto.changeNote);
+      return saved;
     });
 
     return {
@@ -263,7 +275,7 @@ export class WikiService {
         throw new NotFoundException('Wiki page not found');
       }
 
-      if (wikiPage.editPermission === EditPermission.ME && !user.characters.some((ch) => ch.id === wikiPage.owner.id)) {
+      if (!canEditWikiPage(wikiPage.editPermission, wikiPage.owner.id, user)) {
         throw new ForbiddenException('You cannot edit this wiki page');
       }
 
@@ -277,6 +289,12 @@ export class WikiService {
       }
 
       await wikiPageRepo.save(wikiPage);
+      await this.writeRevision(
+        em,
+        wikiPage,
+        this.requireEditor(user, wikiPage.owner.id, wikiPageDto.characterId),
+        wikiPageDto.changeNote,
+      );
     });
   }
 
@@ -300,6 +318,151 @@ export class WikiService {
 			wikiPage.title = `${crypto.randomUUID()} ${wikiPage.title}`;
       await wikiPageRepo.save(wikiPage);
       await wikiPageRepo.softRemove(wikiPage);
+    });
+  }
+
+  // ER2 round 2: revisions
+
+  private requireEditor(user: UserInfo, ownerId: number, requestedId?: number): number {
+    const editorId = pickEditorCharacterId(user, ownerId, requestedId);
+
+    if (!editorId) {
+      throw new ForbiddenException('No character to record as editor');
+    }
+
+    return editorId;
+  }
+
+  private async writeRevision(
+    em: EntityManager,
+    page: { id: number; title: string; content: string },
+    editorId: number,
+    changeNote?: string | null,
+  ): Promise<WikiPageRevision> {
+    const revisionRepo = em.getRepository(WikiPageRevision);
+    return revisionRepo.save(revisionRepo.create(buildRevisionFields(page, editorId, changeNote)));
+  }
+
+  /** Page by title with the same visibility rule as reading it (drafts only for the owner). */
+  private async getVisiblePageByTitle(title: string, user?: UserInfo, em?: EntityManager): Promise<WikiPage> {
+    const variants = wikiTitleVariants(title);
+
+    if (variants.length === 0) {
+      throw new NotFoundException('Wiki page not found');
+    }
+
+    const wikiPage = await (em ? em.getRepository(WikiPage) : this.wikiPageRepo)
+      .createQueryBuilder('wp')
+      .innerJoinAndSelect('wp.owner', 'character')
+      .innerJoinAndSelect('character.user', 'user')
+      .where('wp.title IN (:...variants)', { variants })
+      .select(['wp', 'character.id', 'user.id'])
+      .getOne();
+
+    if (!wikiPage || (wikiPage.published === false && !(user && wikiPage.owner.user.id === user.id))) {
+      throw new NotFoundException('Wiki page not found');
+    }
+
+    return wikiPage;
+  }
+
+  async getRevisions(title: string, user?: UserInfo): Promise<WikiPageRevisionSummaryDto[]> {
+    const wikiPage = await this.getVisiblePageByTitle(title, user);
+    const rows: {
+      id: number;
+      createdAt: Date | string;
+      changeNote: string | null;
+      editor: string;
+      editorServer: string;
+      size: string | number;
+    }[] = await this.revisionRepo
+      .createQueryBuilder('rev')
+      .innerJoin('rev.editor', 'editor')
+      .innerJoin('editor.server', 'server')
+      .where('rev.wikiPageId = :id', { id: wikiPage.id })
+      .orderBy('rev.createdAt', 'DESC')
+      .addOrderBy('rev.id', 'DESC')
+      .select('rev.id', 'id')
+      .addSelect('rev.createdAt', 'createdAt')
+      .addSelect('rev.changeNote', 'changeNote')
+      .addSelect('editor.name', 'editor')
+      .addSelect('server.name', 'editorServer')
+      // LENGTH() is the byte length in MariaDB, matching revisionSize()
+      .addSelect('LENGTH(rev.content)', 'size')
+      .getRawMany();
+
+    return rows.map((row) => ({
+      id: Number(row.id),
+      createdAt: new Date(row.createdAt).getTime(),
+      editor: row.editor,
+      editorServer: row.editorServer,
+      changeNote: row.changeNote,
+      size: Number(row.size) || 0,
+    }));
+  }
+
+  async getRevision(title: string, revisionId: number, user?: UserInfo): Promise<WikiPageRevisionDto> {
+    const wikiPage = await this.getVisiblePageByTitle(title, user);
+    const rev = await this.revisionRepo.findOne({
+      where: { id: revisionId, wikiPage: { id: wikiPage.id } },
+      relations: ['editor', 'editor.server'],
+    });
+
+    if (!rev) {
+      throw new NotFoundException('Revision not found');
+    }
+
+    return {
+      id: rev.id,
+      wikiPageId: wikiPage.id,
+      createdAt: rev.createdAt.getTime(),
+      editor: rev.editor.name,
+      editorServer: rev.editor.server.name,
+      changeNote: rev.changeNote,
+      size: revisionSize(rev.content),
+      title: rev.title,
+      content: rev.content,
+    };
+  }
+
+  /** Restores revision `revisionId` onto the page and records that as a new revision. */
+  async restoreRevision(
+    title: string,
+    revisionId: number,
+    user: UserInfo,
+    changeNote?: string,
+    characterId?: number,
+  ): Promise<IdWrapper> {
+    return this.connection.transaction(async (em) => {
+      const wikiPage = await this.getVisiblePageByTitle(title, user, em);
+
+      if (!canEditWikiPage(wikiPage.editPermission, wikiPage.owner.id, user)) {
+        throw new ForbiddenException('You cannot edit this wiki page');
+      }
+
+      const rev = await em.getRepository(WikiPageRevision).findOne({
+        where: { id: revisionId, wikiPage: { id: wikiPage.id } },
+      });
+
+      if (!rev) {
+        throw new NotFoundException('Revision not found');
+      }
+
+      if (rev.title !== wikiPage.title) {
+        const clash = await em.getRepository(WikiPage).findOne({ where: { title: rev.title }, select: ['id'] });
+
+        if (clash && clash.id !== wikiPage.id) {
+          throw new BadRequestException('Another wiki page already uses the title of this revision');
+        }
+      }
+
+      const editorId = this.requireEditor(user, wikiPage.owner.id, characterId);
+      wikiPage.title = rev.title;
+      wikiPage.content = rev.content;
+      await em.getRepository(WikiPage).save(wikiPage);
+
+      const newRevision = await this.writeRevision(em, wikiPage, editorId, restoreChangeNote(rev.id, changeNote));
+      return { id: newRevision.id };
     });
   }
 }

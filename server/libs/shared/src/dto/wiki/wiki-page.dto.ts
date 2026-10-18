@@ -1,6 +1,6 @@
 import { EditPermission } from "@app/shared/enums/edit-permission.enum";
 import { Type } from "class-transformer";
-import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, MaxLength } from "class-validator";
 
 export class WikiPageDto {
 	@IsNumber()
@@ -47,6 +47,12 @@ export class WikiPageDto {
 	@IsBoolean()
 	@IsOptional()
 	published?: boolean;
+
+	// ER2 round 2: optional note stored with the revision written by this save. Write only.
+	@IsString()
+	@IsOptional()
+	@MaxLength(200)
+	changeNote?: string;
 
 	constructor(properties?: Readonly<WikiPageDto>) {
     if (properties) {

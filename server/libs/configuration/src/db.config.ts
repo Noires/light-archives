@@ -4,6 +4,8 @@ import { CommunityMembership } from '@app/entity/community-membership.entity';
 import { CommunityTag } from '@app/entity/community-tag.entity';
 import { Community } from '@app/entity/community.entity';
 import { VenueTag } from '@app/entity/venue-tag.entity';
+// ER2 round 2 (content features)
+import { WikiPageRevision } from '@app/entity';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import config from 'config';
 import { DbConfigInterface } from './interfaces/db-config.interface';
@@ -56,6 +58,8 @@ export const dbConfiguration: TypeOrmModuleOptions = {
     Violation,
     WikiPage,
     Weather,
+    // ER2 round 2 (content features)
+    WikiPageRevision,
   ],
   synchronize: dbConfig.synchronize,
   // Logging can be: true (all), false (none), or array of types: 'query', 'error', 'schema', 'warn', 'info', 'log', 'migration'

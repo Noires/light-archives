@@ -8,6 +8,8 @@ import { Role } from '@app/shared/enums/role.enum';
 import { BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { WikiMentionsDto } from '@app/shared/dto/wiki/wiki-mentions.dto';
 import { WikiPageListItemDto } from '@app/shared/dto/wiki/wiki-page-list-item.dto';
+import { WikiPageRevisionDto, WikiPageRevisionSummaryDto } from '@app/shared/dto/wiki/wiki-page-revision.dto';
+import { WikiRestoreRequestDto } from '@app/shared/dto/wiki/wiki-restore-request.dto';
 import { WikiService } from './wiki.service';
 
 @Controller('wiki')
@@ -24,6 +26,35 @@ export class WikiController {
 	@Get(':title/mentions')
 	async getWikiPageMentions(@Param('title') title: string): Promise<WikiMentionsDto> {
 		return this.wikiService.getWikiPageMentions(title);
+	}
+
+	// ER2 round 2: revision history (newest first), same visibility as the page
+	@Get(':title/revisions')
+	@UseGuards(OptionalJwtAuthGuard)
+	async getWikiPageRevisions(@Param('title') title: string, @CurrentUser() user?: UserInfo): Promise<WikiPageRevisionSummaryDto[]> {
+		return this.wikiService.getRevisions(title, user);
+	}
+
+	@Get(':title/revisions/:revisionId')
+	@UseGuards(OptionalJwtAuthGuard)
+	async getWikiPageRevision(
+		@Param('title') title: string,
+		@Param('revisionId', ParseIntPipe) revisionId: number,
+		@CurrentUser() user?: UserInfo,
+	): Promise<WikiPageRevisionDto> {
+		return this.wikiService.getRevision(title, revisionId, user);
+	}
+
+	// Same permission as editing; the restore is recorded as a new revision (its id is returned)
+	@Post(':title/revisions/:revisionId/restore')
+	@RoleRequired(Role.TRUSTED)
+	async restoreWikiPageRevision(
+		@Param('title') title: string,
+		@Param('revisionId', ParseIntPipe) revisionId: number,
+		@Body() request: WikiRestoreRequestDto,
+		@CurrentUser() user: UserInfo,
+	): Promise<IdWrapper> {
+		return this.wikiService.restoreRevision(title, revisionId, user, request?.changeNote, request?.characterId);
 	}
 
 	@Get('by-title/:title')
