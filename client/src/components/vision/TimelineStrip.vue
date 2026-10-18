@@ -498,7 +498,7 @@ export default class TimelineStrip extends Vue.with(Props) {
 	pointer-events: none;
 }
 
-// Label text uses --vision-on-danger: white on the light "now" red, deep
+// Label text uses --vision-on-now: white on the light "now" red, deep
 // violet on the dark pink (both AA).
 .vision-timeline__now-label {
 	position: absolute;
@@ -508,7 +508,7 @@ export default class TimelineStrip extends Vue.with(Props) {
 	padding: 1px 8px;
 	border-radius: 999px;
 	background-color: var(--vision-now);
-	color: var(--vision-on-danger);
+	color: var(--vision-on-now);
 	font-size: 11px;
 	font-weight: 700;
 	line-height: 16px;

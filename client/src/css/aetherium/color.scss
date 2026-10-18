@@ -55,6 +55,7 @@
 	--vision-cw-text:        #6B4C21;
 	--vision-cw-border:      rgba(186, 140, 60, 0.55);
 	--vision-now:            #C7484F;
+	--vision-on-now:         #FFFFFF;
 	--vision-card:           #FBF6EA;
 	--vision-focus-edge:     #2B2418;                  // outer edge so the aether ring reaches 3:1
 }
@@ -95,6 +96,7 @@ body.body--dark {
 	--vision-cw-text:        #F3D9A4;
 	--vision-cw-border:      rgba(243, 217, 164, 0.45);
 	--vision-now:            #FF8FA0;
+	--vision-on-now:         #150B23;
 	--vision-card:           #1F1130;
 	--vision-focus-edge:     transparent;              // #7FE6E2 already 8.35:1 on card
 }
