@@ -5,7 +5,7 @@ import { CommunityTag } from '@app/entity/community-tag.entity';
 import { Community } from '@app/entity/community.entity';
 import { VenueTag } from '@app/entity/venue-tag.entity';
 // ER2 round 2 (content features)
-import { Album, FreeCompanyApplication, WikiPageRevision } from '@app/entity';
+import { Album, FreeCompanyApplication, ImageCharacterTag, WikiPageRevision } from '@app/entity';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import config from 'config';
 import { DbConfigInterface } from './interfaces/db-config.interface';
@@ -61,6 +61,7 @@ export const dbConfiguration: TypeOrmModuleOptions = {
     // ER2 round 2 (content features)
     Album,
     FreeCompanyApplication,
+    ImageCharacterTag,
     WikiPageRevision,
   ],
   synchronize: dbConfig.synchronize,
