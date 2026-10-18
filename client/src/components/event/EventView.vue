@@ -64,7 +64,13 @@
           <p v-else class="event-view__muted">Der Veranstalter hat noch keine Beschreibung eingetragen.</p>
         </section>
 
-        <slot name="programme" />
+        <event-programme
+          v-if="programme.length"
+          class="event-view__section"
+          :items="programme"
+          :start-date-time="event.startDateTime"
+          :end-date-time="event.endDateTime"
+        />
 
         <section v-if="hasOocDetails" class="event-view__section" aria-labelledby="event-ooc">
           <h2 id="event-ooc" class="event-view__section-title">OOC-Hinweise</h2>
@@ -148,6 +154,7 @@
 <script lang="ts">
 import { BaseEventDto } from '@app/shared/dto/events/base-event.dto';
 import { EventLinkDto } from '@app/shared/dto/events/event-link.dto';
+import { EventProgrammeItemDto } from '@app/shared/dto/events/event-programme-item.dto';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
 import { getEventTypeIcon, getEventTypeLabel } from 'src/common/event-types';
@@ -157,12 +164,13 @@ import Breadcrumbs from 'components/vision/Breadcrumbs.vue';
 import HtmlViewer from '../common/HtmlViewer.vue';
 import LinkField from '../common/LinkField.vue';
 import EventLocationCard from './EventLocationCard.vue';
+import EventProgramme from './EventProgramme.vue';
 import { isAdultEvent, isEventLive, locationLabel, serverDateTime } from './event-display';
 
 // ER2-504 — event detail: hero (banner or gradient, left-to-right scrim,
 // glass date block, chips, Cinzel title, subline), then a two-column body.
-// Slots: `actions` (sticky bar under the hero), `programme` and
-// `attendees` (right rail).
+// Slots: `actions` (sticky bar under the hero) and `attendees` (right
+// rail). The programme timeline (ER2-506) renders from `event.programme`.
 
 type EventWithExtras = BaseEventDto & { seriesLabel?: string };
 
@@ -188,6 +196,7 @@ class Props {
     HtmlViewer,
     LinkField,
     EventLocationCard,
+    EventProgramme,
   },
 })
 export default class EventView extends Vue.with(Props) {
@@ -249,6 +258,10 @@ export default class EventView extends Vue.with(Props) {
       .replace(/<[^>]*>/g, '')
       .trim();
     return text.length > 0 && text.length <= 60 && !text.includes('\n') ? text : '';
+  }
+
+  get programme(): EventProgrammeItemDto[] {
+    return (this.event.programme || []).filter((item) => !!item && !!item.title);
   }
 
   get contentNotes(): string[] {
