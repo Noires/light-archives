@@ -9,12 +9,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import crypto from 'crypto';
 import { Connection, IsNull, Not, Repository } from 'typeorm';
 import { getVerifiedCharacter } from '../../../common/api-checks';
+import { excludeTestContentSql } from '../test-content.filter';
 import {
   buildWikiMentionLikePatterns,
   contentMentionsWikiTitle,
   WikiMentionItemDto,
   WikiMentionsDto,
 } from './wiki-mentions';
+
+/** ER2-609: entry of GET /wiki */
+export interface WikiPageListItemDto {
+  title: string;
+  updatedAt: number;
+}
 
 const MENTIONS_PER_TYPE = 10;
 // Candidates fetched per type before the exact match; keeps the query bounded.
@@ -33,6 +40,24 @@ export class WikiService {
   ) {}
 
   private readonly mentionsCache = new Map<string, { expiresAt: number; value: WikiMentionsDto }>();
+
+  /** ER2-609: published wiki pages, most recently edited first. */
+  async getWikiPageList(limit = 100): Promise<WikiPageListItemDto[]> {
+    const take = Math.min(Math.max(Math.floor(limit) || 100, 1), 500);
+    const wikiPages = await this.wikiPageRepo
+      .createQueryBuilder('wp')
+      .where('wp.published = :published', { published: true })
+      .andWhere(excludeTestContentSql('wp'))
+      .orderBy('wp.updatedAt', 'DESC')
+      .select(['wp.id', 'wp.title', 'wp.updatedAt'])
+      .limit(take)
+      .getMany();
+
+    return wikiPages.map((wikiPage) => ({
+      title: wikiPage.title,
+      updatedAt: wikiPage.updatedAt.getTime(),
+    }));
+  }
 
   /**
    * ER2-608: published stories, noticeboard items and visible events whose

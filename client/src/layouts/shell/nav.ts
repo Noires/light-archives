@@ -42,17 +42,20 @@ export const PRIMARY_AREAS: ShellNavArea[] = [
   { key: 'gallery', label: 'Galerie', to: '/gallery/screenshot', icon: 'photo_library', prefixes: ['/gallery/', '/image/'] },
 ];
 
-// There is no wiki index route (only /wiki/:title), so "Wiki" opens a menu:
-// a palette search plus the former "Wissenswertes" pages.
+// ER2-609: /wiki is the wiki index now. The top bar still renders "Wiki" as
+// a menu (ShellHeader.vue), so the index is the first of its links, next to
+// the former "Wissenswertes" pages; the mobile tile links
+// straight to /wiki.
 export const WIKI_AREA: ShellNavArea = {
   key: 'wiki',
   label: 'Wiki',
-  to: '/beginner-guide',
+  to: '/wiki',
   icon: 'menu_book',
-  prefixes: ['/wiki/', '/beginner-guide', '/rules', '/faq', '/about', '/changes'],
+  prefixes: ['/wiki', '/beginner-guide', '/rules', '/faq', '/about', '/changes'],
 };
 
 export const WIKI_LINKS: ShellNavLink[] = [
+  { label: 'Wiki-Übersicht', to: '/wiki', icon: 'menu_book' },
   { label: 'Anfängerguide', to: '/beginner-guide', icon: 'school' },
   { label: 'Regeln', to: '/rules', icon: 'gavel' },
   { label: 'FAQ', to: '/faq', icon: 'help_outline' },

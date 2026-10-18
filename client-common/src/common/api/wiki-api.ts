@@ -15,6 +15,12 @@ export interface WikiMentions {
   events: WikiMentionItem[];
 }
 
+/** ER2-609: one entry of GET /wiki */
+export interface WikiPageListItem {
+  title: string;
+  updatedAt: number;
+}
+
 export default class WikiAPI {
   private readonly transport: APITransport;
 
@@ -28,6 +34,11 @@ export default class WikiAPI {
 
   async getWikiPageByTitle(title: string): Promise<WikiPageDto> {
     return this.transport.tokenGet<WikiPageDto>(`by-title/${encodeURIComponent(title)}`);
+  }
+
+  /** ER2-609: published pages, most recently edited first. */
+  async getWikiPages(limit?: number): Promise<WikiPageListItem[]> {
+    return this.transport.get<WikiPageListItem[]>('', limit ? { limit } : undefined);
   }
 
   /** ER2-608: published stories, noticeboard items and events linking to the page (max. 10 each). */
