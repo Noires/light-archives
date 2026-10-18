@@ -147,6 +147,7 @@ export default class RecurringEventsCard extends Vue.with(Props) {
 
 <style lang="scss" scoped>
 .recurring__title {
+	text-align: left;
 	margin: 0 0 12px;
 	font-family: var(--font-display);
 	font-size: 17px;

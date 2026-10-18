@@ -20,7 +20,7 @@
         <q-td :props="props">
           <router-link :to="getLink(props.row)">
             <q-avatar round>
-              <img :src="props.row.avatar" />
+              <img :src="props.row.avatar" alt="" />
             </q-avatar>
           </router-link>
         </q-td>

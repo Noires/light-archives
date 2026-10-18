@@ -157,6 +157,7 @@ export default class StoryReactions extends Vue.with(Props) {
 }
 
 .story-reactions__title {
+  text-align: left;
   margin: 0 0 14px;
   font-family: var(--font-lore);
   font-style: italic;

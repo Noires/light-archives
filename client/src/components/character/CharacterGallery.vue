@@ -1,7 +1,7 @@
 <template>
   <div class="character-gallery">
     <section>
-      <h6>Galerie</h6>
+      <h6 aria-level="2">Galerie</h6>
         <template v-if="content.images && content.images.length > 0">
           <thumb-gallery :images="content.images" />
         </template>

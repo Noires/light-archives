@@ -305,6 +305,9 @@ body.body--dark .q-header.shell-bar {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 24px;
+  // viewport-fit=cover (index.template.html): keep clear of the notch in landscape.
+  padding-left: max(24px, env(safe-area-inset-left, 0px));
+  padding-right: max(24px, env(safe-area-inset-right, 0px));
   font-family: var(--font-ui);
 }
 

@@ -101,6 +101,8 @@
       </div>
     </section>
 
+    <!-- ER2-902: keeps the outline h1 > h2 > h3 (card titles) without a visible label. -->
+    <h2 class="vision-sr-only">Charakterliste</h2>
     <ul v-if="profiles.length > 0" class="characters-dir__grid">
       <li v-for="profile in profiles" :key="`${profile.server}-${profile.name}`">
         <directory-card

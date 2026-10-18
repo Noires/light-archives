@@ -2,7 +2,7 @@
     <q-page>
         <div class="weather-title-container">
           <div class="location-image">
-            <img :src="titleImageUrl" />
+            <img :src="titleImageUrl" alt="" />
           </div>
           <h2 class="title">Wettervorhersage</h2>
         </div>
@@ -22,7 +22,7 @@
                 <div class="weather-date">{{ index + 1 }}</div>
                 <div class="weather-info">
                   <div class="weather-image">
-                    <img :src="`../assets/weather/${weather.imageFileName}`" />
+                    <img :src="`../assets/weather/${weather.imageFileName}`" alt="" />
                   </div>
                   <div class="weather-name">{{ weather.name }}</div>
                 </div>
@@ -40,7 +40,7 @@
                 <div class="weather-date">{{ index + 1 }}</div>
                 <div class="weather-info">
                   <div class="weather-image">
-                    <img :src="`../assets/weather/${weather.imageFileName}`" />
+                    <img :src="`../assets/weather/${weather.imageFileName}`" alt="" />
                   </div>
                   <div class="weather-name">{{ weather.name }}</div>
                 </div>

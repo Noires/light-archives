@@ -108,6 +108,7 @@ Mirror of the Penpot `vision.*` set (UI_UX_VISION_REWORK_PLAN.md §3.1).
 | `--vision-cw-text`       | `#6B4C21` | `#F3D9A4` | content-warning label |
 | `--vision-cw-border`     | `rgba(186,140,60,.55)` | `rgba(243,217,164,.45)` | content-warning outline |
 | `--vision-now`           | `#C7484F` | `#FF8FA0` | timeline "Jetzt" marker, unread dot |
+| `--vision-on-now`        | `#FFFFFF` | `#150B23` | text on `--vision-now` (timeline "Jetzt" label; 4.7:1 / 8.8:1) |
 | `--vision-card`          | `#FBF6EA` | `#1F1130` | card surface (= `--surface-raised`) |
 | `--vision-focus-edge`    | `#2B2418` | `transparent` | 1 px outer edge of the focus ring (see below) |
 

@@ -33,7 +33,7 @@
           @update:model-value="load"
         >
           <template v-slot:append>
-            <q-btn v-if="currentUserId" flat round dense icon="person" @click="filterMine">
+            <q-btn v-if="currentUserId" flat round dense icon="person" aria-label="Meine Tickets" @click="filterMine">
               <q-tooltip>Meine Tickets</q-tooltip>
             </q-btn>
           </template>

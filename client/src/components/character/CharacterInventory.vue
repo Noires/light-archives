@@ -2,12 +2,12 @@
   <div class="character-inventory">
     <section>
       <template v-if="owner || !isEmpty(character.possession)">
-        <h6>Besitz</h6>
+        <h6 aria-level="2">Besitz</h6>
         <p v-if="isEmpty(character.possession)" class="character-inventory__empty">{{ emptyLabel }}</p>
         <html-viewer v-else :content="character.possession" />
       </template>
       <template v-if="owner || !isEmpty(character.specialitems)">
-        <h6>Besondere Gegenstände</h6>
+        <h6 aria-level="2">Besondere Gegenstände</h6>
         <p v-if="isEmpty(character.specialitems)" class="character-inventory__empty">{{ emptyLabel }}</p>
         <html-viewer v-else :content="character.specialitems" />
       </template>

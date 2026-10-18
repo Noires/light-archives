@@ -132,6 +132,8 @@
         </div>
 
         <template v-if="viewMode === 'liste'">
+          <!-- ER2-902: h1 > h2 > h3 (EmptyState title) outline. -->
+          <h2 v-if="listGroups.length === 0" class="vision-sr-only">Termine</h2>
           <empty-state
             v-if="listGroups.length === 0"
             icon="event_busy"
@@ -972,6 +974,7 @@ export default class PageEventCalendar extends Vue {
 }
 
 .page-events__day-title {
+  text-align: left;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -1024,6 +1027,7 @@ export default class PageEventCalendar extends Vue {
 }
 
 .page-events__card-title {
+  text-align: left;
   margin: 0 0 8px;
   font-family: var(--font-display);
   font-size: 17px;
@@ -1095,6 +1099,7 @@ export default class PageEventCalendar extends Vue {
 }
 
 .page-events__calendar-title {
+  text-align: left;
   margin: 0;
   font-family: var(--font-display);
   font-size: 22px;
@@ -1120,7 +1125,9 @@ export default class PageEventCalendar extends Vue {
 
 .page-events__cal-event {
   display: flex;
+  align-items: center;
   gap: 4px;
+  min-height: 24px; // ER2-903
   min-width: 0;
   padding: 2px 6px;
   border-left: 3px solid var(--rule-strong);
@@ -1160,6 +1167,7 @@ export default class PageEventCalendar extends Vue {
 
 .page-events__cal-more {
   align-self: flex-start;
+  min-height: 24px; // ER2-903
   padding: 0 6px;
   border: 0;
   background: transparent;

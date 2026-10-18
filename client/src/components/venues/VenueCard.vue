@@ -184,6 +184,7 @@ export default class VenueCard extends Vue.with(Props) {
 }
 
 .venue-card__title {
+  text-align: left;
   margin: 0;
   font-family: var(--font-display);
   font-size: 18px;

@@ -1,6 +1,6 @@
 <template>
   <q-page class="page-search">
-    <h2 class="regular-header-font">Suchergebnisse</h2>
+    <h1 class="regular-header-font page-search__title">Suchergebnisse</h1>
     <template v-if="!isEmpty">
       <p>Suchergebnisse für <strong>{{ query }}</strong>:</p>
       <q-card>
@@ -23,8 +23,9 @@
               <dl>
                 <template v-for="(result, index) in resultSet.results" :key="index">
                   <dt>
-                    <router-link v-if="result.image" :to="getPageLink(resultSet.type, result)">
-                      <img class="page-search__image gt-sm" :src="result.image.thumbUrl" :title="result.image.title" />
+                    <!-- Same target as the name link below: hidden from AT and the tab order. -->
+                    <router-link v-if="result.image" :to="getPageLink(resultSet.type, result)" tabindex="-1" aria-hidden="true">
+                      <img class="page-search__image gt-sm" :src="result.image.thumbUrl" :title="result.image.title" alt="" />
                     </router-link>
                     <router-link :to="getPageLink(resultSet.type, result)">{{ result.name }}</router-link> — {{ $display.formatDate(result.updatedAt) }}
                   </dt>
@@ -165,6 +166,15 @@ export default class PageSearch extends Vue {
 </script>
 
 <style lang="scss">
+// The page's h1, styled like the former global h2.
+.page-search__title {
+  margin: 0 0 24px;
+  font-size: var(--type-scale-5);
+  line-height: var(--lh-heading);
+  letter-spacing: 0;
+  text-align: center;
+}
+
 .page-search dt {
   font-size: 1.2em;
 }

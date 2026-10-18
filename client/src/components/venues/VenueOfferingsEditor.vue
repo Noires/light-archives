@@ -27,8 +27,8 @@
               <span class="offerings-editor__category-name" @click="cat.__editing = true">{{ cat.name || '(Ohne Name)' }}</span>
             </template>
             <div class="offerings-editor__category-actions">
-              <q-btn flat dense round icon="edit" size="sm" @click="cat.__editing = true" />
-              <q-btn flat dense round icon="delete" size="sm" color="negative" @click="removeCategory(catIdx)" />
+              <q-btn flat dense round icon="edit" size="sm" aria-label="Kategorie umbenennen" @click="cat.__editing = true" />
+              <q-btn flat dense round icon="delete" size="sm" color="negative" aria-label="Kategorie löschen" @click="removeCategory(catIdx)" />
             </div>
           </div>
 
@@ -60,8 +60,8 @@
                       <span class="offerings-editor__subcategory-name" @click="sub.__editing = true">{{ sub.name || '(Ohne Name)' }}</span>
                     </template>
                     <div class="offerings-editor__category-actions">
-                      <q-btn flat dense round icon="edit" size="sm" @click="sub.__editing = true" />
-                      <q-btn flat dense round icon="delete" size="sm" color="negative" @click="removeSubcategory(catIdx, subIdx)" />
+                      <q-btn flat dense round icon="edit" size="sm" aria-label="Unterkategorie umbenennen" @click="sub.__editing = true" />
+                      <q-btn flat dense round icon="delete" size="sm" color="negative" aria-label="Unterkategorie löschen" @click="removeSubcategory(catIdx, subIdx)" />
                     </div>
                   </div>
 
@@ -91,7 +91,7 @@
                             <div class="offerings-editor__offering-image">
                               <template v-if="off.imageUrl">
                                 <img :src="off.imageUrl" class="offerings-editor__offering-thumb" alt="Bild" />
-                                <q-btn flat dense icon="delete" color="negative" size="sm" @click="removeOfferingImage(off)" :loading="off.__imageLoading" />
+                                <q-btn flat dense icon="delete" color="negative" size="sm" aria-label="Bild entfernen" @click="removeOfferingImage(off)" :loading="off.__imageLoading" />
                               </template>
                               <template v-else>
                                 <div
@@ -132,8 +132,8 @@
                           <span v-if="off.price" class="offerings-editor__offering-price">{{ off.price }}</span>
                         </template>
                         <div class="offerings-editor__offering-actions">
-                          <q-btn flat dense round icon="edit" size="xs" @click="off.__expanded = !off.__expanded" />
-                          <q-btn flat dense round icon="delete" size="xs" color="negative" @click="removeOffering(sub.offerings, offIdx, off)" />
+                          <q-btn flat dense round icon="edit" size="sm" aria-label="Angebot bearbeiten" @click="off.__expanded = !off.__expanded" />
+                          <q-btn flat dense round icon="delete" size="sm" color="negative" aria-label="Angebot löschen" @click="removeOffering(sub.offerings, offIdx, off)" />
                         </div>
                       </div>
                     </template>
@@ -190,7 +190,7 @@
                       <div class="offerings-editor__offering-image">
                         <template v-if="off.imageUrl">
                           <img :src="off.imageUrl" class="offerings-editor__offering-thumb" alt="Bild" />
-                          <q-btn flat dense icon="delete" color="negative" size="sm" @click="removeOfferingImage(off)" :loading="off.__imageLoading" />
+                          <q-btn flat dense icon="delete" color="negative" size="sm" aria-label="Bild entfernen" @click="removeOfferingImage(off)" :loading="off.__imageLoading" />
                         </template>
                         <template v-else>
                           <q-btn
@@ -221,8 +221,8 @@
                     <span v-if="off.price" class="offerings-editor__offering-price">{{ off.price }}</span>
                   </template>
                   <div class="offerings-editor__offering-actions">
-                    <q-btn flat dense round icon="edit" size="xs" @click="off.__expanded = !off.__expanded" />
-                    <q-btn flat dense round icon="delete" size="xs" color="negative" @click="removeOffering(cat.offerings!, offIdx, off)" />
+                    <q-btn flat dense round icon="edit" size="sm" aria-label="Angebot bearbeiten" @click="off.__expanded = !off.__expanded" />
+                    <q-btn flat dense round icon="delete" size="sm" color="negative" aria-label="Angebot löschen" @click="removeOffering(cat.offerings!, offIdx, off)" />
                   </div>
                 </div>
               </template>

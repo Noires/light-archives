@@ -209,9 +209,11 @@ Lifts 2 px on hover when `to` is set; the title link covers the whole card.
 | `subtitle` | `string` (IM Fell italic) | `''` |
 | `meta` | `string` | `''` |
 
-Slots: `badges` (top right, next to the avatar), `default` (plain text below
-meta; sits under the card link), `tags`, `footer`. `badges`, `tags` and
-`footer` stay clickable above the card link.
+Slots: `avatar` (optional; replaces the avatar image or placeholder inside
+the 68 px frame, which clips it to the round or crest shape; 64 px content
+fits inside the 2 px border), `badges` (top right, next to the avatar),
+`default` (plain text below meta; sits under the card link), `tags`,
+`footer`. `badges`, `tags` and `footer` stay clickable above the card link.
 
 ```html
 <directory-card
@@ -224,6 +226,16 @@ meta; sits under the card link), `tags`, `footer`. `badges`, `tags` and
 >
   <template #badges><status-badge type="rp-ic" /></template>
   <template #tags><status-badge type="server" label="Alpha" /></template>
+</directory-card>
+```
+
+Free companies pass the layered Lodestone crest through the `avatar` slot:
+
+```html
+<directory-card avatar-shape="crest" placeholder-icon="shield" :title="fc.name" :to="link">
+  <template v-if="fc.crest && fc.crest.length" #avatar>
+    <free-company-crest :images="fc.crest" :size="64" />
+  </template>
 </directory-card>
 ```
 

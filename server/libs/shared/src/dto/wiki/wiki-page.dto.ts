@@ -28,6 +28,12 @@ export class WikiPageDto {
 	@IsOptional()
 	createdAt: number;
 
+	// ER2-607: read only (epoch millis), feeds "Zuletzt bearbeitet". Ignored on
+	// create and edit.
+	@IsNumber()
+	@IsOptional()
+	updatedAt?: number;
+
 	@IsString()
 	title: string;
 

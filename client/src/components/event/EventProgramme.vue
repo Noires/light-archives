@@ -93,6 +93,7 @@ export default class EventProgramme extends Vue.with(Props) {
 
 <style lang="scss" scoped>
 .event-programme__title {
+  text-align: left;
   margin: 0 0 14px;
   font-family: var(--font-display);
   font-size: 22px;

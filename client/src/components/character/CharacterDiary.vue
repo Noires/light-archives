@@ -1,7 +1,7 @@
 <template>
   <div class="character-diary">
     <section>
-      <h6>Tagebuch</h6>
+      <h6 aria-level="2">Tagebuch</h6>
       <div class="character-diary__list" v-if="content.stories.length > 0">
         <div v-for="story in content.stories" :key="story.id" class="character-diary__card mat-parchment">
           <router-link :to="getLink(story)" class="character-diary__card-link">

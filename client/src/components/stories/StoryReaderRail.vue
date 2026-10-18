@@ -149,6 +149,7 @@ export default class StoryReaderRail extends Vue.with(Props) {
 }
 
 .reader-rail__label {
+  text-align: left;
   margin: 0 0 10px;
   font-size: var(--type-scale-0);
   font-weight: 700;

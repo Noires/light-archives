@@ -613,6 +613,7 @@ $hero-ink-soft: rgba(255, 255, 255, 0.86);
 
 .event-view__section-title,
 .event-view__card-title {
+  text-align: left;
   margin: 0 0 12px;
   font-family: var(--font-display);
   font-size: 22px;

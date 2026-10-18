@@ -3,7 +3,7 @@
 			<q-card-section>
 				<template v-if="!editing">
 					<div class="flex">
-						<div class="my-image__thumb-column"><a class="thumb-link" :href="image.url" target="_blank"><img :src="image.thumbUrl" /></a></div>
+						<div class="my-image__thumb-column"><a class="thumb-link" :href="image.url" target="_blank"><img :src="image.thumbUrl" :alt="image.title || 'Bild in voller Größe öffnen'" /></a></div>
 						<div class="my-image__description-column">
 							<div>
 								<h5 v-if="image.category === ImageCategory.UNLISTED">Ungelistetes Bild</h5>

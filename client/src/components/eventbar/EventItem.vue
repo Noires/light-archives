@@ -41,7 +41,7 @@
               icon="event"
               :to="`/event/${event.id}`"
             />
-            <q-btn flat icon="expand_less" @click.stop="collapse" />
+            <q-btn flat icon="expand_less" aria-label="Einklappen" @click.stop="collapse" />
           </div>
           <dl>
             <dt><q-icon name="schedule" /> Beginn</dt>

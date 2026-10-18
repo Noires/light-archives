@@ -637,6 +637,7 @@ export default class PageVenue extends Vue {
   color: var(--ink-primary);
 
   h2 {
+    text-align: left;
     margin: 0 0 14px;
     font-family: var(--font-display);
     font-size: 22px;
@@ -711,6 +712,7 @@ export default class PageVenue extends Vue {
 }
 
 .page-venue__past-events-title {
+  text-align: left;
   margin-top: 24px !important;
 }
 </style>

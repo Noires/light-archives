@@ -1,25 +1,15 @@
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
+import type { WikiMentionItemDto, WikiMentionsDto } from '@app/shared/dto/wiki/wiki-mentions.dto';
+import type { WikiPageListItemDto } from '@app/shared/dto/wiki/wiki-page-list-item.dto';
 import { WikiPageDto } from '@app/shared/dto/wiki/wiki-page.dto';
 import APITransport from './api-transport';
 
-/** ER2-608: one entry of GET /wiki/:title/mentions (shape mirrors server wiki-mentions.ts) */
-export interface WikiMentionItem {
-  id: number;
-  title: string;
-  link: string;
-}
-
-export interface WikiMentions {
-  stories: WikiMentionItem[];
-  noticeboardItems: WikiMentionItem[];
-  events: WikiMentionItem[];
-}
-
+// Response types come from libs/shared (same files as the server wiki module).
+/** ER2-608: one entry of GET /wiki/:title/mentions */
+export type WikiMentionItem = WikiMentionItemDto;
+export type WikiMentions = WikiMentionsDto;
 /** ER2-609: one entry of GET /wiki */
-export interface WikiPageListItem {
-  title: string;
-  updatedAt: number;
-}
+export type WikiPageListItem = WikiPageListItemDto;
 
 export default class WikiAPI {
   private readonly transport: APITransport;

@@ -2,17 +2,17 @@
 	<q-dialog
 		:model-value="modelValue"
 		class="vision-palette-dialog"
+		:aria-labelledby="`${uid}-title`"
 		transition-show="fade"
 		transition-hide="fade"
 		@update:model-value="$emit('update:modelValue', $event)"
 		@show="onShow"
 		@hide="onHide"
 	>
+		<!-- QDialog renders role="dialog" + aria-modal on its root (labelled
+		     via aria-labelledby above), closes on Esc and refocuses the trigger. -->
 		<div
 			class="vision-palette"
-			role="dialog"
-			aria-modal="true"
-			:aria-labelledby="`${uid}-title`"
 			@keydown="onKeydown"
 		>
 			<h2 :id="`${uid}-title`" class="vision-palette__sr">Suche und Befehle</h2>

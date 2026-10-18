@@ -105,6 +105,7 @@ export default class RpActiveStrip extends Vue.with(Props) {
 }
 
 .rp-strip__title {
+	text-align: left;
 	margin: 0;
 	font-family: var(--font-display);
 	font-weight: 500;

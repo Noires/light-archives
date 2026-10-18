@@ -228,11 +228,11 @@ export default class WikiPageView extends Vue.with(Props) {
   }
 
   get updatedAt(): number {
-    return (this.wikiPage as WikiPageDto & { updatedAt?: number }).updatedAt || this.wikiPage.createdAt;
+    return this.wikiPage.updatedAt || this.wikiPage.createdAt;
   }
 
   get wasEdited(): boolean {
-    const updatedAt = (this.wikiPage as WikiPageDto & { updatedAt?: number }).updatedAt;
+    const updatedAt = this.wikiPage.updatedAt;
     return !!updatedAt && !!this.wikiPage.createdAt && updatedAt - this.wikiPage.createdAt > 60 * 1000;
   }
 
@@ -431,6 +431,7 @@ export default class WikiPageView extends Vue.with(Props) {
 }
 
 .wiki-page-view__rail-label {
+  text-align: left;
   margin: 0 0 8px;
   font-family: var(--font-ui);
   font-size: var(--type-scale-0);

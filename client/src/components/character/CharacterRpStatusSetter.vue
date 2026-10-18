@@ -40,7 +40,11 @@
 					dense
 					outlined
 				/>
-				<p class="rp-setter__hint">Der Status läuft danach von selbst ab.</p>
+				<p class="rp-setter__hint">
+					Der Status läuft danach von selbst ab (spätestens nach 6 Stunden). Gespeichert werden nur
+					Status, Ort und Ablaufzeit, ohne Verlauf; du kannst ihn jederzeit zurücksetzen.
+					<router-link class="rp-setter__privacy" to="/privacy-statement">Datenschutz</router-link>
+				</p>
 				<div class="rp-setter__actions">
 					<q-btn
 						v-if="current"

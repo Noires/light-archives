@@ -198,6 +198,7 @@ export default class VenueProfile extends Vue.with(Props) {
 }
 
 .venue-profile__heading {
+  text-align: left;
   margin: 0 0 14px;
   font-family: var(--font-display);
   font-size: 22px;
@@ -237,6 +238,7 @@ export default class VenueProfile extends Vue.with(Props) {
 }
 
 .venue-profile__card-title {
+  text-align: left;
   margin: 0 0 10px;
   font-family: var(--font-display);
   font-size: 17px;

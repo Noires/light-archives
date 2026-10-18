@@ -56,6 +56,15 @@ Optional kann eine Fehlerdiagnose ueber <strong>Sentry</strong> aktiviert werden
 
 Bei aktiver Fehlerdiagnose werden technische Ereignisdaten verarbeitet (z. B. Stacktraces, Browser-/Geraetekontext, Route ohne Query-Parameter). Zugangstoken, E-Mail-Adressen und Cookies sollen nicht uebertragen werden.
 
+#### e) RP-Status (freiwillig)
+
+Du kannst fuer einen deiner Charaktere freiwillig einen RP-Status setzen (z. B. "Im RP", "Sucht RP", "OOC"). Gespeichert werden nur der Status, ein optionaler Ort, den du selbst eintraegst, und der Zeitpunkt, zu dem der Status ablaeuft. Der Status ist auf dem Charakterprofil und in Uebersichten fuer andere sichtbar.
+
+Der Status laeuft automatisch nach der von dir gewaehlten Dauer ab, spaetestens nach 6 Stunden. Danach wird er weder angezeigt noch ausgewertet; die abgelaufenen Angaben bleiben nur in deinem Charakterdatensatz, bis du einen neuen Status setzt oder ihn zuruecksetzt. Ein Verlauf frueherer Status wird nicht gespeichert: ein neuer Status ersetzt den alten. Du kannst den Status jederzeit selbst zuruecksetzen; dabei werden Status, Ort und Ablaufzeit geloescht.
+
+<strong>Zweck:</strong> Anderen zeigen, dass dein Charakter gerade fuer Rollenspiel erreichbar ist.  
+<strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. b DSGVO (von dir gewuenschte Community-Funktion).
+
 ### 3) Empfaenger oder Kategorien von Empfaengern
 
 Empfaenger deiner Daten koennen sein:
@@ -75,6 +84,7 @@ Soweit keine speziellere Aufbewahrungspflicht gilt, speichern wir Daten nur so l
 * Server-Logs: derzeit bis zu 14 Tage
 * lokale Sitzungsdaten im Browser: derzeit bis zu 30 Tage (bzw. bis zur Loeschung durch dich)
 * Account-/Profildaten: bis zur Loeschung des Kontos bzw. soweit fuer den Betrieb erforderlich
+* RP-Status: sichtbar bis zum Ablauf (hoechstens 6 Stunden); gespeichert bis zum naechsten Setzen oder Zuruecksetzen; kein Verlauf
 * Einwilligungsstatus zur Fehlerdiagnose: bis Aenderung/Widerruf und darueber hinaus nur soweit fuer Nachweiszwecke erforderlich
 
 ### 6) Pflicht zur Bereitstellung von Daten

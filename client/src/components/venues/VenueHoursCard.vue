@@ -74,6 +74,7 @@ export default class VenueHoursCard extends Vue.with(Props) {
 }
 
 .venue-hours__title {
+  text-align: left;
   margin: 0;
   font-family: var(--font-display);
   font-size: 17px;

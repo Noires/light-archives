@@ -53,6 +53,7 @@ export default class GroupFacts extends Vue.with(Props) {
 }
 
 .group-facts__title {
+	text-align: left;
 	margin: 0 0 12px;
 	font-family: var(--font-display);
 	font-weight: 500;

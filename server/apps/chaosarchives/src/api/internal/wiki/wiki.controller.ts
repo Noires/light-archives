@@ -6,8 +6,9 @@ import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { WikiPageDto } from '@app/shared/dto/wiki/wiki-page.dto';
 import { Role } from '@app/shared/enums/role.enum';
 import { BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { WikiMentionsDto } from './wiki-mentions';
-import { WikiPageListItemDto, WikiService } from './wiki.service';
+import { WikiMentionsDto } from '@app/shared/dto/wiki/wiki-mentions.dto';
+import { WikiPageListItemDto } from '@app/shared/dto/wiki/wiki-page-list-item.dto';
+import { WikiService } from './wiki.service';
 
 @Controller('wiki')
 export class WikiController {

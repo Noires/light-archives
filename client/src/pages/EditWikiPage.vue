@@ -18,6 +18,12 @@
               $rules.required('Dieses Feld ist erforderlich.'),
             ]"
           />
+          <!-- ER2-810: draft flag (the API defaults new pages to published) -->
+          <q-toggle
+            :model-value="wikiPage.published !== false"
+            label="Veröffentlicht (sonst nur für dich sichtbar)"
+            @update:model-value="wikiPage.published = $event"
+          />
           <h6>Content *</h6>
           <html-editor v-model="wikiPage.content" />
           <section class="page-edit-wiki-page__license text-caption">

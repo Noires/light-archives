@@ -105,3 +105,31 @@
 			0 0 0 3px var(--vision-focus-edge);
 	}
 }
+
+// -----------------------------------------------------------------------------
+// ER2-903 — primary actions are at least 44 px tall on phones (WCAG 2.5.5
+// enhanced; everything else keeps Quasar's >= 24 px defaults).
+// -----------------------------------------------------------------------------
+@media (max-width: 599px) {
+	.q-btn.elpis-btn--primary,
+	.q-btn.elpis-btn--danger {
+		min-height: 44px;
+	}
+}
+
+// -----------------------------------------------------------------------------
+// Screen-reader-only text (ER2-902), e.g. a section heading that keeps the
+// heading outline without a visible label:
+//   <h2 class="vision-sr-only">Ergebnisse</h2>
+// -----------------------------------------------------------------------------
+.vision-sr-only {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	margin: -1px !important;
+	padding: 0 !important;
+	overflow: hidden !important;
+	clip: rect(0 0 0 0) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
+}
