@@ -242,3 +242,27 @@ export function sectionEnabled(section: CharacterSection, character: CharacterPr
 export function sectionPublic(section: CharacterSection, character: CharacterProfileDto, content: CharacterContentDto): boolean {
 	return sectionEnabled(section, character) && sectionHasContent(section.key, character, content);
 }
+
+export interface ProfileCompleteness {
+	percent: number;
+	missing: string[];
+}
+
+/** ER2-404 — share of the core profile parts the owner has filled in. */
+export function profileCompleteness(character: CharacterProfileDto): ProfileCompleteness {
+	const parts: { label: string; done: boolean }[] = [
+		{ label: 'Titel', done: hasText(character, 'title') },
+		{ label: 'Banner', done: !!character.banner },
+		{ label: 'Hintergrund', done: hasText(character, 'background') },
+		...FACTS.slice(0, 6).map((fact) => ({ label: fact.label, done: hasText(character, fact.key) })),
+		{ label: 'Aussehen', done: anyText(character, APPEARANCE_FIELDS) },
+		{ label: 'Persönlichkeit', done: anyText(character, PERSONALITY_FIELDS) },
+		{ label: 'Kontakte', done: anyText(character, CONTACT_FIELDS.map((f) => f.key)) },
+		{ label: 'Gerüchte', done: anyText(character, RUMOR_FIELDS.map((f) => f.key)) },
+	];
+	const done = parts.filter((part) => part.done).length;
+	return {
+		percent: Math.round((done / parts.length) * 100),
+		missing: parts.filter((part) => !part.done).map((part) => part.label),
+	};
+}

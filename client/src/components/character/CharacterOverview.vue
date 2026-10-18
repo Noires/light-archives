@@ -1,13 +1,48 @@
 <template>
 	<div class="character-overview">
+		<section v-if="isOwner" class="character-overview__completeness" aria-labelledby="co-completeness">
+			<div class="character-overview__completeness-text">
+				<h2 id="co-completeness" class="character-overview__completeness-title">Profil zu {{ completeness.percent }} % ausgefüllt</h2>
+				<p v-if="completeness.missing.length > 0" class="character-overview__card-text">
+					Es fehlen noch: {{ missingSummary }}
+				</p>
+				<p v-else class="character-overview__card-text">Alles da. Besucher sehen ein vollständiges Profil.</p>
+			</div>
+			<div
+				class="character-overview__meter"
+				role="progressbar"
+				aria-labelledby="co-completeness"
+				aria-valuemin="0"
+				aria-valuemax="100"
+				:aria-valuenow="completeness.percent"
+			>
+				<span class="character-overview__meter-fill" :style="{ width: `${completeness.percent}%` }"></span>
+			</div>
+			<q-btn
+				class="elpis-btn elpis-btn--secondary"
+				flat
+				no-caps
+				icon="edit"
+				label="Profil bearbeiten"
+				:to="editLink('profile')"
+			/>
+		</section>
+
 		<div class="character-overview__main">
-			<section v-if="facts.length > 0" class="character-overview__section" aria-labelledby="co-facts">
+			<section v-if="facts.length > 0 || missingFacts.length > 0" class="character-overview__section" aria-labelledby="co-facts">
 				<h2 id="co-facts" class="character-overview__heading">Auf einen Blick</h2>
 				<ul class="character-overview__facts">
 					<li v-for="fact in facts" :key="fact.key" class="character-overview__fact">
 						<q-icon class="character-overview__fact-icon" :name="fact.icon" aria-hidden="true" />
 						<span class="character-overview__fact-label">{{ fact.label }}</span>
 						<link-field class="character-overview__fact-value" :content="fact.value" />
+					</li>
+					<li v-for="fact in missingFacts" :key="fact.key" class="character-overview__fact-slot">
+						<router-link class="character-overview__fact character-overview__fact--add" :to="editLink('profile')">
+							<q-icon class="character-overview__fact-icon" name="add" aria-hidden="true" />
+							<span class="character-overview__fact-label">{{ fact.label }}</span>
+							<span class="character-overview__fact-value">Ergänzen</span>
+						</router-link>
 					</li>
 				</ul>
 			</section>
@@ -17,6 +52,17 @@
 				<div class="character-overview__background mat-parchment">
 					<html-viewer class="character-overview__prose" :content="character.background" />
 				</div>
+			</section>
+			<section v-else-if="isOwner" class="character-overview__section" aria-labelledby="co-background">
+				<h2 id="co-background" class="character-overview__heading">Hintergrund</h2>
+				<empty-state
+					variant="owner"
+					icon="history_edu"
+					title="Noch kein Hintergrund"
+					text="Woher kommt dein Charakter, und was hat ihn geprägt? Ein paar Absätze genügen."
+					action-label="Hintergrund schreiben"
+					:action-to="editLink('profile')"
+				/>
 			</section>
 
 			<iframe
@@ -48,6 +94,19 @@
 					:to="tabLink('tagebuch')"
 				>Alle {{ stories.length }} Einträge</router-link>
 			</section>
+			<section v-else-if="isOwner" class="character-overview__section" aria-labelledby="co-diary">
+				<h2 id="co-diary" class="character-overview__heading">Aus dem Tagebuch</h2>
+				<empty-state
+					variant="owner"
+					icon="auto_stories"
+					:title="enabled('tagebuch') ? 'Noch keine Tagebucheinträge' : 'Tagebuch ausgeblendet'"
+					:text="enabled('tagebuch')
+						? 'Halte fest, was dein Charakter erlebt hat. Der neueste Eintrag erscheint hier.'
+						: 'Besucher sehen dein Tagebuch erst, wenn du es im Editor einschaltest.'"
+					:action-label="enabled('tagebuch') ? 'Geschichte erstellen' : 'Einstellungen öffnen'"
+					:action-to="enabled('tagebuch') ? '/create-story' : editLink('diary')"
+				/>
+			</section>
 		</div>
 
 		<aside class="character-overview__rail" aria-label="Vorschau">
@@ -63,6 +122,16 @@
 					</figcaption>
 				</figure>
 			</section>
+			<empty-state
+				v-else-if="isOwner"
+				class="character-overview__rail-empty"
+				variant="owner"
+				icon="sms"
+				title="Gerüchte"
+				:text="enabled('geruechte') ? 'Was erzählt man sich über deinen Charakter?' : 'Für Besucher ausgeblendet.'"
+				action-label="Ergänzen"
+				:action-to="editLink('rumors')"
+			/>
 
 			<section v-if="showContacts" ref="contacts" class="character-overview__card" aria-labelledby="co-contacts">
 				<header class="character-overview__card-head">
@@ -82,6 +151,16 @@
 					{{ character.name }} hat Kontakte ohne Verlinkung eingetragen.
 				</p>
 			</section>
+			<empty-state
+				v-else-if="isOwner"
+				class="character-overview__rail-empty"
+				variant="owner"
+				icon="diversity_3"
+				title="Kontakte"
+				:text="enabled('kontakte') ? 'Verlinke Freunde, Familie und Rivalen mit [[Name]].' : 'Für Besucher ausgeblendet.'"
+				action-label="Ergänzen"
+				:action-to="editLink('contacts')"
+			/>
 
 			<section v-if="thumbs.length > 0" class="character-overview__card" aria-labelledby="co-gallery">
 				<header class="character-overview__card-head">
@@ -100,6 +179,16 @@
 					</a>
 				</div>
 			</section>
+			<empty-state
+				v-else-if="isOwner"
+				class="character-overview__rail-empty"
+				variant="owner"
+				icon="collections"
+				title="Galerie"
+				:text="enabled('galerie') ? 'Zeig deinen Charakter mit ein paar Bildern.' : 'Für Besucher ausgeblendet.'"
+				action-label="Ergänzen"
+				:action-to="editLink('gallery')"
+			/>
 		</aside>
 	</div>
 </template>
@@ -115,6 +204,7 @@ import { StorySummaryDto } from '@app/shared/dto/stories/story-summary.dto';
 import { wikify } from '@common/common/wikilinks';
 import { bindHoverCards } from 'components/vision/hover-card';
 import { Options, prop, Vue } from 'vue-class-component';
+import EmptyState from 'components/vision/EmptyState.vue';
 import HtmlViewer from '../common/HtmlViewer.vue';
 import LinkField from '../common/LinkField.vue';
 import { isEmptyFieldValue } from './empty-field';
@@ -126,6 +216,8 @@ import {
 	FactDef,
 	FACTS,
 	fieldText,
+	profileCompleteness,
+	ProfileCompleteness,
 	RUMOR_FIELDS,
 	sectionEnabled,
 	splitEntries,
@@ -168,6 +260,7 @@ class Props {
 @Options({
 	name: 'CharacterOverview',
 	components: {
+		EmptyState,
 		HtmlViewer,
 		LinkField,
 	},
@@ -188,7 +281,7 @@ export default class CharacterOverview extends Vue.with(Props) {
 	}
 
 	/** Preview sections follow the visitor switches of their tabs. */
-	private enabled(key: CharacterTabKey): boolean {
+	enabled(key: CharacterTabKey): boolean {
 		const section = CHARACTER_SECTIONS.find((s) => s.key === key);
 		return !!section && sectionEnabled(section, this.character);
 	}
@@ -201,6 +294,28 @@ export default class CharacterOverview extends Vue.with(Props) {
 		return FACTS
 			.map((def) => ({ ...def, value: fieldText(this.character, def.key) }))
 			.filter((fact) => !isEmptyFieldValue(fact.value));
+	}
+
+	/** ER2-404 — empty facts become dashed "Ergänzen" tiles for the owner. */
+	get missingFacts(): FactDef[] {
+		if (!this.isOwner) {
+			return [];
+		}
+		return FACTS.filter((def) => isEmptyFieldValue(fieldText(this.character, def.key)));
+	}
+
+	get completeness(): ProfileCompleteness {
+		return profileCompleteness(this.character);
+	}
+
+	get missingSummary(): string {
+		const missing = this.completeness.missing;
+		const shown = missing.slice(0, 4).join(', ');
+		return missing.length > 4 ? `${shown} und ${missing.length - 4} weitere` : shown;
+	}
+
+	editLink(editPath: string): string {
+		return `/edit-character/${this.character.id}/${editPath}`;
 	}
 
 	get hasBackground(): boolean {
@@ -341,6 +456,54 @@ export default class CharacterOverview extends Vue.with(Props) {
 	color: var(--ink-link);
 }
 
+// Owner: completeness ---------------------------------------------------------
+.character-overview__completeness {
+	grid-column: 1 / -1;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(160px, 280px) auto;
+	align-items: center;
+	gap: 12px 24px;
+	padding: 16px 20px;
+	border: 1px dashed var(--rule-strong);
+	border-radius: 12px;
+	background-color: var(--rule-tint);
+
+	@media (max-width: 767px) {
+		grid-template-columns: minmax(0, 1fr);
+		justify-items: start;
+	}
+}
+
+.character-overview__completeness-title {
+	margin: 0 0 2px;
+	font-family: var(--font-ui);
+	font-weight: 600;
+	font-size: 16px;
+	line-height: 22px;
+	color: var(--ink-primary);
+}
+
+.character-overview__meter {
+	position: relative;
+	width: 100%;
+	height: 8px;
+	overflow: hidden;
+	border-radius: 999px;
+	background-color: var(--rule-soft);
+}
+
+.character-overview__meter-fill {
+	display: block;
+	height: 100%;
+	border-radius: inherit;
+	background-color: var(--rule-strong);
+	transition: width var(--motion-slow) var(--ease-elpis);
+}
+
+.character-overview__rail-empty {
+	padding: 20px 16px;
+}
+
 // Fact tiles -----------------------------------------------------------------
 .character-overview__facts {
 	display: grid;
@@ -372,6 +535,36 @@ export default class CharacterOverview extends Vue.with(Props) {
 	border: 1px solid var(--rule-soft);
 	border-radius: 12px;
 	background-color: var(--vision-card);
+}
+
+.character-overview__fact-slot {
+	display: flex;
+}
+
+.character-overview__fact--add {
+	flex: 1 1 auto;
+	border-style: dashed;
+	border-color: var(--rule-strong);
+	background-color: transparent;
+	color: var(--ink-primary);
+	text-decoration: none;
+	transition: background-color var(--motion-fast) var(--ease-elpis);
+
+	.character-overview__fact-value {
+		color: var(--ink-link);
+		font-weight: 600;
+	}
+
+	&:hover {
+		background-color: var(--rule-tint);
+	}
+
+	&:focus-visible {
+		outline: none;
+		box-shadow:
+			0 0 0 2px var(--glow-aether),
+			0 0 0 3px var(--vision-focus-edge);
+	}
 }
 
 .character-overview__fact-icon {
