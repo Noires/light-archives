@@ -1,7 +1,8 @@
-// ER2-401 / ER2-410 — the router scrolls to the top on every navigation,
-// including a tab switch that only changes a param or the query. When the
-// reader has already scrolled past the page header, that hides the content
-// they asked for, so scroll back to just below the header afterwards.
+// ER2-401 / ER2-410 — a tab switch keeps the scroll position (the router's
+// scrollBehavior skips in-page navigations). When the reader has scrolled past
+// the page header, the new tab's content would start above the viewport, so
+// scroll back to just below the header. Used by the character, free company
+// and community pages.
 export function keepTabsInView(header: HTMLElement | null | undefined) {
 	if (!header) {
 		return;
@@ -11,6 +12,6 @@ export function keepTabsInView(header: HTMLElement | null | undefined) {
 	if (window.scrollY < target - 1) {
 		return;
 	}
-	// Runs after the router's own scroll-to-top.
+	// Runs after the new tab has rendered.
 	window.setTimeout(() => window.scrollTo({ top: target, left: 0 }), 0);
 }
