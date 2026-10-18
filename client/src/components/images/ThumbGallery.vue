@@ -5,10 +5,10 @@
 				<img :src="image.thumbUrl" :alt="image.title" />
 				<div v-if="image.title" class="thumb-gallery__caption">{{ image.title }}</div>
 			</a>
-			<div v-else class="thumb-gallery__image-wrapper thumb-link" @click="select(image)">
+			<button v-else type="button" class="thumb-gallery__image-wrapper thumb-link" :title="image.title" @click="select(image)">
 				<img :src="image.thumbUrl" :alt="image.title" />
 				<div v-if="image.title" class="thumb-gallery__caption">{{ image.title }}</div>
-			</div>
+			</button>
 		</div>
 	</div>
 </template>
@@ -36,10 +36,10 @@ export default class ThumbGallery extends Vue.with(Props) {
 	}
 
 	async openSlides(index: number) {
-		const ImageSlidesDialog = (await import('./ImageSlidesDialog.vue')).default;
+		const Lightbox = (await import('components/vision/Lightbox.vue')).default;
 
 		this.$q.dialog({
-			component: ImageSlidesDialog,
+			component: Lightbox,
 			componentProps: {
 				images: this.images,
 				initialIndex: index,
@@ -51,17 +51,18 @@ export default class ThumbGallery extends Vue.with(Props) {
 
 <style lang="scss">
 .thumb-gallery {
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	justify-content: center;
-	margin-right: -12px;
+	// ER2-703 — grid instead of a centred flex row: the last row stays
+	// left-aligned and tiles share the available width.
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: 12px;
 }
 
 .thumb-gallery__image-wrapper {
 	display: flex;
-	margin-right: 12px;
-	margin-bottom: 12px;
+	width: 100%;
+	aspect-ratio: 1 / 1;
+	padding: 0;
 	cursor: pointer;
 	position: relative;
 	border-radius: 6px;
@@ -69,10 +70,18 @@ export default class ThumbGallery extends Vue.with(Props) {
 	background: linear-gradient(135deg, rgba(24, 32, 48, 0.08), rgba(24, 32, 48, 0.02));
 	border: 1px solid var(--rule-gold-soft);
 	box-shadow: 0 6px 14px rgba(43, 36, 24, 0.08);
+	font: inherit;
 	transition:
 		transform var(--motion-fast) var(--ease-elpis),
 		border-color var(--motion-fast) var(--ease-elpis),
 		box-shadow var(--motion-fast) var(--ease-elpis);
+}
+
+.thumb-gallery__image-wrapper:focus-visible {
+	outline: none;
+	box-shadow:
+		0 0 0 2px var(--glow-aether),
+		0 0 0 3px var(--vision-focus-edge);
 }
 
 .thumb-gallery__image-wrapper:hover {
@@ -85,8 +94,8 @@ export default class ThumbGallery extends Vue.with(Props) {
 
 .thumb-gallery img {
 	background: #80a0c0;
-	width: 174px;
-	height: 174px;
+	width: 100%;
+	height: 100%;
 	display: block;
 	object-fit: cover;
 	transition:
@@ -138,34 +147,10 @@ export default class ThumbGallery extends Vue.with(Props) {
 	transform: translateY(0);
 }
 
-@media screen and (max-width: $breakpoint-sm) {
-	.thumb-gallery > div {
-		width: calc(((100% - 48px) / 4) + 12px);
-	}
-
-	.thumb-gallery img {
-		width: 100%;
-		height: auto;
-	}
-}
-
 @media screen and (max-width: $breakpoint-xs) {
 	.thumb-gallery {
-		margin-right: -6px;
-	}
-
-	.thumb-gallery__image-wrapper {
-		margin-right: 6px;
-		margin-bottom: 6px;
-	}
-
-	.thumb-gallery > div {
-		width: calc(((100% - 24px) / 4) + 6px);
-	}
-
-	.thumb-gallery img {
-		width: 100%;
-		height: auto;
+		grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+		gap: 6px;
 	}
 }
 
