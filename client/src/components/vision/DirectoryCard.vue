@@ -6,8 +6,11 @@
 		<div class="vision-dir-card__body">
 			<div class="vision-dir-card__head">
 				<span class="vision-dir-card__avatar" :class="`vision-dir-card__avatar--${avatarShape}`">
+					<!-- Optional custom avatar content, e.g. a layered FC crest
+					     (64 px fits inside the 68 px frame with its 2 px border). -->
+					<slot v-if="$slots.avatar" name="avatar" />
 					<img
-						v-if="avatarSrc"
+						v-else-if="avatarSrc"
 						class="vision-dir-card__avatar-img"
 						:src="avatarSrc"
 						:alt="avatarAlt || title"

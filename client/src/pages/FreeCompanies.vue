@@ -69,14 +69,14 @@
           :title="fc.name"
           :meta="`Sitz · ${fc.server} [Light]`"
         >
+          <template v-if="fc.crest && fc.crest.length" #avatar>
+            <free-company-crest :images="fc.crest" :size="64" />
+          </template>
           <template v-if="fc.recruiting" #badges>
             <status-badge type="open" label="Nimmt Mitglieder auf" />
           </template>
           <p v-if="fc.goal" class="fc-dir__goal">{{ fc.goal }}</p>
         </directory-card>
-        <!-- The Lodestone crest is several stacked layers, so it sits on top of
-             the card's single-image crest slot. Pointer events pass through. -->
-        <free-company-crest v-if="fc.crest && fc.crest.length" class="fc-dir__crest" :images="fc.crest" :size="64" />
       </li>
     </ul>
     <empty-state
@@ -326,24 +326,6 @@ export default class PageFreeCompanies extends Vue {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-// Sits exactly inside the DirectoryCard crest slot (104 px banner, -34 px
-// overlap, 16 px padding, 2 px border) and follows the card's hover lift.
-.fc-dir__crest {
-  position: absolute;
-  top: 72px;
-  left: 18px;
-  z-index: 1;
-  overflow: hidden;
-  border-radius: 10px 10px 32px 32px;
-  pointer-events: none;
-  transition: transform var(--motion-fast) var(--ease-elpis);
-}
-
-.fc-dir__item:hover .fc-dir__crest,
-.fc-dir__item:focus-within .fc-dir__crest {
-  transform: translateY(-2px);
 }
 
 .fc-dir__more {
