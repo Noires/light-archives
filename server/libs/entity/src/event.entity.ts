@@ -7,6 +7,7 @@ import { ContentNote } from './content-note.entity';
 import { EventLocation } from './event-location.entity';
 import { EventAnnouncement } from './event-announcement.entity';
 import { EventRegistration } from './event-registration.entity';
+import { EventSeries } from './event-series.entity';
 import { Image } from './image.entity';
 import { SearchFields } from './search-fields';
 
@@ -181,4 +182,11 @@ export class Event extends BasicEntity {
   @ManyToMany(() => ContentNote)
   @JoinTable()
   contentNotes: ContentNote[];
+
+  // ER2-804: optional recurring series this event belongs to
+  @ManyToOne(() => EventSeries, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  series: EventSeries | null;
 }

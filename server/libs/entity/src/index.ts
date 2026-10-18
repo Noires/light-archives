@@ -8,6 +8,7 @@ export { Event } from './event.entity';
 export { EventAnnouncement } from './event-announcement.entity';
 export { EventLocation } from './event-location.entity';
 export { EventRegistration } from './event-registration.entity';
+export { EventSeries } from './event-series.entity';
 export { FreeCompany } from './free-company.entity';
 export { FreeCompanyMemberPermission } from './free-company-member-permission.entity';
 export { Image } from './image.entity';
