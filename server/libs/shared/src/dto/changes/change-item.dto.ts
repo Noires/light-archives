@@ -13,4 +13,8 @@ export interface ChangeItemDto {
   happenedAt: number;
   createdAt: number;
   updatedAt: number;
+  // ER2 round 2 (optional): avatar of the author character
+  authorAvatar?: string;
+  /** profile avatar (profiles), image thumbnail (media), banner (venues) */
+  thumbnailUrl?: string;
 }
