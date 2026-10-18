@@ -45,8 +45,8 @@ import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 import { Options, prop, Vue } from 'vue-class-component';
 
 // ER2-306 — "Momente der Woche": one large tile, a 2×2 block and one large
-// tile from the newest screenshots and artwork. Tiles open the slides
-// dialog; without JavaScript they link to the image page.
+// tile from the newest screenshots and artwork. Tiles open the Lightbox;
+// without JavaScript they link to the image page.
 
 class Props {
 	images = prop<ImageSummaryDto[]>({ default: () => [] });
@@ -70,9 +70,9 @@ export default class HomeGalleryBand extends Vue.with(Props) {
 	}
 
 	async open(index: number) {
-		const ImageSlidesDialog = (await import('components/images/ImageSlidesDialog.vue')).default;
+		const Lightbox = (await import('components/vision/Lightbox.vue')).default;
 		this.$q.dialog({
-			component: ImageSlidesDialog,
+			component: Lightbox,
 			componentProps: {
 				images: this.tiles,
 				initialIndex: index,

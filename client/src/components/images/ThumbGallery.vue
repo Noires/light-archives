@@ -36,10 +36,10 @@ export default class ThumbGallery extends Vue.with(Props) {
 	}
 
 	async openSlides(index: number) {
-		const ImageSlidesDialog = (await import('./ImageSlidesDialog.vue')).default;
+		const Lightbox = (await import('components/vision/Lightbox.vue')).default;
 
 		this.$q.dialog({
-			component: ImageSlidesDialog,
+			component: Lightbox,
 			componentProps: {
 				images: this.images,
 				initialIndex: index,
