@@ -399,9 +399,9 @@ export default class CharacterOverview extends Vue.with(Props) {
 	}
 
 	async openImage(index: number) {
-		const ImageSlidesDialog = (await import('../images/ImageSlidesDialog.vue')).default;
+		const Lightbox = (await import('../vision/Lightbox.vue')).default;
 		this.$q.dialog({
-			component: ImageSlidesDialog,
+			component: Lightbox,
 			componentProps: {
 				images: this.images,
 				initialIndex: index,
