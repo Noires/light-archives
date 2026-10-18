@@ -40,6 +40,9 @@ client/src/css/aetherium/
 ├── motion.scss       ← easings, durations, prefers-reduced-motion guard
 ├── materials.scss    ← .mat-vellum / -aetherglass / -obsidian / -crystal / -parchment
 └── AETHERIUM.md      ← this file
+
+client/src/css/vision.scss   ← ER2 button hierarchy (.elpis-btn--*), imported last in app.scss
+client/src/components/vision/ ← ER2 shared components; see its README.md
 ```
 
 Import order is intentional. Materials reference colour and motion tokens, so
@@ -69,6 +72,95 @@ but `--semantic-success` is theme-shared).
 
 `--semantic-danger` is `#C7484F`. The legacy `#C10015` is **gone** — it failed
 AA on `--surface-pearl`. Don't reintroduce it.
+
+### Role aliases (`color.scss`, ER2-003)
+
+Theme-neutral names consumed by `components/vision/` and `css/vision.scss`.
+Each resolves per theme, so a component that uses them needs no
+`body.body--dark` override.
+
+| Token | Hydaelyn | Zodiark | Role |
+|---|---|---|---|
+| `--surface-raised` | `#FBF6EA` | `#1F1130` | card / panel surface (= vellum / lift) |
+| `--surface-glass`  | `rgba(251,246,234,.86)` | `rgba(21,11,35,.82)` | sticky bars, tab rails |
+| `--ink-primary`    | `#2B2418` | `#ECE3F7` | body + heading ink |
+| `--ink-muted`      | `#6E5F46` | `#B5A6CB` | meta, leads, inactive tabs (Zodiark value is new) |
+| `--ink-link`       | `#8A5A14` | `#C19BFF` | links, ghost buttons, eyebrows |
+| `--rule-strong`    | `#9C7A3C` | `#8F72D6` | active-tab underline, secondary border, avatar ring |
+| `--rule-soft`      | `rgba(186,155,91,.28)` | `rgba(107,79,168,.32)` | hairlines, card borders |
+| `--rule-tint`      | `rgba(186,155,91,.14)` | `rgba(193,155,255,.10)` | hover fill, neutral chip fill |
+
+### Vision tokens (`color.scss`, ER2-003)
+
+Mirror of the Penpot `vision.*` set (UI_UX_VISION_REWORK_PLAN.md §3.1).
+
+| Token | Hydaelyn | Zodiark | Use |
+|---|---|---|---|
+| `--vision-primary`       | `#DDB476` | `#C19BFF` | primary button, active chip, active tab count |
+| `--vision-on-primary`    | `#2B2418` | `#150B23` | text on primary |
+| `--vision-primary-hover` | `#E8C68E` | `#D2B6FF` | primary hover |
+| `--vision-danger`        | `#B3363E` | `#F08A93` | destructive actions |
+| `--vision-on-danger`     | `#FFFFFF` | `#150B23` | text on danger |
+| `--vision-live`          | `#2E7D4F` | `#6EDCA8` | live dot, live bar |
+| `--vision-live-bg`       | `rgba(46,125,79,.12)` | `rgba(110,220,168,.14)` | Live / Geöffnet / Im RP pill |
+| `--vision-live-text`     | `#256A42` | `#6EDCA8` | label on `--vision-live-bg` (added: `#2E7D4F` reaches only 4.02:1 there) |
+| `--vision-cw-bg`         | `rgba(229,178,94,.16)` | `rgba(243,217,164,.10)` | content-warning pill |
+| `--vision-cw-text`       | `#6B4C21` | `#F3D9A4` | content-warning label |
+| `--vision-cw-border`     | `rgba(186,140,60,.55)` | `rgba(243,217,164,.45)` | content-warning outline |
+| `--vision-now`           | `#C7484F` | `#FF8FA0` | timeline "Jetzt" marker, unread dot |
+| `--vision-card`          | `#FBF6EA` | `#1F1130` | card surface (= `--surface-raised`) |
+| `--vision-focus-edge`    | `#2B2418` | `transparent` | 1 px outer edge of the focus ring (see below) |
+
+**Contrast (WCAG 2.1, alpha tokens composited over `--vision-card`).**
+Text pairs need 4.5:1, non-text indicators 3:1.
+
+| Pair | Hydaelyn | Zodiark | Result |
+|---|---|---|---|
+| on-primary / primary          | 7.94 | 8.51 | AA (AAA) |
+| on-primary / primary-hover    | 9.43 | 10.76 | AA (AAA) |
+| on-danger / danger            | 5.98 | 7.94 | AA |
+| live-text / live-bg           | 5.19 | 8.01 | AA |
+| live / card (dot, bar)        | 4.68 | 10.55 | AA non-text |
+| cw-text / cw-bg               | 6.65 | 10.35 | AA |
+| cw-text / cw-bg on page       | 6.31 | 12.24 | AA |
+| now / card (marker)           | 4.36 | 8.20 | AA non-text |
+| danger / card (button edge)   | 5.54 | 7.42 | AA non-text |
+| ink-primary / card            | 14.23 | 14.31 | AAA |
+| ink-muted / card              | 5.75 | 7.86 | AA |
+| ink-muted / rule-tint         | 5.14 | 6.63 | AA |
+| ink-link / card               | 5.48 | 7.96 | AA |
+| ink-link / rule-tint          | 4.90 | 6.71 | AA |
+| rule-strong / card            | 3.70 | 4.70 | AA non-text |
+| glow-aether / card            | 1.36 | 8.35 | see note |
+
+Notes:
+- `--vision-primary` against the card is 1.79:1 in Hydaelyn. The button is
+  identified by its label (WCAG 1.4.11 does not require a fill boundary), so
+  this is accepted; do not use the primary fill alone as a state indicator.
+- `--vision-cw-border` (1.70:1 in Hydaelyn) is decorative; the CW badge
+  carries a warning icon and text.
+- The focus ring is 2 px `--glow-aether` plus a 1 px `--vision-focus-edge`.
+  The aether cyan alone is 1.36:1 on parchment; the dark edge brings the ring
+  to 14:1 in Hydaelyn. In Zodiark the edge is transparent.
+
+Recompute with any WCAG calculator if a value changes; keep this table in
+the same commit as the token edit.
+
+### Vision button hierarchy (`css/vision.scss`, ER2-004)
+
+Loaded once at the end of `app.scss`. Apply to `q-btn`:
+
+```html
+<q-btn class="elpis-btn elpis-btn--primary" label="Speichern" />
+<q-btn class="elpis-btn elpis-btn--secondary" label="Abbrechen" />
+<q-btn class="elpis-btn elpis-btn--ghost" label="Mehr" />
+<q-btn class="elpis-btn elpis-btn--danger" label="Löschen" />
+```
+
+Shared: 8 px radius, `--font-ui` 600 14 px, sentence case, focus ring as
+above, disabled opacity .42. `vision.scss` also removes Quasar's default
+uppercase from every `.q-btn`. Use `flat` / `unelevated` props freely; the
+classes override fill and text colour.
 
 ### Spacing (`space.scss`)
 
