@@ -1,4 +1,4 @@
-import { Image, Venue, VenueMembership, VenueOffering, VenueOfferingCategory } from '@app/entity';
+import { Image, Venue, VenueMembership, VenueOffering, VenueOfferingCategory, VenueOpeningException, VenueOpeningHours } from '@app/entity';
 import SharedConstants from '@app/shared/SharedConstants';
 import { Module } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
@@ -7,10 +7,19 @@ import { ImagesModule } from '../images/images.module';
 import { StorageService } from '../images/storage.service';
 import { VenuesController } from './venues.controller';
 import { VenuesService } from './venues.service';
+import { VenueOpeningHoursService } from './venue-opening-hours.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Venue, VenueMembership, VenueOfferingCategory, VenueOffering, Image]),
+    TypeOrmModule.forFeature([
+      Venue,
+      VenueMembership,
+      VenueOfferingCategory,
+      VenueOffering,
+      VenueOpeningHours,
+      VenueOpeningException,
+      Image,
+    ]),
     MulterModule.registerAsync({
       useFactory: () => ({
         limits: {
@@ -21,7 +30,7 @@ import { VenuesService } from './venues.service';
     ImagesModule,
   ],
   controllers: [VenuesController],
-  providers: [VenuesService, StorageService],
-  exports: [VenuesService],
+  providers: [VenuesService, VenueOpeningHoursService, StorageService],
+  exports: [VenuesService, VenueOpeningHoursService],
 })
 export class VenuesModule {}

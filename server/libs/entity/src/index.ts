@@ -30,6 +30,8 @@ export { Venue } from './venue.entity';
 export { VenueMembership } from './venue-membership.entity';
 export { VenueOfferingCategory } from './venue-offering-category.entity';
 export { VenueOffering } from './venue-offering.entity';
+export { VenueOpeningException } from './venue-opening-exception.entity';
+export { VenueOpeningHours } from './venue-opening-hours.entity';
 export { VenueTag } from './venue-tag.entity';
 export { Violation } from './violation.entity';
 export { Weather } from './weather.entity';

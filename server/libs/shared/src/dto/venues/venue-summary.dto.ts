@@ -1,6 +1,8 @@
 import { HousingArea } from "@app/shared/enums/housing-area.enum";
+import { VenueOpeningStatusDto } from "./venue-opening-hours.dto";
 
-export interface VenueSummaryDto {
+// ER2-805: openNow / opensAt / closesAt / openingHours / openingHoursDerived are optional
+export interface VenueSummaryDto extends VenueOpeningStatusDto {
 	id: number;
 	name: string;
 	server: string;

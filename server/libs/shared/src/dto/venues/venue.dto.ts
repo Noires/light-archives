@@ -9,6 +9,7 @@ import { EventIconDto } from '../events/event-icon.dto';
 import { EventLinkDto } from '../events/event-link.dto';
 import { EventType } from '../../enums/event-type.enum';
 import { VenueOfferingsDto } from './venue-offering.dto';
+import { VenueOpeningHoursSlotDto } from './venue-opening-hours.dto';
 import { VenueStaffMemberDto } from './venue-staff-member.dto';
 
 export class VenueDto {
@@ -275,6 +276,22 @@ export class VenueDto {
 
   @IsOptional()
   offerings?: VenueOfferingsDto;
+
+  // ER2-805 (read only, optional). Edit via PUT /venues/:id/opening-hours.
+  @IsOptional()
+  openNow?: boolean;
+
+  @IsOptional()
+  opensAt?: string;
+
+  @IsOptional()
+  closesAt?: string;
+
+  @IsOptional()
+  openingHours?: VenueOpeningHoursSlotDto[];
+
+  @IsOptional()
+  openingHoursDerived?: boolean;
 
 	constructor(properties?: Readonly<VenueDto>) {
     if (properties) {

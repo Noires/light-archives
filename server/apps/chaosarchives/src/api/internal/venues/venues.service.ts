@@ -31,6 +31,7 @@ import { Contains } from '../../../common/db';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import { ImagesService } from '../images/images.service';
 import { StorageService } from '../images/storage.service';
+import { VenueOpeningHoursService } from './venue-opening-hours.service';
 import { hashFile } from '@app/security';
 
 const HOUSING_AREA_LABELS: Record<HousingArea, string> = {
@@ -52,7 +53,14 @@ export class VenuesService {
     private connection: Connection,
     private imagesService: ImagesService,
     private storageService: StorageService,
+    private openingHoursService: VenueOpeningHoursService,
   ) {}
+
+  // ER2-805: attach the computed opening status (optional fields) to summaries
+  private async toVenueSummaryDtos(venues: Venue[]): Promise<VenueSummaryDto[]> {
+    const statuses = await this.openingHoursService.getOpeningStatuses(venues);
+    return venues.map((venue) => ({ ...this.toVenueSummaryDto(venue), ...(statuses.get(venue.id) || {}) }));
+  }
 
 	async getVenues(filter: { characterId?: number, limit?: number }): Promise<VenueSummaryDto[]> {
 		const myVenues = await this.venueRepo.find({
@@ -62,7 +70,7 @@ export class VenuesService {
 			take: filter.limit || undefined,
 		});
 
-		return myVenues.map(venue => this.toVenueSummaryDto(venue));
+		return this.toVenueSummaryDtos(myVenues);
 	}
 
   async getEditableVenues(user: UserInfo): Promise<VenueSummaryDto[]> {
@@ -94,7 +102,7 @@ export class VenuesService {
       uniqueVenues.set(venue.id, venue);
     }
 
-    return Array.from(uniqueVenues.values()).map((venue) => this.toVenueSummaryDto(venue));
+    return this.toVenueSummaryDtos(Array.from(uniqueVenues.values()));
   }
 
   async searchVenues(query: string, server?: string): Promise<VenueSummaryDto[]> {
@@ -118,7 +126,7 @@ export class VenuesService {
       take: 10,
     });
 
-    return venues.map((venue) => this.toVenueSummaryDto(venue));
+    return this.toVenueSummaryDtos(venues);
   }
 
 	private toVenueSummaryDto(venue: Venue): VenueSummaryDto {
@@ -390,7 +398,10 @@ export class VenuesService {
       await this.imagesService.ensureIconThumb(eventIcon);
     }
 
+    const openingStatus = (await this.openingHoursService.getOpeningStatuses([venue])).get(venue.id) || {};
+
 		return {
+      ...openingStatus,
 			id: venue.id,
 			mine: !!venue.owner && !!user && userCharacterIds.includes(venue.owner!.id),
       membershipStatus,
