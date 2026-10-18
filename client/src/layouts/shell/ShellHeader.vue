@@ -19,43 +19,16 @@
           {{ area.label }}
         </router-link>
 
-        <button
-          type="button"
-          class="shell-bar__nav-item shell-bar__nav-trigger"
+        <router-link
+          :to="wikiArea.to"
+          class="shell-bar__nav-item"
           :class="{ 'shell-bar__nav-item--active': isActive(wikiArea) }"
-          aria-haspopup="menu"
-          :aria-expanded="wikiMenuOpen ? 'true' : 'false'"
+          active-class=""
+          exact-active-class=""
+          :aria-current="isActive(wikiArea) ? 'page' : undefined"
         >
           {{ wikiArea.label }}
-          <q-icon name="expand_more" size="16px" aria-hidden="true" />
-          <q-menu
-            v-model="wikiMenuOpen"
-            anchor="bottom left"
-            self="top left"
-            :offset="[0, 6]"
-            class="shell-menu"
-          >
-            <q-list dense class="shell-menu__list">
-              <q-item clickable v-close-popup class="shell-menu__item" @click="$emit('open-search')">
-                <q-item-section avatar><q-icon name="search" size="18px" /></q-item-section>
-                <q-item-section>Im Wiki suchen</q-item-section>
-              </q-item>
-              <q-separator class="shell-menu__sep" />
-              <q-item
-                v-for="link in wikiLinks"
-                :key="link.to"
-                clickable
-                v-close-popup
-                :to="link.to"
-                class="shell-menu__item"
-                active-class="shell-menu__item--active"
-              >
-                <q-item-section avatar><q-icon :name="link.icon" size="18px" /></q-item-section>
-                <q-item-section>{{ link.label }}</q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-        </button>
+        </router-link>
 
         <button
           type="button"
@@ -200,6 +173,7 @@ import {
   MORE_GROUPS,
   PRIMARY_AREAS,
   ShellNavArea,
+  ShellNavGroup,
   WIKI_AREA,
   WIKI_LINKS,
   isAreaActive,
@@ -207,8 +181,8 @@ import {
 } from './nav';
 import { shellTheme, themeAriaLabel, themeIcon, themeTooltip, toggleShellTheme } from './theme-state';
 
-// ER2-201 — compact top bar: logo, seven primary areas (the seventh, Wiki,
-// is a menu because there is no wiki index route), "Mehr", search pill,
+// ER2-201 — compact top bar: logo, seven primary areas (Wiki links to the
+// /wiki index), "Mehr", search pill,
 // notifications slot, theme toggle and the account pill (UserMenu in a
 // q-menu). Emits `open-search` for the command palette. The nav model lives
 // in ./nav.ts. Unscoped styles: the q-menu content is teleported.
@@ -225,7 +199,6 @@ import { shellTheme, themeAriaLabel, themeIcon, themeTooltip, toggleShellTheme }
     '$route.fullPath'() {
       const self = this as ShellHeader;
       self.accountMenuOpen = false;
-      self.wikiMenuOpen = false;
       self.moreMenuOpen = false;
     },
   },
@@ -233,10 +206,13 @@ import { shellTheme, themeAriaLabel, themeIcon, themeTooltip, toggleShellTheme }
 export default class ShellHeader extends Vue {
   readonly primaryAreas = PRIMARY_AREAS;
   readonly wikiArea = WIKI_AREA;
-  readonly wikiLinks = WIKI_LINKS;
-  readonly moreGroups = MORE_GROUPS;
+  // ER2-609 follow-up: Wiki is a plain link to /wiki now; the former
+  // "Wissenswertes" pages move into the Mehr menu.
+  readonly moreGroups: ShellNavGroup[] = [
+    ...MORE_GROUPS,
+    { key: 'knowledge', label: 'Wissenswertes', links: WIKI_LINKS.filter((link) => link.to !== '/wiki') },
+  ];
 
-  wikiMenuOpen = false;
   moreMenuOpen = false;
   accountMenuOpen = false;
 

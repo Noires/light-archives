@@ -42,10 +42,8 @@ export const PRIMARY_AREAS: ShellNavArea[] = [
   { key: 'gallery', label: 'Galerie', to: '/gallery/screenshot', icon: 'photo_library', prefixes: ['/gallery/', '/image/'] },
 ];
 
-// ER2-609: /wiki is the wiki index now. The top bar still renders "Wiki" as
-// a menu (ShellHeader.vue), so the index is the first of its links, next to
-// the former "Wissenswertes" pages; the mobile tile links
-// straight to /wiki.
+// ER2-609: /wiki is the wiki index; the top bar links "Wiki" there and lists
+// the former "Wissenswertes" pages (WIKI_LINKS minus the index) under "Mehr".
 export const WIKI_AREA: ShellNavArea = {
   key: 'wiki',
   label: 'Wiki',
