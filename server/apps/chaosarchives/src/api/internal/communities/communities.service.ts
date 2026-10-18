@@ -2,7 +2,7 @@ import { UserInfo } from '@app/auth/model/user-info';
 import { Character, Community, CommunityMembership, CommunityTag, Image } from '@app/entity';
 import { CharacterIdWrapper } from '@app/shared/dto/common/character-id-wrapper.dto';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
-import { CommunityMemberDto } from '@app/shared/dto/communities/community-member.dto';
+import { communityRole, CommunityMemberDto } from '@app/shared/dto/communities/community-member.dto';
 import { CommunitySummaryDto } from '@app/shared/dto/communities/community-summary.dto';
 import { CommunityDto } from '@app/shared/dto/communities/community.dto';
 import { MemberFlagsDto } from '@app/shared/dto/communities/member-flags.dto';
@@ -19,6 +19,7 @@ import { Connection, EntityManager, FindOneOptions, IsNull, Not, Repository } fr
 import { assertUserCharacterId, checkCarrdProfile, getVerifiedCharacter } from '../../../common/api-checks';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import { ImagesService } from '../images/images.service';
+import { loadGroupSummaryExtras } from '../../../common/group-summary';
 
 @Injectable()
 export class CommunitiesService {
@@ -93,6 +94,8 @@ export class CommunitiesService {
         'membership.status',
         'membership.canEdit',
         'membership.canManageMembers',
+        'community.id',
+        'owner.id',
       ])
       .getMany();
 
@@ -104,6 +107,12 @@ export class CommunitiesService {
       status: membership.status,
       canEdit: membership.canEdit,
       canManageMembers: membership.canManageMembers,
+      role: communityRole(
+        membership.community.owner.id === membership.character.id,
+        membership.status,
+        membership.canEdit,
+        membership.canManageMembers,
+      ),
     }));
   }
 
@@ -118,7 +127,12 @@ export class CommunitiesService {
     }
 
     const communities = await query.getMany();
-    return communities.map((community) => this.toCommunitySummary(community));
+    const extras = await loadGroupSummaryExtras(
+      this.connection.manager,
+      'community',
+      communities.map((community) => community.id),
+    );
+    return communities.map((community) => ({ ...this.toCommunitySummary(community), ...extras.get(community.id) }));
   }
 
   private toCommunitySummary(community: Community): CommunitySummaryDto {

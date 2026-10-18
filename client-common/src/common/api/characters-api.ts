@@ -1,5 +1,6 @@
 import { AddCharacterRequestDto } from '@app/shared/dto/characters/add-character-request.dto';
 import { CharacterContentDto } from '@app/shared/dto/characters/character-content.dto';
+import type { CharacterLookupNameDto, CharacterLookupResultDto } from '@app/shared/dto/characters/character-lookup.dto';
 import { CharacterProfileFilterDto } from '@app/shared/dto/characters/character-profile-filter.dto';
 import { CharacterProfileDto } from '@app/shared/dto/characters/character-profile.dto';
 import { CharacterRefreshResultDto } from '@app/shared/dto/characters/character-refresh-result.dto';
@@ -88,5 +89,14 @@ export default class CharactersAPI {
 
   async getMyContent(characterId: number): Promise<MyContentDto> {
     return this.transport.authGet<MyContentDto>(`${characterId}/my-content`);
+  }
+
+  /**
+   * ER2 round 2: profile cards for names from [[wikilinks]] (max. 50). Names match
+   * case-insensitively (underscores = spaces, `[[Name|Text]]` accepted); unmatched
+   * names are left out, `query` echoes the requested name.
+   */
+  async lookupCharacters(names: CharacterLookupNameDto[]): Promise<CharacterLookupResultDto[]> {
+    return this.transport.post<CharacterLookupResultDto[]>('lookup', { names });
   }
 }

@@ -32,6 +32,9 @@ import { RpStatusRequestDto } from '@app/shared/dto/characters/rp-status-request
 import { computeRpStatusExpiry, normalizeRpLocation, resolveRpPresence, RpPresence } from '@app/shared/presence';
 import { LodestoneService } from '../lodestone/lodestone.service';
 import { normalizeAccentColor, normalizePlayStyleTags } from '@app/shared/validation/profile-fields';
+import { CharacterLookupRequestDto, CharacterLookupResultDto } from '@app/shared/dto/characters/character-lookup.dto';
+import { communityRole, CommunityRole } from '@app/shared/dto/communities/community-member.dto';
+import { lookupKey, normalizeLookupName, pickLookupMatch, profileLink } from './character-lookup';
 
 @Injectable()
 export class CharactersService {
@@ -480,6 +483,11 @@ export class CharactersService {
 			.orderBy('character.name', 'ASC')
 			.innerJoinAndSelect('character.server', 'server')
 			.select([
+        'character.id',
+        'character.title',
+        'character.updatedAt',
+        'character.accentColor',
+        'character.playStyleTags',
         'character.name',
         'character.profession',
         'character.race',
@@ -537,6 +545,11 @@ export class CharactersService {
     }
     
     const characters = await query.getMany();
+    const characterIds = characters.map((character) => character.id);
+    const [bannerUrls, roles] = await Promise.all([
+      this.getBannerUrls(characterIds),
+      filter.communityId ? this.getCommunityRoles(filter.communityId, characterIds) : Promise.resolve(new Map<number, CommunityRole>()),
+    ]);
 
 		return {
       total,
@@ -548,9 +561,132 @@ export class CharactersService {
 				avatar: character.avatar,
 				server: character.server.name,
         ...this.getRpPresence(character),
+        // ER2 round 2
+        id: character.id,
+        bannerUrl: bannerUrls.get(character.id) || null,
+        title: character.title || null,
+        lastActiveAt: character.updatedAt ? character.updatedAt.getTime() : undefined,
+        playStyleTags: character.playStyleTags || [],
+        accentColor: character.accentColor ?? null,
+        communityRole: roles.get(character.id),
 			}))
     };
 	}
+
+  // ─── ER2 round 2: summary enrichment and lookup ─────────────────────────────
+
+  /** Banner URLs for many characters in one query. */
+  private async getBannerUrls(characterIds: number[]): Promise<Map<number, string>> {
+    const result = new Map<number, string>();
+
+    if (characterIds.length === 0) {
+      return result;
+    }
+
+    const rows: { characterId: number | string; ownerId: number | string; hash: string; filename: string }[] =
+      await this.connection.query(
+        'SELECT c.`id` AS characterId, i.`ownerId` AS ownerId, i.`hash` AS hash, i.`filename` AS filename '
+        + 'FROM `character` c INNER JOIN `image` i ON i.`id` = c.`bannerId` AND i.`deletedAt` IS NULL '
+        + 'WHERE c.`id` IN (?)',
+        [characterIds],
+      );
+
+    rows.forEach((row) => {
+      result.set(Number(row.characterId), this.imagesService.getUrl({
+        owner: { id: Number(row.ownerId) },
+        hash: row.hash,
+        filename: row.filename,
+      } as Image));
+    });
+
+    return result;
+  }
+
+  /** Roles in one community for many characters in one query. */
+  private async getCommunityRoles(communityId: number, characterIds: number[]): Promise<Map<number, CommunityRole>> {
+    const result = new Map<number, CommunityRole>();
+
+    if (characterIds.length === 0) {
+      return result;
+    }
+
+    const memberships = await this.communityMembershipRepo
+      .createQueryBuilder('membership')
+      .innerJoinAndSelect('membership.community', 'community')
+      .innerJoinAndSelect('community.owner', 'owner')
+      .innerJoinAndSelect('membership.character', 'character')
+      .where('community.id = :communityId', { communityId })
+      .andWhere('character.id IN (:...characterIds)', { characterIds })
+      .select(['membership.id', 'membership.status', 'membership.canEdit', 'membership.canManageMembers', 'community.id', 'owner.id', 'character.id'])
+      .getMany();
+
+    memberships.forEach((membership) => {
+      result.set(membership.character.id, communityRole(
+        membership.community.owner.id === membership.character.id,
+        membership.status,
+        membership.canEdit,
+        membership.canManageMembers,
+      ));
+    });
+
+    return result;
+  }
+
+  /** Profile cards for names from [[wikilinks]]; unmatched names are left out. */
+  async lookupCharacters(request: CharacterLookupRequestDto): Promise<CharacterLookupResultDto[]> {
+    const wanted = new Map<string, { query: string; name: string; server?: string }>();
+
+    request.names.forEach((entry) => {
+      const name = normalizeLookupName(entry.name);
+
+      if (name) {
+        const key = lookupKey(name, entry.server);
+
+        if (!wanted.has(key)) {
+          wanted.set(key, { query: entry.name, name, server: entry.server?.trim() || undefined });
+        }
+      }
+    });
+
+    const names = Array.from(new Set(Array.from(wanted.values()).map((entry) => entry.name)));
+
+    if (names.length === 0) {
+      return [];
+    }
+
+    // Collation makes IN case-insensitive, like the link resolver's equality match
+    const characters = await this.characterRepo
+      .createQueryBuilder('character')
+      .innerJoinAndSelect('character.server', 'server')
+      .where('character.verifiedAt IS NOT NULL')
+      .andWhere('character.name IN (:...names)', { names })
+      .orderBy('character.updatedAt', 'DESC')
+      .select(['character.id', 'character.name', 'character.avatar', 'character.updatedAt', 'server.name'])
+      .getMany();
+
+    const candidates = characters.map((character) => ({
+      name: character.name,
+      server: character.server.name,
+      avatar: character.avatar,
+    }));
+    const results: CharacterLookupResultDto[] = [];
+
+    wanted.forEach((entry) => {
+      const match = pickLookupMatch(candidates, entry.name, entry.server);
+
+      if (match) {
+        results.push({
+          query: entry.query,
+          name: match.name,
+          server: match.server,
+          avatar: match.avatar,
+          link: profileLink(match.name, match.server),
+        });
+      }
+    });
+
+    return results;
+  }
 
   // ─── ER2-806: RP presence ────────────────────────────────────────────────────
 

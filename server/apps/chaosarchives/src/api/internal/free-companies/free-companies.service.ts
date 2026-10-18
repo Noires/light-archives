@@ -17,6 +17,7 @@ import { Connection, IsNull, Not, Repository } from 'typeorm';
 import { checkCarrdProfile, getVerifiedCharacter } from '../../../common/api-checks';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import { ImagesService } from '../images/images.service';
+import { loadGroupSummaryExtras } from '../../../common/group-summary';
 import { LodestoneService } from '../lodestone/lodestone.service';
 import { canApplyToFreeCompany, decideFcApplication, FcApplicationDecision } from './fc-applications';
 
@@ -193,16 +194,20 @@ export class FreeCompaniesService {
       .where('fc.claimedAt IS NOT NULL')
       .orderBy('fc.name', 'ASC')
       .innerJoinAndSelect('fc.server', 'server')
-      .select(['fc.id', 'fc.name', 'fc.crest', 'fc.goal', 'fc.recruiting', 'server.name']);
+      .select(['fc.id', 'fc.name', 'fc.tag', 'fc.crest', 'fc.goal', 'fc.recruiting', 'server.name']);
 
     const fcs = await query.getMany();
+    const extras = await loadGroupSummaryExtras(this.connection.manager, 'freeCompany', fcs.map((fc) => fc.id));
 
     return fcs.map((fc) => ({
+      id: fc.id,
+      tag: fc.tag,
       name: fc.name,
       crest: fc.getCrest(),
       goal: fc.goal,
       server: fc.server.name,
       recruiting: fc.recruiting ?? null,
+      ...extras.get(fc.id),
     }));
   }
 

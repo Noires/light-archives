@@ -10,6 +10,7 @@ import { CharacterProfileDto } from '@app/shared/dto/characters/character-profil
 import { CharacterRefreshResultDto } from '@app/shared/dto/characters/character-refresh-result.dto';
 import { CharacterRegistrationStatusResultDto } from '@app/shared/dto/characters/character-registration-status-result.dto';
 import { CharacterSummaryDto } from '@app/shared/dto/characters/character-summary.dto';
+import { CharacterLookupRequestDto, CharacterLookupResultDto } from '@app/shared/dto/characters/character-lookup.dto';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { ImageDto } from '@app/shared/dto/image/image.dto';
@@ -37,6 +38,12 @@ export class CharactersController {
   @Get('rp-active')
   async getRpActiveCharacters(@Query('limit') limit?: string): Promise<RpPresenceDto[]> {
     return this.charactersService.getRpActiveCharacters(limit ? parseInt(limit, 10) : 12);
+  }
+
+  // ER2 round 2: names from [[wikilinks]] to profile cards (max. 50, case-insensitive)
+  @Post('lookup')
+  async lookupCharacters(@Body() request: CharacterLookupRequestDto): Promise<CharacterLookupResultDto[]> {
+    return this.charactersService.lookupCharacters(request);
   }
 
   @Put(':id/rp-status')
