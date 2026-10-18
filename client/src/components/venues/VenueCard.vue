@@ -7,6 +7,11 @@
         <status-badge :type="badgeType" :label="status.label" />
       </span>
       <span v-if="venue.adultOnly" class="venue-card__adult" title="Nur für Erwachsene">18+</span>
+      <!-- ER2 social: bookmark -->
+      <span v-if="venue.id" class="venue-card__bookmark">
+        <bookmark-button target-type="venue" :target-id="venue.id" variant="icon" />
+      </span>
+      <!-- /ER2 social: bookmark -->
     </div>
     <div class="venue-card__body">
       <h2 class="venue-card__title">
@@ -41,6 +46,7 @@
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { DateTime } from 'luxon';
 import StatusBadge from 'components/vision/StatusBadge.vue';
+import BookmarkButton from 'components/social/BookmarkButton.vue'; // ER2 social: bookmark
 import type { StatusBadgeType } from 'components/vision/types';
 import { Options, prop, Vue } from 'vue-class-component';
 import { formatEventStart } from 'components/mainpage/home-data';
@@ -65,7 +71,10 @@ class Props {
 
 @Options({
   name: 'VenueCard',
-  components: { StatusBadge },
+  components: {
+    BookmarkButton, // ER2 social: bookmark
+    StatusBadge,
+  },
 })
 export default class VenueCard extends Vue.with(Props) {
   get link(): string {
@@ -221,7 +230,7 @@ export default class VenueCard extends Vue.with(Props) {
 // #150B23 on #F08A93 in Zodiark), both above 4.5:1.
 .venue-card__adult {
   position: absolute;
-  top: 12px;
+  bottom: 12px;
   right: 12px;
   padding: 2px 9px;
   border-radius: 999px;
@@ -233,6 +242,15 @@ export default class VenueCard extends Vue.with(Props) {
   line-height: 18px;
   letter-spacing: 0.02em;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+// ER2 social: bookmark — above the stretched card link (z-index 1).
+.venue-card__bookmark {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: inline-flex;
 }
 
 .venue-card__body {

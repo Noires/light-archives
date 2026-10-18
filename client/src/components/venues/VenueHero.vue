@@ -25,7 +25,7 @@
         <q-icon name="place" aria-hidden="true" />
         {{ address }}
       </p>
-      <div v-if="command || $slots.actions" class="venue-hero__actions">
+      <div v-if="command || $slots.actions || showSocial" class="venue-hero__actions">
         <q-btn
           v-if="command"
           unelevated
@@ -37,6 +37,12 @@
           <q-tooltip>{{ command }}</q-tooltip>
         </q-btn>
         <slot name="actions" />
+        <!-- ER2 social: follow/bookmark -->
+        <template v-if="showSocial">
+          <follow-button target-type="venue" :target-key="String(venue.id)" variant="on-media" />
+          <bookmark-button target-type="venue" :target-id="venue.id" variant="on-media" />
+        </template>
+        <!-- /ER2 social: follow/bookmark -->
       </div>
     </div>
   </header>
@@ -47,6 +53,9 @@ import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { copyToClipboard } from 'quasar';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import Breadcrumbs from 'components/vision/Breadcrumbs.vue';
+import FollowButton from 'components/social/FollowButton.vue'; // ER2 social: follow/bookmark
+import BookmarkButton from 'components/social/BookmarkButton.vue'; // ER2 social: follow/bookmark
+import { canUseSocial, socialState } from 'components/social/social-state'; // ER2 social: follow/bookmark
 import { Options, prop, Vue } from 'vue-class-component';
 import { addressText, teleportCommand } from './venue-location';
 import { VenueStatus, getVenueStatus } from './venue-status';
@@ -62,9 +71,19 @@ class Props {
 
 @Options({
   name: 'VenueHero',
-  components: { Breadcrumbs },
+  components: {
+    Breadcrumbs,
+    FollowButton, // ER2 social: follow/bookmark
+    BookmarkButton, // ER2 social: follow/bookmark
+  },
 })
 export default class VenueHero extends Vue.with(Props) {
+  // ER2 social: follow/bookmark (the buttons hide themselves for guests or without the endpoints)
+  get showSocial(): boolean {
+    return !this.preview && !!this.venue.id && canUseSocial(this.$store.getters.realRole)
+      && (!socialState.unavailable.follows || !socialState.unavailable.bookmarks);
+  }
+
   get bannerUrl(): string {
     return this.venue.banner?.url || '';
   }

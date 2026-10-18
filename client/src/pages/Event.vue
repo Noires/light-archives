@@ -44,6 +44,9 @@
               :href="icsUrl"
               download
             />
+            <!-- ER2 social: bookmark -->
+            <bookmark-button v-if="event.id" target-type="event" :target-id="event.id" />
+            <!-- /ER2 social: bookmark -->
             <q-btn flat class="elpis-btn elpis-btn--ghost" icon="share" label="Teilen" @click="share" />
           </div>
           <avatar-stack
@@ -109,6 +112,7 @@ import { useRouter } from 'src/router';
 import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
 import ReportViolationSection from 'src/components/common/ReportViolationSection.vue';
+import BookmarkButton from 'components/social/BookmarkButton.vue'; // ER2 social: bookmark
 
 // ER2-504 — event detail page: hero (EventView) plus a sticky glass action
 // bar. "Ich bin dabei" uses the registration endpoints: closed events keep
@@ -151,6 +155,7 @@ async function load(params: RouteParams): Promise<{ event: EventDto, eventId: nu
     ThumbGallery,
     ReportViolationSection,
     AvatarStack,
+    BookmarkButton, // ER2 social: bookmark
   },
   async beforeRouteEnter(to, _, next) {
     const { event, eventId } = await load(to.params);

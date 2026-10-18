@@ -401,6 +401,24 @@ const routes: RouteRecordRaw[] = [
         },
       },
 
+      // ER2 social: notifications and bookmarks (login prompt inside the pages)
+      {
+        path: 'benachrichtigungen',
+        component: () => import('pages/Notifications.vue'),
+        meta: {
+          title: 'Benachrichtigungen',
+          breadcrumb: 'Benachrichtigungen',
+        },
+      },
+      {
+        path: 'gemerkt',
+        component: () => import('pages/Bookmarks.vue'),
+        meta: {
+          title: 'Gemerkt',
+          breadcrumb: 'Gemerkt',
+        },
+      },
+
       {
         path: 'edit-image/:id',
         component: () => import('pages/EditImage.vue'),
