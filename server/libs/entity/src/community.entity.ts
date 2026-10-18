@@ -1,3 +1,4 @@
+import { FocusItem } from '@app/shared/validation/profile-fields';
 import { Column, Entity, Index, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BasicEntity } from './basic.entity';
 import { Character } from './character.entity';
@@ -83,6 +84,13 @@ export class Community extends BasicEntity {
     lazy: true,
   })
   banner: Promise<Image | null>;
+
+  // ER2 round 2: "Was wir spielen" cards, max 6 x {icon, title, text}
+  @Column({
+    type: 'simple-json',
+    nullable: true,
+  })
+  focusItems: FocusItem[] | null;
 
   @OneToMany(() => CommunityTag, (tag) => tag.community, {
     cascade: true,

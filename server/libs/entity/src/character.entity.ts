@@ -606,4 +606,18 @@ export class Character extends BasicEntity {
     nullable: true,
   })
   rpStatusExpiresAt: Date | null;
+
+  // ER2 round 2: profile accent colour (#rrggbb) and play-style tags (max 6 x 24 chars)
+  @Column({
+    type: 'varchar',
+    length: 7,
+    nullable: true,
+  })
+  accentColor: string | null;
+
+  @Column({
+    type: 'simple-json',
+    nullable: true,
+  })
+  playStyleTags: string[] | null;
 }

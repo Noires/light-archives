@@ -83,6 +83,8 @@
             />
           </section>
           <banner-edit-section v-model="community.banner" />
+          <!-- ER2 round 2: "Was wir spielen" -->
+          <focus-items-edit-section v-model="community.focusItems" />
           <h6>Beschreibung</h6>
           <html-editor v-model="community.description" />
           <carrd-edit-section
@@ -145,6 +147,7 @@ import BannerEditSection from 'src/components/common/BannerEditSection.vue';
 import CarrdEditSection from 'src/components/common/CarrdEditSection.vue';
 import CharacterSelector from 'src/components/common/CharacterSelector.vue';
 import WikilinkHint from 'src/components/common/WikilinkHint.vue';
+import FocusItemsEditSection from 'src/components/common/FocusItemsEditSection.vue';
 import CommunityProfile from 'src/components/communities/CommunityProfile.vue';
 import { useRouter } from 'src/router';
 import { useStore } from 'src/store';
@@ -185,6 +188,7 @@ async function load(params: RouteParams): Promise<CommunityDto|null> {
     CarrdEditSection,
     CharacterSelector,
     WikilinkHint,
+    FocusItemsEditSection,
   },
 	async beforeRouteEnter(to, _, next) {
 		const content = await load(to.params);

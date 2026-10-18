@@ -27,6 +27,56 @@
             <q-checkbox v-model="character.showInventory" @update:model-value="updateCharacter" label="Zeige Inventar" />
           </section>
         </section>
+        <!-- ER2 round 2: Akzentfarbe & Spielstil -->
+        <section class="page-edit-character__style">
+          <h6>Akzentfarbe &amp; Spielstil</h6>
+          <div class="page-edit-character__form-controls">
+            <q-input
+              :model-value="character.accentColor || ''"
+              @update:model-value="onAccentColorChange"
+              label="Akzentfarbe"
+              hint="Farbe für dein Profil im Format #RRGGBB. Leer lassen für die Standardfarbe."
+              maxlength="7"
+              clearable
+              :rules="[(v: string) => !v || ACCENT_COLOR_REGEX.test(v) || 'Bitte gib eine Farbe im Format #RRGGBB an.']"
+            >
+              <template v-slot:prepend>
+                <span
+                  class="page-edit-character__swatch"
+                  :style="{ background: isValidAccentColor(character.accentColor) ? character.accentColor : 'transparent' }"
+                  aria-hidden="true"
+                />
+              </template>
+              <template v-slot:append>
+                <q-btn flat round dense icon="colorize" aria-label="Farbe auswählen">
+                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                    <q-color
+                      :model-value="character.accentColor || '#ba9b5b'"
+                      @update:model-value="onAccentColorChange"
+                      format-model="hex"
+                      no-header-tabs
+                      default-view="palette"
+                    />
+                  </q-popup-proxy>
+                </q-btn>
+              </template>
+            </q-input>
+            <q-select
+              :model-value="character.playStyleTags || []"
+              @update:model-value="onPlayStyleTagsChange"
+              @new-value="onNewPlayStyleTag"
+              label="Spielstil-Tags"
+              :hint="`Bis zu ${PLAY_STYLE_TAGS_MAX} Tags mit je max. ${PLAY_STYLE_TAG_MAX_LENGTH} Zeichen, z. B. Abenteuer oder Slice of Life. Mit Enter hinzufügen.`"
+              multiple
+              use-chips
+              use-input
+              hide-dropdown-icon
+              input-debounce="0"
+              :max-values="PLAY_STYLE_TAGS_MAX"
+              :options="[]"
+            />
+          </div>
+        </section>
         <banner-edit-section v-model="character.banner" />
         <h6>Biografie</h6>
         <div class="page-edit-character__lodestone-info">
@@ -110,6 +160,12 @@ import HtmlEditor from '../components/common/HtmlEditor.vue';
 import { ref } from 'vue';
 import { Dialog } from 'quasar';
 import type { ParsedCharacterData } from 'src/common/wiki-import';
+import {
+  ACCENT_COLOR_REGEX,
+  isValidAccentColor,
+  PLAY_STYLE_TAG_MAX_LENGTH,
+  PLAY_STYLE_TAGS_MAX,
+} from '@app/shared/validation/profile-fields';
 
 const $api = useApi();
 
@@ -183,6 +239,10 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
 })
 export default class PageEditProfile extends Vue {
   readonly SharedConstants = SharedConstants;
+  readonly ACCENT_COLOR_REGEX = ACCENT_COLOR_REGEX;
+  readonly PLAY_STYLE_TAGS_MAX = PLAY_STYLE_TAGS_MAX;
+  readonly PLAY_STYLE_TAG_MAX_LENGTH = PLAY_STYLE_TAG_MAX_LENGTH;
+  readonly isValidAccentColor = isValidAccentColor;
 
   readonly previewOptions = [
     { label: 'Bearbeitung', value: false },
@@ -239,6 +299,29 @@ export default class PageEditProfile extends Vue {
 
   onChange() {
     this.isDirty = true;
+  }
+
+  // ER2 round 2
+  onAccentColorChange(value: string | null) {
+    this.character.accentColor = value ? value.trim() : null;
+    this.onChange();
+  }
+
+  onPlayStyleTagsChange(tags: string[] | null) {
+    this.character.playStyleTags = tags || [];
+    this.onChange();
+  }
+
+  onNewPlayStyleTag(value: string, done: (item?: string, mode?: 'add' | 'add-unique' | 'toggle') => void) {
+    const tag = value.replace(/\s+/g, ' ').trim().substring(0, PLAY_STYLE_TAG_MAX_LENGTH);
+    const existing = (this.character.playStyleTags || []).map((t) => t.toLowerCase());
+
+    if (!tag || existing.includes(tag.toLowerCase()) || existing.length >= PLAY_STYLE_TAGS_MAX) {
+      done();
+      return;
+    }
+
+    done(tag, 'add-unique');
   }
 
   onRevertClick() {
@@ -304,6 +387,18 @@ export default class PageEditProfile extends Vue {
 
 .page-edit-character__preview {
   margin-bottom: 24px;
+}
+
+.page-edit-character__style {
+  margin-bottom: 16px;
+}
+
+.page-edit-character__swatch {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--rule-gold-soft, rgba(186, 155, 91, 0.28));
 }
 
 .page-edit-character__age,

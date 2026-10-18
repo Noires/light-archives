@@ -9,6 +9,7 @@ import { FreeCompanyDto } from '@app/shared/dto/fcs/free-company.dto';
 import { MyFreeCompanySummaryDto } from '@app/shared/dto/fcs/my-free-company-summary.dto';
 import { FreeCompanyApplicationStatus } from '@app/shared/enums/free-company-application-status.enum';
 import SharedConstants from '@app/shared/SharedConstants';
+import { normalizeFocusItems } from '@app/shared/validation/profile-fields';
 import { BadRequestException, ConflictException, ForbiddenException, GoneException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime } from 'luxon';
@@ -269,6 +270,10 @@ export class FreeCompaniesService {
       }
       fc.carrdProfile = checkCarrdProfile(fcDto.carrdProfile, user);
 
+      if (fcDto.focusItems !== undefined) {
+        fc.focusItems = normalizeFocusItems(fcDto.focusItems);
+      }
+
       // Set banner
       if (fcDto.banner && fcDto.banner.id) {
         const banner = await em.getRepository(Image).findOne({
@@ -527,6 +532,7 @@ export class FreeCompaniesService {
       recruitingOfficers: fc.recruitingOfficers,
       recruiting: fc.recruiting ?? null,
       carrdProfile: fc.carrdProfile,
+      focusItems: fc.focusItems || [],
       banner: !banner
         ? null
         : {

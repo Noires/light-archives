@@ -10,6 +10,7 @@ import { MyCommunitySummaryDto } from '@app/shared/dto/communities/my-community-
 import { MembershipStatus } from '@app/shared/enums/membership-status.enum';
 import html from '@app/shared/html';
 import SharedConstants from '@app/shared/SharedConstants';
+import { normalizeFocusItems } from '@app/shared/validation/profile-fields';
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import crypto from 'crypto';
@@ -187,6 +188,7 @@ export class CommunitiesService {
       recruitingOfficers: community.recruitingOfficers,
       recruiting: community.recruiting ?? null,
       carrdProfile: community.carrdProfile,
+      focusItems: community.focusItems || [],
       tags: community.tags.map((tag) => tag.name),
       banner: !banner
         ? null
@@ -282,6 +284,10 @@ export class CommunitiesService {
       community.recruiting = communityDto.recruiting;
     }
     community.carrdProfile = checkCarrdProfile(communityDto.carrdProfile, user);
+
+    if (communityDto.focusItems !== undefined) {
+      community.focusItems = normalizeFocusItems(communityDto.focusItems);
+    }
 
     // Validate founding date
 

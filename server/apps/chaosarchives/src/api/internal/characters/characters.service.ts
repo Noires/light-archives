@@ -31,6 +31,7 @@ import { RpPresenceDto } from '@app/shared/dto/characters/rp-presence.dto';
 import { RpStatusRequestDto } from '@app/shared/dto/characters/rp-status-request.dto';
 import { computeRpStatusExpiry, normalizeRpLocation, resolveRpPresence, RpPresence } from '@app/shared/presence';
 import { LodestoneService } from '../lodestone/lodestone.service';
+import { normalizeAccentColor, normalizePlayStyleTags } from '@app/shared/validation/profile-fields';
 
 @Injectable()
 export class CharactersService {
@@ -174,6 +175,8 @@ export class CharactersService {
         server: freeCompany.server.name
       },
       ...this.getRpPresence(character),
+      accentColor: character.accentColor ?? null,
+      playStyleTags: character.playStyleTags || [],
     };
   }
 
@@ -305,6 +308,8 @@ export class CharactersService {
         server: freeCompany.server.name
       },
       ...this.getRpPresence(character),
+      accentColor: character.accentColor ?? null,
+      playStyleTags: character.playStyleTags || [],
     };
   }
 
@@ -398,6 +403,19 @@ export class CharactersService {
         showInventory: characterDto.showInventory,
         combinedDescription: characterDto.combinedDescription,
 			});
+
+      // ER2 round 2: optional, omitted = keep
+      if (characterDto.accentColor !== undefined) {
+        try {
+          character.accentColor = normalizeAccentColor(characterDto.accentColor);
+        } catch (e) {
+          throw new BadRequestException('accentColor must be #RRGGBB');
+        }
+      }
+
+      if (characterDto.playStyleTags !== undefined) {
+        character.playStyleTags = normalizePlayStyleTags(characterDto.playStyleTags);
+      }
 
       if (characterDto.banner && characterDto.banner.id) {
         const banner = await em.getRepository(Image).findOne({
