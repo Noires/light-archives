@@ -147,7 +147,7 @@ Conventions follow `UI_UX_REWORK_BACKLOG.md`: sizes **XS** (≤ 0.5 d) · **S** 
 | ER2-107 | **[done 2026-10-18]** Hyphenation and language | XS | – | `lang="de"` on `<html>`; `hyphens: auto` on body copy; P&P empty values dimmed (Vision #17, S7) |
 | ER2-108 | **[done 2026-10-18]** Header indent alignment | XS | – | all directory hero titles align to the content grid (Vision #12, S8) |
 | ER2-109 | **[done 2026-10-18]** Skip link | XS | – | "Zum Inhalt springen" first focusable element, visible on focus, targets `<main>` (§5, S9) |
-| ER2-110 | Character drawer active state | XS | – | interim fix until ER2-401: active item indicator like ELPIS-406 |
+| ER2-110 | **[superseded by ER2-401]** Character drawer active state | XS | – | interim fix until ER2-401: active item indicator like ELPIS-406 |
 | ER2-111 | **[done 2026-10-18]** Hide test content from public lists | S | – | stories/wiki titled as tests or with empty body excluded from main page, changes and directory queries (server filter); `/test-*` routes admin-guarded (Vision #6, L6 partial) |
 | ER2-112 | **[done 2026-10-18]** Hide empty fields for visitors | S | – | "(FOLGT)" and empty detail rows not rendered for non-owners on all character tabs (Vision #6) |
 
@@ -262,9 +262,9 @@ Conventions follow `UI_UX_REWORK_BACKLOG.md`: sizes **XS** (≤ 0.5 d) · **S** 
 
 | ID | Title | Size | Deps | AC |
 |---|---|---|---|---|
-| ER2-901 | Focus management | M | 206, 702 | palette, lightbox, dialogs and veil trap focus and return it on close; Esc closes |
-| ER2-902 | Screen-reader pass | M | Epics 2–6 | NVDA + VoiceOver on Home, Profil, Events, Story; landmarks; heading order; badges have text alternatives |
-| ER2-903 | Target sizes | S | – | interactive targets ≥ 24 × 24 px, primary actions ≥ 44 px (WCAG 2.5.8) |
+| ER2-901 | **[done 2026-10-18 — code-level; no screen-reader/browser session yet]** Focus management | M | 206, 702 | palette, lightbox, dialogs and veil trap focus and return it on close; Esc closes |
+| ER2-902 | **[done 2026-10-18 — code-level; no screen-reader/browser session yet]** Screen-reader pass | M | Epics 2–6 | NVDA + VoiceOver on Home, Profil, Events, Story; landmarks; heading order; badges have text alternatives |
+| ER2-903 | **[done 2026-10-18 — code-level; no screen-reader/browser session yet]** Target sizes | S | – | interactive targets ≥ 24 × 24 px, primary actions ≥ 44 px (WCAG 2.5.8) |
 | ER2-904 | Baseline task test | S | Epic 1 | three Vision §7 tasks, 5 participants, recorded in `memory.md` |
 | ER2-905 | Re-test after Phase D | S | Epics 2–5 | same tasks; compare against §0 targets |
 | ER2-906 | Board conformance review | S | per epic | each implemented page compared with its Penpot board in Hydaelyn and Zodiark; deviations logged |

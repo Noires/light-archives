@@ -41,6 +41,16 @@ Read in order. Each builds on the prior.
 
 ---
 
+## Elpis Reborn 2 (vision rework) — status 2026-10-18
+
+Branch `vision/er2` (from `symphony/tr-7`) implements `UI_UX_VISION_REWORK_PLAN.md` (design: Penpot page "Vision (Konzept)", findings: `UI_UX_VISION.md`). Layout/IA freeze lifted for `[IA]` tickets; all other constraints still hold.
+
+- **Done:** Epics 0–8 and the code-level part of Epic 9 (80 of 85 tickets; partials are annotated inline in the plan, mostly where list DTOs lack data such as venue banners, character banners, FC tags, noticeboard pinned/image flags).
+- **Open:** ER2-904/905 (task tests with real users), ER2-906 (board-conformance review against Penpot once the MCP is reachable), screen-reader/browser sessions for ER2-901..903.
+- **Verification:** client lint clean (src), `quasar build` OK, server build OK, Jest 97/97, all 81 pre-rework sample URLs resolve to the same pages (`client/src/router/ROUTES_SNAPSHOT.md`).
+- **Deploy notes:** TypeORM `synchronize: true` will add tables `event_series`, `venue_opening_hours`, `venue_opening_exception`, `reaction` and nullable/defaulted columns (event_registration.kind, event.programme/seriesId, character.rpStatus/rpLocation/rpStatusExpiresAt, story.seriesTitle/seriesIndex/published, wiki_page.published, free_company/community.recruiting). Back up the DB first. The client works against the old API (new fields optional), but home fetches venue details for the "Jetzt geöffnet" fallback until the new API is live.
+- **Known content issue:** event 44 OOC text wraps a `[[…]]` link in pasted `<div>`s, so it cannot render as a link.
+
 ## Next ticket
 
 This session shipped **ELPIS-211 (Pen & Paper journal-page reveal) plus a small cleanup** removing two dead keyframes (`navShimmer`, `navGridShift`) flagged in the ELPIS-807 audit from `MainLayout.vue`. **Epic 2 closes 20 / 21 → 21 / 21.** 211 was marked `deps 007, 008` — 008 ✓ is satisfied, and the 007 dependency was satisfiable via the same IntersectionObserver + CSS-keyframes pattern that landed ELPIS-110 (home activity-grid diagonal-wave reveal) since the AC's "5 cards reveal in sequence (turning-page motion)" describes a one-shot-on-mount cascade with per-card stagger that doesn't need Motion One's runtime orchestration. Lint clean (`npx eslint src/components/character/CharacterPenAndPaper.vue src/layouts/MainLayout.vue` exit 0).
