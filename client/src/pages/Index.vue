@@ -45,40 +45,22 @@
       </div>
     </section>
 
-    <section class="page-index__grid">
-      <section id="neueste-aenderungen" class="page-index__panel mat-vellum page-index__panel--wide page-index__section--changes">
-        <div class="page-index__panel-header">
-          <h5>Neueste Änderungen</h5>
-          <router-link class="page-index__panel-link" to="/changes">Komplette Liste</router-link>
-        </div>
-        <div class="page-index__panel-content page-index__panel-content--flush">
-          <q-list v-if="recentChanges.length" class="page-index__changes-list">
-            <q-item
-              v-for="entry in recentChanges"
-              :key="entry.id"
-              clickable
-              :to="entry.link"
-              class="page-index__changes-item"
-            >
-              <q-item-section>
-                <q-item-label class="page-index__changes-title">
-                  {{ entry.title }}
-                </q-item-label>
-                <q-item-label caption class="page-index__changes-meta">
-                  <q-icon :name="changeAreaIcon(entry.area)" size="14px" class="page-index__changes-icon" />
-                  {{ changeAreaLabel(entry.area) }} · {{ changeTypeLabel(entry.type) }}
-                  <template v-if="entry.author"> · von {{ entry.author }}</template>
-                </q-item-label>
-              </q-item-section>
-              <q-item-section side class="page-index__changes-time">
-                {{ $display.relativeTime(entry.happenedAt) }}
-              </q-item-section>
-            </q-item>
-          </q-list>
-          <div v-else class="page-index__empty page-index__empty--padded">Noch keine Änderungen verfügbar.</div>
-        </div>
-      </section>
+    <section class="home-community" aria-labelledby="home-community-title">
+      <div class="home-section-head">
+        <p class="home-eyebrow">Aus der Community</p>
+        <h2 id="home-community-title" class="home-section-head__title">Was gibt es Neues?</h2>
+      </div>
+      <div class="home-community__grid">
+        <home-activity-feed
+          :initial-items="recentChanges"
+          :avatars="profileAvatars"
+          :thumbs="imageThumbs"
+          :limit="recentChangesLimit"
+        />
+      </div>
+    </section>
 
+    <section class="page-index__grid">
       <section class="page-index__panel mat-vellum page-index__section--stories">
         <div class="page-index__panel-header">
           <h5>Neue Geschichten</h5>
@@ -211,8 +193,6 @@
 import { ChangeItemDto } from '@app/shared/dto/changes/change-item.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { MainPageContentDto } from '@app/shared/dto/main-page/main-page-content.dto';
-import { ChangeArea } from '@app/shared/enums/change-area.enum';
-import { ChangeType } from '@app/shared/enums/change-type.enum';
 import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
 import ThumbGallery from 'components/images/ThumbGallery.vue';
 import {
@@ -230,6 +210,7 @@ import {
   toTimelineEvent,
 } from 'components/mainpage/home-data';
 import type { HomeTodayStats, HomeVenue } from 'components/mainpage/home-data';
+import HomeActivityFeed from 'components/mainpage/HomeActivityFeed.vue';
 import HomeHero from 'components/mainpage/HomeHero.vue';
 import HomeOpenVenues from 'components/mainpage/HomeOpenVenues.vue';
 import HomeUpNext from 'components/mainpage/HomeUpNext.vue';
@@ -247,7 +228,7 @@ import FreeCompanyNameList from 'src/components/free-company/FreeCompanyNameList
 import { Options, Vue } from 'vue-class-component';
 
 const $api = useApi();
-const RECENT_CHANGES_LIMIT = 3;
+const RECENT_CHANGES_LIMIT = 8;
 
 interface MainPageChangesApiClient {
   getMainPageContent(): Promise<MainPageContentDto>;
@@ -299,6 +280,7 @@ async function load(): Promise<HomeData> {
     VenueList,
     CommunityList,
     ThumbGallery,
+    HomeActivityFeed,
     HomeHero,
     HomeOpenVenues,
     HomeUpNext,
@@ -324,6 +306,7 @@ export default class PageIndex extends Vue {
     newNoticeboardItems: [],
   };
   recentChanges: ChangeItemDto[] = [];
+  readonly recentChangesLimit = RECENT_CHANGES_LIMIT;
   events: EventSummaryDto[] = [];
   eventsAvailable = true;
   timelineView: TimelineView = 'tonight';
@@ -428,6 +411,26 @@ export default class PageIndex extends Vue {
     if (this.liveEvents.length > 0) {
       this.timelineView = 'now';
     }
+  }
+
+  // --- ER2-305: activity feed ----------------------------------------------
+
+  get profileAvatars(): Record<string, string> {
+    const result: Record<string, string> = {};
+    this.content.newProfiles.forEach((profile) => {
+      if (profile.avatar) {
+        result[profile.name] = profile.avatar;
+      }
+    });
+    return result;
+  }
+
+  get imageThumbs(): Record<number, string> {
+    const result: Record<number, string> = {};
+    [...this.content.newScreenshots, ...this.content.newArtwork].forEach((image) => {
+      result[image.id] = image.thumbUrl;
+    });
+    return result;
   }
 
   // --- ER2-301: hero "Heute-Leiste" ----------------------------------------
@@ -581,40 +584,6 @@ export default class PageIndex extends Vue {
 
   getProfileLink(profile: MainPageContentDto['newProfiles'][number]) {
     return `/${profile.server}/${profile.name.replace(/ /g, '_')}`;
-  }
-
-  changeAreaLabel(area: ChangeArea): string {
-    const labels: Record<ChangeArea, string> = {
-      [ChangeArea.PROFILE]: 'Profile',
-      [ChangeArea.VENUE]: 'Treffpunkte',
-      [ChangeArea.COMMUNITY]: 'Communities',
-      [ChangeArea.FREE_COMPANY]: 'Freie Gesellschaften',
-      [ChangeArea.STORY]: 'Geschichten',
-      [ChangeArea.NOTICEBOARD]: 'Anschlagbrett',
-      [ChangeArea.EVENT]: 'Events',
-      [ChangeArea.MEDIA]: 'Medien',
-    };
-
-    return labels[area];
-  }
-
-  changeAreaIcon(area: ChangeArea): string {
-    const icons: Record<ChangeArea, string> = {
-      [ChangeArea.PROFILE]: 'person',
-      [ChangeArea.VENUE]: 'place',
-      [ChangeArea.COMMUNITY]: 'groups',
-      [ChangeArea.FREE_COMPANY]: 'shield',
-      [ChangeArea.STORY]: 'menu_book',
-      [ChangeArea.NOTICEBOARD]: 'campaign',
-      [ChangeArea.EVENT]: 'event',
-      [ChangeArea.MEDIA]: 'photo_library',
-    };
-
-    return icons[area];
-  }
-
-  changeTypeLabel(type: ChangeType): string {
-    return type === ChangeType.CREATED ? 'Neu' : 'Aktualisiert';
   }
 
   loginWithDiscord() {
@@ -1492,6 +1461,41 @@ body.body--dark .page-index .page-stories__card-link:focus-visible {
 
 @media (max-width: 1023px) {
   .home-hub__columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.home-section-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.home-section-head__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--type-scale-5);
+  font-weight: 600;
+  line-height: var(--lh-heading);
+  color: var(--ink-primary);
+}
+
+.home-community {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 48px;
+}
+
+.home-community__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+@media (max-width: 1023px) {
+  .home-community__grid {
     grid-template-columns: minmax(0, 1fr);
   }
 }
