@@ -440,6 +440,11 @@ export default class UploadDialog extends Vue.with(Props) {
       Object.assign(imageDto, { venueId: this.detailsModel.venue.id });
     }
 
+    // ER2 round 2: sent as "1,2" in the multipart body; only when chosen.
+    if (this.detailsModel.albumIds && this.detailsModel.albumIds.length > 0) {
+      Object.assign(imageDto, { albumIds: this.detailsModel.albumIds });
+    }
+
     return this.$api.images.uploadImage(imageDto, convertedFile, filename);
   }
 

@@ -189,6 +189,27 @@
 				action-label="Ergänzen"
 				:action-to="editLink('gallery')"
 			/>
+
+			<!-- ER2 round 2: albums of the character (hidden without albums or API) -->
+			<section v-if="albums.length > 0" class="character-overview__card" aria-labelledby="co-albums">
+				<header class="character-overview__card-head">
+					<h2 id="co-albums" class="character-overview__card-title">Alben</h2>
+				</header>
+				<ul class="character-overview__albums">
+					<li v-for="album in albums" :key="album.id">
+						<router-link class="character-overview__album" :to="`/album/${album.id}`">
+							<span class="character-overview__album-cover" aria-hidden="true">
+								<img v-if="album.coverThumbUrl" :src="album.coverThumbUrl" alt="" loading="lazy" />
+								<q-icon v-else name="photo_album" size="20px" />
+							</span>
+							<span class="character-overview__album-text">
+								<span class="character-overview__album-title">{{ album.title }}</span>
+								<span class="character-overview__album-meta">{{ album.imageCount === 1 ? '1 Bild' : `${album.imageCount} Bilder` }}</span>
+							</span>
+						</router-link>
+					</li>
+				</ul>
+			</section>
 		</aside>
 	</div>
 </template>
@@ -197,6 +218,7 @@
 // ER2-403 — profile overview: fact tiles, background on parchment with a drop
 // cap, the latest diary entry, and previews of rumours, contacts and gallery.
 // Uses only the already loaded profile and content DTOs.
+import type { AlbumSummaryDto } from '@app/shared/dto/albums/album.dto';
 import { CharacterContentDto } from '@app/shared/dto/characters/character-content.dto';
 import { CharacterProfileDto } from '@app/shared/dto/characters/character-profile.dto';
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
@@ -264,12 +286,32 @@ class Props {
 		HtmlViewer,
 		LinkField,
 	},
+	watch: {
+		'character.id'() {
+			void (this as CharacterOverview).loadAlbums();
+		},
+	},
 })
 export default class CharacterOverview extends Vue.with(Props) {
 	private unbindHoverCards: (() => void) | null = null;
+	albums: AlbumSummaryDto[] = [];
 
 	mounted() {
 		this.unbindHoverCards = bindHoverCards(this.$el as HTMLElement);
+		void this.loadAlbums();
+	}
+
+	/** ER2 round 2: GET /albums?characterId=; the production API may lack it. */
+	async loadAlbums() {
+		const characterId = this.character.id;
+		try {
+			const albums = await this.$api.albums.getAlbums(characterId);
+			if (characterId === this.character.id) {
+				this.albums = albums.filter((album) => album.ownerId === characterId).slice(0, 4);
+			}
+		} catch {
+			this.albums = [];
+		}
 	}
 
 	beforeUnmount() {
@@ -505,6 +547,76 @@ export default class CharacterOverview extends Vue.with(Props) {
 .character-overview__rail-empty {
 	padding: 20px 16px;
 }
+
+// Albums (ER2 round 2) ----------------------------------------------------------
+.character-overview__albums {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.character-overview__album {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 4px;
+	border-radius: 8px;
+	color: var(--ink-primary);
+	text-decoration: none;
+
+	&:hover {
+		background-color: var(--rule-tint);
+	}
+
+	&:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 2px var(--glow-aether), 0 0 0 3px var(--vision-focus-edge);
+	}
+}
+
+.character-overview__album-cover {
+	display: inline-flex;
+	flex: 0 0 44px;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	overflow: hidden;
+	border-radius: 6px;
+	background-color: var(--rule-tint);
+	color: var(--ink-muted);
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+}
+
+.character-overview__album-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.character-overview__album-title {
+	overflow: hidden;
+	font-family: var(--font-ui);
+	font-weight: 600;
+	font-size: 14px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.character-overview__album-meta {
+	font-family: var(--font-ui);
+	font-size: 12px;
+	color: var(--ink-muted);
+}
+
 
 // Fact tiles -----------------------------------------------------------------
 .character-overview__facts {

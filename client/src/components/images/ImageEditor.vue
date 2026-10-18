@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<a class="thumb-link" :href="modelValue.url" target="_blank"><img :src="modelValue.thumbUrl" alt="Vorschau" /></a>
-		<step-image-details v-model="imageDetails" />
+		<step-image-details v-model="imageDetails" :album-character-id="ownerCharacterId" />
 		<div class="image-editor__button-bar">
 			<q-btn v-if="!fullPage" flat color="secondary" label="Abbrechen" @click="onCancelClick" />
 			<q-btn :flat="!fullPage" :disable="!isValid" color="primary" label="Änderungen speichern" @click="onSaveClick" />
@@ -62,6 +62,31 @@ export default class ImageEditor extends Vue.with(Props) {
 		};
 	}
 
+	/** The user's character that owns the image (for its albums). */
+	get ownerCharacterId(): number | null {
+		const owner = this.$store.getters.characters.find(
+			(character) => character.name === this.modelValue.author && character.server === this.modelValue.authorServer,
+		);
+		return owner ? owner.id : null;
+	}
+
+	mounted() {
+		void this.loadOwnerDetails();
+	}
+
+	/** ER2 round 2: album membership is only on GET /images/:id (owner only). */
+	async loadOwnerDetails() {
+		try {
+			const full = this.modelValue.albumIds ? this.modelValue : await this.$api.images.getImage(this.modelValue.id);
+
+			if (full.albumIds && !this.imageDetails.albumIds) {
+				this.imageDetails = { ...this.imageDetails, albumIds: [...full.albumIds] };
+			}
+		} catch {
+			// Not critical: without album data the album field keeps membership unchanged.
+		}
+	}
+
 	get isValid() {
 		return (this.imageDetails.category === ImageCategory.UNLISTED || !!this.imageDetails.title)
       && !!this.imageDetails.credits;
@@ -88,6 +113,11 @@ export default class ImageEditor extends Vue.with(Props) {
 
       if (this.imageDetails.venue) {
         Object.assign(imageDescriptionDto, { venueId: this.imageDetails.venue.id });
+      }
+
+      // Only when known; omitted keeps the current album membership.
+      if (this.imageDetails.albumIds) {
+        Object.assign(imageDescriptionDto, { albumIds: this.imageDetails.albumIds });
       }
 
       await this.$api.images.saveImage(this.modelValue.id, imageDescriptionDto);

@@ -78,6 +78,21 @@
         </q-select>
       </section>
     </q-slide-transition>
+    <!-- ER2 round 2: albums (hidden when the API has none or lacks the endpoint) -->
+    <q-select
+      v-if="albumOptions.length"
+      class="step-image-details__albums"
+      :model-value="modelValue.albumIds || []"
+      :options="albumOptions"
+      label="Alben"
+      hint="Optional: Bild in eines oder mehrere deiner Alben einsortieren."
+      multiple
+      emit-value
+      map-options
+      use-chips
+      filled
+      @update:model-value="onAlbumsUpdated"
+    />
     <q-input
       class="step-image-details__credits"
       label="Credits *"
@@ -108,6 +123,11 @@ class Props {
   modelValue = prop<ImageDetailsModel>({
     default: null,
   });
+
+  /** Owner of an existing image (edit mode); otherwise modelValue.characterId is used. */
+  albumCharacterId = prop<number | null>({
+    default: null,
+  });
 }
 
 @Options({
@@ -117,6 +137,11 @@ class Props {
     HtmlEditor,
   },
   emits: ['update:model-value'],
+  watch: {
+    albumOwnerId() {
+      void (this as StepImageDetails).loadAlbums();
+    },
+  },
 })
 export default class StepImageDetails extends Vue.with(Props) {
   readonly ImageCategory = ImageCategory;
@@ -127,6 +152,8 @@ export default class StepImageDetails extends Vue.with(Props) {
   eventOptionsSearchString = '';
   editableVenues: VenueSummaryDto[] = [];
   loadingEditableVenues = false;
+  albumOptions: { label: string; value: number }[] = [];
+  private albumsToken = 0;
 
   categoryHints = {
     [ImageCategory.UNLISTED]:
@@ -144,6 +171,48 @@ export default class StepImageDetails extends Vue.with(Props) {
       })
     );
     void this.loadEditableVenues();
+    void this.loadAlbums();
+  }
+
+  get albumOwnerId(): number | null {
+    return this.albumCharacterId || this.modelValue?.characterId || null;
+  }
+
+  async loadAlbums() {
+    const token = ++this.albumsToken;
+    const ownerId = this.albumOwnerId;
+
+    if (!ownerId) {
+      this.albumOptions = [];
+      return;
+    }
+
+    try {
+      const albums = await this.$api.albums.getAlbums(ownerId);
+
+      if (token === this.albumsToken) {
+        this.albumOptions = albums
+          .filter((album) => album.ownerId === ownerId)
+          .map((album) => ({ label: album.title, value: album.id }));
+
+        // Drop selections that belong to another character's albums.
+        const valid = new Set(this.albumOptions.map((option) => option.value));
+        if (this.modelValue.albumIds && this.modelValue.albumIds.some((id) => !valid.has(id))) {
+          this.modelValue.albumIds = this.modelValue.albumIds.filter((id) => valid.has(id));
+          this.onModelUpdated();
+        }
+      }
+    } catch {
+      // Older API without albums.
+      if (token === this.albumsToken) {
+        this.albumOptions = [];
+      }
+    }
+  }
+
+  onAlbumsUpdated(ids: number[] | null) {
+    this.modelValue.albumIds = ids || [];
+    this.onModelUpdated();
   }
 
   async loadEditableVenues() {
@@ -249,6 +318,10 @@ export default class StepImageDetails extends Vue.with(Props) {
 }
 
 .step-select-image__venue-link {
+  margin-top: 8px;
+}
+
+.step-image-details__albums {
   margin-top: 8px;
 }
 
