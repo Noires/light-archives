@@ -192,6 +192,13 @@ body.body--dark :where(.q-card.q-card--dark.q-dark .q-separator) {
 	background: var(--app-card-divider);
 }
 
+// ER2-104 — Quasar fills dark tab panels with the hard-coded $dark #1D1D1D,
+// which shows as a grey slab on the Zodiark surfaces. Panels inherit the
+// surface they sit on instead.
+body.body--dark :where(.q-tab-panels.q-dark) {
+	background: transparent;
+}
+
 .q-page .q-select .q-field__control {
 	background: var(--app-select-control-bg);
 }

@@ -68,8 +68,10 @@ export default class CharacterDetail extends Vue.with(Props) {
   border-bottom-color: rgba(186, 155, 91, 0.4);
 }
 
+/* ER2-104 — a quiet 8 % white hairline in Zodiark (vision spec) instead of a
+   hard divider; hover still lifts it to arcane. */
 body.body--dark .character-detail {
-  border-bottom-color: var(--rule-arcane-soft);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
 body.body--dark .character-detail:hover {

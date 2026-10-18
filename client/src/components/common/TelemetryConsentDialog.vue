@@ -144,7 +144,7 @@ export default class TelemetryConsentDialog extends Vue.with(Props) {
 
 .telemetry-consent-dialog__hint {
   margin: 0;
-  color: #555;
+  color: var(--ink-muted);
 }
 
 .telemetry-consent-dialog__actions {

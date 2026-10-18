@@ -210,6 +210,9 @@ body.body--dark .offerings-view {
 }
 
 .offerings-view__tab-panels {
+  // ER2-104 — Quasar paints .q-tab-panels.q-dark with $dark (#1D1D1D); let the
+  // offerings card surface show through instead.
+  background: transparent;
   position: relative;
   overflow: hidden;
   contain: layout paint;
