@@ -380,7 +380,7 @@ export class CommunitiesService {
   }
 
   private async assertEditRights(communityId: number, user: UserInfo): Promise<void> {
-    if (!this.checkFlag(communityId, user, false)) {
+    if (!(await this.checkFlag(communityId, user, false))) {
       throw new ForbiddenException('Operation not permitted');
     }
   }
@@ -390,13 +390,17 @@ export class CommunitiesService {
   }
 
   private async assertManageMembersRights(communityId: number, user: UserInfo): Promise<void> {
-    if (!this.checkFlag(communityId, user, true)) {
+    if (!(await this.checkFlag(communityId, user, true))) {
       throw new ForbiddenException('Operation not permitted');
     }
   }
 
   private async checkFlag(communityId: number, user: UserInfo, manageMembersFlag: boolean): Promise<boolean> {
     const flagName = manageMembersFlag ? 'canManageMembers' : 'canEdit';
+
+    if (user.characters.length === 0) {
+      return false;
+    }
 
     const membershipCount = await this.communityMembershipRepo
       .createQueryBuilder('membership')
