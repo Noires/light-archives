@@ -100,6 +100,19 @@
 				<p v-if="description" class="vision-lightbox__description">{{ description }}</p>
 				<p v-if="detail && detail.credits" class="vision-lightbox__credits">{{ detail.credits }}</p>
 
+				<div v-if="tags.length" class="vision-lightbox__tags" aria-label="Verknüpft mit">
+					<router-link
+						v-for="tag in tags"
+						:key="tag.key"
+						class="vision-lightbox__tag"
+						:to="tag.to"
+						@click="hide"
+					>
+						<q-icon :name="tag.icon" aria-hidden="true" />
+						<span>{{ tag.label }}</span>
+					</router-link>
+				</div>
+
 				<div v-if="reactions.length" class="vision-lightbox__reactions" role="group" aria-label="Reaktionen">
 					<button
 						v-for="reaction in reactions"
@@ -154,10 +167,19 @@ import type { RouteLocationRaw } from 'vue-router';
 // strip, info panel. QDialog provides Esc, the focus trap and refocusing the
 // trigger; ←/→ are handled here. Details (credits, linked event/venue,
 // reactions) come from GET /images/:id when available.
+// ER2-704 — linked event and venue are shown as chips. The image DTOs have
+// no tagged characters, so there are none to show.
 
 interface DialogRef {
 	show(): void;
 	hide(): void;
+}
+
+interface Tag {
+	key: string;
+	label: string;
+	icon: string;
+	to: RouteLocationRaw;
 }
 
 interface ReactionView {
@@ -332,6 +354,21 @@ export default class Lightbox extends Vue.with(Props) {
 
 	get description(): string {
 		return this.detail?.description || this.current?.description || '';
+	}
+
+	get tags(): Tag[] {
+		const detail = this.detail;
+		if (!detail) {
+			return [];
+		}
+		const tags: Tag[] = [];
+		if (detail.eventId && detail.eventTitle) {
+			tags.push({ key: `event-${detail.eventId}`, label: detail.eventTitle, icon: 'event', to: `/event/${detail.eventId}` });
+		}
+		if (detail.venueId && detail.venueName) {
+			tags.push({ key: `venue-${detail.venueId}`, label: detail.venueName, icon: 'storefront', to: `/venue/${detail.venueId}` });
+		}
+		return tags;
 	}
 
 	// --- Reactions (ER2-807; hidden while the API has none) --------------------
@@ -650,11 +687,35 @@ export default class Lightbox extends Vue.with(Props) {
 	color: var(--lb-muted);
 }
 
+.vision-lightbox__tags,
 .vision-lightbox__reactions,
 .vision-lightbox__actions {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
+}
+
+.vision-lightbox__tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	max-width: 100%;
+	padding: 4px 12px;
+	border: 1px solid var(--lb-rule);
+	border-radius: 999px;
+	font-size: 13px;
+	font-weight: 600;
+	text-decoration: none;
+
+	span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&:hover {
+		background-color: var(--lb-tint);
+	}
 }
 
 .vision-lightbox__reaction {
