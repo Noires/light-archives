@@ -60,9 +60,9 @@ export function contentMentionsWikiTitle(content: string | null | undefined, tit
   }
 
   const wikilinkRegex = new RegExp(WIKILINK_REGEX.source, 'gi');
-  let match: RegExpExecArray | null;
+  let match: RegExpExecArray | null = wikilinkRegex.exec(content);
 
-  while ((match = wikilinkRegex.exec(content)) !== null) {
+  while (match !== null) {
     const body = match[1];
     const barIndex = body.indexOf('|');
     const target = barIndex === -1 ? body : body.substring(0, barIndex);
@@ -70,16 +70,22 @@ export function contentMentionsWikiTitle(content: string | null | undefined, tit
     if (normalizeWikiTitle(target) === wanted) {
       return true;
     }
+
+    match = wikilinkRegex.exec(content);
   }
 
   const linkUrlRegex = new RegExp(LINK_URL_REGEX.source, 'gi');
 
-  while ((match = linkUrlRegex.exec(content)) !== null) {
+  match = linkUrlRegex.exec(content);
+
+  while (match !== null) {
     const target = safeDecodeURIComponent(decodeBasicEntities(match[1]));
 
     if (normalizeWikiTitle(target) === wanted) {
       return true;
     }
+
+    match = linkUrlRegex.exec(content);
   }
 
   return false;

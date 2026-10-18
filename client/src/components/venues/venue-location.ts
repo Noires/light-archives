@@ -26,8 +26,15 @@ export const HOUSING_AREA_LABELS: Record<string, string> = {
 	[HousingArea.EMPYREUM]: 'Empyreum',
 };
 
-// Lifestream's `/li` parser understands the English district names on every
-// client language, so the command uses those.
+// Lifestream's `/li` address parser (Utils.TryParseAddressBookEntry /
+// ParseResidentialAetheryteKind in NightmareXIV/Lifestream) only matches the
+// English district names (mist, goblet, lavender beds / lb, empy[reum],
+// shiro[gane]) on every client language; German names are not recognised.
+// Accepted shapes, in this order: `<World> <District> W<ward> P<plot>` (plot
+// 1-60, subdivision plots are 31-60; the W/P prefixes are optional) and
+// `<World> <District> W<ward> [sub] A<apartment>` for apartments, where
+// `sub` marks the subdivision building.
+// https://github.com/NightmareXIV/Lifestream/blob/main/Lifestream/Utils.cs
 const HOUSING_AREA_COMMAND: Record<string, string> = {
 	[HousingArea.MIST]: 'Mist',
 	[HousingArea.LAVENDER_BEDS]: 'Lavender Beds',
@@ -97,7 +104,11 @@ export function addressText(venue: VenueLocationSource | null | undefined): stri
 	return text;
 }
 
-/** `/li <Welt> <Wohngebiet> <Bezirk> <Haus>`, or '' when the data is incomplete. */
+/**
+ * `/li <Welt> <Wohngebiet> W<Bezirk> P<Haus>` for houses,
+ * `/li <Welt> <Wohngebiet> W<Bezirk> [sub] A<Wohnung>` for apartments,
+ * or '' when the data is incomplete.
+ */
 export function teleportCommand(venue: VenueLocationSource | null | undefined): string {
 	if (!venue || !venue.server || !hasHousing(venue)) {
 		return '';
@@ -106,13 +117,26 @@ export function teleportCommand(venue: VenueLocationSource | null | undefined): 
 	if (!area) {
 		return '';
 	}
-	const parts = [ '/li', venue.server, area, String(venue.ward) ];
+	const parts = [ '/li', venue.server, area, `W${String(venue.ward)}` ];
 	if (venue.location === VenueLocation.HOUSE) {
 		const plot = plotNumber(venue);
 		if (!plot) {
 			return '';
 		}
-		parts.push(String(plot));
+		parts.push(`P${String(plot)}`);
+	} else if (venue.location === VenueLocation.APARTMENT) {
+		// Lifestream reads a one- or two-digit number; free-text rooms like
+		// "Zimmer 12" still yield it.
+		const room = /\d+/.exec(venue.room || '');
+		if (!room || room[0].length > 2) {
+			return '';
+		}
+		if (venue.subdivision) {
+			parts.push('sub');
+		}
+		parts.push(`A${room[0]}`);
+	} else {
+		return '';
 	}
 	return parts.join(' ');
 }

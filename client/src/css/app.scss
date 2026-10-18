@@ -563,7 +563,6 @@ body.body--dark .page-changes__empty,
 body.body--dark .page-changes__empty-subtitle,
 body.body--dark .venue-list__meta,
 body.body--dark .venue-list__server,
-body.body--dark .community-list__goal,
 body.body--dark .noticeboard-item-list__meta,
 body.body--dark .noticeboard-item-list__time {
 	color: rgba(213, 226, 240, 0.74);
@@ -580,7 +579,6 @@ body:not(.body--dark) .page-changes__empty,
 body:not(.body--dark) .page-changes__empty-subtitle,
 body:not(.body--dark) .venue-list__meta,
 body:not(.body--dark) .venue-list__server,
-body:not(.body--dark) .community-list__goal,
 body:not(.body--dark) .noticeboard-item-list__meta,
 body:not(.body--dark) .noticeboard-item-list__time {
 	color: var(--ink-muted);
@@ -593,7 +591,6 @@ body.body--dark .page-stories__stats,
 body.body--dark .page-changes__stats,
 body.body--dark .page-changes__item-title,
 body.body--dark .venue-list__name,
-body.body--dark .community-list__name,
 body.body--dark .noticeboard-item-list__title {
 	color: rgba(213, 226, 240, 0.94);
 }
@@ -623,7 +620,6 @@ body.body--dark .page-changes .q-field__append {
 
 body.body--dark .page-changes__item,
 body.body--dark .venue-list__item,
-body.body--dark .community-list__item,
 body.body--dark .noticeboard-item-list__item {
 	background: rgba(18, 26, 37, 0.96);
 	border-color: rgba(141, 181, 223, 0.24);
@@ -632,7 +628,6 @@ body.body--dark .noticeboard-item-list__item {
 
 body.body--dark .page-changes__item:hover,
 body.body--dark .venue-list__item:hover,
-body.body--dark .community-list__item:hover,
 body.body--dark .noticeboard-item-list__item:hover {
 	border-color: rgba(141, 181, 223, 0.44);
 	box-shadow: 0 16px 28px rgba(0, 0, 0, 0.34);
@@ -746,8 +741,6 @@ body.body--dark .page-support-ticket__empty,
 body.body--dark .page-support-ticket-admin__lead,
 body.body--dark .page-support-ticket-admin__meta-line,
 body.body--dark .page-support-ticket-admin__empty,
-body.body--dark .free-company-name-list__goal,
-body.body--dark .free-company-name-list__server,
 body.body--dark .page-verify > p,
 body.body--dark .page-terms__card > p {
 	color: rgba(213, 226, 240, 0.74);
@@ -758,20 +751,8 @@ body.body--dark .page-support-tickets__toolbar-meta,
 body.body--dark .page-support-tickets__ticket-number,
 body.body--dark .page-support-queue__hero-count-number,
 body.body--dark .page-support-ticket__reply-title,
-body.body--dark .page-support-ticket-admin__section-title,
-body.body--dark .free-company-name-list__name {
+body.body--dark .page-support-ticket-admin__section-title {
 	color: rgba(213, 226, 240, 0.94);
-}
-
-body.body--dark .free-company-name-list__item {
-	background: rgba(18, 26, 37, 0.96);
-	border-color: rgba(141, 181, 223, 0.24);
-	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
-}
-
-body.body--dark .free-company-name-list__item:hover {
-	border-color: rgba(141, 181, 223, 0.44);
-	box-shadow: 0 16px 28px rgba(0, 0, 0, 0.34);
 }
 
 body.body--dark .page-support-tickets .q-field__control,
