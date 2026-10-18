@@ -1,5 +1,8 @@
 <template>
   <div class="character-contacts">
+    <!-- ER2 outlook: constellation (renders itself only with at least 2 parsed contacts) -->
+    <relationship-constellation :character="character" />
+    <!-- /ER2 outlook: constellation -->
     <section>
       <template v-if="showSection(contactFields)">
         <h6 aria-level="2">Kontakte</h6>
@@ -39,6 +42,7 @@ import CharacterDetail from './CharacterDetail.vue';
 import CharacterDetailsBox from './CharacterDetailsBox.vue';
 import CharacterTextField from './CharacterTextField.vue';
 import { isEmptyFieldValue } from './empty-field';
+import RelationshipConstellation from '../outlook/RelationshipConstellation.vue'; // ER2 outlook: constellation
 
 type ContactField = { label: string; value?: string };
 
@@ -60,6 +64,7 @@ class Props {
     BannerView,
     HtmlViewer,
     ReportViolationSection,
+    RelationshipConstellation, // ER2 outlook: constellation
   },
 })
 export default class CharacterContacts extends Vue.with(Props) {
