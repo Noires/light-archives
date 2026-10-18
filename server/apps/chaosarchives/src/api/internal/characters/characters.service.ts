@@ -22,11 +22,14 @@ import { BadRequestException, ConflictException, ForbiddenException, GoneExcepti
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
-import { checkCarrdProfile } from '../../../common/api-checks';
+import { assertUserCharacterId, checkCarrdProfile } from '../../../common/api-checks';
 import { andWhereExists, escapeForLike, isQueryFailedError } from '../../../common/db';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import { ImagesService } from '../images/images.service';
 import { getTribeByName } from '@app/shared/enums/tribe.enum';
+import { RpPresenceDto } from '@app/shared/dto/characters/rp-presence.dto';
+import { RpStatusRequestDto } from '@app/shared/dto/characters/rp-status-request.dto';
+import { computeRpStatusExpiry, normalizeRpLocation, resolveRpPresence, RpPresence } from '@app/shared/presence';
 import { LodestoneService } from '../lodestone/lodestone.service';
 
 @Injectable()
@@ -170,6 +173,7 @@ export class CharactersService {
         name: freeCompany.name,
         server: freeCompany.server.name
       },
+      ...this.getRpPresence(character),
     };
   }
 
@@ -300,6 +304,7 @@ export class CharactersService {
         name: freeCompany.name,
         server: freeCompany.server.name
       },
+      ...this.getRpPresence(character),
     };
   }
 
@@ -456,7 +461,17 @@ export class CharactersService {
 			.where('character.verifiedAt IS NOT NULL')
 			.orderBy('character.name', 'ASC')
 			.innerJoinAndSelect('character.server', 'server')
-			.select([ 'character.name', 'character.profession', 'character.race', 'character.tribe', 'character.avatar', 'server.name' ]);
+			.select([
+        'character.name',
+        'character.profession',
+        'character.race',
+        'character.tribe',
+        'character.avatar',
+        'character.rpStatus',
+        'character.rpLocation',
+        'character.rpStatusExpiresAt',
+        'server.name',
+      ]);
 
     if (filter.searchQuery) {
       query.andWhere(`(character.name LIKE :searchQuery OR character.profession LIKE :searchQuery)`,
@@ -514,9 +529,98 @@ export class CharactersService {
         tribe: character.tribe,
 				avatar: character.avatar,
 				server: character.server.name,
+        ...this.getRpPresence(character),
 			}))
     };
 	}
+
+  // ─── ER2-806: RP presence ────────────────────────────────────────────────────
+
+  private getRpPresence(character: Character): RpPresence {
+    return resolveRpPresence(character.rpStatus, character.rpLocation, character.rpStatusExpiresAt, Date.now());
+  }
+
+  async setRpStatus(characterId: number, request: RpStatusRequestDto, user: UserInfo): Promise<RpPresenceDto> {
+    const now = Date.now();
+    return this.updateRpStatus(characterId, user, {
+      rpStatus: request.rpStatus,
+      rpLocation: normalizeRpLocation(request.rpLocation),
+      rpStatusExpiresAt: new Date(computeRpStatusExpiry(now, request.durationMinutes)),
+    });
+  }
+
+  async clearRpStatus(characterId: number, user: UserInfo): Promise<RpPresenceDto> {
+    return this.updateRpStatus(characterId, user, {
+      rpStatus: null,
+      rpLocation: null,
+      rpStatusExpiresAt: null,
+    });
+  }
+
+  private async updateRpStatus(
+    characterId: number,
+    user: UserInfo,
+    values: { rpStatus: string | null; rpLocation: string | null; rpStatusExpiresAt: Date | null },
+  ): Promise<RpPresenceDto> {
+    assertUserCharacterId(characterId, user);
+
+    const character = await this.characterRepo.findOne({
+      where: { id: characterId, user: { id: user.id }, verifiedAt: Not(IsNull()) },
+      relations: ['server'],
+    });
+
+    if (!character) {
+      throw new NotFoundException('Character not found');
+    }
+
+    // Keep updatedAt untouched: a presence change is not a profile change (changes feed)
+    await this.characterRepo
+      .createQueryBuilder()
+      .update(Character)
+      .set({ ...values, updatedAt: () => '`updatedAt`' })
+      .where('id = :id', { id: character.id })
+      .execute();
+
+    Object.assign(character, values);
+    const presence = this.toRpPresenceDto(character);
+    void this.eventEmitter.emitAsync('presence.changed', presence);
+    return presence;
+  }
+
+  async getRpActiveCharacters(limit: number): Promise<RpPresenceDto[]> {
+    const characters = await this.characterRepo
+      .createQueryBuilder('character')
+      .innerJoinAndSelect('character.server', 'server')
+      .where('character.verifiedAt IS NOT NULL')
+      .andWhere('character.rpStatus IS NOT NULL')
+      .andWhere('character.rpStatusExpiresAt > :now', { now: new Date() })
+      .orderBy('character.rpStatusExpiresAt', 'DESC')
+      .select([
+        'character.id',
+        'character.name',
+        'character.avatar',
+        'character.rpStatus',
+        'character.rpLocation',
+        'character.rpStatusExpiresAt',
+        'server.name',
+      ])
+      .limit(Math.max(1, Math.min(50, limit || 12)))
+      .getMany();
+
+    return characters
+      .map((character) => this.toRpPresenceDto(character))
+      .filter((presence) => presence.rpStatus !== null);
+  }
+
+  private toRpPresenceDto(character: Character): RpPresenceDto {
+    return {
+      characterId: character.id,
+      name: character.name,
+      server: character.server?.name || '',
+      avatar: character.avatar,
+      ...this.getRpPresence(character),
+    };
+  }
 
   async refreshCharacter(characterId: IdWrapper, user: UserInfo): Promise<CharacterRefreshResultDto> {
     // Note that we intentionally don't check if the character is verified.

@@ -5,6 +5,7 @@ import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } fro
 import { BannerDto } from './banner.dto';
 import { BaseCharacterProfileDto } from './base-character-profile.dto';
 import { CharacterFreeCompanyDto } from './character-free-company.dto';
+import { RpStatus } from '../../enums/rp-status.enum';
 
 export class CharacterProfileDto extends BaseCharacterProfileDto {
   @IsNumber()
@@ -79,6 +80,16 @@ export class CharacterProfileDto extends BaseCharacterProfileDto {
   combinedDescription: boolean;
 
   freeCompany: CharacterFreeCompanyDto|null;
+
+  // ER2-806 (read only, optional; null when no active status). Set via PUT /characters/:id/rp-status.
+  @IsOptional()
+  rpStatus?: RpStatus | null;
+
+  @IsOptional()
+  rpLocation?: string | null;
+
+  @IsOptional()
+  rpStatusExpiresAt?: number | null;
 	
 	constructor(properties?: Readonly<CharacterProfileDto>) {
     super();
