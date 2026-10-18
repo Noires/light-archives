@@ -419,6 +419,17 @@ const routes: RouteRecordRaw[] = [
         },
       },
 
+      // ER2 outlook: map — same page with the map view preselected
+      {
+        path: 'venues/karte',
+        component: () => import('pages/Venues.vue'),
+        meta: {
+          title: 'Treffpunkte auf der Karte',
+          venueView: 'karte',
+          breadcrumb: [{ label: 'Treffpunkte', to: '/venues' }, 'Karte'],
+        },
+      },
+
       {
         path: 'my-venues',
         component: () => import('pages/MyVenues.vue'),
