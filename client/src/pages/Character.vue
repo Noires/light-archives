@@ -64,7 +64,7 @@
 					<character-pen-and-paper v-else-if="tab === 'pen-and-paper'" :character="character" />
 				</template>
 
-				<report-violation-section :pageType="PageType.PROFILE" :pageId="character.id" />
+				<report-violation-section :pageType="PageType.PROFILE" :pageId="character.id" hide-copy-link />
 			</div>
 		</template>
 	</q-page>
@@ -330,11 +330,6 @@ export default class PageCharacter extends Vue {
 	position: sticky;
 	top: var(--nav-height, 68px);
 	z-index: 5;
-}
-
-// "Teilen" in the header replaces the copy-link button of the report row.
-.page-character__body :deep(.report-violation-section > .q-btn:first-child) {
-	display: none;
 }
 
 .page-character__body {

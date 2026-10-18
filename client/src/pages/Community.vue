@@ -174,7 +174,7 @@
           </template>
         </div>
 
-        <report-violation-section :pageType="PageType.COMMUNITY" :pageId="community.id" />
+        <report-violation-section :pageType="PageType.COMMUNITY" :pageId="community.id" hide-copy-link />
       </div>
     </template>
   </q-page>
@@ -481,11 +481,6 @@ export default class PageCommunity extends Vue {
 
   @media (max-width: 599px) {
     padding: 16px 12px 0;
-  }
-
-  // "Teilen" in the header replaces the copy-link button of the report row.
-  :deep(.report-violation-section > .q-btn:first-child) {
-    display: none;
   }
 }
 
