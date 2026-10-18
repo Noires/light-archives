@@ -82,8 +82,14 @@ body.body--dark .q-footer.mat-vellum {
   flex-grow: 1;
 }
 
-.layout__footer a {
+// Local colour on purpose: the footer is page chrome (Vellum / Obsidian),
+// not page content, so the global link colour must not leak in. Underlined
+// so the links do not rely on colour alone inside the legal text.
+.layout__footer a,
+.layout__footer a:visited {
   color: var(--app-footer-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .layout__footer a:hover {

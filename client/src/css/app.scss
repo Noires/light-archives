@@ -38,8 +38,9 @@
 	--app-card-divider: rgba(31, 44, 56, 0.12);
 	--app-footer-bg: #ebebeb;
 	--app-footer-text: #000000;
-	--app-footer-link: #777777;
-	--app-footer-link-hover: #bbbbbb;
+	// Footer is Vellum in Hydaelyn: bronze link ink (5.48:1), darker on hover.
+	--app-footer-link: var(--ink-link, #8A5A14);
+	--app-footer-link-hover: var(--ink-primary, #2B2418);
 	--app-table-surface: #f0f0f0;
 	--app-select-control-bg: rgba(246, 241, 232, 0.95);
 	--app-select-control-text: #20323d;
@@ -401,7 +402,11 @@ a {
 	transition: color 0.3s ease;
 }
 
-.q-page a:visited {
+// Specificity (0,0,1), like `a` above: a component class that colours its
+// links (e.g. white chips on media heroes, the footer) must win over the
+// visited colour. `.q-page a:visited` (0,2,1) used to turn visited hero links
+// bronze in Hydaelyn.
+:where(.q-page) a:where(:visited) {
 	color: var(--app-link-visited-color);
 }
 
