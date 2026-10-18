@@ -260,3 +260,36 @@ Slot: `action` (e.g. an RSVP button; stays clickable above the card link).
   </template>
 </event-card>
 ```
+
+## CommandPalette
+
+Ctrl+K / Cmd+K palette (ER2-206, ER2-207). The shell mounts it once in
+`layouts/MainLayout.vue`, lazily via `defineAsyncComponent`, and opens it
+from the shortcut, the top-bar search pill and the mobile "Suche" button. Do
+not mount a second one in pages; to open it from elsewhere, emit up to the
+layout or reuse its `openPalette()`.
+
+| Prop | Type | Default |
+|---|---|---|
+| `modelValue` | `boolean` | `false` |
+
+Emits `update:modelValue`.
+
+- Empty input: "Zuletzt geöffnet" (up to 5 results from `localStorage`
+  key `elpis.palette.recent`) and "Aktionen".
+- Typing: debounced 250 ms. Uses `$api.search.suggest(q)` from 2 characters
+  if client-common provides it (`GET /search/suggest`, groups of
+  `{ id, title, subtitle?, link, avatar? }`); on error or without it, falls
+  back to `$api.search.search(q)` from 3 characters, mapped through
+  `common/pagelinks.ts`.
+- Groups: Charaktere, Treffpunkte, Events, Geschichten, Wiki, Anschlagbrett,
+  Gemeinschaften (communities and free companies), then Aktionen: "Alle
+  Ergebnisse für …" (`/search?q=`), "Event erstellen" (`/create-event`),
+  "Zu meinem Profil", "Charakter wechseln" (verified users only).
+- Keyboard: ↑↓ move the highlight, Enter opens it, Enter without a highlight
+  goes to `/search?q=`, Esc closes. The input is the only tab stop (options
+  use `aria-activedescendant`); focus returns to the trigger on close.
+
+```html
+<command-palette v-model="paletteOpen" />
+```

@@ -101,9 +101,12 @@ import { Role } from '@app/shared/enums/role.enum';
 import { getPageLink } from 'src/common/pagelinks';
 import { Options, prop, Vue } from 'vue-class-component';
 
-// ER2-206 — command palette (Ctrl/Cmd+K). Controlled via v-model; the shell
-// (layouts/MainLayout.vue) owns the open state and the global shortcut and
-// loads this file lazily with defineAsyncComponent. See README.md.
+// ER2-206 / ER2-207 — command palette (Ctrl/Cmd+K). Controlled via v-model;
+// the shell (layouts/MainLayout.vue) owns the open state and the global
+// shortcut and loads this file lazily with defineAsyncComponent.
+// Data: `$api.search.suggest(q)` from 2 characters when the client has it
+// (ER2-809 adds GET /search/suggest), else `$api.search.search(q)` from 3.
+// Recently opened results are kept in localStorage. See README.md.
 
 export interface PaletteItem {
 	id: string;
@@ -139,8 +142,50 @@ export const PALETTE_RESULT_GROUPS: ResultGroupDef[] = [
 ];
 
 const SEARCH_MIN_LENGTH = 3;
+const SUGGEST_MIN_LENGTH = 2;
 const DEBOUNCE_MS = 250;
 const RESULTS_PER_GROUP = 5;
+const RECENT_STORAGE_KEY = 'elpis.palette.recent';
+const RECENT_MAX = 5;
+
+/** Response shape of GET /search/suggest (ER2-809). */
+export interface SuggestResultDto {
+	id: number | string;
+	title: string;
+	subtitle?: string | null;
+	link: string;
+	avatar?: string | null;
+}
+
+export interface SuggestGroupDto {
+	type: string;
+	results: SuggestResultDto[];
+}
+
+type SuggestFn = (query: string) => Promise<SuggestGroupDto[]>;
+
+function readRecent(): PaletteItem[] {
+	try {
+		const raw = window.localStorage.getItem(RECENT_STORAGE_KEY);
+		const parsed: unknown = raw ? JSON.parse(raw) : [];
+		if (!Array.isArray(parsed)) {
+			return [];
+		}
+		return (parsed as PaletteItem[])
+			.filter((item) => item && typeof item.label === 'string' && typeof item.to === 'string')
+			.slice(0, RECENT_MAX);
+	} catch (e) {
+		return [];
+	}
+}
+
+function writeRecent(items: PaletteItem[]): void {
+	try {
+		window.localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(items.slice(0, RECENT_MAX)));
+	} catch (e) {
+		// Storage unavailable (private mode, quota): recent items are a convenience only.
+	}
+}
 
 let paletteCounter = 0;
 
@@ -192,6 +237,7 @@ export default class CommandPalette extends Vue.with(Props) {
 	error = false;
 	resultGroups: { def: ResultGroupDef; items: PaletteItem[] }[] = [];
 	searchedQuery = '';
+	recentItems: PaletteItem[] = readRecent();
 
 	private debounceTimer: ReturnType<typeof setTimeout> | null = null;
 	private requestSeq = 0;
@@ -201,7 +247,13 @@ export default class CommandPalette extends Vue.with(Props) {
 	}
 
 	get minLength(): number {
-		return SEARCH_MIN_LENGTH;
+		return this.suggestFn() ? SUGGEST_MIN_LENGTH : SEARCH_MIN_LENGTH;
+	}
+
+	/** `$api.search.suggest` once client-common has it (runtime check, ER2-207). */
+	suggestFn(): SuggestFn | null {
+		const api = this.$api.search as unknown as { suggest?: SuggestFn };
+		return typeof api.suggest === 'function' ? (q: string) => api.suggest!.call(api, q) : null;
 	}
 
 	get actionItems(): PaletteItem[] {
@@ -290,9 +342,26 @@ export default class CommandPalette extends Vue.with(Props) {
 		return '';
 	}
 
-	/** Groups shown above the search results (recent items in v2). */
+	/** Groups shown above the search results: recent items while the input is empty. */
 	extraGroups(): { key: string; label: string; items: PaletteItem[] }[] {
-		return [];
+		if (this.trimmedQuery || !this.recentItems.length) {
+			return [];
+		}
+		return [{
+			key: 'recent',
+			label: 'Zuletzt geöffnet',
+			items: this.recentItems.map((item) => ({ ...item, id: `recent-${item.id}`, icon: item.icon || 'history' })),
+		}];
+	}
+
+	rememberItem(item: PaletteItem) {
+		if (!item.to || item.run || item.id.startsWith('action-')) {
+			return;
+		}
+		const id = item.id.replace(/^recent-/, '');
+		const entry: PaletteItem = { id, label: item.label, subtitle: item.subtitle, icon: item.icon, avatar: item.avatar, to: item.to };
+		this.recentItems = [entry, ...readRecent().filter((recent) => recent.to !== entry.to)].slice(0, RECENT_MAX);
+		writeRecent(this.recentItems);
 	}
 
 	optionId(item: PaletteItem): string {
@@ -300,6 +369,7 @@ export default class CommandPalette extends Vue.with(Props) {
 	}
 
 	onShow() {
+		this.recentItems = readRecent();
 		const input = this.$refs.input as HTMLInputElement | undefined;
 		input?.focus();
 		input?.select();
@@ -356,8 +426,47 @@ export default class CommandPalette extends Vue.with(Props) {
 		}
 	}
 
-	/** v1: full-text search (`GET /search?q=`), mapped to the palette groups. */
 	async fetchGroups(q: string): Promise<{ def: ResultGroupDef; items: PaletteItem[] }[]> {
+		const suggest = this.suggestFn();
+		if (suggest) {
+			try {
+				const groups = await suggest(q);
+				if (!Array.isArray(groups)) {
+					throw new Error('Unexpected suggest response');
+				}
+				return this.mapSuggest(groups);
+			} catch (e) {
+				if (q.length < SEARCH_MIN_LENGTH) {
+					throw e;
+				}
+				// Fall back to the full-text search below.
+			}
+		}
+		return this.fetchSearchGroups(q);
+	}
+
+	/** v2: autocomplete (`GET /search/suggest?q=`), already carrying links. */
+	mapSuggest(groups: SuggestGroupDto[]): { def: ResultGroupDef; items: PaletteItem[] }[] {
+		return PALETTE_RESULT_GROUPS.map((def) => ({
+			def,
+			items: groups
+				.filter((group) => group && def.types.includes(group.type) && Array.isArray(group.results))
+				.flatMap((group) => group.results
+					.filter((result) => result && result.title && result.link)
+					.map((result) => ({
+						id: `${group.type}-${result.id}`,
+						label: result.title,
+						subtitle: result.subtitle || '',
+						icon: def.icon,
+						avatar: result.avatar || undefined,
+						to: result.link,
+					})))
+				.slice(0, RESULTS_PER_GROUP),
+		}));
+	}
+
+	/** v1: full-text search (`GET /search?q=`), mapped to the palette groups. */
+	async fetchSearchGroups(q: string): Promise<{ def: ResultGroupDef; items: PaletteItem[] }[]> {
 		const results: SearchResultsDto[] = await this.$api.search.search(q);
 		return PALETTE_RESULT_GROUPS.map((def) => ({
 			def,
@@ -450,9 +559,12 @@ export default class CommandPalette extends Vue.with(Props) {
 	}
 
 	async openItem(item: PaletteItem) {
+		this.rememberItem(item);
 		this.close();
 		if (item.run) {
 			await item.run();
+		} else if (item.to && /^https?:\/\//.test(item.to)) {
+			window.location.assign(item.to);
 		} else if (item.to) {
 			await this.$router.push(item.to);
 		}
