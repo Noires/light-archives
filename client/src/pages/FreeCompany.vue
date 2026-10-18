@@ -12,30 +12,16 @@
 				</header>
 
 				<div class="page-free-company__members-grid">
-					<div
+					<member-card
 						v-for="profile in members.data"
 						:key="`${profile.name}_${profile.server}`"
-						class="page-free-company__member-card"
-					>
-						<router-link :to="getLink(profile)" class="page-free-company__member-link">
-							<aetheryte-badge
-								size="md"
-								shape="round"
-								:src="profile.avatar"
-								:alt="profile.name"
-								class="page-free-company__member-avatar"
-							/>
-							<div class="page-free-company__member-body">
-								<div class="page-free-company__member-name">{{ profile.name }}</div>
-								<div class="page-free-company__member-meta">
-									{{ $display.races[profile.race] }} - {{ profile.server }}
-								</div>
-								<div v-if="profile.profession" class="page-free-company__member-profession">
-									{{ profile.profession }}
-								</div>
-							</div>
-						</router-link>
-					</div>
+						:to="getLink(profile)"
+						:avatar-src="profile.avatar"
+						:name="profile.name"
+						:meta="`${$display.races[profile.race]} · ${profile.server}`"
+						:subtitle="profile.profession || ''"
+						:rp-status="profile.rpStatus || null"
+					/>
 				</div>
 
 				<div v-if="members.total === 0" class="page-free-company__members-empty">
@@ -68,7 +54,7 @@ import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import errors from '@app/shared/errors';
 import FreeCompanyProfile from 'components/free-company/FreeCompanyProfile.vue';
 import FreeCompanyMemberPermissionEditor from 'components/free-company/FreeCompanyMemberPermissionEditor.vue';
-import AetheryteBadge from 'components/aetherium/AetheryteBadge.vue';
+import MemberCard from 'components/vision/MemberCard.vue';
 import { useApi } from 'src/boot/axios';
 import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
@@ -143,7 +129,7 @@ async function load(params: RouteParams): Promise<Content> {
 		FreeCompanyProfile,
     FreeCompanyMemberPermissionEditor,
 		ReportViolationSection,
-		AetheryteBadge,
+		MemberCard,
 	},
 	async beforeRouteEnter(to, _, next) {
 		const content = await load(to.params);
@@ -241,61 +227,6 @@ export default class PageFreeCompany extends Vue {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px;
-  padding: 12px;
-  border: 1px solid var(--rule-gold-soft);
-  background: var(--surface-vellum);
-  box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
-  border-radius: 6px;
-}
-
-.page-free-company__member-card {
-  border: 1px solid var(--rule-gold-soft);
-  background: var(--surface-vellum);
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
-  transition:
-    transform var(--motion-fast) var(--ease-elpis),
-    box-shadow var(--motion-fast) var(--ease-elpis),
-    border-color var(--motion-fast) var(--ease-elpis);
-}
-
-.page-free-company__member-card:hover {
-  transform: translateY(-4px);
-  box-shadow:
-    0 1px 2px rgba(43, 36, 24, 0.06),
-    0 12px 28px rgba(43, 36, 24, 0.12);
-  border-color: var(--rule-gold);
-}
-
-.page-free-company__member-link {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px;
-  align-items: center;
-  padding: 14px 16px;
-  color: inherit;
-  text-decoration: none;
-}
-
-.page-free-company__member-name {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: var(--type-scale-2);
-  letter-spacing: var(--ls-display);
-  color: var(--surface-ink);
-}
-
-.page-free-company__member-meta {
-  font-family: var(--font-ui);
-  color: var(--ink-muted);
-  font-size: var(--type-scale-0);
-}
-
-.page-free-company__member-profession {
-  font-family: var(--font-section);
-  font-style: italic;
-  color: var(--ink-muted);
-  font-size: var(--type-scale-1);
 }
 
 .page-free-company__members-empty {
@@ -319,25 +250,14 @@ body.body--dark .page-free-company__members-empty {
 }
 
 body.body--dark .page-free-company__members-header h3,
-body.body--dark .page-free-company__member-name {
-  color: var(--ink-luminous);
-}
-
-body.body--dark .page-free-company__members-count,
+body.body--dark body.body--dark .page-free-company__members-count,
 body.body--dark .page-free-company__member-meta,
 body.body--dark .page-free-company__member-profession,
 body.body--dark .page-free-company__members-empty {
   color: rgba(236, 227, 247, 0.74);
 }
 
-body.body--dark .page-free-company__member-card:hover {
-  border-color: var(--rule-arcane);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.35),
-    0 12px 28px rgba(0, 0, 0, 0.45);
-}
-
-@media screen and (max-width: $breakpoint-sm) {
+body.body--dark @media screen and (max-width: $breakpoint-sm) {
   .page-free-company__members-grid {
     grid-template-columns: minmax(0, 1fr);
   }

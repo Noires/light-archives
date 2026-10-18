@@ -38,26 +38,16 @@
           </header>
 
           <div class="page-community__members-grid">
-            <div
+            <member-card
               v-for="profile in members"
               :key="`${profile.name}_${profile.server}`"
-              class="page-community__member-card"
-            >
-              <router-link :to="getLink(profile)" class="page-community__member-link">
-                <q-avatar round size="56px" class="page-community__member-avatar">
-                  <img :src="profile.avatar" />
-                </q-avatar>
-                <div class="page-community__member-body">
-                  <div class="page-community__member-name">{{ profile.name }}</div>
-                  <div class="page-community__member-meta">
-                    {{ $display.races[profile.race] }} - {{ profile.server }}
-                  </div>
-                  <div v-if="profile.profession" class="page-community__member-profession">
-                    {{ profile.profession }}
-                  </div>
-                </div>
-              </router-link>
-            </div>
+              :to="getLink(profile)"
+              :avatar-src="profile.avatar"
+              :name="profile.name"
+              :meta="`${$display.races[profile.race]} · ${profile.server}`"
+              :subtitle="profile.profession || ''"
+              :rp-status="profile.rpStatus || null"
+            />
           </div>
 
           <div v-if="members.length === 0" class="page-community__members-empty">
@@ -105,6 +95,7 @@ import CommunityApplicantEditor from 'src/components/communities/CommunityApplic
 import CommunityMemberEditor from 'src/components/communities/CommunityMemberEditor.vue';
 import { PageType } from '@app/shared/enums/page-type.enum';
 import ReportViolationSection from 'src/components/common/ReportViolationSection.vue';
+import MemberCard from 'components/vision/MemberCard.vue';
 
 const $api = useApi();
 const $store = useStore();
@@ -138,6 +129,7 @@ async function load(
     CommunityApplicantEditor,
 		CommunityMemberEditor,
 		ReportViolationSection,
+    MemberCard,
   },
   async beforeRouteEnter(to, _, next) {
     const { community, members } = await load(to.params);
@@ -331,52 +323,6 @@ body.body--dark .page-community {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px;
-  padding: 12px;
-  border: 1px solid var(--community-members-surface-border);
-  background: var(--community-members-surface-bg);
-  box-shadow: var(--community-members-surface-shadow-md);
-}
-
-.page-community__member-card {
-  border: 1px solid var(--community-members-card-border);
-  background: var(--community-members-card-bg);
-  box-shadow: var(--community-members-card-shadow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.page-community__member-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--community-members-card-shadow-hover);
-  border-color: var(--community-members-card-border-hover);
-}
-
-.page-community__member-link {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px;
-  align-items: center;
-  padding: 16px;
-  color: inherit;
-  text-decoration: none;
-}
-
-.page-community__member-avatar {
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
-}
-
-.page-community__member-name {
-  font-weight: 700;
-  color: var(--community-members-name);
-}
-
-.page-community__member-meta {
-  color: var(--community-members-meta);
-  font-size: 0.85rem;
-}
-
-.page-community__member-profession {
-  color: var(--community-members-meta-muted);
-  font-size: 0.85rem;
 }
 
 .page-community__members-empty {
@@ -401,13 +347,4 @@ body.body--dark .page-community {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .page-community__member-card {
-    transition: none;
-  }
-
-  .page-community__member-card:hover {
-    transform: none;
-  }
-}
 </style>
