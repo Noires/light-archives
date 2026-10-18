@@ -343,29 +343,17 @@ h2 {
 	margin-bottom: 24px;
 }
 
-// ER2-108 — directory hero titles sit on the content grid. The global h2 is
+// ER2-108 — legacy hero titles sit on the content grid. The global h2 is
 // centred, and inside the hero text column (whose width follows the lead
-// paragraph) that pushed short titles inwards by different amounts per page
-// (Communities ~137px, Freie Gesellschaften 66px). Left-align them so every
-// title starts at the hero's 22px inner edge.
-.page-characters__hero-text > h2,
-.page-venues__hero-text > h2,
-.page-communities__hero-text > h2,
-.page-free-companies__hero-text > h2,
-.page-noticeboard__hero-text > h2,
-.page-stories__hero-text > h2,
+// paragraph) that pushed short titles inwards by different amounts per page.
+// Left-align them so every title starts at the hero's 22px inner edge.
 .page-changes__hero-text > h2,
-.page-gallery__hero-text > h2,
 .page-support-tickets__hero-text > h2,
 .page-support-queue__hero-text > h2,
 .page-support-ticket__hero-text > h2,
 .page-support-ticket-admin__hero-text > h2,
 .page-new-support-ticket__hero-text > h2 {
 	text-align: left;
-}
-
-h2.with-subtitle {
-	margin-bottom: 0;
 }
 
 .subtitle {
@@ -528,9 +516,7 @@ body.body--dark .striped-list tr:nth-child(even) {
 }
 
 // Global dark-mode overrides for list-heavy archive pages.
-body.body--dark .page-characters,
 body.body--dark .page-venues,
-body.body--dark .page-communities,
 body.body--dark .page-noticeboard,
 body.body--dark .page-stories,
 body.body--dark .page-changes {
@@ -538,9 +524,7 @@ body.body--dark .page-changes {
 	color: rgba(213, 226, 240, 0.92);
 }
 
-body.body--dark .page-characters::before,
 body.body--dark .page-venues::before,
-body.body--dark .page-communities::before,
 body.body--dark .page-noticeboard::before,
 body.body--dark .page-stories::before,
 body.body--dark .page-changes::before {
@@ -549,72 +533,29 @@ body.body--dark .page-changes::before {
 		radial-gradient(circle at 80% 0%, rgba(90, 125, 166, 0.16), transparent 50%);
 }
 
-body.body--dark .page-characters__hero,
-body.body--dark .page-venues__hero,
-body.body--dark .page-communities__hero,
-body.body--dark .page-noticeboard__hero,
-body.body--dark .page-stories__hero,
 body.body--dark .page-changes__hero,
-body.body--dark .page-characters__alphabet-nav,
-body.body--dark .page-characters__toolbar,
 body.body--dark .page-venues__toolbar,
-body.body--dark .page-communities__toolbar,
 body.body--dark .page-noticeboard__toolbar,
 body.body--dark .page-stories__toolbar,
 body.body--dark .page-changes__toolbar,
-body.body--dark .page-characters__list,
-body.body--dark .page-venues__list,
-body.body--dark .page-communities__list,
-body.body--dark .page-noticeboard__list,
-body.body--dark .page-stories__list,
 body.body--dark .page-changes__list-wrapper,
-body.body--dark .page-characters__empty,
-body.body--dark .page-venues__empty,
-body.body--dark .page-communities__empty,
-body.body--dark .page-noticeboard__empty,
-body.body--dark .page-stories__empty,
 body.body--dark .page-changes__empty {
 	background: rgba(17, 24, 34, 0.94);
 	border-color: rgba(141, 181, 223, 0.28);
 	box-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
 }
 
-body.body--dark .page-characters__eyebrow,
-body.body--dark .page-venues__eyebrow,
-body.body--dark .page-communities__eyebrow,
-body.body--dark .page-noticeboard__eyebrow,
-body.body--dark .page-stories__eyebrow,
 body.body--dark .page-changes__eyebrow {
 	color: rgba(171, 201, 235, 0.88);
 }
 
-body.body--dark .page-characters__lead,
-body.body--dark .page-venues__lead,
-body.body--dark .page-communities__lead,
-body.body--dark .page-noticeboard__lead,
-body.body--dark .page-stories__lead,
 body.body--dark .page-changes__lead,
-body.body--dark .page-characters__count-label,
-body.body--dark .page-venues__count-label,
-body.body--dark .page-communities__count-label,
-body.body--dark .page-noticeboard__count-label,
-body.body--dark .page-stories__hero-count-label,
 body.body--dark .page-changes__hero-count-label,
-body.body--dark .page-stories__card-meta,
-body.body--dark .page-stories__card-excerpt,
-body.body--dark .page-stories__empty,
-body.body--dark .page-stories__empty-subtitle,
 body.body--dark .page-changes__item-time,
 body.body--dark .page-changes__item-meta,
 body.body--dark .page-changes__item-summary,
 body.body--dark .page-changes__empty,
 body.body--dark .page-changes__empty-subtitle,
-body.body--dark .page-characters__card-meta,
-body.body--dark .page-characters__card-profession,
-body.body--dark .page-characters__empty,
-body.body--dark .page-venues__empty,
-body.body--dark .page-communities__empty,
-body.body--dark .page-noticeboard__empty,
 body.body--dark .venue-list__meta,
 body.body--dark .venue-list__server,
 body.body--dark .community-list__goal,
@@ -625,33 +566,13 @@ body.body--dark .noticeboard-item-list__time {
 
 // ER2-102 — the same meta/caption set in Hydaelyn: muted ink (#6E5F46,
 // ≥ 5.4:1 on pearl) instead of the per-page rgba(35,35,35,.5–.65) greys.
-body:not(.body--dark) .page-characters__lead,
-body:not(.body--dark) .page-venues__lead,
-body:not(.body--dark) .page-communities__lead,
-body:not(.body--dark) .page-noticeboard__lead,
-body:not(.body--dark) .page-stories__lead,
 body:not(.body--dark) .page-changes__lead,
-body:not(.body--dark) .page-characters__count-label,
-body:not(.body--dark) .page-venues__count-label,
-body:not(.body--dark) .page-communities__count-label,
-body:not(.body--dark) .page-noticeboard__count-label,
-body:not(.body--dark) .page-stories__hero-count-label,
 body:not(.body--dark) .page-changes__hero-count-label,
-body:not(.body--dark) .page-stories__card-meta,
-body:not(.body--dark) .page-stories__card-excerpt,
-body:not(.body--dark) .page-stories__empty,
-body:not(.body--dark) .page-stories__empty-subtitle,
 body:not(.body--dark) .page-changes__item-time,
 body:not(.body--dark) .page-changes__item-meta,
 body:not(.body--dark) .page-changes__item-summary,
 body:not(.body--dark) .page-changes__empty,
 body:not(.body--dark) .page-changes__empty-subtitle,
-body:not(.body--dark) .page-characters__card-meta,
-body:not(.body--dark) .page-characters__card-profession,
-body:not(.body--dark) .page-characters__empty,
-body:not(.body--dark) .page-venues__empty,
-body:not(.body--dark) .page-communities__empty,
-body:not(.body--dark) .page-noticeboard__empty,
 body:not(.body--dark) .venue-list__meta,
 body:not(.body--dark) .venue-list__server,
 body:not(.body--dark) .community-list__goal,
@@ -660,21 +581,11 @@ body:not(.body--dark) .noticeboard-item-list__time {
 	color: var(--ink-muted);
 }
 
-
-body.body--dark .page-characters__count-number,
-body.body--dark .page-venues__count-number,
-body.body--dark .page-communities__count-number,
-body.body--dark .page-noticeboard__count-number,
-body.body--dark .page-stories__hero-count-number,
 body.body--dark .page-changes__hero-count-number,
-body.body--dark .page-characters__stats,
 body.body--dark .page-venues__stats,
-body.body--dark .page-communities__stats,
 body.body--dark .page-noticeboard__stats,
 body.body--dark .page-stories__stats,
 body.body--dark .page-changes__stats,
-body.body--dark .page-characters__card-name,
-body.body--dark .page-stories__card-title,
 body.body--dark .page-changes__item-title,
 body.body--dark .venue-list__name,
 body.body--dark .community-list__name,
@@ -682,9 +593,7 @@ body.body--dark .noticeboard-item-list__title {
 	color: rgba(213, 226, 240, 0.94);
 }
 
-body.body--dark .page-characters .q-field__control,
 body.body--dark .page-venues .q-field__control,
-body.body--dark .page-communities .q-field__control,
 body.body--dark .page-noticeboard .q-field__control,
 body.body--dark .page-stories .q-field__control,
 body.body--dark .page-changes .q-field__control {
@@ -692,15 +601,9 @@ body.body--dark .page-changes .q-field__control {
 	box-shadow: inset 0 0 0 1px rgba(141, 181, 223, 0.28);
 }
 
-body.body--dark .page-characters .q-field__native,
-body.body--dark .page-characters .q-field__label,
-body.body--dark .page-characters .q-field__append,
 body.body--dark .page-venues .q-field__native,
 body.body--dark .page-venues .q-field__label,
 body.body--dark .page-venues .q-field__append,
-body.body--dark .page-communities .q-field__native,
-body.body--dark .page-communities .q-field__label,
-body.body--dark .page-communities .q-field__append,
 body.body--dark .page-noticeboard .q-field__native,
 body.body--dark .page-noticeboard .q-field__label,
 body.body--dark .page-noticeboard .q-field__append,
@@ -713,8 +616,6 @@ body.body--dark .page-changes .q-field__append {
 	color: rgba(213, 226, 240, 0.84);
 }
 
-body.body--dark .page-characters__card,
-body.body--dark .page-stories__card,
 body.body--dark .page-changes__item,
 body.body--dark .venue-list__item,
 body.body--dark .community-list__item,
@@ -724,45 +625,12 @@ body.body--dark .noticeboard-item-list__item {
 	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
 }
 
-body.body--dark .page-characters__card:hover,
-body.body--dark .page-stories__card:hover,
 body.body--dark .page-changes__item:hover,
 body.body--dark .venue-list__item:hover,
 body.body--dark .community-list__item:hover,
 body.body--dark .noticeboard-item-list__item:hover {
 	border-color: rgba(141, 181, 223, 0.44);
 	box-shadow: 0 16px 28px rgba(0, 0, 0, 0.34);
-}
-
-body.body--dark .page-characters__alphabet-btn {
-	background: rgba(20, 29, 41, 0.96);
-	border-color: rgba(141, 181, 223, 0.32);
-	color: rgba(213, 226, 240, 0.9);
-	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.24);
-}
-
-body.body--dark .page-characters__alphabet-btn:hover {
-	background: rgba(141, 181, 223, 0.18);
-	border-color: rgba(141, 181, 223, 0.48);
-}
-
-body.body--dark .page-characters__alphabet-btn--active {
-	background: linear-gradient(135deg, rgba(141, 181, 223, 0.3) 0%, rgba(102, 149, 200, 0.18) 100%);
-	border-color: rgba(141, 181, 223, 0.58);
-	color: rgba(218, 232, 247, 0.96);
-}
-
-body.body--dark .page-stories__card-type {
-	color: rgba(196, 221, 247, 0.95);
-	background: rgba(141, 181, 223, 0.2);
-}
-
-body.body--dark .page-stories__card-action {
-	color: rgba(196, 221, 247, 0.95);
-}
-
-body.body--dark .page-stories__card-link:focus-visible {
-	box-shadow: inset 0 0 0 2px rgba(141, 181, 223, 0.44);
 }
 
 body.body--dark .page-changes__item-icon .q-icon {
@@ -778,7 +646,6 @@ body.body--dark .page-about,
 body.body--dark .page-beginner-guide,
 body.body--dark .page-faq,
 body.body--dark .page-rules,
-body.body--dark .page-free-companies,
 body.body--dark .page-support-tickets,
 body.body--dark .page-support-queue,
 body.body--dark .page-new-support-ticket,
@@ -792,7 +659,6 @@ body.body--dark .page-about::before,
 body.body--dark .page-beginner-guide::before,
 body.body--dark .page-faq::before,
 body.body--dark .page-rules::before,
-body.body--dark .page-free-companies::before,
 body.body--dark .page-support-tickets::before,
 body.body--dark .page-support-queue::before,
 body.body--dark .page-new-support-ticket::before,
@@ -811,10 +677,6 @@ body.body--dark .page-faq__hero,
 body.body--dark .page-faq__content,
 body.body--dark .page-rules__hero,
 body.body--dark .page-rules__content,
-body.body--dark .page-free-companies__hero,
-body.body--dark .page-free-companies__toolbar,
-body.body--dark .page-free-companies__list,
-body.body--dark .page-free-companies__empty,
 body.body--dark .page-support-tickets__hero,
 body.body--dark .page-support-tickets__toolbar,
 body.body--dark .page-support-tickets__table-shell,
@@ -833,9 +695,6 @@ body.body--dark .page-support-ticket-admin__messages-shell,
 body.body--dark .page-support-ticket-admin__reply-card,
 body.body--dark .page-support-ticket-admin__note-card,
 body.body--dark .page-support-ticket-admin__closed-banner,
-body.body--dark .page-free-company__members-header,
-body.body--dark .page-free-company__members-grid,
-body.body--dark .page-free-company__members-empty,
 body.body--dark .page-verify__card,
 body.body--dark .page-terms__card,
 body.body--dark .page-terms__terms-of-use {
@@ -854,7 +713,6 @@ body.body--dark .page-about__eyebrow,
 body.body--dark .page-beginner-guide__eyebrow,
 body.body--dark .page-faq__eyebrow,
 body.body--dark .page-rules__eyebrow,
-body.body--dark .page-free-companies__eyebrow,
 body.body--dark .page-support-tickets__eyebrow,
 body.body--dark .page-support-queue__eyebrow,
 body.body--dark .page-new-support-ticket__eyebrow,
@@ -867,9 +725,6 @@ body.body--dark .page-about__lead,
 body.body--dark .page-beginner-guide__hero p,
 body.body--dark .page-faq__hero p,
 body.body--dark .page-rules__hero p,
-body.body--dark .page-free-companies__lead,
-body.body--dark .page-free-companies__count-label,
-body.body--dark .page-free-companies__empty,
 body.body--dark .page-support-tickets__lead,
 body.body--dark .page-support-tickets__hero-count-label,
 body.body--dark .page-support-tickets__hero-stats,
@@ -886,9 +741,6 @@ body.body--dark .page-support-ticket__empty,
 body.body--dark .page-support-ticket-admin__lead,
 body.body--dark .page-support-ticket-admin__meta-line,
 body.body--dark .page-support-ticket-admin__empty,
-body.body--dark .page-free-company__member-meta,
-body.body--dark .page-free-company__member-profession,
-body.body--dark .page-free-company__members-empty,
 body.body--dark .free-company-name-list__goal,
 body.body--dark .free-company-name-list__server,
 body.body--dark .page-verify > p,
@@ -896,34 +748,27 @@ body.body--dark .page-terms__card > p {
 	color: rgba(213, 226, 240, 0.74);
 }
 
-body.body--dark .page-free-companies__count-number,
-body.body--dark .page-free-companies__stats,
 body.body--dark .page-support-tickets__hero-count-number,
 body.body--dark .page-support-tickets__toolbar-meta,
 body.body--dark .page-support-tickets__ticket-number,
 body.body--dark .page-support-queue__hero-count-number,
 body.body--dark .page-support-ticket__reply-title,
 body.body--dark .page-support-ticket-admin__section-title,
-body.body--dark .page-free-company__members-count,
-body.body--dark .page-free-company__member-name,
 body.body--dark .free-company-name-list__name {
 	color: rgba(213, 226, 240, 0.94);
 }
 
-body.body--dark .free-company-name-list__item,
-body.body--dark .page-free-company__member-card {
+body.body--dark .free-company-name-list__item {
 	background: rgba(18, 26, 37, 0.96);
 	border-color: rgba(141, 181, 223, 0.24);
 	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
 }
 
-body.body--dark .free-company-name-list__item:hover,
-body.body--dark .page-free-company__member-card:hover {
+body.body--dark .free-company-name-list__item:hover {
 	border-color: rgba(141, 181, 223, 0.44);
 	box-shadow: 0 16px 28px rgba(0, 0, 0, 0.34);
 }
 
-body.body--dark .page-free-companies .q-field__control,
 body.body--dark .page-support-tickets .q-field__control,
 body.body--dark .page-support-queue .q-field__control,
 body.body--dark .page-new-support-ticket .q-field__control,
@@ -935,9 +780,6 @@ body.body--dark .page-terms .q-field__control {
 	box-shadow: inset 0 0 0 1px rgba(141, 181, 223, 0.28);
 }
 
-body.body--dark .page-free-companies .q-field__native,
-body.body--dark .page-free-companies .q-field__label,
-body.body--dark .page-free-companies .q-field__append,
 body.body--dark .page-support-tickets .q-field__native,
 body.body--dark .page-support-tickets .q-field__label,
 body.body--dark .page-support-tickets .q-field__append,
@@ -1037,43 +879,6 @@ body.body--dark .event-view {
 	color: rgba(213, 226, 240, 0.9);
 }
 
-body.body--dark .event-view__icon {
-	background: rgba(141, 181, 223, 0.2);
-	border-color: rgba(141, 181, 223, 0.32);
-	box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
-}
-
-body.body--dark .event-view__icon .q-icon,
-body.body--dark .event-view__subtitle {
-	color: rgba(213, 226, 240, 0.72);
-}
-
-// Content warnings (title + chips) are themed by --vision-cw-* in EventView.vue.
-body.body--dark .event-view__type,
-body.body--dark .event-view__meta-label {
-	color: rgba(213, 226, 240, 0.62);
-}
-
-body.body--dark .event-view__chip {
-	background: rgba(141, 181, 223, 0.2);
-	color: rgba(213, 226, 240, 0.92);
-}
-
-body.body--dark .event-view__meta,
-body.body--dark .event-view__location-card {
-	background: rgba(17, 24, 34, 0.94);
-	border-color: rgba(141, 181, 223, 0.28);
-	box-shadow: 0 12px 22px rgba(0, 0, 0, 0.3);
-}
-
-body.body--dark .event-view__meta-row {
-	color: rgba(213, 226, 240, 0.84);
-}
-
-body.body--dark .event-view__location-title {
-	color: rgba(213, 226, 240, 0.94);
-}
-
 body.body--dark .event-icon-edit-section__placeholder {
 	background: rgba(17, 24, 34, 0.94);
 	color: rgba(213, 226, 240, 0.72);
@@ -1121,14 +926,11 @@ body.body--dark .hide-details__title {
 }
 
 // ELPIS-218 — Edit/Preview toggle as a Crystal-faceted segmented control.
-// Originally scoped to `.page-edit-character__button-bar` (seven character
-// editors). ELPIS-304 generalises it: the EventCalendar Kalender/Liste view
-// toggle (`.page-event-calendar__view-toggle`) opts in via the same selector
-// list. New consumers can be added by extending the parent list — the markup
+// Scoped to `.page-edit-character__button-bar` (seven character editors).
+// New consumers can be added by extending the selector lists — the markup
 // must use `toggle-color="secondary"` so the active segment lands on
 // `.bg-secondary`.
-.page-edit-character__button-bar .q-btn-toggle,
-.page-event-calendar__view-toggle .q-btn-toggle {
+.page-edit-character__button-bar .q-btn-toggle {
 	border: 1px solid var(--rule-gold-soft);
 	border-radius: 6px;
 	overflow: hidden;
@@ -1138,8 +940,7 @@ body.body--dark .hide-details__title {
 		0 1px 2px rgba(43, 36, 24, 0.08);
 }
 
-.page-edit-character__button-bar .q-btn-toggle .q-btn,
-.page-event-calendar__view-toggle .q-btn-toggle .q-btn {
+.page-edit-character__button-bar .q-btn-toggle .q-btn {
 	font-family: var(--font-display);
 	font-size: var(--type-scale-1);
 	letter-spacing: var(--ls-eyebrow);
@@ -1153,8 +954,7 @@ body.body--dark .hide-details__title {
 // Active segment uses the prism crystal gradient so it reads as the "selected
 // facet" of the toggle. Both segments stay legible because the gradient sits
 // at a 45 % opacity tier on Hydaelyn / 55 % on Zodiark.
-.page-edit-character__button-bar .q-btn-toggle .q-btn.bg-secondary,
-.page-event-calendar__view-toggle .q-btn-toggle .q-btn.bg-secondary {
+.page-edit-character__button-bar .q-btn-toggle .q-btn.bg-secondary {
 	background: var(--crystal-prism) !important;
 	background-size: 200% 200%;
 	background-position: 0% 50%;
@@ -1162,8 +962,7 @@ body.body--dark .hide-details__title {
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
-body.body--dark .page-edit-character__button-bar .q-btn-toggle,
-body.body--dark .page-event-calendar__view-toggle .q-btn-toggle {
+body.body--dark .page-edit-character__button-bar .q-btn-toggle {
 	background-color: var(--surface-deep);
 	border-color: var(--rule-arcane-soft);
 	box-shadow:
@@ -1171,13 +970,11 @@ body.body--dark .page-event-calendar__view-toggle .q-btn-toggle {
 		0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
-body.body--dark .page-edit-character__button-bar .q-btn-toggle .q-btn,
-body.body--dark .page-event-calendar__view-toggle .q-btn-toggle .q-btn {
+body.body--dark .page-edit-character__button-bar .q-btn-toggle .q-btn {
 	color: var(--ink-luminous);
 }
 
-body.body--dark .page-edit-character__button-bar .q-btn-toggle .q-btn.bg-secondary,
-body.body--dark .page-event-calendar__view-toggle .q-btn-toggle .q-btn.bg-secondary {
+body.body--dark .page-edit-character__button-bar .q-btn-toggle .q-btn.bg-secondary {
 	color: var(--surface-ink) !important;
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
@@ -1285,74 +1082,6 @@ body.body--dark .elpis-membership-banner--confirmed {
 	box-shadow:
 		inset 4px 0 0 var(--semantic-success),
 		0 1px 2px rgba(0, 0, 0, 0.35);
-}
-
-// ELPIS-404 — Directory toolbar refinements. Targets the shared toolbar
-// wrapper across `Venues.vue`, `Communities.vue`, `FreeCompanies.vue`. The
-// toolbar's `q-input` (Suche) and `q-select` (Gebiet/Server) controls pick
-// up an Aetherglass-style focus state — gold-rule border with a soft warm
-// halo. The `__stats` counter inside the toolbar gets tabular numerals so
-// "12 von 47" reads with column-aligned digits as totals shift.
-.elpis-directory-toolbar .q-field--filled .q-field__control {
-	background: var(--surface-vellum);
-	border-radius: 6px;
-	border: 1px solid var(--rule-gold-soft);
-	transition:
-		border-color var(--motion-fast) var(--ease-elpis),
-		box-shadow var(--motion-fast) var(--ease-elpis),
-		background-color var(--motion-fast) var(--ease-elpis);
-}
-
-.elpis-directory-toolbar .q-field--filled .q-field__control::before,
-.elpis-directory-toolbar .q-field--filled .q-field__control::after {
-	display: none;
-}
-
-.elpis-directory-toolbar .q-field--filled:hover .q-field__control {
-	border-color: var(--rule-gold);
-}
-
-.elpis-directory-toolbar .q-field--filled.q-field--focused .q-field__control {
-	border-color: var(--rule-gold);
-	background: rgba(186, 155, 91, 0.06);
-	box-shadow:
-		0 0 0 3px rgba(186, 155, 91, 0.18),
-		inset 0 1px 0 rgba(255, 255, 255, 0.55);
-}
-
-.elpis-directory-toolbar .q-field__label,
-.elpis-directory-toolbar .q-field__native,
-.elpis-directory-toolbar .q-field__input {
-	color: var(--surface-ink);
-	font-family: var(--font-ui);
-}
-
-.elpis-directory-toolbar__stats {
-	font-variant-numeric: tabular-nums lining-nums;
-	font-feature-settings: 'tnum' 1, 'lnum' 1;
-}
-
-body.body--dark .elpis-directory-toolbar .q-field--filled .q-field__control {
-	background: var(--surface-lift);
-	border-color: var(--rule-arcane-soft);
-}
-
-body.body--dark .elpis-directory-toolbar .q-field--filled:hover .q-field__control {
-	border-color: var(--rule-arcane);
-}
-
-body.body--dark .elpis-directory-toolbar .q-field--filled.q-field--focused .q-field__control {
-	border-color: var(--rule-arcane);
-	background: rgba(107, 79, 168, 0.18);
-	box-shadow:
-		0 0 0 3px rgba(184, 165, 255, 0.22),
-		inset 0 1px 0 rgba(184, 165, 255, 0.18);
-}
-
-body.body--dark .elpis-directory-toolbar .q-field__label,
-body.body--dark .elpis-directory-toolbar .q-field__native,
-body.body--dark .elpis-directory-toolbar .q-field__input {
-	color: var(--ink-luminous);
 }
 
 // ELPIS-405 — Pagination input + chevron restyle. Used on the directory
