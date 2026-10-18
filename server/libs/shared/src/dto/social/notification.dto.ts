@@ -71,11 +71,17 @@ export const NOTIFICATION_PREFERENCE_FLAG: Readonly<{ [type in NotificationType]
 /** Body of PUT /notifications/preferences; omitted fields stay unchanged. */
 export class NotificationPreferencesUpdateDto implements NotificationPreferencesDto {
   @IsOptional() @IsBoolean() seriesPart?: boolean;
+
   @IsOptional() @IsBoolean() authorStory?: boolean;
+
   @IsOptional() @IsBoolean() venueEvent?: boolean;
+
   @IsOptional() @IsBoolean() eventReminder?: boolean;
+
   @IsOptional() @IsBoolean() eventRegistration?: boolean;
+
   @IsOptional() @IsBoolean() imageTag?: boolean;
+
   @IsOptional() @IsBoolean() discordDm?: boolean;
 
   @IsOptional()

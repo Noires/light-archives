@@ -12,6 +12,34 @@ import { calendarFeedUrl, generateCalendarToken, isCalendarTokenFormat } from '.
 
 const MAX_EVENTS = 500;
 
+/** Same mapping as the per-event export in events.service (kept local to avoid touching that file). */
+export function toIcsEvent(event: Event, frontendRoot: string): IcsEvent {
+  const root = frontendRoot.replace(/\/+$/, '');
+  let host = 'elpisgarten';
+
+  try {
+    host = new URL(root).host || host;
+  } catch {
+    // keep fallback host
+  }
+
+  const location = (event.locations || [])
+    .map((loc) => [loc.name, loc.address, loc.server?.name].filter((part) => !!part && part.trim()).join(', '))
+    .filter((loc) => loc.length > 0)
+    .join(' / ');
+
+  return {
+    uid: `event-${event.id}@${host}`,
+    start: event.startDateTime,
+    end: event.endDateTime,
+    summary: event.title,
+    location: location || null,
+    url: root ? `${root}/event/${event.id}` : null,
+    description: htmlToIcsPlainText(event.details || '') || null,
+    lastModified: event.updatedAt || null,
+  };
+}
+
 @Injectable()
 export class CalendarTokenService {
   constructor(
@@ -95,32 +123,4 @@ export class CalendarTokenService {
       createdAt: token.createdAt.getTime(),
     };
   }
-}
-
-/** Same mapping as the per-event export in events.service (kept local to avoid touching that file). */
-export function toIcsEvent(event: Event, frontendRoot: string): IcsEvent {
-  const root = frontendRoot.replace(/\/+$/, '');
-  let host = 'elpisgarten';
-
-  try {
-    host = new URL(root).host || host;
-  } catch {
-    // keep fallback host
-  }
-
-  const location = (event.locations || [])
-    .map((loc) => [loc.name, loc.address, loc.server?.name].filter((part) => !!part && part.trim()).join(', '))
-    .filter((loc) => loc.length > 0)
-    .join(' / ');
-
-  return {
-    uid: `event-${event.id}@${host}`,
-    start: event.startDateTime,
-    end: event.endDateTime,
-    summary: event.title,
-    location: location || null,
-    url: root ? `${root}/event/${event.id}` : null,
-    description: htmlToIcsPlainText(event.details || '') || null,
-    lastModified: event.updatedAt || null,
-  };
 }

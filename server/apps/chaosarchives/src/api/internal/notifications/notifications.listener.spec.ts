@@ -7,8 +7,8 @@ type Followers = { [key: string]: number[] };
 function setup(options: { followers?: Followers; story?: any; event?: any; character?: any } = {}) {
   const followers = options.followers || {};
   const notificationsService = {
-    notify: jest.fn(async (_userId: number, _payload: any) => undefined),
-    notifyMany: jest.fn(async (ids: number[], _payload: any) => ids),
+    notify: jest.fn<Promise<void>, [number, any]>(async () => undefined),
+    notifyMany: jest.fn<Promise<number[]>, [number[], any]>(async (ids) => ids),
   };
   const followsService = {
     getFollowerUserIds: jest.fn(async (type: FollowTargetType, keys: string[]) =>
