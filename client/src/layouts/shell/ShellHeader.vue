@@ -244,13 +244,15 @@ export default class ShellHeader extends Vue {
 
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private lastUnreadFetch = 0;
-  private readonly onVisibilityChange = () => {
+  private visibilityListener: (() => void) | null = null;
+
+  onVisibilityChange() {
     if (document.hidden) {
       this.stopTimer();
     } else if (this.socialEnabled) {
       this.startPolling();
     }
-  };
+  }
 
   get socialEnabled(): boolean {
     return canUseSocial(this.$store.getters.realRole);
@@ -276,14 +278,17 @@ export default class ShellHeader extends Vue {
   }
 
   mounted() {
-    document.addEventListener('visibilitychange', this.onVisibilityChange);
+    this.visibilityListener = () => this.onVisibilityChange();
+    document.addEventListener('visibilitychange', this.visibilityListener);
     if (this.socialEnabled) {
       this.startPolling();
     }
   }
 
   beforeUnmount() {
-    document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    if (this.visibilityListener) {
+      document.removeEventListener('visibilitychange', this.visibilityListener);
+    }
     this.stopPolling();
   }
 
