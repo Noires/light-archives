@@ -59,7 +59,7 @@
 					<character-contacts v-else-if="tab === 'kontakte'" :character="character" />
 					<character-rumors v-else-if="tab === 'geruechte'" :character="character" />
 					<character-diary v-else-if="tab === 'tagebuch'" :content="content" :character="character" />
-					<character-gallery v-else-if="tab === 'galerie'" :content="content" />
+					<character-gallery v-else-if="tab === 'galerie'" :content="content" :character-id="character.id" />
 					<character-inventory v-else-if="tab === 'inventar'" :character="character" />
 					<character-pen-and-paper v-else-if="tab === 'pen-and-paper'" :character="character" />
 				</template>
