@@ -12,7 +12,7 @@ import { StoryType } from '@app/shared/enums/story-type.enum';
 import { tribes } from '@app/shared/enums/tribe.enum';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import SharedConstants from '@app/shared/SharedConstants';
-import { DateTime } from 'luxon';
+import { DateTime, Settings } from 'luxon';
 import { boot } from 'quasar/wrappers';
 
 // This boot file adds a $display property to all Vue components, containing human-readable display names
@@ -24,8 +24,12 @@ declare module '@vue/runtime-core' {
   }
 }
 
-const DATE_FORMAT = 'd MMMM yyyy';
-const DATE_TIME_FORMAT = "d MMMM yyyy 'um' HH:mm";
+// German UI: every Luxon formatter without an explicit locale (toFormat,
+// toLocaleString, weekdayLong, monthLong, toRelative, ...) renders in German.
+Settings.defaultLocale = 'de';
+
+const DATE_FORMAT = 'd. MMMM yyyy';
+const DATE_TIME_FORMAT = "d. MMMM yyyy 'um' HH:mm";
 
 class Display {
 	readonly races = races;

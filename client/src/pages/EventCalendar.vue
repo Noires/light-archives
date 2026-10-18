@@ -65,6 +65,7 @@
               :model-value="dateStr"
               :day-min-height="140"
               :weekdays="[1, 2, 3, 4, 5, 6, 0]"
+              locale="de-DE"
             >
               <template v-slot:day="{ scope: { timestamp } }">
                 <div
