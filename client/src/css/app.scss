@@ -135,6 +135,14 @@ body {
 	color: var(--app-text-color);
 }
 
+// ER2-107 — German body copy hyphenates at syllable boundaries (needs
+// <html lang="de">) instead of breaking compounds mid-word. Running text only:
+// headings, buttons and nav labels keep whole words.
+.q-page :where(p, li, dd, blockquote) {
+	hyphens: auto;
+	-webkit-hyphens: auto;
+}
+
 // Override Quasar's `body.body--dark { background: var(--q-dark-page); }`
 // so dark mode keeps the custom app background image.
 body.body--dark {
