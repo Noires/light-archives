@@ -27,6 +27,8 @@
       <directory-area-tabs />
     </page-head>
 
+    <rp-active-strip />
+
     <section class="characters-dir__toolbar" aria-label="Filter">
       <q-input
         v-model="searchQuery"
@@ -152,6 +154,7 @@ import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto'
 import { Race } from '@app/shared/enums/race.enum';
 import { RpStatus } from '@app/shared/enums/rp-status.enum';
 import DirectoryAreaTabs from 'components/character/DirectoryAreaTabs.vue';
+import RpActiveStrip from 'components/character/RpActiveStrip.vue';
 import { isEmptyFieldValue } from 'components/character/empty-field';
 import { stripWikilinks } from 'components/character/profile-sections';
 import { activeRpStatus, RP_STATUS_BADGES, RP_STATUS_LABELS } from 'components/character/rp-status';
@@ -212,6 +215,7 @@ function toApiFilter(filters: Filters, offset: number): CharacterProfileFilterDt
     DirectoryCard,
     EmptyState,
     PageHead,
+    RpActiveStrip,
     StatusBadge,
   },
   async beforeRouteEnter(to, __, next) {
