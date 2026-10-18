@@ -570,6 +570,16 @@ const routes: RouteRecordRaw[] = [
 
       // Wiki
 
+      // ER2-609: wiki index
+      {
+        path: 'wiki',
+        component: () => import('pages/WikiIndex.vue'),
+        meta: {
+          title: 'Wiki',
+          breadcrumb: 'Wiki',
+        },
+      },
+
       {
         path: 'wiki/:title',
         component: () => import('pages/Wiki.vue'),

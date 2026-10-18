@@ -1,343 +1,402 @@
 <template>
   <q-page class="page-noticeboard">
-    <header class="page-noticeboard__hero">
-      <div class="page-noticeboard__hero-text">
-        <span class="page-noticeboard__eyebrow">Community</span>
-        <h2>Anschlagbrett</h2>
-        <p class="page-noticeboard__lead">
-          Neueste Aushänge, Gesuche und Hinweise aus der Community.
-        </p>
-      </div>
-      <div class="page-noticeboard__hero-meta">
-        <div class="page-noticeboard__count">
-          <span class="page-noticeboard__count-number">{{ noticeboardItems.length }}</span>
-          <span class="page-noticeboard__count-label">Einträge</span>
-        </div>
-      </div>
-    </header>
+    <page-head :eyebrow="eyebrow" title="Gesucht, geboten, gerüchteweise" lead="Aushänge, Gesuche und Neuigkeiten aus den Städten Eorzeas.">
+      <template v-if="canWrite" #actions>
+        <q-btn class="elpis-btn elpis-btn--primary" unelevated no-caps icon="push_pin" label="Aushang erstellen" to="/create-noticeboard-item" />
+      </template>
+    </page-head>
 
-    <section class="page-noticeboard__content">
-      <div class="page-noticeboard__toolbar">
-        <q-input
-          class="page-noticeboard__search"
-          v-model="searchQuery"
-          label="Suche"
-          debounce="200"
-          filled
-          dense
-          clearable
-          @update:model-value="onFilterChange"
-        />
-        <q-select
-          class="page-noticeboard__location-select"
-          v-model="locationFilter"
-          label="Ort"
-          emit-value
-          map-options
-          :options="locationOptions"
-          filled
-          dense
-          @update:model-value="onFilterChange"
-        />
-        <q-select
-          class="page-noticeboard__type-select"
-          v-model="typeFilter"
-          label="Typ"
-          emit-value
-          map-options
-          :options="typeOptions"
-          filled
-          dense
-          @update:model-value="onFilterChange"
-        />
-        <div class="page-noticeboard__stats">
-          {{ filteredCount }} von {{ noticeboardItems.length }}
-        </div>
-        <q-pagination
-          class="page-noticeboard__pagination"
-          :model-value="page"
-          :max="maxPage"
-          input
-          @update:model-value="setPage"
-        />
+    <div class="page-noticeboard__toolbar" role="search">
+      <q-input
+        v-model="searchQuery"
+        class="page-noticeboard__search"
+        outlined
+        dense
+        clearable
+        debounce="200"
+        placeholder="Titel, Autor oder Treffpunkt suchen"
+        aria-label="Aushänge durchsuchen"
+        @update:model-value="onFilterChange"
+      >
+        <template #prepend><q-icon name="search" /></template>
+      </q-input>
+    </div>
+
+    <div class="page-noticeboard__filters">
+      <div class="page-noticeboard__chips" role="group" aria-label="Nach Typ filtern">
+        <button
+          type="button"
+          class="page-noticeboard__chip"
+          :aria-pressed="!typeFilter ? 'true' : 'false'"
+          @click="setType('')"
+        >Alle Typen</button>
+        <button
+          v-for="type in availableTypes"
+          :key="type"
+          type="button"
+          class="page-noticeboard__chip page-noticeboard__chip--type"
+          :style="{ '--nb-type': typeColor(type) }"
+          :aria-pressed="typeFilter === type ? 'true' : 'false'"
+          @click="setType(type)"
+        >
+          <span class="page-noticeboard__chip-prefix">[{{ $display.noticeboardTypes[type] || type }}]</span>
+          <span class="page-noticeboard__chip-count">{{ typeCounts[type] }}</span>
+        </button>
       </div>
-      <div v-if="pagedNoticeboardItems.length > 0" class="page-noticeboard__list">
-        <noticeboard-item-list :noticeboard-items="pagedNoticeboardItems" />
+      <div class="page-noticeboard__chips" role="group" aria-label="Nach Ort filtern">
+        <button
+          v-for="location in availableLocations"
+          :key="location"
+          type="button"
+          class="page-noticeboard__chip page-noticeboard__chip--location"
+          :aria-pressed="locationFilter === location ? 'true' : 'false'"
+          @click="setLocation(location)"
+        >
+          <q-icon name="place" size="14px" aria-hidden="true" />
+          {{ $display.noticeboardLocations[location] || location }}
+        </button>
       </div>
-      <div v-else class="page-noticeboard__empty">
-        {{ emptyMessage }}
-      </div>
-    </section>
+    </div>
+
+    <p class="page-noticeboard__stats" aria-live="polite">{{ statsLabel }}</p>
+
+    <div v-if="pagedItems.length" class="page-noticeboard__masonry">
+      <noticeboard-card v-for="item in pagedItems" :key="item.id" :item="item" />
+    </div>
+    <empty-state
+      v-else
+      icon="push_pin"
+      :title="noticeboardItems.length ? 'Keine passenden Aushänge' : 'Das Anschlagbrett ist leer'"
+      :text="noticeboardItems.length ? 'Passe die Suche oder die Filter an.' : 'Häng den ersten Aushang auf.'"
+      :action-label="noticeboardItems.length ? 'Filter zurücksetzen' : (canWrite ? 'Aushang erstellen' : '')"
+      :action-to="noticeboardItems.length ? null : { path: '/create-noticeboard-item' }"
+      @action="onEmptyAction"
+    />
+
+    <q-pagination
+      v-if="maxPage > 1"
+      class="page-noticeboard__pagination"
+      :model-value="page"
+      :max="maxPage"
+      :max-pages="7"
+      direction-links
+      boundary-links
+      @update:model-value="setPage"
+    />
   </q-page>
 </template>
 
 <script lang="ts">
-import { NoticeboardItemSummaryDto } from '@app/shared/dto/noticeboard/noticeboard-item-summary.dto';
-import NoticeboardItemList from 'components/noticeboard/NoticeboardItemList.vue';
+import NoticeboardCard from 'components/noticeboard/NoticeboardCard.vue';
+import { NOTICEBOARD_TYPE_ORDER, NoticeboardCardItem, noticeboardTypeColor } from 'components/noticeboard/noticeboard-types';
+import EmptyState from 'components/vision/EmptyState.vue';
+import PageHead from 'components/vision/PageHead.vue';
 import { useApi } from 'src/boot/axios';
 import { notifyError } from 'src/common/notify';
 import { Options, Vue } from 'vue-class-component';
 
 const $api = useApi();
 
+// ER2-605 — noticeboard directory: PageHead, "[Typ]" chips in type colour,
+// location chips, three-column masonry of note cards. The list endpoint
+// returns every notice, so filtering and paging stay client-side. There is
+// no pinned flag on notices yet, so the "Angeheftet" row is left out.
+
+const PAGE_SIZE = 18;
+
 @Options({
-	name: 'PageNoticeboard',
-	components: {
-		NoticeboardItemList
-	},
-  async beforeRouteEnter(_, __, next) {
+  name: 'PageNoticeboard',
+  components: {
+    EmptyState,
+    NoticeboardCard,
+    PageHead,
+  },
+  async beforeRouteEnter(to, __, next) {
     try {
       const noticeboardItems = await $api.noticeboard.getNoticeboardItems({});
-      next(vm => (vm as PageNoticeboard).setContent(noticeboardItems));
+      next((vm) => {
+        const page = vm as PageNoticeboard;
+        page.typeFilter = (to.query.type as string) || '';
+        page.locationFilter = (to.query.location as string) || '';
+        page.setContent(noticeboardItems);
+      });
     } catch (e) {
-      console.log(e);
       notifyError(e);
+      next();
     }
-  }
+  },
 })
 export default class PageNoticeboard extends Vue {
-  noticeboardItems: NoticeboardItemSummaryDto[] = [];
+  noticeboardItems: NoticeboardCardItem[] = [];
   searchQuery = '';
   locationFilter = '';
   typeFilter = '';
   page = 1;
-  readonly perPage = 12;
 
-	setContent(noticeboardItems: NoticeboardItemSummaryDto[]) {
-		this.noticeboardItems = noticeboardItems;
+  setContent(noticeboardItems: NoticeboardCardItem[]) {
+    this.noticeboardItems = noticeboardItems;
     this.page = 1;
-	}
+  }
 
-  get locationOptions() {
-    const locations = Array.from(new Set(this.noticeboardItems.map((item) => item.location))).sort();
+  get canWrite(): boolean {
+    return !!this.$store.getters.character;
+  }
+
+  get eyebrow(): string {
+    const count = this.noticeboardItems.length;
+    return `Anschlagbrett · ${count.toLocaleString('de-DE')} ${count === 1 ? 'Aushang' : 'Aushänge'}`;
+  }
+
+  get typeCounts(): { [type: string]: number } {
+    const counts: { [type: string]: number } = {};
+    this.noticeboardItems.forEach((item) => {
+      counts[item.type] = (counts[item.type] || 0) + 1;
+    });
+    return counts;
+  }
+
+  get availableTypes(): string[] {
+    const present = Object.keys(this.typeCounts);
     return [
-      { label: 'Alle Orte', value: '' },
-      ...locations.map((location) => ({ label: this.$display.noticeboardLocations[location], value: location }))
+      ...NOTICEBOARD_TYPE_ORDER.filter((type) => present.includes(type)),
+      ...present.filter((type) => !NOTICEBOARD_TYPE_ORDER.includes(type)),
     ];
   }
 
-  get typeOptions() {
-    const types = Array.from(new Set(this.noticeboardItems.map((item) => item.type))).sort();
-    return [
-      { label: 'Alle Typen', value: '' },
-      ...types.map((type) => ({ label: this.$display.noticeboardTypes[type] || type, value: type }))
-    ];
+  get availableLocations(): string[] {
+    return Array.from(new Set(this.noticeboardItems.map((item) => item.location))).sort((a, b) =>
+      (this.$display.noticeboardLocations[a] || a).localeCompare(this.$display.noticeboardLocations[b] || b, 'de'),
+    );
   }
 
-  get filteredNoticeboardItems() {
-    const query = this.searchQuery.trim().toLowerCase();
+  get filteredItems(): NoticeboardCardItem[] {
+    const query = (this.searchQuery || '').trim().toLowerCase();
+
     return this.noticeboardItems.filter((item) => {
       if (this.locationFilter && item.location !== this.locationFilter) {
         return false;
       }
+
       if (this.typeFilter && item.type !== this.typeFilter) {
         return false;
       }
+
       if (!query) {
         return true;
       }
-      const haystack = `${item.title} ${item.author} ${item.venueName || ''} ${item.venueServer || ''} ${this.$display.noticeboardLocations[item.location]} ${this.$display.noticeboardTypes[item.type] || ''}`.toLowerCase();
+
+      const haystack = [
+        item.title,
+        item.author,
+        item.venueName || '',
+        item.excerpt || '',
+        this.$display.noticeboardLocations[item.location] || '',
+        this.$display.noticeboardTypes[item.type] || '',
+      ].join(' ').toLowerCase();
+
       return haystack.includes(query);
     });
   }
 
-  get filteredCount() {
-    return this.filteredNoticeboardItems.length;
+  get pagedItems(): NoticeboardCardItem[] {
+    const start = (this.page - 1) * PAGE_SIZE;
+    return this.filteredItems.slice(start, start + PAGE_SIZE);
   }
 
-  get pagedNoticeboardItems() {
-    const start = (this.page - 1) * this.perPage;
-    return this.filteredNoticeboardItems.slice(start, start + this.perPage);
+  get maxPage(): number {
+    return Math.max(1, Math.ceil(this.filteredItems.length / PAGE_SIZE));
   }
 
-  get maxPage() {
-    return Math.max(1, Math.ceil(this.filteredCount / this.perPage));
+  get statsLabel(): string {
+    const shown = this.filteredItems.length;
+    const total = this.noticeboardItems.length;
+    return shown === total ? `${total} ${total === 1 ? 'Aushang' : 'Aushänge'}` : `${shown} von ${total} Aushängen`;
   }
 
-  get emptyMessage() {
-    if (this.noticeboardItems.length == 0) {
-      return 'Es gibt noch keine Aushänge auf Elpisgarten.';
+  typeColor(type: string): string {
+    return noticeboardTypeColor(type);
+  }
+
+  setType(type: string) {
+    this.typeFilter = this.typeFilter === type ? '' : type;
+    this.syncQuery();
+    this.onFilterChange();
+  }
+
+  setLocation(location: string) {
+    this.locationFilter = this.locationFilter === location ? '' : location;
+    this.syncQuery();
+    this.onFilterChange();
+  }
+
+  syncQuery() {
+    const query = { ...this.$route.query };
+
+    if (this.typeFilter) {
+      query.type = this.typeFilter;
+    } else {
+      delete query.type;
     }
-    return 'Keine Ergebnisse für die aktuellen Filter.';
+
+    if (this.locationFilter) {
+      query.location = this.locationFilter;
+    } else {
+      delete query.location;
+    }
+
+    void this.$router.replace({ query });
   }
 
   onFilterChange() {
     this.page = 1;
   }
 
-  setPage(newPage: number) {
-    const clamped = Math.min(Math.max(newPage, 1), this.maxPage);
-    this.page = clamped;
+  onEmptyAction() {
+    if (!this.noticeboardItems.length) {
+      return;
+    }
+
+    this.searchQuery = '';
+    this.typeFilter = '';
+    this.locationFilter = '';
+    this.syncQuery();
+    this.onFilterChange();
+  }
+
+  setPage(page: number) {
+    this.page = Math.min(Math.max(page, 1), this.maxPage);
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .page-noticeboard {
-  position: relative;
-  padding: 28px 18px 42px;
-  background: linear-gradient(180deg, #f8f4ee 0%, #ffffff 45%, #f2ede4 100%);
-  border-radius: 30px;
-  overflow: hidden;
-}
-
-.page-noticeboard::before {
-  content: '';
-  position: absolute;
-  inset: -120px 0 auto;
-  height: 260px;
-  background: radial-gradient(circle at 20% 30%, rgba(221, 180, 118, 0.18), transparent 55%),
-    radial-gradient(circle at 80% 0%, rgba(15, 76, 104, 0.12), transparent 50%);
-  pointer-events: none;
-}
-
-.page-noticeboard h2 {
-  margin: 0;
-  font-family: $header-font;
-  letter-spacing: 0.02em;
-}
-
-.page-noticeboard__hero {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 24px;
-  padding: 20px 22px;
-  margin-bottom: 18px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
-}
-
-.page-noticeboard__eyebrow {
-  font-size: 0.75rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(139, 103, 58, 0.9);
-  font-weight: 600;
-}
-
-.page-noticeboard__hero-text {
-  display: grid;
-  gap: 8px;
-}
-
-.page-noticeboard__lead {
-  margin: 0;
-  color: rgba(35, 35, 35, 0.7);
-  max-width: 520px;
-}
-
-.page-noticeboard__hero-meta {
-  display: grid;
-  gap: 6px;
-  justify-items: end;
-}
-
-.page-noticeboard__count {
-  display: grid;
-  justify-items: end;
-  line-height: 1;
-}
-
-.page-noticeboard__count-number {
-  font-family: $header-font;
-  font-size: 2rem;
-  color: #20323d;
-}
-
-.page-noticeboard__count-label {
-  font-size: 0.85rem;
-  color: rgba(35, 35, 35, 0.6);
-}
-
-.page-noticeboard__content {
-  position: relative;
-  z-index: 1;
+  color: var(--ink-primary);
 }
 
 .page-noticeboard__toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(160px, 0.6fr) minmax(160px, 0.6fr) auto auto;
-  gap: 12px;
-  align-items: center;
-  padding: 12px 14px;
-  margin-bottom: 18px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  display: flex;
+  margin: 20px 0 14px;
 }
 
-.page-noticeboard__search .q-field__control,
-.page-noticeboard__location-select .q-field__control,
-.page-noticeboard__type-select .q-field__control {
-  background: #f6f1e8;
-  border-radius: 0;
+.page-noticeboard__search {
+  flex: 1 1 auto;
+  max-width: 560px;
+}
+
+.page-noticeboard__filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.page-noticeboard__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.page-noticeboard__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  background: var(--vision-card);
+  color: var(--ink-primary);
+  font: 600 var(--type-scale-1) / 1 var(--font-ui);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--ease-elpis),
+    border-color var(--motion-fast) var(--ease-elpis);
+
+  &:hover {
+    background: var(--rule-tint);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--glow-aether), 0 0 0 3px var(--vision-focus-edge);
+  }
+
+  &[aria-pressed='true'] {
+    border-color: var(--vision-primary);
+    background: var(--vision-primary);
+    color: var(--vision-on-primary);
+  }
+}
+
+.page-noticeboard__chip--type {
+  border-left: 4px solid var(--nb-type);
+
+  .page-noticeboard__chip-prefix {
+    color: var(--ink-primary);
+    color: color-mix(in srgb, var(--nb-type) 72%, var(--ink-primary));
+  }
+
+  &[aria-pressed='true'] {
+    border-left-color: var(--nb-type);
+
+    .page-noticeboard__chip-prefix {
+      color: inherit;
+    }
+  }
+}
+
+.page-noticeboard__chip-count {
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--rule-tint);
+  font-size: var(--type-scale-0);
+  text-align: center;
+}
+
+.page-noticeboard__chip--location {
+  font-weight: 500;
 }
 
 .page-noticeboard__stats {
-  text-align: right;
-  white-space: nowrap;
-  font-family: $header-font;
-  font-size: 1.05rem;
-  color: #20323d;
+  margin: 0 0 12px;
+  font-family: var(--font-ui);
+  font-size: var(--type-scale-1);
+  color: var(--ink-muted);
+}
+
+// Masonry via CSS columns; cards avoid breaking across columns.
+.page-noticeboard__masonry {
+  column-count: 3;
+  column-gap: 18px;
+
+  > * {
+    margin-bottom: 18px;
+  }
 }
 
 .page-noticeboard__pagination {
-  justify-self: end;
+  justify-content: center;
+  margin-top: 16px;
 }
 
-.page-noticeboard__list {
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
-}
-
-.page-noticeboard__list .q-list {
-  border: none;
-}
-
-.page-noticeboard__empty {
-  padding: 18px;
-  color: rgba(35, 35, 35, 0.7);
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
-}
-
-@media screen and (max-width: 1100px) {
-  .page-noticeboard__hero {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .page-noticeboard__hero-meta {
-    width: 100%;
-    justify-items: start;
-  }
-
-  .page-noticeboard__toolbar {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .page-noticeboard__stats {
-    text-align: left;
-  }
-
-  .page-noticeboard__pagination {
-    justify-self: start;
+@media screen and (max-width: 1023px) {
+  .page-noticeboard__masonry {
+    column-count: 2;
   }
 }
 
-@media screen and (max-width: $breakpoint-sm) {
-  .page-noticeboard {
-    padding: 20px 14px 36px;
+@media screen and (max-width: 599px) {
+  .page-noticeboard__masonry {
+    column-count: 1;
   }
+}
 
-  .page-noticeboard__hero {
-    padding: 16px;
+@media (prefers-reduced-motion: reduce) {
+  .page-noticeboard__chip {
+    transition: none;
   }
 }
 </style>
