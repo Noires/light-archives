@@ -41,3 +41,4 @@ export { WikiPage } from './wiki-page.entity';
 export { Follow } from './follow.entity';
 export { Notification } from './notification.entity';
 export { NotificationPreference } from './notification-preference.entity';
+export { Bookmark } from './bookmark.entity';

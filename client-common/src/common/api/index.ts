@@ -28,6 +28,7 @@ import LodestoneAPI from './lodestone-api';
 // ER2 social
 import FollowsAPI from './follows-api';
 import NotificationsAPI from './notifications-api';
+import BookmarksAPI from './bookmarks-api';
 
 export default class API {
   private readonly transport = new APITransport();
@@ -63,6 +64,7 @@ export default class API {
   // ER2 social
   readonly follows = new FollowsAPI(this.transport);
   readonly notifications = new NotificationsAPI(this.transport);
+  readonly bookmarks = new BookmarksAPI(this.transport);
 
   // Token management
 
