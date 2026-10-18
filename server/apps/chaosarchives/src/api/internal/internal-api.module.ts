@@ -28,6 +28,7 @@ import { WikiModule } from "./wiki/wiki.module";
 import { LodestoneModule } from './lodestone/lodestone.module';
 // ER2 social
 import { FollowsModule } from './follows/follows.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 const controllerModules = [
 	MainPageModule,
@@ -58,6 +59,7 @@ const controllerModules = [
 	LodestoneModule,
 	// ER2 social
 	FollowsModule,
+	NotificationsModule,
 ];
 
 @Module({

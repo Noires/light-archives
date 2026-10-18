@@ -6,6 +6,8 @@ import { Community } from '@app/entity/community.entity';
 import { VenueTag } from '@app/entity/venue-tag.entity';
 // ER2 social
 import { Follow } from '@app/entity/follow.entity';
+import { Notification } from '@app/entity/notification.entity';
+import { NotificationPreference } from '@app/entity/notification-preference.entity';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import config from 'config';
 import { DbConfigInterface } from './interfaces/db-config.interface';
@@ -60,6 +62,8 @@ export const dbConfiguration: TypeOrmModuleOptions = {
     Weather,
     // ER2 social
     Follow,
+    Notification,
+    NotificationPreference,
   ],
   synchronize: dbConfig.synchronize,
   // Logging can be: true (all), false (none), or array of types: 'query', 'error', 'schema', 'warn', 'info', 'log', 'migration'

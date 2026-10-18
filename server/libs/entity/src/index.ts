@@ -39,3 +39,5 @@ export { Weather } from './weather.entity';
 export { WikiPage } from './wiki-page.entity';
 // ER2 social
 export { Follow } from './follow.entity';
+export { Notification } from './notification.entity';
+export { NotificationPreference } from './notification-preference.entity';
