@@ -25,6 +25,7 @@ import SharedConstants from '@app/shared/SharedConstants';
 import { isValidUrl } from '@app/shared/validation/validators';
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter'; // ER2 social
 import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime, Duration } from 'luxon';
 import { firstValueFrom } from 'rxjs';
@@ -61,6 +62,7 @@ export class EventsService {
     @InjectRedis()
     private readonly redisService: Redis,
     private readonly httpService: HttpService,
+    private readonly eventEmitter: EventEmitter2, // ER2 social
   ) {}
 
   async getEvent(id: number, edit: boolean, user?: UserInfo): Promise<BaseEventDto> {
@@ -110,6 +112,7 @@ export class EventsService {
     });
 
     void this.notifySteward(eventEntity); // no await
+    if (!eventEntity.hidden) void this.eventEmitter.emitAsync('event.created', { eventId: eventEntity.id, actorUserId: user.id }); // ER2 social: notify venue followers
 
     const result = (await this.toEventDto(eventEntity, true, user)) as EventCreaterResultDto;
     result.id = eventEntity.id;
@@ -469,6 +472,7 @@ export class EventsService {
         kind,
       });
       await registrationRepo.save(registration);
+      void this.eventEmitter.emitAsync('event.registration.created', { eventId: event.id, eventTitle: event.title, ownerUserId: event.owner?.user?.id ?? null, characterName: character.name, kind, actorUserId: user.id }); // ER2 social: notify the event owner
     });
   }
 

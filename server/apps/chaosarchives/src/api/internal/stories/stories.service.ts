@@ -8,6 +8,7 @@ import { StorySummaryDto } from '@app/shared/dto/stories/story-summary.dto';
 import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import html from '@app/shared/html';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter'; // ER2 social
 import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, In, IsNull, Not, Repository } from 'typeorm';
 import { getVerifiedCharacter } from '../../../common/api-checks';
@@ -28,6 +29,7 @@ export class StoriesService {
     @InjectRepository(Story) private storyRepo: Repository<Story>,
     @InjectRepository(StoryTag) private storyTagRepo: Repository<StoryTag>,
     private reactionsService: ReactionsService,
+    private eventEmitter: EventEmitter2, // ER2 social
   ) {}
 
   async getStory(id: number, user?: UserInfo): Promise<StoryDto> {
@@ -149,12 +151,15 @@ export class StoriesService {
       return storyRepo.save(story);
     });
 
+    if (storyEntity.published) void this.eventEmitter.emitAsync('story.published', { storyId: storyEntity.id, actorUserId: user.id }); // ER2 social: notify followers
+
     return {
       id: storyEntity.id,
     };
   }
 
   async editStory(storyDto: StoryDto & { id: number }, user: UserInfo): Promise<void> {
+    let becamePublished = false; // ER2 social
     await this.connection.transaction(async (em) => {
       const storyRepo = em.getRepository(Story);
       const story = await storyRepo
@@ -185,6 +190,7 @@ export class StoriesService {
       }
 
       if (storyDto.published !== undefined) {
+        becamePublished = storyDto.published && !story.published; // ER2 social
         story.published = storyDto.published;
       }
 
@@ -228,6 +234,7 @@ export class StoriesService {
 
       await storyRepo.save(story);
     });
+    if (becamePublished) void this.eventEmitter.emitAsync('story.published', { storyId: storyDto.id, actorUserId: user.id }); // ER2 social: draft -> published, notify followers
   }
 
   async deleteStory(id: number, user: UserInfo): Promise<void> {

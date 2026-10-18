@@ -3,6 +3,7 @@ import { dbConfiguration, redisConfiguration } from '@app/configuration';
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { InternalApiModule } from './api/internal/internal-api.module';
@@ -20,6 +21,7 @@ import { RedisModule } from '@liaoliaots/nestjs-redis';
     TypeOrmModule.forRootAsync({ useFactory: () => dbConfiguration }),
     RedisModule.forRootAsync({ useFactory: () => ({ config: redisConfiguration }) }),
     EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(), // ER2 social: reminders and notification retention
     SentryModule.forRoot(),
     AuthModule,
     InternalApiModule,

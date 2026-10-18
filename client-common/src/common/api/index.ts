@@ -25,6 +25,11 @@ import ViolationsAPI from './violations-api';
 import WeatherAPI from './weather-api';
 import WikiAPI from './wiki-api';
 import LodestoneAPI from './lodestone-api';
+// ER2 social
+import FollowsAPI from './follows-api';
+import NotificationsAPI from './notifications-api';
+import BookmarksAPI from './bookmarks-api';
+import CalendarTokenAPI from './calendar-token-api';
 
 export default class API {
   private readonly transport = new APITransport();
@@ -57,6 +62,11 @@ export default class API {
   readonly violations = new ViolationsAPI(this.transport);
   readonly weather = new WeatherAPI(this.transport);
   readonly wiki = new WikiAPI(this.transport);
+  // ER2 social
+  readonly follows = new FollowsAPI(this.transport);
+  readonly notifications = new NotificationsAPI(this.transport);
+  readonly bookmarks = new BookmarksAPI(this.transport);
+  readonly calendarToken = new CalendarTokenAPI(this.transport);
 
   // Token management
 

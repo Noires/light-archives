@@ -26,6 +26,11 @@ import { ViolationsModule } from './violations/violations.module';
 import { WeatherModule } from './weather/weather.module';
 import { WikiModule } from "./wiki/wiki.module";
 import { LodestoneModule } from './lodestone/lodestone.module';
+// ER2 social
+import { FollowsModule } from './follows/follows.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { BookmarksModule } from './bookmarks/bookmarks.module';
+import { CalendarTokenModule } from './calendar-token/calendar-token.module';
 
 const controllerModules = [
 	MainPageModule,
@@ -53,7 +58,12 @@ const controllerModules = [
 	StatisticsModule,
 	WeatherModule,
 	WikiModule,
-	LodestoneModule
+	LodestoneModule,
+	// ER2 social
+	FollowsModule,
+	NotificationsModule,
+	BookmarksModule,
+	CalendarTokenModule,
 ];
 
 @Module({
