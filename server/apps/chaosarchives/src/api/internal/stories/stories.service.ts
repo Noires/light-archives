@@ -13,6 +13,7 @@ import { decode } from 'html-entities';
 import { Connection, In, IsNull, Not, Repository } from 'typeorm';
 import { getVerifiedCharacter } from '../../../common/api-checks';
 import { escapeForLike } from '../../../common/db';
+import { excludeTestContentSql } from '../test-content.filter';
 
 @Injectable()
 export class StoriesService {
@@ -288,6 +289,9 @@ export class StoriesService {
         type: filter.type,
       });
     }
+
+    // ER2-111 — hide test stories from the directory and main page (not from a character's own list).
+    if (!filter.characterId) query.andWhere(excludeTestContentSql('story'));
 
     const [ total, stories ] = await Promise.all([ query.getCount(),  query.getMany() ]);
 

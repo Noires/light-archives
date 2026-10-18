@@ -91,6 +91,14 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: 'Wiki Import Test'
         },
+        beforeEnter: () => {
+          const store = useStore();
+          const role = store.getters.role;
+          if (role !== 'admin')
+          {
+            return false;
+          }
+        }
       },
 
       {
@@ -99,6 +107,14 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: 'Character Selector Test'
         },
+        beforeEnter: () => {
+          const store = useStore();
+          const role = store.getters.role;
+          if (role !== 'admin')
+          {
+            return false;
+          }
+        }
       },
 
       {

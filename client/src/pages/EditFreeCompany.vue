@@ -25,7 +25,7 @@
             />
             <wikilink-hint note="Wikilinks funktionieren in allen Feldern außer Webseite." />
           </section>
-          <h6>Description</h6>
+          <h6>Beschreibung</h6>
           <html-editor v-model="fc.description" />
           <carrd-edit-section
             class="page-edit-free-company__form-controls"

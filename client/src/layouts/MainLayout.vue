@@ -1,12 +1,17 @@
 <template>
   <q-layout view="hHh Lpr fff">
+    <!-- ER2-109 — first focusable element; jumps past the header. -->
+    <a class="layout__skip-link" href="#inhalt" @click="onSkipLinkClick">Zum Inhalt springen</a>
+
     <shell-header @open-search="openPalette" />
 
     <q-page-container>
       <shell-hero v-if="isHome" />
 
       <div class="layout__page-shell">
-        <div class="layout__page-container">
+        <!-- Skip-link target. Not a <main>: every q-page already renders the
+             page's <main> landmark inside this container. -->
+        <div id="inhalt" class="layout__page-container" tabindex="-1">
           <router-view />
         </div>
       </div>
@@ -93,6 +98,18 @@ export default class MainLayout extends Vue {
   openPalette() {
     this.paletteLoaded = true;
     this.paletteOpen = true;
+  }
+
+  // ER2-109 — Move focus programmatically instead of following the #inhalt hash, so the
+  // router never sees a hash navigation and keyboard focus really lands in main.
+  onSkipLinkClick(event: Event) {
+    const main = document.getElementById('inhalt');
+    if (!main) {
+      return;
+    }
+    event.preventDefault();
+    main.focus({ preventScroll: true });
+    main.scrollIntoView({ block: 'start' });
   }
 
   // ER2-202 — the logo hero renders on the home page only.
@@ -204,6 +221,36 @@ body.body--dark {
 .layout__create-content-list {
   padding-left: 12px;
   background: #016097;
+}
+
+// ER2-109 — skip link: off-screen until focused, then pinned top-left above
+// the header. No transition, so reduced motion needs no extra handling.
+.layout__skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 7000;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--ink-primary);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  text-decoration: underline;
+  transform: translateY(-200%);
+}
+
+.layout__skip-link:focus,
+.layout__skip-link:focus-visible {
+  transform: none;
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--glow-aether),
+    0 0 0 3px var(--vision-focus-edge);
+}
+
+.layout__page-container:focus {
+  outline: none;
 }
 
 .layout__page-container {

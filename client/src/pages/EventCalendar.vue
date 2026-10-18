@@ -19,9 +19,9 @@
 
     <section class="page-event-calendar__navbar">
       <div>
-        <q-btn color="secondary" label="< Vorheriger Monat" :to="prevLink" />&nbsp;
-        <q-btn color="secondary" label="Heute" to="/calendar" />&nbsp;
-        <q-btn color="secondary" label="Nächster Monat >" :to="nextLink" />
+        <q-btn flat class="elpis-btn elpis-btn--secondary" icon="chevron_left" label="Vorheriger Monat" :to="prevLink" />&nbsp;
+        <q-btn flat class="elpis-btn elpis-btn--secondary" label="Heute" to="/calendar" />&nbsp;
+        <q-btn flat class="elpis-btn elpis-btn--secondary" icon-right="chevron_right" label="Nächster Monat" :to="nextLink" />
       </div>
       <div class="page-event-calendar__filters">
         <q-select
@@ -48,7 +48,8 @@
       <div>
         <q-btn
           v-if="$store.getters.role && $store.getters.role !== Role.UNVERIFIED"
-          color="primary"
+          unelevated
+          class="elpis-btn elpis-btn--primary"
           label="Neues Event"
           icon="add"
           to="/create-event"
@@ -230,7 +231,7 @@
                             <q-btn
                               v-if="event.link"
                               flat
-                              color="secondary"
+                              class="elpis-btn elpis-btn--ghost"
                               icon="launch"
                               :label="eventLinkLabel(event)"
                               type="a"
@@ -240,7 +241,7 @@
                             <q-btn
                               v-else
                               flat
-                              color="secondary"
+                              class="elpis-btn elpis-btn--ghost"
                               icon="event"
                               label="Event anzeigen"
                               :to="`/event/${event.id}`"
@@ -361,7 +362,7 @@
                       <q-btn
                         v-if="event.link"
                         flat
-                        color="secondary"
+                        class="elpis-btn elpis-btn--ghost"
                         icon="launch"
                         :label="eventLinkLabel(event)"
                         type="a"
@@ -371,7 +372,7 @@
                       <q-btn
                         v-else
                         flat
-                        color="secondary"
+                        class="elpis-btn elpis-btn--ghost"
                         icon="event"
                         label="Event anzeigen"
                         :to="`/event/${event.id}`"

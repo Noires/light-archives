@@ -1,6 +1,7 @@
 <template>
   <q-dialog
     ref="dialog"
+    class="telemetry-consent-dialog__root"
     :no-backdrop-dismiss="!settingsMode"
     :no-esc-dismiss="!settingsMode"
     @hide="onDialogHide"
@@ -9,8 +10,8 @@
       <q-card-section class="telemetry-consent-dialog__header">
         <h5>{{ title }}</h5>
         <p>
-          Wir nutzen freiwillige Fehlerdiagnose, um Abstuerze und technische Probleme schneller zu beheben.
-          Du kannst jederzeit ablehnen oder spaeter umstellen.
+          Wir nutzen freiwillige Fehlerdiagnose, um Abstürze und technische Probleme schneller zu beheben.
+          Du kannst jederzeit ablehnen oder später umstellen.
         </p>
       </q-card-section>
 
@@ -18,27 +19,30 @@
         <p><strong>Gesendet werden nur technische Diagnosedaten:</strong></p>
         <ul>
           <li>Fehlermeldungen und Stacktraces</li>
-          <li>Browser- und Geraetekontext</li>
+          <li>Browser- und Gerätekontext</li>
           <li>Die betroffene Seitenroute (ohne Query-Parameter)</li>
         </ul>
         <p class="telemetry-consent-dialog__hint">
-          Es werden keine Zugangstoken oder E-Mail-Adressen uebertragen.
+          Es werden keine Zugangstoken oder E-Mail-Adressen übertragen.
         </p>
       </q-card-section>
 
       <q-card-actions align="between">
-        <q-btn flat color="secondary" label="Datenschutzerklärung" @click="onOpenPrivacyClick" />
+        <q-btn flat class="elpis-btn elpis-btn--ghost" label="Datenschutzerklärung" @click="onOpenPrivacyClick" />
         <div class="telemetry-consent-dialog__actions">
-          <q-btn v-if="settingsMode" flat color="secondary" label="Schliessen" @click="onCloseClick" />
+          <q-btn v-if="settingsMode" flat class="elpis-btn elpis-btn--ghost" label="Schließen" @click="onCloseClick" />
+          <!-- ER2-106 — both choices carry the same weight (DSGVO): same
+               variant, same size, no warning colour on "Ablehnen". -->
           <q-btn
             flat
-            color="negative"
+            class="elpis-btn elpis-btn--secondary telemetry-consent-dialog__choice"
             label="Ablehnen"
             :disable="declineDisabled"
             @click="onDeclineClick"
           />
           <q-btn
-            color="primary"
+            flat
+            class="elpis-btn elpis-btn--secondary telemetry-consent-dialog__choice"
             label="Fehlerdiagnose erlauben"
             :disable="allowDisabled"
             @click="onAllowClick"
@@ -118,6 +122,15 @@ export default class TelemetryConsentDialog extends Vue.with(Props) {
 </script>
 
 <style lang="scss">
+// ER2-106 — a 60 % scrim so the choice reads as modal (Quasar default is 40 %).
+.telemetry-consent-dialog__root .q-dialog__backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.telemetry-consent-dialog__choice {
+  min-width: 200px;
+}
+
 .telemetry-consent-dialog {
   width: min(720px, 95vw);
   border-radius: 16px;
@@ -144,7 +157,7 @@ export default class TelemetryConsentDialog extends Vue.with(Props) {
 
 .telemetry-consent-dialog__hint {
   margin: 0;
-  color: #555;
+  color: var(--ink-muted);
 }
 
 .telemetry-consent-dialog__actions {
@@ -157,6 +170,11 @@ export default class TelemetryConsentDialog extends Vue.with(Props) {
 @media (max-width: 700px) {
   .telemetry-consent-dialog__actions {
     width: 100%;
+  }
+
+  .telemetry-consent-dialog__choice {
+    flex: 1 1 0;
+    min-width: 0;
   }
 }
 </style>

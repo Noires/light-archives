@@ -75,7 +75,8 @@
           v-if="canGoBack"
           flat
           color="secondary"
-          label="< Zurück"
+          icon="chevron_left"
+          label="Zurück"
           @click="goBack"
         />
         <q-btn
@@ -83,7 +84,8 @@
           :disable="!canGoNext || transitioning"
           flat
           color="primary"
-          label="Weiter >"
+          icon-right="chevron_right"
+          label="Weiter"
           @click="goNext"
         />
         <q-btn

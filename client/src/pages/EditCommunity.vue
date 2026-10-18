@@ -196,8 +196,8 @@ async function load(params: RouteParams): Promise<CommunityDto|null> {
 })
 export default class PageEditCommunity extends Vue {
   readonly previewOptions = [
-    { label: 'Edit', value: false },
-    { label: 'Preview', value: true },
+    { label: 'Bearbeiten', value: false },
+    { label: 'Vorschau', value: true },
   ];
 
   readonly SharedConstants = SharedConstants;

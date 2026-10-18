@@ -5,67 +5,34 @@
       :class="{ 'character-appearance__top--without-visual': !hasAppearanceImage }"
     >
       <section class="character-appearance__details page-edit-character__form-controls">
-        <h6>Allgemeines</h6>
-        <q-input
-          readonly
-          v-model="character.haircolor"
-          label="Haarfarbe"
-          class="character-appearance__color-field"
-          :input-style="colorFieldInputStyle(character.haircolor)"
-        >
-          <template #append>
-            <div v-if="hairSelectedColors.length" class="character-appearance__color-pair">
-              <span
-                v-for="(color, index) in hairSelectedColors"
-                :key="`hair-${index}`"
-                class="character-appearance__color-dot"
-                :style="colorDotStyle(color)"
-              />
-            </div>
-          </template>
-        </q-input>
-        <q-input
-          readonly
-          v-model="character.eyecolor"
-          label="Augenfarbe"
-          class="character-appearance__color-field"
-          :input-style="colorFieldInputStyle(character.eyecolor)"
-        >
-          <template #append>
-            <div v-if="eyeSelectedColors.length" class="character-appearance__color-pair">
-              <span
-                v-for="(color, index) in eyeSelectedColors"
-                :key="`eye-${index}`"
-                class="character-appearance__color-dot"
-                :style="colorDotStyle(color)"
-              />
-            </div>
-          </template>
-        </q-input>
-        <q-input
-          readonly
-          v-model="character.skintone"
-          label="Hautfarbe"
-          class="character-appearance__color-field"
-          :input-style="colorFieldInputStyle(character.skintone)"
-        >
-          <template #append>
-            <div v-if="skinSelectedColors.length" class="character-appearance__color-pair">
-              <span
-                v-for="(color, index) in skinSelectedColors"
-                :key="`skin-${index}`"
-                class="character-appearance__color-dot"
-                :style="colorDotStyle(color)"
-              />
-            </div>
-          </template>
-        </q-input>
-        <q-input readonly v-model="character.build" label="Statur / Körperbau" />
-        <q-input readonly v-model="character.height" label="Größe" />
-        <q-input readonly v-model="character.weight" label="Gewicht" />
-        <q-input readonly v-model="character.apparentage" label="Optisches Alter" />
-        <q-input readonly v-model="character.voice" label="Stimme" />
-        <q-input readonly v-model="character.specialfeatures" label="Besonderheiten" />
+        <template v-if="showGeneral">
+          <h6>Allgemeines</h6>
+          <character-text-field
+            v-for="field in colorFields"
+            :key="field.label"
+            :label="field.label"
+            :value="field.value"
+            :owner="owner"
+          >
+            <template #append>
+              <span v-if="field.colors.length" class="character-appearance__color-pair">
+                <span
+                  v-for="(color, index) in field.colors"
+                  :key="`${field.label}-${index}`"
+                  class="character-appearance__color-dot"
+                  :style="colorDotStyle(color)"
+                />
+              </span>
+            </template>
+          </character-text-field>
+          <character-text-field
+            v-for="field in generalFields"
+            :key="field.label"
+            :label="field.label"
+            :value="field.value"
+            :owner="owner"
+          />
+        </template>
       </section>
 
       <aside v-if="hasAppearanceImage" class="character-appearance__visual">
@@ -73,11 +40,17 @@
       </aside>
     </section>
 
-    <h6>Erscheinungsbild</h6>
-    <html-viewer :content="character.appearance" />
+    <template v-if="owner || !isEmpty(character.appearance)">
+      <h6>Erscheinungsbild</h6>
+      <p v-if="isEmpty(character.appearance)" class="character-appearance__empty">{{ emptyLabel }}</p>
+      <html-viewer v-else :content="character.appearance" />
+    </template>
 
-    <h6>Äther</h6>
-    <html-viewer :content="character.aether" />
+    <template v-if="owner || !isEmpty(character.aether)">
+      <h6>Äther</h6>
+      <p v-if="isEmpty(character.aether)" class="character-appearance__empty">{{ emptyLabel }}</p>
+      <html-viewer v-else :content="character.aether" />
+    </template>
   </div>
 </template>
 
@@ -85,6 +58,11 @@
 import { CharacterProfileDto } from '@app/shared/dto/characters/character-profile.dto';
 import { Options, prop, Vue } from 'vue-class-component';
 import HtmlViewer from '../common/HtmlViewer.vue';
+import CharacterTextField from './CharacterTextField.vue';
+import { EMPTY_FIELD_LABEL, isEmptyFieldValue } from './empty-field';
+
+type AppearanceField = { label: string; value?: string };
+type ColorField = AppearanceField & { colors: string[] };
 
 class Props {
   character = prop<CharacterProfileDto>({
@@ -98,11 +76,45 @@ class Props {
 
 @Options({
   components: {
+    CharacterTextField,
     HtmlViewer,
   },
 })
 export default class CharacterAppearance extends Vue.with(Props) {
-  private textMeasureElement: HTMLSpanElement | null = null;
+  readonly emptyLabel = EMPTY_FIELD_LABEL;
+
+  get owner(): boolean {
+    return this.preview || !!this.character.mine;
+  }
+
+  get colorFields(): ColorField[] {
+    const c = this.character;
+    return [
+      { label: 'Haarfarbe', value: c.haircolor, colors: this.hairSelectedColors },
+      { label: 'Augenfarbe', value: c.eyecolor, colors: this.eyeSelectedColors },
+      { label: 'Hautfarbe', value: c.skintone, colors: this.skinSelectedColors },
+    ];
+  }
+
+  get generalFields(): AppearanceField[] {
+    const c = this.character;
+    return [
+      { label: 'Statur / Körperbau', value: c.build },
+      { label: 'Größe', value: c.height },
+      { label: 'Gewicht', value: c.weight },
+      { label: 'Optisches Alter', value: c.apparentage },
+      { label: 'Stimme', value: c.voice },
+      { label: 'Besonderheiten', value: c.specialfeatures },
+    ];
+  }
+
+  get showGeneral(): boolean {
+    return this.owner || [...this.colorFields, ...this.generalFields].some((field) => !isEmptyFieldValue(field.value));
+  }
+
+  isEmpty(value?: string): boolean {
+    return isEmptyFieldValue(value);
+  }
 
   get hairSelectedColors() {
     return this.getSelectedColors(this.character.haircolorShade1, this.character.haircolorShade2);
@@ -162,52 +174,6 @@ export default class CharacterAppearance extends Vue.with(Props) {
       .map((rawColor) => this.resolveColor(rawColor))
       .filter((color): color is string => !!color);
   }
-
-  beforeUnmount() {
-    if (this.textMeasureElement?.parentElement) {
-      this.textMeasureElement.parentElement.removeChild(this.textMeasureElement);
-    }
-
-    this.textMeasureElement = null;
-  }
-
-  private getTextWidthPx(text: string): number {
-    if (typeof window === 'undefined' || typeof document === 'undefined') {
-      return text.length * 8;
-    }
-
-    if (!this.textMeasureElement) {
-      const element = document.createElement('span');
-      element.style.position = 'absolute';
-      element.style.visibility = 'hidden';
-      element.style.pointerEvents = 'none';
-      element.style.whiteSpace = 'pre';
-      element.style.left = '-10000px';
-      element.style.top = '-10000px';
-      document.body.appendChild(element);
-      this.textMeasureElement = element;
-    }
-
-    const sampleInput = document.querySelector<HTMLElement>('.character-appearance__color-field .q-field__native');
-    const sampleStyle = sampleInput ? window.getComputedStyle(sampleInput) : window.getComputedStyle(document.body);
-    this.textMeasureElement.style.font = sampleStyle.font;
-    this.textMeasureElement.style.letterSpacing = sampleStyle.letterSpacing;
-    this.textMeasureElement.style.textTransform = sampleStyle.textTransform;
-    this.textMeasureElement.textContent = text || ' ';
-
-    return this.textMeasureElement.getBoundingClientRect().width;
-  }
-
-  colorFieldInputStyle(rawText?: string | null) {
-    const text = rawText || '';
-    const measuredWidth = this.getTextWidthPx(text);
-    const width = Math.max(56, Math.ceil(measuredWidth + 10));
-
-    return {
-      width: `${width}px`,
-      maxWidth: '100%',
-    };
-  }
 }
 </script>
 
@@ -255,27 +221,9 @@ export default class CharacterAppearance extends Vue.with(Props) {
   gap: 6px;
 }
 
-.character-appearance__color-field .q-field__control-container {
-  flex: 0 1 auto;
-  min-width: 0;
-}
-
-.character-appearance__color-field .q-field__control {
-  justify-content: flex-start;
-}
-
-.character-appearance__color-field .q-field__control-container.col {
-  flex: 0 1 auto;
-}
-
-.character-appearance__color-field .q-field__native,
-.character-appearance__color-field .q-field__input {
-  width: auto;
-  min-width: 6ch;
-}
-
-.character-appearance__color-field .q-field__append {
-  padding-left: 8px;
+.character-appearance__empty {
+  color: var(--ink-muted);
+  font-style: italic;
 }
 
 body.body--dark .character-appearance__visual {

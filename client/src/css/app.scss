@@ -18,9 +18,11 @@
 	--app-body-bg-color: #ddb476;
 	--app-body-bg-image: url(assets/bg.jpg);
 	--app-text-color: #1f1f1f;
-	--app-link-color: #ddb476;
-	--app-link-hover-color: #c59826;
-	--app-link-visited-color: #ddb476;
+	// ER2-102 — links on parchment/pearl use bronze ink (5.48:1 on card,
+	// ≈5.2:1 on pearl). The gold #ddb476 brand token stays for ornaments only.
+	--app-link-color: var(--ink-link, #8A5A14);
+	--app-link-hover-color: #6B4410;
+	--app-link-visited-color: var(--ink-link, #8A5A14);
 	--app-item-color: #000000;
 	--app-scrollbar-track: #ddb476;
 	--app-scrollbar-thumb: #edd297;
@@ -133,6 +135,14 @@ body {
 	color: var(--app-text-color);
 }
 
+// ER2-107 — German body copy hyphenates at syllable boundaries (needs
+// <html lang="de">) instead of breaking compounds mid-word. Running text only:
+// headings, buttons and nav labels keep whole words.
+.q-page :where(p, li, dd, blockquote) {
+	hyphens: auto;
+	-webkit-hyphens: auto;
+}
+
 // Override Quasar's `body.body--dark { background: var(--q-dark-page); }`
 // so dark mode keeps the custom app background image.
 body.body--dark {
@@ -188,6 +198,13 @@ body.body--dark :where(.q-card.q-card--dark.q-dark:not(.q-card--flat)) {
 
 body.body--dark :where(.q-card.q-card--dark.q-dark .q-separator) {
 	background: var(--app-card-divider);
+}
+
+// ER2-104 — Quasar fills dark tab panels with the hard-coded $dark #1D1D1D,
+// which shows as a grey slab on the Zodiark surfaces. Panels inherit the
+// surface they sit on instead.
+body.body--dark :where(.q-tab-panels.q-dark) {
+	background: transparent;
 }
 
 .q-page .q-select .q-field__control {
@@ -326,6 +343,27 @@ h2 {
 	margin-bottom: 24px;
 }
 
+// ER2-108 — directory hero titles sit on the content grid. The global h2 is
+// centred, and inside the hero text column (whose width follows the lead
+// paragraph) that pushed short titles inwards by different amounts per page
+// (Communities ~137px, Freie Gesellschaften 66px). Left-align them so every
+// title starts at the hero's 22px inner edge.
+.page-characters__hero-text > h2,
+.page-venues__hero-text > h2,
+.page-communities__hero-text > h2,
+.page-free-companies__hero-text > h2,
+.page-noticeboard__hero-text > h2,
+.page-stories__hero-text > h2,
+.page-changes__hero-text > h2,
+.page-gallery__hero-text > h2,
+.page-support-tickets__hero-text > h2,
+.page-support-queue__hero-text > h2,
+.page-support-ticket__hero-text > h2,
+.page-support-ticket-admin__hero-text > h2,
+.page-new-support-ticket__hero-text > h2 {
+	text-align: left;
+}
+
 h2.with-subtitle {
 	margin-bottom: 0;
 }
@@ -389,6 +427,14 @@ a {
 
 .q-page a:hover {
 	color: var(--app-link-hover-color);
+}
+
+// ER2-102 — text links show an underline on hover/focus so they read as links
+// without relying on colour alone (WCAG 1.4.1). Item/button links are excluded.
+.q-page a:not(.q-item):not(.q-btn):not(.q-tab):not(.q-chip):hover,
+.q-page a:not(.q-item):not(.q-btn):not(.q-tab):not(.q-chip):focus-visible {
+	text-decoration: underline;
+	text-underline-offset: 0.15em;
 }
 
 .q-page a.q-item:hover {
@@ -576,6 +622,44 @@ body.body--dark .noticeboard-item-list__meta,
 body.body--dark .noticeboard-item-list__time {
 	color: rgba(213, 226, 240, 0.74);
 }
+
+// ER2-102 — the same meta/caption set in Hydaelyn: muted ink (#6E5F46,
+// ≥ 5.4:1 on pearl) instead of the per-page rgba(35,35,35,.5–.65) greys.
+body:not(.body--dark) .page-characters__lead,
+body:not(.body--dark) .page-venues__lead,
+body:not(.body--dark) .page-communities__lead,
+body:not(.body--dark) .page-noticeboard__lead,
+body:not(.body--dark) .page-stories__lead,
+body:not(.body--dark) .page-changes__lead,
+body:not(.body--dark) .page-characters__count-label,
+body:not(.body--dark) .page-venues__count-label,
+body:not(.body--dark) .page-communities__count-label,
+body:not(.body--dark) .page-noticeboard__count-label,
+body:not(.body--dark) .page-stories__hero-count-label,
+body:not(.body--dark) .page-changes__hero-count-label,
+body:not(.body--dark) .page-stories__card-meta,
+body:not(.body--dark) .page-stories__card-excerpt,
+body:not(.body--dark) .page-stories__empty,
+body:not(.body--dark) .page-stories__empty-subtitle,
+body:not(.body--dark) .page-changes__item-time,
+body:not(.body--dark) .page-changes__item-meta,
+body:not(.body--dark) .page-changes__item-summary,
+body:not(.body--dark) .page-changes__empty,
+body:not(.body--dark) .page-changes__empty-subtitle,
+body:not(.body--dark) .page-characters__card-meta,
+body:not(.body--dark) .page-characters__card-profession,
+body:not(.body--dark) .page-characters__empty,
+body:not(.body--dark) .page-venues__empty,
+body:not(.body--dark) .page-communities__empty,
+body:not(.body--dark) .page-noticeboard__empty,
+body:not(.body--dark) .venue-list__meta,
+body:not(.body--dark) .venue-list__server,
+body:not(.body--dark) .community-list__goal,
+body:not(.body--dark) .noticeboard-item-list__meta,
+body:not(.body--dark) .noticeboard-item-list__time {
+	color: var(--ink-muted);
+}
+
 
 body.body--dark .page-characters__count-number,
 body.body--dark .page-venues__count-number,
@@ -964,14 +1048,13 @@ body.body--dark .event-view__subtitle {
 	color: rgba(213, 226, 240, 0.72);
 }
 
+// Content warnings (title + chips) are themed by --vision-cw-* in EventView.vue.
 body.body--dark .event-view__type,
-body.body--dark .event-view__meta-label,
-body.body--dark .event-view__warnings-title {
+body.body--dark .event-view__meta-label {
 	color: rgba(213, 226, 240, 0.62);
 }
 
-body.body--dark .event-view__chip,
-body.body--dark .event-view__warning-chip {
+body.body--dark .event-view__chip {
 	background: rgba(141, 181, 223, 0.2);
 	color: rgba(213, 226, 240, 0.92);
 }

@@ -1,20 +1,29 @@
 <template>
   <div class="character-contacts">
-    <section >
-      <h6>Kontakte</h6>
-            <q-input autogrow readonly v-model="character.partners" label="Partner" />
-            <q-input autogrow readonly v-model="character.parents" label="Eltern" />
-            <q-input autogrow readonly v-model="character.children" label="Kinder" />
-            <q-input autogrow readonly v-model="character.relatives" label="Verwandte" />
-            <q-input autogrow readonly v-model="character.friends" label="Freunde" />
-            <q-input autogrow readonly v-model="character.acquaintances" label="Bekannte / Kollegen" />
-            <q-input autogrow readonly v-model="character.enemies" label="Rivalen / Feinde" />
-            <q-input autogrow readonly v-model="character.past" label="Vergangenheit" />
-            <h6>Verbindungen</h6>
-            <q-input autogrow readonly v-model="character.freecompanies" label="Freie Gesellschaft" />
-            <q-input autogrow readonly v-model="character.meetingplaces" label="Treffpunkte" />
-            <q-input autogrow readonly v-model="character.communities" label="Communities" />
-            <q-input autogrow readonly v-model="character.mentioned" label="Erwähnt in (Anschlagebrett, Geschichten, ...)" />
+    <section>
+      <template v-if="showSection(contactFields)">
+        <h6>Kontakte</h6>
+        <character-text-field
+          v-for="field in contactFields"
+          :key="field.label"
+          :label="field.label"
+          :value="field.value"
+          :owner="owner"
+        />
+      </template>
+      <template v-if="showSection(connectionFields)">
+        <h6>Verbindungen</h6>
+        <character-text-field
+          v-for="field in connectionFields"
+          :key="field.label"
+          :label="field.label"
+          :value="field.value"
+          :owner="owner"
+        />
+      </template>
+      <p v-if="!showSection(contactFields) && !showSection(connectionFields)" class="character-contacts__empty">
+        Noch keine Kontakte eingetragen.
+      </p>
     </section>
   </div>
 </template>
@@ -28,6 +37,10 @@ import HtmlViewer from '../common/HtmlViewer.vue';
 import ReportViolationSection from '../common/ReportViolationSection.vue';
 import CharacterDetail from './CharacterDetail.vue';
 import CharacterDetailsBox from './CharacterDetailsBox.vue';
+import CharacterTextField from './CharacterTextField.vue';
+import { isEmptyFieldValue } from './empty-field';
+
+type ContactField = { label: string; value?: string };
 
 class Props {
   character = prop<CharacterProfileDto>({
@@ -43,6 +56,7 @@ class Props {
   components: {
     CharacterDetail,
     CharacterDetailsBox,
+    CharacterTextField,
     BannerView,
     HtmlViewer,
     ReportViolationSection,
@@ -51,7 +65,37 @@ class Props {
 export default class CharacterContacts extends Vue.with(Props) {
   PageType = PageType;
 
+  get owner(): boolean {
+    return this.preview || !!this.character.mine;
+  }
 
+  get contactFields(): ContactField[] {
+    const c = this.character;
+    return [
+      { label: 'Partner', value: c.partners },
+      { label: 'Eltern', value: c.parents },
+      { label: 'Kinder', value: c.children },
+      { label: 'Verwandte', value: c.relatives },
+      { label: 'Freunde', value: c.friends },
+      { label: 'Bekannte / Kollegen', value: c.acquaintances },
+      { label: 'Rivalen / Feinde', value: c.enemies },
+      { label: 'Vergangenheit', value: c.past },
+    ];
+  }
+
+  get connectionFields(): ContactField[] {
+    const c = this.character;
+    return [
+      { label: 'Freie Gesellschaft', value: c.freecompanies },
+      { label: 'Treffpunkte', value: c.meetingplaces },
+      { label: 'Communities', value: c.communities },
+      { label: 'Erwähnt in', value: c.mentioned },
+    ];
+  }
+
+  showSection(fields: ContactField[]): boolean {
+    return this.owner || fields.some((field) => !isEmptyFieldValue(field.value));
+  }
 }
 </script>
 
@@ -71,33 +115,13 @@ export default class CharacterContacts extends Vue.with(Props) {
   margin-top: 0;
 }
 
-.character-contacts .q-field--readonly .q-field__control,
-.character-contacts .q-field--readonly .q-field__control::before {
-  background-color: var(--surface-vellum);
-}
-
-.character-contacts .q-field--readonly .q-field__control::before {
-  border: 1px solid var(--rule-gold-soft);
-}
-
-.character-contacts .q-field--readonly:hover .q-field__control::before {
-  border-color: var(--rule-gold);
+.character-contacts__empty {
+  color: var(--ink-muted);
+  font-style: italic;
 }
 
 body.body--dark .character-contacts h6 {
   color: var(--ink-luminous);
 }
 
-body.body--dark .character-contacts .q-field--readonly .q-field__control,
-body.body--dark .character-contacts .q-field--readonly .q-field__control::before {
-  background-color: var(--surface-lift);
-}
-
-body.body--dark .character-contacts .q-field--readonly .q-field__control::before {
-  border-color: var(--rule-arcane-soft);
-}
-
-body.body--dark .character-contacts .q-field--readonly:hover .q-field__control::before {
-  border-color: var(--rule-arcane);
-}
 </style>

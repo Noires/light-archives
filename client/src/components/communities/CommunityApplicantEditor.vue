@@ -107,7 +107,7 @@ export default class CommunityApplicantEditor extends Vue.with(Props) {
   onRejectClick(member: CommunityMemberDto) {
     this.$q
       .dialog({
-        title: 'Confirm Reject',
+        title: 'Ablehnen bestätigen',
         message: `Möchtest du den Mitgliedschaftsantrag von ${member.name} ablehnen?`,
         ok: {
           label: 'Ablehnen',
