@@ -30,11 +30,13 @@
       </div>
     </div>
 
-    <hr />
-    <html-viewer
-      class="story-view__content"
-      :content="story.content"
-    />
+    <triskelion-divider class="story-view__divider" />
+    <section class="story-view__body mat-parchment" :class="{ 'story-view__body--drop-cap': hasDropCap }">
+      <html-viewer
+        class="story-view__content"
+        :content="story.content"
+      />
+    </section>
   </div>
 </template>
 
@@ -42,7 +44,10 @@
 import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
 import { Options, prop, Vue } from 'vue-class-component';
+import TriskelionDivider from '../aetherium/TriskelionDivider.vue';
 import HtmlViewer from '../common/HtmlViewer.vue';
+
+const DROP_CAP_WORD_THRESHOLD = 200;
 
 class Props {
   story = prop<StoryDto>({
@@ -58,6 +63,7 @@ class Props {
   name: 'StoryView',
   components: {
     HtmlViewer,
+    TriskelionDivider,
   }
 })
 export default class StoryView extends Vue.with(Props) {
@@ -74,14 +80,25 @@ export default class StoryView extends Vue.with(Props) {
     const character = this.story.author?.replace(/ /g, '_') || '';
     return `/${server}/${character}`;
   }
+
+  get hasDropCap(): boolean {
+    const stripped = (this.story.content || '').replace(/<[^>]*>/g, ' ');
+    const wordCount = stripped.split(/\s+/).filter(Boolean).length;
+    return wordCount >= DROP_CAP_WORD_THRESHOLD;
+  }
 }
 </script>
 
 <style lang="scss">
 @import url($extraGoogleFonts);
 
+// ELPIS-501 — Story view body lives on Parchment. Triskelion divider replaces
+// the old hr separator so the page reads as "header → seal → manuscript".
+// Subtitle/warnings rebased onto Aetherium tokens for theme awareness.
 .story-view__subtitle {
-  color: $grey-8;
+  color: var(--ink-muted);
+  font-family: var(--font-section);
+  font-style: italic;
 }
 
 .story-view__posted-by {
@@ -92,6 +109,42 @@ export default class StoryView extends Vue.with(Props) {
 .story-view__type {
   flex-grow: 0;
   white-space: nowrap;
+  font-family: var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
+  font-size: var(--type-scale-0);
+}
+
+.story-view__divider {
+  margin: 24px auto 18px;
+}
+
+.story-view__body {
+  padding: 28px 32px;
+  margin-bottom: 24px;
+}
+
+.story-view__body .story-view__content {
+  font-family: var(--font-body);
+  line-height: var(--lh-body);
+}
+
+// ELPIS-502 — Illuminated drop cap on stories >= 200 words. Cinzel Eorzea via
+// --font-ornament; falls through to Cinzel/serif until ELPIS-001 self-hosts.
+// Three-line height tuned to --lh-body (1.6); the float-left lets body copy
+// flow around the initial. Mobile collapses to ~2.4 lines so the cap doesn't
+// dominate the column.
+.story-view__body--drop-cap .story-view__content > p:first-of-type::first-letter {
+  float: left;
+  font-family: var(--font-ornament);
+  font-size: 4.4em;
+  line-height: 0.9;
+  margin: 0.06em 0.12em 0 0;
+  padding: 0;
+  color: var(--rule-gold);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+  letter-spacing: -0.02em;
+  font-weight: 500;
 }
 
 .story-view__warnings {
@@ -100,9 +153,10 @@ export default class StoryView extends Vue.with(Props) {
 
 .story-view__warnings-title {
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.75rem;
-  color: rgba(35, 35, 35, 0.6);
+  letter-spacing: var(--ls-eyebrow);
+  font-size: var(--type-scale-0);
+  color: var(--ink-muted);
+  font-family: var(--font-ui);
   font-weight: 600;
   margin-bottom: 6px;
 }
@@ -115,7 +169,35 @@ export default class StoryView extends Vue.with(Props) {
 
 .story-view__warning-chip {
   background: rgba(221, 180, 118, 0.22);
-  color: #6b4c21;
+  color: var(--rule-gold);
   font-weight: 600;
+  border: 1px solid var(--rule-gold-soft);
+}
+
+body.body--dark .story-view__subtitle,
+body.body--dark .story-view__warnings-title {
+  color: rgba(236, 227, 247, 0.74);
+}
+
+body.body--dark .story-view__warning-chip {
+  background: rgba(193, 155, 255, 0.18);
+  color: var(--ink-luminous);
+  border-color: var(--rule-arcane-soft);
+}
+
+body.body--dark .story-view__body--drop-cap .story-view__content > p:first-of-type::first-letter {
+  color: var(--ink-luminous);
+  text-shadow: 0 0 18px rgba(184, 165, 255, 0.32);
+}
+
+@media screen and (max-width: 600px) {
+  .story-view__body {
+    padding: 20px 18px;
+  }
+
+  .story-view__body--drop-cap .story-view__content > p:first-of-type::first-letter {
+    font-size: 3.2em;
+    margin-right: 0.10em;
+  }
 }
 </style>

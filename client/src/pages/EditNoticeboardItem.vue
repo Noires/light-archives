@@ -58,7 +58,7 @@
           />
           <div class="page-edit-noticeboard-item__revert-submit">
             <q-btn label="Zurücksetzen" color="secondary" @click="revert" />&nbsp;
-            <q-btn label="Änderungen speichern" type="submit" color="primary" />
+            <q-btn label="Änderungen speichern" type="submit" color="primary" v-elpis-save-pulse="savePulseTrigger" />
           </div>
         </div>
         <q-inner-loading :showing="saving" />
@@ -139,6 +139,7 @@ export default class PageEditNoticeboardItem extends Vue {
   preview = false;
   loaded = false;
   saving = false;
+  savePulseTrigger = 0;
 
   confirmRevert = false;
 
@@ -256,6 +257,7 @@ export default class PageEditNoticeboardItem extends Vue {
       }
 
       this.noticeboardItemBackup = new NoticeboardItemDto(this.noticeboardItem);
+      this.savePulseTrigger++;
 
       notifySuccess('Aushang gespeichert.', {
         label: 'Anschauen',

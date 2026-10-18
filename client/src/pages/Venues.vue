@@ -17,7 +17,7 @@
     </header>
 
     <section class="page-venues__content">
-      <div class="page-venues__toolbar">
+      <div class="page-venues__toolbar elpis-directory-toolbar">
         <q-input
           class="page-venues__search"
           v-model="searchQuery"
@@ -50,11 +50,11 @@
           dense
           @update:model-value="onFilterChange"
         />
-        <div class="page-venues__stats">
+        <div class="page-venues__stats elpis-directory-toolbar__stats">
           {{ filteredCount }} von {{ venues.length }}
         </div>
         <q-pagination
-          class="page-venues__pagination"
+          class="page-venues__pagination elpis-pagination"
           :model-value="page"
           :max="maxPage"
           input
@@ -294,12 +294,9 @@ export default class PageVenues extends Vue {
   border-radius: 2px;
 }
 
-.page-venues__search .q-field__control,
-.page-venues__area-select .q-field__control,
-.page-venues__server-select .q-field__control {
-  background: #f6f1e8;
-  border-radius: 0;
-}
+// ELPIS-404 — Toolbar field chrome (Aetherglass focus + idle border) lives in
+// app.scss under `.elpis-directory-toolbar`. The previous local q-field
+// background override is gone — the shared rule now owns that surface.
 
 .page-venues__stats {
   text-align: right;

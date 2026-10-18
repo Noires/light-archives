@@ -14,12 +14,18 @@
             <q-input @update:model-value="onChange" v-model="character.fears" label="Ängste" />
             <q-input @update:model-value="onChange" v-model="character.slogan" label="Motto" />
             <q-input @update:model-value="onChange" v-model="character.motivation" label="Motivation" />
-            <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername|mein bester Freund]], in allen obigen Feldern nutzen.</div>
+            <wikilink-hint
+              example="[[Charaktername|mein bester Freund]]"
+              note="Wikilinks funktionieren in allen obigen Feldern."
+            />
             <h6>Charakteristika</h6>
             <q-input @update:model-value="onChange" v-model="character.strengths" label="Stärken" />
             <q-input @update:model-value="onChange" v-model="character.weaknesses" label="Schwächen" />
             <q-input @update:model-value="onChange" v-model="character.ticks" label="Eigenheiten" />
-            <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername|mein bester Freund]], in allen obigen Feldern nutzen.</div>     
+            <wikilink-hint
+              example="[[Charaktername|mein bester Freund]]"
+              note="Wikilinks funktionieren in allen obigen Feldern."
+            />     
           </section>
           <h6>Persönlichkeit</h6>
           <html-editor @update:model-value="onChange" v-model="character.personality" />
@@ -31,7 +37,7 @@
           <q-btn-toggle v-model="preview" :options="previewOptions" toggle-color="secondary" />
           <div class="page-edit-character__revert-submit">
             <q-btn label="Zurücksetzen" color="secondary" @click="onRevertClick" />&nbsp;
-            <q-btn label="Änderungen speichern" type="submit" color="primary" />
+            <q-btn label="Änderungen speichern" type="submit" color="primary" v-elpis-save-pulse="savePulseTrigger" />
           </div>
         </div>
         <q-inner-loading :showing="saving" />
@@ -40,7 +46,7 @@
     <q-spinner v-else />
 
     <q-dialog v-model="confirmRevert" persistent>
-      <q-card>
+      <q-card class="mat-aetherglass elevation-3 revert-confirm-dialog">
         <q-card-section class="row items-center">
           <span class="q-ml-sm">Möchtest du die ungespeicherten Änderungen auf die letzte gespeicherte Version zurücksetzen?</span>
         </q-card-section>
@@ -61,6 +67,7 @@ import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
 import CarrdEditSection from 'src/components/common/CarrdEditSection.vue';
+import WikilinkHint from 'src/components/common/WikilinkHint.vue';
 import { useStore } from 'src/store';
 import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
@@ -71,7 +78,6 @@ import CharacterPersonality from 'src/components/character/CharacterPersonality.
 import type { ParsedCharacterData } from 'src/common/wiki-import';
 
 const $api = useApi();
-const isDirty = ref(false);
 
 async function load(params: RouteParams): Promise<CharacterProfileDto> {
   const id = parseInt(params.id as string, 10);
@@ -93,14 +99,14 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
     CharacterPersonality,
     BannerEditSection,
     CarrdEditSection,
+    WikilinkHint,
   },
   async beforeRouteEnter(to, _, next) {
-    isDirty.value = false;
     const character = await load(to.params);
     next((vm) => (vm as PageEditProfile).setContent(character));
   },
   beforeRouteLeave(to, from, next) {
-    if (isDirty.value) {
+    if ((this as PageEditProfile).isDirty) {
       Dialog.create({
         title: 'Warnung',
         message: 'Ungespeicherte Änderungen gehen verloren. Möchtest du fortfahren?',
@@ -143,6 +149,8 @@ export default class PageEditProfile extends Vue {
   confirmRevert = false;
   drawer = ref(false);
   miniState = true;
+  isDirty = false;
+  savePulseTrigger = 0;
 
   setContent(character: CharacterProfileDto) {
     this.characterBackup = character;
@@ -183,7 +191,7 @@ export default class PageEditProfile extends Vue {
   }
 
   onChange() {
-    isDirty.value = true;
+    this.isDirty = true;
   }
 
   onRevertClick() {
@@ -192,7 +200,7 @@ export default class PageEditProfile extends Vue {
 
   onConfirmRevert() {
     this.character = new CharacterProfileDto(this.characterBackup);
-    isDirty.value = false;
+    this.isDirty = false;
   }
 
   async onSubmit() {
@@ -201,6 +209,7 @@ export default class PageEditProfile extends Vue {
     try {
       await this.$api.characters.saveCharacter(this.character);
       this.characterBackup = new CharacterProfileDto(this.character);
+      this.savePulseTrigger++;
 
       notifySuccess('Charakter gespeichert.', {
         label: 'Anschauen',
@@ -211,7 +220,7 @@ export default class PageEditProfile extends Vue {
       notifyError(e);
     } finally {
       this.saving = false;
-      isDirty.value = false;
+      this.isDirty = false;
     }
   }
 

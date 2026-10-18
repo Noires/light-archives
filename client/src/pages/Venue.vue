@@ -86,21 +86,21 @@
           </section>
           <section
             v-else-if="!venue.canEdit && venue.membershipStatus === MembershipStatus.APPLIED"
-            class="page-venue__membership-status"
+            class="page-venue__membership-status elpis-membership-banner elpis-membership-banner--applied"
           >
-            Du hast eine Anfrage für eine Mitgliedschaft bei diesem Treffpunkt gesendet.
+            <span>Du hast eine Anfrage für eine Mitgliedschaft bei diesem Treffpunkt gesendet.</span>
           </section>
           <section
             v-else-if="!venue.canEdit && venue.membershipStatus === MembershipStatus.REJECTED"
-            class="page-venue__membership-status"
+            class="page-venue__membership-status elpis-membership-banner elpis-membership-banner--rejected"
           >
-            Deine Mitgliedschaftsanfrage wurde abgelehnt.
+            <span>Deine Mitgliedschaftsanfrage wurde abgelehnt.</span>
           </section>
           <section
             v-else-if="!venue.canEdit && venue.membershipStatus === MembershipStatus.CONFIRMED"
-            class="page-venue__membership-status"
+            class="page-venue__membership-status elpis-membership-banner elpis-membership-banner--confirmed"
           >
-            Du bist ein Mitglied dieses Treffpunkts.
+            <span>Du bist ein Mitglied dieses Treffpunkts.</span>
           </section>
 
           <template v-if="activeSection === VenueSection.OVERVIEW">
@@ -635,6 +635,70 @@ body.body--dark .page-venue-layout {
   --venue-muted: rgba(213, 226, 240, 0.74);
 }
 
+// ELPIS-406: aetheryte indicator on the active section. The drawer's
+// .page-venue-layout__menu .q-item--active gets:
+//   1. a 3 px gold-rule left rail (the aetheryte "stem")
+//   2. a soft gold tint background that crossfades over --motion-base
+//   3. a hexagonal aetheryte glyph (inline SVG) hovering at the left edge,
+//      fading in alongside the tint.
+// All three transition on --motion-base var(--ease-elpis) so switching
+// sections reads as the aether "settling" on the new row instead of a flat
+// highlight swap. Reduced-motion → global guard collapses --motion-base
+// to --motion-instant (80 ms), so the fade still happens but is near-instant.
+.page-venue-layout__menu .q-item {
+  position: relative;
+  overflow: hidden;
+  transition:
+    background-color var(--motion-base) var(--ease-elpis),
+    color var(--motion-base) var(--ease-elpis);
+}
+
+.page-venue-layout__menu .q-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 28px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='%23BA9B5B' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 5 L24 10 L24 22 L16 27 L8 22 L8 10 Z' opacity='0.85'/%3E%3Cpath d='M16 11 L20 13.5 L20 19.5 L16 22 L12 19.5 L12 13.5 Z' opacity='0.55'/%3E%3Cpath d='M16 5 L16 27' opacity='0.35'/%3E%3Cpath d='M8 16 L24 16' opacity='0.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 6px center;
+  background-size: 18px 18px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-base) var(--ease-elpis);
+}
+
+.page-venue-layout__menu .q-item.q-item--active {
+  background-color: rgba(186, 155, 91, 0.14);
+  color: var(--surface-ink);
+  box-shadow: inset 3px 0 0 var(--rule-gold);
+}
+
+.page-venue-layout__menu .q-item.q-item--active::before {
+  opacity: 1;
+}
+
+.page-venue-layout__menu .q-item.q-item--active .q-item__section--avatar .q-icon {
+  color: var(--rule-gold);
+}
+
+body.body--dark .page-venue-layout__menu .q-item::before {
+  // Re-paint the aetheryte glyph onto the arcane palette via an inline SVG
+  // swap (CSS vars can't be embedded in url()).
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='%23B8A5FF' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 5 L24 10 L24 22 L16 27 L8 22 L8 10 Z' opacity='0.9'/%3E%3Cpath d='M16 11 L20 13.5 L20 19.5 L16 22 L12 19.5 L12 13.5 Z' opacity='0.6'/%3E%3Cpath d='M16 5 L16 27' opacity='0.4'/%3E%3Cpath d='M8 16 L24 16' opacity='0.4'/%3E%3C/svg%3E");
+}
+
+body.body--dark .page-venue-layout__menu .q-item.q-item--active {
+  background-color: rgba(193, 155, 255, 0.16);
+  color: var(--ink-luminous);
+  box-shadow: inset 3px 0 0 var(--rule-arcane);
+}
+
+body.body--dark .page-venue-layout__menu .q-item.q-item--active .q-item__section--avatar .q-icon {
+  color: var(--glow-aether-d);
+}
+
 .page-venue-layout__edit-item {
   margin-top: 12px;
   background: var(--venue-edit-bg);
@@ -672,14 +736,9 @@ body.body--dark .page-venue-layout__delete-item:hover {
   margin-bottom: 8px;
 }
 
-.page-venue__membership-status {
-  margin: 10px 0 14px;
-  padding: 12px 14px;
-  border: 1px solid var(--venue-box-border);
-  background: var(--venue-box-bg);
-  box-shadow: var(--venue-box-shadow);
-  color: var(--venue-muted);
-}
+// Legacy `.page-venue__membership-status` chrome lives in app.scss now under
+// `.elpis-membership-banner` (ELPIS-411). The class stays on the section so
+// callsites continue to compile, but no styles ride on it directly here.
 
 .page-venue__content-box {
   margin: 14px 0 22px;

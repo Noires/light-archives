@@ -1,14 +1,17 @@
 <template>
   <q-layout view="hHh Lpr fff">
     <q-header>
-      <q-toolbar class="layout__toolbar__header">
+      <q-toolbar class="layout__toolbar__header mat-aetherglass">
         <div class="layout__filler layout__header-row">
-          <div class="layout__char-name cursor-pointer" @click="toggleLeftDrawer"> 
+          <div class="layout__char-name cursor-pointer" @click="toggleLeftDrawer">
             <template v-if="$store.getters.character">
             <div>
-              <q-avatar round>
-                <img :src="$store.getters.character.avatar" />
-              </q-avatar>
+              <aetheryte-badge
+                size="md"
+                shape="round"
+                :src="$store.getters.character.avatar"
+                :alt="$store.getters.character?.name || ''"
+              />
               <span header>{{ $store.getters.character?.name }}</span>
             </div>
             </template>
@@ -191,8 +194,9 @@
       </div>
     </q-page-container>
 
-    <q-footer elevated>
-      <q-toolbar class="layout__toolbar__footer">
+    <q-footer elevated class="mat-vellum">
+      <q-toolbar class="layout__toolbar__footer column">
+        <triskelion-divider class="layout__footer-ornament" />
         <div class="layout__footer text-body justify-center text-center">
           Final Fantasy XIV © 2010&ndash;2026 Square Enix Co., Ltd. Alle Rechte vorbehalten. Elpisgarten ist eine
           Fanseite und steht nicht mit Square Enix in Verbindung.<br />
@@ -211,6 +215,8 @@ import CalendarSidebarWidget from '../components/eventbar/CalendarSidebarWidget.
 import UserMenu from '../components/sidebar/UserMenu.vue';
 import InlineSvg from 'vue-inline-svg';
 import SiteSearchField from 'src/components/search/SiteSearchField.vue';
+import AetheryteBadge from 'src/components/aetherium/AetheryteBadge.vue';
+import TriskelionDivider from 'src/components/aetherium/TriskelionDivider.vue';
 import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
 import { TelemetryConsentStatus } from '@app/shared/enums/telemetry-consent-status.enum';
 import { notifyError, notifySuccess } from 'src/common/notify';
@@ -235,10 +241,12 @@ interface NavGroup {
 
 @Options({
   components: {
+    AetheryteBadge,
     CalendarSidebarWidget,
     UserMenu,
     InlineSvg,
     SiteSearchField,
+    TriskelionDivider,
   },
 })
 export default class MainLayout extends Vue {
@@ -541,12 +549,16 @@ $color-dark: #1b1b1b;
   text-transform: uppercase;
   border-radius: 0;
   background: linear-gradient(135deg, var(--nav-char-bg-start) 0%, var(--nav-char-bg-end) 100%);
-  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.3);
+  box-shadow: 4px 0 12px rgba(43, 36, 24, 0.10); // Hydaelyn — warm soft drop
   transition: background 0.3s ease,
               box-shadow 0.3s ease,
               color 0.3s ease;
   animation: navReveal 0.55s ease both;
   cursor: pointer;
+}
+
+body.body--dark .layout__char-name {
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.35); // Zodiark — original dark drop
 }
 
 .layout__char-name > div {
@@ -576,21 +588,21 @@ $color-dark: #1b1b1b;
 }
 
 .layout__char-name:hover {
-  color: #ffffff;
+  // Inherit theme-aware ink — pearl gets dark warm, deep gets luminous cream.
+  // `--nav-ink` flips correctly across both themes (Aetherium-aligned).
+  color: var(--nav-ink);
   background: linear-gradient(135deg, var(--nav-char-bg-hover-start) 0%, var(--nav-char-bg-hover-end) 100%);
-  box-shadow: 6px 0 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 6px 0 18px rgba(43, 36, 24, 0.18);
 }
 
-.layout__char-name .q-avatar {
-  border: 2px solid var(--nav-char-avatar-border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  transition: all 0.3s ease;
+body.body--dark .layout__char-name:hover {
+  box-shadow: 6px 0 24px rgba(0, 0, 0, 0.45);
 }
 
-.layout__char-name:hover .q-avatar {
-  border-color: var(--nav-char-avatar-border-hover);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
-}
+// AetheryteBadge owns its own gold rule and shadow chrome; the legacy
+// `.q-avatar` rules here are obsolete now that ELPIS-202 is in place. The
+// nav-aware tokens still drive the inner ring on hover via the badge's own
+// :hover handler — no per-layout overrides are needed.
 
 .layout__char-name .q-icon {
   color: var(--nav-accent);
@@ -781,41 +793,44 @@ $color-dark: #1b1b1b;
 }
 
 body {
-  --nav-bg-start: #1a1a1a;
-  --nav-bg-end: #0f0f0f;
-  --nav-accent: #ddb476;
-  --nav-accent-strong: #ead1a3;
-  --nav-ink: #e8d4b0;
-  --nav-border-bottom: rgba(221, 180, 118, 0.3);
-  --nav-overlay-glow-left: rgba(221, 180, 118, 0.08);
-  --nav-overlay-glow-right: rgba(159, 132, 189, 0.06);
-  --nav-overlay-shade: rgba(0, 0, 0, 0.2);
-  --nav-char-bg-start: rgba(221, 180, 118, 0.12);
-  --nav-char-bg-end: rgba(51, 51, 51, 0.9);
-  --nav-char-bg-hover-start: rgba(221, 180, 118, 0.2);
-  --nav-char-bg-hover-end: rgba(59, 59, 59, 0.95);
-  --nav-char-divider: rgb(50, 50, 48);
-  --nav-char-divider-hover: rgba(59, 59, 59, 0.95);
-  --nav-char-avatar-border: rgba(221, 180, 118, 0.4);
-  --nav-char-avatar-border-hover: rgba(221, 180, 118, 0.6);
-  --nav-link-color: rgba(232, 212, 176, 0.9);
-  --nav-link-underline: rgba(221, 180, 118, 0.8);
-  --nav-link-hover-bg: rgba(221, 180, 118, 0.08);
-  --nav-link-active-bg: rgba(221, 180, 118, 0.12);
-  --nav-link-active-border: rgba(221, 180, 118, 0.8);
-  --nav-link-open-bg: rgba(221, 180, 118, 0.14);
-  --nav-menu-border: rgba(221, 180, 118, 0.28);
-  --nav-menu-border-top: rgba(221, 180, 118, 0.7);
-  --nav-menu-bg-start: rgba(39, 33, 24, 0.98);
-  --nav-menu-bg-end: rgba(19, 16, 12, 0.98);
-  --nav-menu-item-color: rgba(232, 212, 176, 0.9);
-  --nav-menu-item-indicator: rgba(221, 180, 118, 0.9);
-  --nav-menu-item-hover-bg: rgba(221, 180, 118, 0.12);
-  --nav-action-bg: rgba(221, 180, 118, 0.08);
-  --nav-action-border: rgba(221, 180, 118, 0.2);
-  --nav-action-hover-bg: rgba(221, 180, 118, 0.14);
-  --nav-action-hover-border: rgba(221, 180, 118, 0.4);
-  --nav-action-sheen: rgba(221, 180, 118, 0.1);
+  // Hydaelyn nav palette — calibrated to read on `.mat-aetherglass` pearl
+  // surface (ELPIS-101). The legacy gold-on-near-black values that lived
+  // here would have been invisible on pearl; rule/ink tokens replace them.
+  --nav-bg-start: transparent; // legacy fallback only — Aetherglass provides bg
+  --nav-bg-end: transparent;
+  --nav-accent: var(--rule-gold);
+  --nav-accent-strong: var(--rule-gold);
+  --nav-ink: var(--surface-ink);
+  --nav-border-bottom: transparent; // Aetherglass inner rule replaces the bottom border
+  --nav-overlay-glow-left: rgba(186, 155, 91, 0.10);
+  --nav-overlay-glow-right: rgba(127, 230, 226, 0.06);
+  --nav-overlay-shade: transparent; // pearl shouldn't darken downward
+  --nav-char-bg-start: rgba(186, 155, 91, 0.14);
+  --nav-char-bg-end: rgba(245, 239, 226, 0.55);
+  --nav-char-bg-hover-start: rgba(186, 155, 91, 0.22);
+  --nav-char-bg-hover-end: rgba(251, 246, 234, 0.85);
+  --nav-char-divider: rgba(186, 155, 91, 0.22);
+  --nav-char-divider-hover: rgba(186, 155, 91, 0.36);
+  --nav-char-avatar-border: var(--rule-gold);
+  --nav-char-avatar-border-hover: var(--rule-gold);
+  --nav-link-color: var(--surface-ink);
+  --nav-link-underline: var(--rule-gold);
+  --nav-link-hover-bg: rgba(186, 155, 91, 0.10);
+  --nav-link-active-bg: rgba(186, 155, 91, 0.16);
+  --nav-link-active-border: var(--rule-gold);
+  --nav-link-open-bg: rgba(186, 155, 91, 0.18);
+  --nav-menu-border: rgba(186, 155, 91, 0.28);
+  --nav-menu-border-top: var(--rule-gold);
+  --nav-menu-bg-start: rgba(251, 246, 234, 0.98);
+  --nav-menu-bg-end: rgba(245, 239, 226, 0.98);
+  --nav-menu-item-color: var(--surface-ink);
+  --nav-menu-item-indicator: var(--rule-gold);
+  --nav-menu-item-hover-bg: rgba(186, 155, 91, 0.12);
+  --nav-action-bg: rgba(186, 155, 91, 0.10);
+  --nav-action-border: rgba(186, 155, 91, 0.28);
+  --nav-action-hover-bg: rgba(186, 155, 91, 0.18);
+  --nav-action-hover-border: var(--rule-gold);
+  --nav-action-sheen: rgba(186, 155, 91, 0.14);
   --drawer-label-color: rgba(221, 180, 118, 0.7);
   --drawer-item-color: rgba(232, 212, 176, 0.9);
   --drawer-item-hover-color: #ffffff;
@@ -841,41 +856,44 @@ body {
 
 body.body--dark {
   --layout-outline: #2b3645;
-  --nav-bg-start: #131c2a;
-  --nav-bg-end: #0a1018;
-  --nav-accent: #8db5df;
-  --nav-accent-strong: #b2cde9;
-  --nav-ink: #d6e5f5;
-  --nav-border-bottom: rgba(141, 181, 223, 0.35);
-  --nav-overlay-glow-left: rgba(141, 181, 223, 0.15);
-  --nav-overlay-glow-right: rgba(96, 132, 173, 0.12);
-  --nav-overlay-shade: rgba(0, 0, 0, 0.24);
-  --nav-char-bg-start: rgba(141, 181, 223, 0.2);
-  --nav-char-bg-end: rgba(20, 31, 45, 0.95);
-  --nav-char-bg-hover-start: rgba(141, 181, 223, 0.3);
-  --nav-char-bg-hover-end: rgba(24, 38, 56, 0.98);
-  --nav-char-divider: rgb(17, 26, 39);
-  --nav-char-divider-hover: rgba(22, 34, 49, 0.98);
-  --nav-char-avatar-border: rgba(141, 181, 223, 0.45);
-  --nav-char-avatar-border-hover: rgba(141, 181, 223, 0.7);
-  --nav-link-color: rgba(214, 229, 245, 0.9);
-  --nav-link-underline: rgba(141, 181, 223, 0.82);
-  --nav-link-hover-bg: rgba(141, 181, 223, 0.14);
-  --nav-link-active-bg: rgba(141, 181, 223, 0.2);
-  --nav-link-active-border: rgba(141, 181, 223, 0.88);
-  --nav-link-open-bg: rgba(141, 181, 223, 0.22);
-  --nav-menu-border: rgba(141, 181, 223, 0.34);
-  --nav-menu-border-top: rgba(141, 181, 223, 0.78);
-  --nav-menu-bg-start: rgba(20, 30, 44, 0.98);
-  --nav-menu-bg-end: rgba(12, 20, 31, 0.98);
-  --nav-menu-item-color: rgba(214, 229, 245, 0.9);
-  --nav-menu-item-indicator: rgba(141, 181, 223, 0.9);
-  --nav-menu-item-hover-bg: rgba(141, 181, 223, 0.2);
-  --nav-action-bg: rgba(141, 181, 223, 0.12);
-  --nav-action-border: rgba(141, 181, 223, 0.34);
-  --nav-action-hover-bg: rgba(141, 181, 223, 0.22);
-  --nav-action-hover-border: rgba(141, 181, 223, 0.52);
-  --nav-action-sheen: rgba(141, 181, 223, 0.18);
+  // Zodiark nav palette — retuned around Aetherium's arcane violet
+  // (`--rule-arcane`) instead of the legacy cool-blue chrome. Reads on the
+  // deep-purple Aetherglass surface, matches the Zodiark theme identity.
+  --nav-bg-start: transparent;
+  --nav-bg-end: transparent;
+  --nav-accent: var(--rule-arcane);
+  --nav-accent-strong: var(--rule-arcane);
+  --nav-ink: var(--ink-luminous);
+  --nav-border-bottom: transparent;
+  --nav-overlay-glow-left: rgba(167, 139, 196, 0.16);
+  --nav-overlay-glow-right: rgba(127, 230, 226, 0.10);
+  --nav-overlay-shade: transparent;
+  --nav-char-bg-start: rgba(167, 139, 196, 0.20);
+  --nav-char-bg-end: rgba(31, 17, 48, 0.85);
+  --nav-char-bg-hover-start: rgba(167, 139, 196, 0.30);
+  --nav-char-bg-hover-end: rgba(38, 22, 60, 0.92);
+  --nav-char-divider: rgba(31, 17, 48, 0.85);
+  --nav-char-divider-hover: rgba(38, 22, 60, 0.92);
+  --nav-char-avatar-border: var(--rule-arcane);
+  --nav-char-avatar-border-hover: var(--rule-arcane);
+  --nav-link-color: var(--ink-luminous);
+  --nav-link-underline: var(--rule-arcane);
+  --nav-link-hover-bg: rgba(167, 139, 196, 0.18);
+  --nav-link-active-bg: rgba(167, 139, 196, 0.26);
+  --nav-link-active-border: var(--rule-arcane);
+  --nav-link-open-bg: rgba(167, 139, 196, 0.28);
+  --nav-menu-border: rgba(167, 139, 196, 0.34);
+  --nav-menu-border-top: var(--rule-arcane);
+  --nav-menu-bg-start: rgba(31, 17, 48, 0.98);
+  --nav-menu-bg-end: rgba(20, 11, 32, 0.98);
+  --nav-menu-item-color: var(--ink-luminous);
+  --nav-menu-item-indicator: var(--rule-arcane);
+  --nav-menu-item-hover-bg: rgba(167, 139, 196, 0.22);
+  --nav-action-bg: rgba(167, 139, 196, 0.14);
+  --nav-action-border: rgba(167, 139, 196, 0.34);
+  --nav-action-hover-bg: rgba(167, 139, 196, 0.24);
+  --nav-action-hover-border: var(--rule-arcane);
+  --nav-action-sheen: rgba(167, 139, 196, 0.20);
   --drawer-label-color: rgba(141, 181, 223, 0.74);
   --drawer-item-color: rgba(214, 229, 245, 0.9);
   --drawer-item-hover-color: #f2f7ff;
@@ -898,28 +916,37 @@ body.body--dark {
   --drawer-field-append: rgba(214, 229, 245, 0.74);
 }
 
+// ELPIS-101 — header surface is now `.mat-aetherglass`, which provides:
+//   • background-color (pearl @ 88% / deep @ 78%)
+//   • backdrop-filter blur + saturate
+//   • inner gold/arcane rule (inset 0 0 0 2px)
+//   • top light-leak highlight (inset 0 1px 0 white@0.6)
+//   • soft external shadow
+// Only the header-specific geometry stays: full-bleed edges (no rounded
+// corners), font-family, ink colour, min-height, and the layered overlay
+// `::before` for radial glints.
 .layout__toolbar__header {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--nav-bg-start) 0%, var(--nav-bg-end) 100%);
-  border-bottom: 2px solid var(--nav-border-bottom);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6), 0 8px 48px rgba(0, 0, 0, 0.4);
   font-family: Michroma, sans-serif;
   color: var(--nav-ink);
   min-height: var(--nav-height);
-  backdrop-filter: blur(10px);
 }
 
-body.body--dark .layout__toolbar__header {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 8px 48px rgba(0, 0, 0, 0.35);
+// Higher-specificity override (.layout__toolbar__header.mat-aetherglass = 0,2,0)
+// guarantees full-bleed edges regardless of CSS source ordering.
+.layout__toolbar__header.mat-aetherglass {
+  border-radius: 0;
 }
 
+// Zodiark wedge gradient retuned away from the legacy cool-blue rgba toward
+// the arcane-violet accent so it harmonizes with the rest of the dark palette.
 body.body--dark .layout__char-name::after {
-  background: linear-gradient(135deg, rgba(56, 77, 99, 0.16) 0%, var(--nav-char-bg-end) 100%);
+  background: linear-gradient(135deg, rgba(167, 139, 196, 0.18) 0%, var(--nav-char-bg-end) 100%);
 }
 
 body.body--dark .layout__char-name:hover::after {
-  background: linear-gradient(135deg, rgba(94, 116, 139, 0.16) 0%, var(--nav-char-bg-hover-end) 100%);
+  background: linear-gradient(135deg, rgba(184, 159, 213, 0.22) 0%, var(--nav-char-bg-hover-end) 100%);
 }
 
 .layout__toolbar__header::before {
@@ -935,9 +962,21 @@ body.body--dark .layout__char-name:hover::after {
   animation: none;
 }
 
+// ELPIS-105 — Vellum (Hydaelyn) / Obsidian (Zodiark) is now the page-chrome
+// surface for the footer; toolbar inside stays transparent so the parent
+// material is visible. Column flow lets the triskelion ornament sit above
+// the legal text.
 .layout__toolbar__footer {
-  background: var(--app-footer-bg);
+  background: transparent;
   color: var(--app-footer-text);
+  padding: 18px 16px;
+  gap: 14px;
+  min-height: 0;
+}
+
+.layout__footer-ornament {
+  margin-bottom: 4px;
+  align-self: stretch;
 }
 
 .layout__nav-links {
@@ -1002,7 +1041,8 @@ body.body--dark .layout__char-name:hover::after {
 
 .layout__nav-links a:hover,
 .layout__nav-dropdown-trigger:hover {
-  color: #ffffff;
+  // Theme-aware ink — pearl wants dark warm, deep wants luminous cream.
+  color: var(--nav-ink);
   background: var(--nav-link-hover-bg);
 }
 
@@ -1013,7 +1053,7 @@ body.body--dark .layout__char-name:hover::after {
 
 .layout__nav-links .router-link-active,
 .layout__nav-dropdown-trigger_active {
-  color: #ffffff;
+  color: var(--nav-ink);
   background: var(--nav-link-active-bg);
   border-bottom-color: var(--nav-link-active-border);
 }
@@ -1041,7 +1081,7 @@ body.body--dark .layout__char-name:hover::after {
 }
 
 .layout__nav-dropdown-trigger_open {
-  color: #ffffff;
+  color: var(--nav-ink);
   background: var(--nav-link-open-bg);
 }
 
@@ -1056,9 +1096,14 @@ body.body--dark .layout__char-name:hover::after {
   border-radius: 8px;
   padding: 8px;
   background: linear-gradient(135deg, var(--nav-menu-bg-start) 0%, var(--nav-menu-bg-end) 100%);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  // Hydaelyn — softer warm drop. Zodiark override below restores the deep shadow.
+  box-shadow: 0 8px 32px rgba(43, 36, 24, 0.18);
   backdrop-filter: blur(10px);
   overflow: hidden;
+}
+
+body.body--dark .layout__nav-menu {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
 .layout__nav-menu .q-list {
@@ -1115,7 +1160,9 @@ body.body--dark .layout__char-name:hover::after {
 
 .layout__nav-menu .layout__nav-menu-item:hover,
 .layout__nav-menu .q-router-link--active {
-  color: #ffffff;
+  // Inherit theme-aware ink — pure white on pearl was invisible.
+  // Background/translate provide the hover feedback; colour stays at
+  // `--nav-menu-item-color` (`--surface-ink` light / `--ink-luminous` dark).
   background: var(--nav-menu-item-hover-bg);
   transform: translateX(4px);
 }
@@ -1131,10 +1178,14 @@ body.body--dark .layout__char-name:hover::after {
   border-top: 2px solid var(--nav-menu-border-top);
   border-radius: 8px;
   background: linear-gradient(180deg, var(--nav-menu-bg-start) 0%, var(--nav-menu-bg-end) 100%);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 8px 32px rgba(43, 36, 24, 0.18);
   backdrop-filter: blur(10px);
   overflow: hidden;
   padding: 8px;
+}
+
+body.body--dark .layout__mobile-menu {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
 .layout__mobile-menu .q-list {
@@ -1155,7 +1206,7 @@ body.body--dark .layout__char-name:hover::after {
 
 .layout__mobile-menu .q-item:hover,
 .layout__mobile-menu .q-router-link--active {
-  color: #ffffff;
+  color: var(--nav-menu-item-color);
   background: var(--nav-menu-item-hover-bg);
   transform: translateX(4px);
 }
@@ -1209,7 +1260,7 @@ body.body--dark .layout__char-name:hover::after {
 .layout__theme-toggle:hover {
   background: var(--nav-action-hover-bg);
   border-left-color: var(--nav-action-hover-border);
-  color: #ffffff;
+  color: var(--nav-ink);
 }
 
 .layout__theme-toggle .q-icon {
@@ -1228,7 +1279,7 @@ body.body--dark .layout__char-name:hover::after {
 .layout__toolbar-button-more:hover {
   background: var(--nav-action-hover-bg);
   border-left-color: var(--nav-action-hover-border);
-  color: #ffffff;
+  color: var(--nav-ink);
 }
 
 .layout__toolbar-button-more:hover::before {
@@ -1267,24 +1318,6 @@ body.body--dark .layout__char-name:hover::after {
   100% {
     opacity: 1;
     transform: translateX(100%) translateY(0);
-  }
-}
-
-@keyframes navShimmer {
-  0% {
-    transform: translateX(-120%);
-  }
-  100% {
-    transform: translateX(120%);
-  }
-}
-
-@keyframes navGridShift {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(32px);
   }
 }
 
@@ -1363,9 +1396,29 @@ body.body--dark .layout__char-name:hover::after {
   }
 }
 
+// `.q-footer.mat-vellum` keeps the footer edge-to-edge (no rounded corners)
+// and softens the elevated drop-shadow on the Hydaelyn warm palette. On
+// Zodiark we override Vellum's lift surface with the Obsidian gradient so
+// the footer reads as continuous page chrome, not a dark card.
 .q-footer {
-  background: var(--app-footer-bg);
   color: var(--app-footer-text);
+}
+
+.q-footer.mat-vellum {
+  border-radius: 0;
+  border-top: 1px solid var(--rule-gold-soft);
+  box-shadow: 0 -2px 10px rgba(43, 36, 24, 0.08);
+}
+
+body.body--dark .q-footer.mat-vellum {
+  background-color: var(--surface-obsidian);
+  background-image: linear-gradient(
+    135deg,
+    var(--surface-obsidian) 0%,
+    var(--surface-deep) 100%
+  );
+  border-top-color: var(--rule-arcane-soft);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.45);
 }
 
 .layout__footer {
@@ -1437,7 +1490,7 @@ body.body--dark .layout__char-name:hover::after {
     font-size: 0.7rem;
   }
 
-  .layout__char-name .q-avatar {
+  .layout__char-name .aetheryte-badge {
     width: 36px;
     height: 36px;
   }

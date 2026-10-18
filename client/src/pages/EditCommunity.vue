@@ -69,7 +69,7 @@
               v-model="community.recruitingOfficers"
               label="Rekrutierer"
             />
-            <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername]], in <strong>Ziel</strong>, <strong>Status</strong> und <strong>Rekrutierer</strong> nutzen.</div>
+            <wikilink-hint note="Wikilinks funktionieren in Ziel, Status und Rekrutierer." />
             <q-input
               :model-value="tags"
               @update:model-value="onTagsChanged"
@@ -96,7 +96,7 @@
           />
           <div class="page-edit-community__revert-submit">
             <q-btn label="Zurücksetzen" color="secondary" @click="revert" />&nbsp;
-            <q-btn label="Änderungen speichern" type="submit" color="primary" />
+            <q-btn label="Änderungen speichern" type="submit" color="primary" v-elpis-save-pulse="savePulseTrigger" />
           </div>
         </div>
         <q-inner-loading :showing="saving" />
@@ -138,6 +138,7 @@ import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
 import CarrdEditSection from 'src/components/common/CarrdEditSection.vue';
 import CharacterSelector from 'src/components/common/CharacterSelector.vue';
+import WikilinkHint from 'src/components/common/WikilinkHint.vue';
 import CommunityProfile from 'src/components/communities/CommunityProfile.vue';
 import { useRouter } from 'src/router';
 import { useStore } from 'src/store';
@@ -177,6 +178,7 @@ async function load(params: RouteParams): Promise<CommunityDto|null> {
     BannerEditSection,
     CarrdEditSection,
     CharacterSelector,
+    WikilinkHint,
   },
 	async beforeRouteEnter(to, _, next) {
 		const content = await load(to.params);
@@ -201,6 +203,7 @@ export default class PageEditCommunity extends Vue {
   preview = false;
   loaded = false;
   saving = false;
+  savePulseTrigger = 0;
 
   confirmRevert = false;
 
@@ -277,6 +280,7 @@ export default class PageEditCommunity extends Vue {
       }
 
       this.communityBackup = new CommunityDto(this.community);
+      this.savePulseTrigger++;
 
       notifySuccess('Community gespeichert.', {
         label: 'Anschauen',

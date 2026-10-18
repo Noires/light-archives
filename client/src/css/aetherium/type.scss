@@ -1,0 +1,77 @@
+// Aetherium — typography tokens.
+// Modular scale of 1.250 (Major Third), nine steps centered on 16 px:
+// 12 / 14 / 16 / 20 / 25 / 31 / 39 / 49 / 61. Source of truth: UI_UX_REWORK_PLAN.md §3.1.
+//
+// Faces map to Light Archives' brand vocabulary:
+//   display  → Cinzel (FFXIV ornamental titles, hero pages)
+//   section  → Spectral (h2/h3 — humanist serif, replaces Cinzel below h2 for readability)
+//   body     → Spectral / Noto Sans fallback
+//   ui       → Inter (labels, tabular numerals, dense UI)
+//   lore     → IM Fell English italic (Character background, Story body, Wiki h-roman)
+//   mono     → system mono (code, hashes, ids)
+//   ornament → Cinzel Eorzea (already self-hosted under public/fonts/)
+//
+// Spectral, Inter, and IM Fell English ship with ELPIS-001 (Fontsource self-host,
+// deferred). The fallback chains here keep the page legible until that lands;
+// downstream surfaces should reference --font-* tokens (never bare names) so the
+// ELPIS-001 swap is transparent.
+
+:root {
+	// Family tokens. Fallbacks are intentional and safe before ELPIS-001.
+	--font-display:  'Cinzel', 'Cinzel Eorzea', serif;
+	--font-section:  'Spectral', Georgia, 'Times New Roman', serif;
+	--font-body:     'Spectral', 'Noto Sans', Georgia, serif;
+	--font-ui:       'Inter', 'Noto Sans', system-ui, -apple-system, sans-serif;
+	--font-lore:     'IM Fell English', 'Spectral', Georgia, serif;
+	--font-mono:     'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+	--font-ornament: 'Cinzel Eorzea', 'Cinzel', serif;
+
+	// Modular scale 1.250 — base 16 px. Steps cover micro UI through home hero.
+	--type-scale-0: 0.75rem;     // 12 px — eyebrow / micro labels
+	--type-scale-1: 0.875rem;    // 14 px — small UI / footer / h6
+	--type-scale-2: 1rem;        // 16 px — body / h5
+	--type-scale-3: 1.25rem;     // 20 px — h4 / large body
+	--type-scale-4: 1.5625rem;   // 25 px — h3 / section heading
+	--type-scale-5: 1.9375rem;   // 31 px — h2 / page title
+	--type-scale-6: 2.4375rem;   // 39 px — display medium
+	--type-scale-7: 3.0625rem;   // 49 px — h1 / display large / hero
+	--type-scale-8: 3.8125rem;   // 61 px — display max / home hero only
+
+	// Line heights vary by role: tight on display, generous on body.
+	--lh-display: 1.1;
+	--lh-heading: 1.25;
+	--lh-body: 1.6;
+	--lh-ui: 1.4;
+
+	// Letter-spacing — tighter for large Cinzel, wider for uppercase eyebrows.
+	--ls-display: -0.01em;
+	--ls-eyebrow:  0.06em;
+}
+
+// Utility classes — intentionally minimal, no descendant selectors, no resets.
+// Apply directly via class= on the element that needs the treatment.
+.text-display {
+	font-family: var(--font-display);
+	font-size: var(--type-scale-7);
+	font-weight: 600;
+	line-height: var(--lh-display);
+	letter-spacing: var(--ls-display);
+}
+
+.text-body-lore {
+	font-family: var(--font-lore);
+	font-style: italic;
+	font-size: var(--type-scale-2);
+	line-height: var(--lh-body);
+}
+
+// "ui-mono" = the Inter monospace-feel for labels, counts and stat blocks
+// per plan §3.1 (tabular numerals enabled). Not a true mono — Inter retains
+// proportional ascenders, only the digits align in columns.
+.text-ui-mono {
+	font-family: var(--font-ui);
+	font-feature-settings: 'tnum' 1, 'lnum' 1;
+	font-variant-numeric: tabular-nums lining-nums;
+	font-size: var(--type-scale-1);
+	line-height: var(--lh-ui);
+}

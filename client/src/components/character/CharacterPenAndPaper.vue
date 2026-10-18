@@ -1,7 +1,12 @@
 <template>
-  <div class="character-sheet">
+  <div :class="['character-sheet', { 'character-sheet--first-load': revealEnabled }]">
+    <glyph-corner class="character-sheet__corner character-sheet__corner--tl" size="md" position="tl" />
+    <glyph-corner class="character-sheet__corner character-sheet__corner--tr" size="md" position="tr" />
+    <glyph-corner class="character-sheet__corner character-sheet__corner--br" size="md" position="br" />
+    <glyph-corner class="character-sheet__corner character-sheet__corner--bl" size="md" position="bl" />
+
     <header class="character-sheet__hero">
-      <div class="character-sheet__hero-copy">
+      <div class="character-sheet__hero-copy character-sheet__page">
         <p class="character-sheet__eyebrow">Pen &amp; Paper Dossier</p>
         <h2 class="character-sheet__title">{{ character.name }}</h2>
         <p class="character-sheet__subtitle">
@@ -9,22 +14,28 @@
         </p>
       </div>
 
-      <aside class="character-sheet__oracle">
+      <aside
+        class="character-sheet__oracle character-sheet__page"
+        :class="{ 'character-sheet__oracle--just-rolled': runeFlashing }"
+      >
         <div class="character-sheet__oracle-head">
           <span class="character-sheet__oracle-label">Würfel-Orakel</span>
           <strong>{{ diceResultLabel }}</strong>
         </div>
-        <p class="character-sheet__oracle-reading">{{ diceReading }}</p>
+        <p
+          class="character-sheet__oracle-reading"
+          :class="{ 'character-sheet__oracle-reading--w100': diceLabel === 'W100' && diceResult !== null }"
+        >{{ diceReading }}</p>
         <div class="character-sheet__oracle-actions">
-          <q-btn unelevated color="secondary" label="W6" @click="rollDie(6, 'W6')" />
-          <q-btn unelevated color="secondary" label="W20" @click="rollDie(20, 'W20')" />
-          <q-btn unelevated color="accent" label="W100" @click="rollPercentile" />
+          <q-btn class="character-sheet__oracle-die" unelevated label="W6" @click="rollDie(6, 'W6')" />
+          <q-btn class="character-sheet__oracle-die" unelevated label="W20" @click="rollDie(20, 'W20')" />
+          <q-btn class="character-sheet__oracle-die character-sheet__oracle-die--percentile" unelevated label="W100" @click="rollPercentile" />
         </div>
         <p class="character-sheet__oracle-note">Lokaler Zufallswurf als kleines Runden-Gimmick. Es werden keine Werte gespeichert.</p>
       </aside>
     </header>
 
-    <section class="character-sheet__summary">
+    <section class="character-sheet__summary character-sheet__page">
       <article class="character-sheet__summary-card">
         <span class="character-sheet__summary-label">Kernprofil</span>
         <div class="character-sheet__summary-value">
@@ -54,7 +65,7 @@
       </article>
     </section>
 
-    <section v-if="factSections.length > 0" class="character-sheet__ledger">
+    <section v-if="factSections.length > 0" class="character-sheet__ledger character-sheet__page">
       <article v-for="section in factSections" :key="section.title" class="character-sheet__panel">
         <div class="character-sheet__panel-head">
           <h6>{{ section.title }}</h6>
@@ -70,7 +81,7 @@
       </article>
     </section>
 
-    <section v-if="textBlocks.length > 0" class="character-sheet__notes">
+    <section v-if="textBlocks.length > 0" class="character-sheet__notes character-sheet__page">
       <article v-for="block in textBlocks" :key="block.title" :class="block.accent ? 'character-sheet__note character-sheet__note--accent' : 'character-sheet__note'">
         <div class="character-sheet__panel-head">
           <h6>{{ block.title }}</h6>
@@ -82,7 +93,7 @@
       </article>
     </section>
 
-    <section v-if="factSections.length === 0 && textBlocks.length === 0" class="character-sheet__empty">
+    <section v-if="factSections.length === 0 && textBlocks.length === 0" class="character-sheet__empty character-sheet__page">
       <h6>Noch kein Dossier</h6>
       <p>
         Für diesen Pen-&amp;-Paper-Bogen wurden noch keine kompakten Sheet-Angaben hinterlegt.
@@ -94,6 +105,7 @@
 <script lang="ts">
 import { CharacterProfileDto } from '@app/shared/dto/characters/character-profile.dto';
 import { Options, prop, Vue } from 'vue-class-component';
+import GlyphCorner from '../aetherium/GlyphCorner.vue';
 import HtmlViewer from '../common/HtmlViewer.vue';
 
 type SheetEntry = {
@@ -122,12 +134,24 @@ class Props {
 
 @Options({
   components: {
+    GlyphCorner,
     HtmlViewer,
   },
 })
 export default class CharacterPenAndPaper extends Vue.with(Props) {
   diceResult: number | null = null;
   diceLabel = 'Noch kein Wurf';
+  runeFlashing = false;
+  private runeFlashTimer: number | null = null;
+
+  // ELPIS-211 — Pen & Paper journal-page reveal. Each major card (hero copy,
+  // oracle plate, summary, ledger, notes — and the empty-state alternative)
+  // wears `.character-sheet__page`; the wrapper carries `--first-load` only
+  // on the first session-scoped visit so the page-turn motion never replays
+  // on a route bounce. Per-card delays cascade in DOM order so the cards
+  // appear to leaf through the dossier.
+  revealEnabled = false;
+  private revealObserver: IntersectionObserver | null = null;
 
   get diceResultLabel(): string {
     return this.diceResult === null ? this.diceLabel : `${this.diceLabel}: ${this.diceResult}`;
@@ -271,10 +295,100 @@ export default class CharacterPenAndPaper extends Vue.with(Props) {
   rollDie(sides: number, label: string): void {
     this.diceLabel = label;
     this.diceResult = Math.floor(Math.random() * sides) + 1;
+    this.triggerRuneFlash();
   }
 
   rollPercentile(): void {
     this.rollDie(100, 'W100');
+  }
+
+  created(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      const flag = window.sessionStorage.getItem('elpis.penAndPaperRevealed');
+      if (!flag) {
+        this.revealEnabled = true;
+        window.sessionStorage.setItem('elpis.penAndPaperRevealed', '1');
+      }
+    } catch (_) {
+      this.revealEnabled = false;
+    }
+  }
+
+  mounted(): void {
+    if (!this.revealEnabled) {
+      return;
+    }
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+      this.markAllRevealed();
+      return;
+    }
+    const reduced =
+      !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      this.markAllRevealed();
+      return;
+    }
+
+    const cards = (this.$el as HTMLElement).querySelectorAll<HTMLElement>(
+      '.character-sheet__page',
+    );
+    if (!cards.length) {
+      return;
+    }
+
+    cards.forEach((card, idx) => {
+      card.style.setProperty('--page-reveal-delay', `${Math.min(idx, 11) * 90}ms`);
+    });
+
+    this.revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            (entry.target as HTMLElement).classList.add('character-sheet__page--revealed');
+            this.revealObserver?.unobserve(entry.target);
+          }
+        });
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.04 },
+    );
+
+    cards.forEach((card) => {
+      this.revealObserver!.observe(card);
+    });
+  }
+
+  private markAllRevealed(): void {
+    const cards = (this.$el as HTMLElement).querySelectorAll<HTMLElement>(
+      '.character-sheet__page',
+    );
+    cards.forEach((card) => card.classList.add('character-sheet__page--revealed'));
+  }
+
+  private triggerRuneFlash(): void {
+    if (this.runeFlashTimer !== null) {
+      window.clearTimeout(this.runeFlashTimer);
+    }
+    this.runeFlashing = false;
+    // Force a reflow tick so re-adding the class restarts the animation.
+    void window.requestAnimationFrame(() => {
+      this.runeFlashing = true;
+      this.runeFlashTimer = window.setTimeout(() => {
+        this.runeFlashing = false;
+        this.runeFlashTimer = null;
+      }, 720);
+    });
+  }
+
+  beforeUnmount(): void {
+    if (this.runeFlashTimer !== null) {
+      window.clearTimeout(this.runeFlashTimer);
+      this.runeFlashTimer = null;
+    }
+    this.revealObserver?.disconnect();
+    this.revealObserver = null;
   }
 
   private htmlBlock(title: string, kind: string, content?: string): TextBlock | null {
@@ -298,6 +412,7 @@ export default class CharacterPenAndPaper extends Vue.with(Props) {
 
 <style lang="scss">
 .character-sheet {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -310,6 +425,59 @@ export default class CharacterPenAndPaper extends Vue.with(Props) {
     linear-gradient(180deg, #f7f0df 0%, #efe3cb 100%);
   box-shadow: 0 18px 42px rgba(54, 37, 19, 0.16);
   color: #2d2014;
+}
+
+// ELPIS-211 — Ornamental corner stamps anchored to the dossier frame so the
+// sheet reads as a journal binding rather than a bare rounded card. Inset
+// 12 px desktop / 8 px on the narrowest breakpoint to stay clear of card
+// content. Z-index 2 to sit above the page-turn animation's transform.
+.character-sheet__corner {
+  position: absolute;
+  z-index: 2;
+}
+
+.character-sheet__corner--tl { top: 12px; left: 12px; }
+.character-sheet__corner--tr { top: 12px; right: 12px; }
+.character-sheet__corner--br { bottom: 12px; right: 12px; }
+.character-sheet__corner--bl { bottom: 12px; left: 12px; }
+
+// ELPIS-211 — Journal-page reveal. Five "pages" (hero copy, oracle plate,
+// summary spread, ledger spread, notes spread — or the empty-state
+// alternative) wear `character-sheet__page`. The `--first-load` parent gate
+// only paints the keyframe contract on the first session-scoped visit; on
+// route bounces the cards render at their default style. IntersectionObserver
+// adds `--revealed` per card; per-card `--page-reveal-delay` (assigned at
+// mount-time in DOM order) cascades the page-turn motion.
+.character-sheet--first-load .character-sheet__page:not(.character-sheet__page--revealed) {
+  opacity: 0;
+  transform: perspective(1200px) rotateY(-22deg) translateX(-12px);
+  transform-origin: left center;
+}
+
+.character-sheet--first-load .character-sheet__page--revealed {
+  animation: character-sheet-page-turn var(--motion-slow, 420ms) var(--ease-elpis, ease-out)
+    var(--page-reveal-delay, 0ms) backwards;
+}
+
+@keyframes character-sheet-page-turn {
+  from {
+    opacity: 0;
+    transform: perspective(1200px) rotateY(-22deg) translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1200px) rotateY(0) translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .character-sheet--first-load .character-sheet__page,
+  .character-sheet--first-load .character-sheet__page:not(.character-sheet__page--revealed),
+  .character-sheet--first-load .character-sheet__page--revealed {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
 }
 
 .character-sheet__hero {
@@ -360,11 +528,119 @@ export default class CharacterPenAndPaper extends Vue.with(Props) {
 }
 
 .character-sheet__oracle {
+  position: relative;
   padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 14px;
   justify-content: space-between;
+  overflow: hidden;
+}
+
+// ELPIS-212 — Rune flash overlay that paints once when a die lands.
+// The pseudo carries a faceted-hex SVG plus a soft warm radial halo. The
+// `--just-rolled` modifier owns animation; the base rule keeps the pseudo
+// invisible so unrelated re-renders don't repaint it.
+.character-sheet__oracle::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(245, 213, 133, 0.28) 0%, rgba(186, 155, 91, 0.14) 38%, transparent 72%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><polygon points='32,4 58,18 58,46 32,60 6,46 6,18' fill='none' stroke='%23BA9B5B' stroke-width='1.4' opacity='0.55'/><polygon points='32,16 48,24 48,40 32,48 16,40 16,24' fill='none' stroke='%23BA9B5B' stroke-width='1' opacity='0.45'/><line x1='32' y1='4' x2='32' y2='60' stroke='%23BA9B5B' stroke-width='0.8' opacity='0.35'/><line x1='6' y1='18' x2='58' y2='46' stroke='%23BA9B5B' stroke-width='0.8' opacity='0.3'/><line x1='58' y1='18' x2='6' y2='46' stroke='%23BA9B5B' stroke-width='0.8' opacity='0.3'/></svg>");
+  background-repeat: no-repeat, no-repeat;
+  background-position: center 26%, center 26%;
+  background-size: 100% 100%, 110px 110px;
+}
+
+.character-sheet__oracle--just-rolled::after {
+  animation: character-sheet-rune-flash 720ms cubic-bezier(0.18, 0.78, 0.32, 1.06) forwards;
+}
+
+@keyframes character-sheet-rune-flash {
+  0% { opacity: 0; transform: scale(0.92); }
+  18% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .character-sheet__oracle--just-rolled::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+// ELPIS-212 — Crystal-facet dice buttons. Three faceted gold crystals with a
+// hover lift; the W100 percentile die wears the cooler arcane gradient so it
+// reads as the heavier oracle pull.
+.character-sheet__oracle-die.q-btn {
+  position: relative;
+  z-index: 1;
+  border-radius: 10px;
+  font-family: var(--font-display, 'Cinzel', serif);
+  letter-spacing: var(--ls-display, 0.04em);
+  font-weight: 600;
+  color: var(--surface-ink, #2a2317);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, #f5d585 0%, #ba9b5b 50%, #8a6a2c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(120, 80, 24, 0.5),
+    0 0 0 1px rgba(186, 155, 91, 0.55),
+    0 6px 14px rgba(110, 76, 30, 0.22);
+  transition:
+    transform var(--motion-fast, 160ms) var(--ease-elpis, ease-out),
+    box-shadow var(--motion-fast, 160ms) var(--ease-elpis, ease-out);
+}
+
+.character-sheet__oracle-die.q-btn:hover,
+.character-sheet__oracle-die.q-btn:focus-visible {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(120, 80, 24, 0.55),
+    0 0 0 1px rgba(245, 213, 133, 0.85),
+    0 0 14px rgba(245, 213, 133, 0.45),
+    0 10px 20px rgba(110, 76, 30, 0.26);
+}
+
+.character-sheet__oracle-die.q-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.character-sheet__oracle-die--percentile.q-btn {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, #d5c4ff 0%, #9f84bd 50%, #5d3f96 100%);
+  color: rgba(28, 18, 56, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(56, 38, 100, 0.5),
+    0 0 0 1px rgba(159, 132, 189, 0.55),
+    0 6px 14px rgba(64, 40, 110, 0.22);
+}
+
+.character-sheet__oracle-die--percentile.q-btn:hover,
+.character-sheet__oracle-die--percentile.q-btn:focus-visible {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(56, 38, 100, 0.55),
+    0 0 0 1px rgba(213, 196, 255, 0.85),
+    0 0 16px rgba(184, 165, 255, 0.5),
+    0 10px 20px rgba(64, 40, 110, 0.28);
+}
+
+.character-sheet__oracle-reading--w100 {
+  font-family: var(--font-section, 'Spectral', serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+  color: #5d3a16;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .character-sheet__oracle-head {
@@ -534,6 +810,28 @@ body.body--dark .character-sheet__oracle-note {
 
 body.body--dark .character-sheet__oracle-reading {
   color: rgba(241, 228, 206, 0.88);
+}
+
+body.body--dark .character-sheet__oracle-reading--w100 {
+  color: rgba(245, 220, 178, 0.94);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+body.body--dark .character-sheet__oracle::after {
+  background:
+    radial-gradient(circle at 50% 38%, rgba(213, 196, 255, 0.32) 0%, rgba(184, 165, 255, 0.16) 38%, transparent 72%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><polygon points='32,4 58,18 58,46 32,60 6,46 6,18' fill='none' stroke='%23B8A5FF' stroke-width='1.4' opacity='0.6'/><polygon points='32,16 48,24 48,40 32,48 16,40 16,24' fill='none' stroke='%23B8A5FF' stroke-width='1' opacity='0.5'/><line x1='32' y1='4' x2='32' y2='60' stroke='%23B8A5FF' stroke-width='0.8' opacity='0.4'/><line x1='6' y1='18' x2='58' y2='46' stroke='%23B8A5FF' stroke-width='0.8' opacity='0.35'/><line x1='58' y1='18' x2='6' y2='46' stroke='%23B8A5FF' stroke-width='0.8' opacity='0.35'/></svg>");
+  background-repeat: no-repeat, no-repeat;
+  background-position: center 26%, center 26%;
+  background-size: 100% 100%, 110px 110px;
+}
+
+body.body--dark .character-sheet__oracle-die.q-btn {
+  color: rgba(40, 26, 12, 0.92);
+}
+
+body.body--dark .character-sheet__oracle-die--percentile.q-btn {
+  color: rgba(28, 18, 56, 0.96);
 }
 
 body.body--dark .character-sheet__panel-head {

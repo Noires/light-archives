@@ -1,3 +1,5 @@
+@import 'aetherium/index';
+
 @import 'weather';
 @import 'locations';
 @import 'input_styles';
@@ -316,10 +318,10 @@ h1, h2, h3, h4, h5, h6 {
 h2 {
 	font-family: 'Cinzel Eorzea', Cinzel, sans-serif;
 	text-align: center;
-	font-size: 2.5rem;
+	font-size: var(--type-scale-5);
 	margin-top: 0;
 	letter-spacing: 0;
-	line-height: 1.3;
+	line-height: var(--lh-heading);
 	margin-bottom: 24px;
 }
 
@@ -330,7 +332,7 @@ h2.with-subtitle {
 .subtitle {
 	text-align: center;
 	font-family: $header-font;
-	font-size: 1.6em;
+	font-size: var(--type-scale-3);
 	margin-bottom: 24px;
 }
 
@@ -339,23 +341,25 @@ h2.regular-header-font {
 }
 
 h3 {
-	font-size: 2rem;
+	font-size: var(--type-scale-4);
 	margin-top: 0.8em;
 	margin-bottom: 0.5em;
 }
 
 h4 {
-	font-size: 1.7rem;
+	font-size: var(--type-scale-3);
 	margin-top: 0.8em;
 	margin-bottom: 0.5em;
 }
 
 h5 {
+	font-size: var(--type-scale-2);
 	margin-top: 0.6em;
 	margin-bottom: 0.4em;
 }
 
 h6 {
+	font-size: var(--type-scale-1);
 	margin-top: 0.6em;
 	margin-bottom: 0.4em;
 }
@@ -1019,6 +1023,885 @@ body.body--dark .hide-details__title {
 
 .hide-details.hide-details_visible > .hide-details__content {
 	display: block;
+}
+
+// ELPIS-221 — revert confirmation dialog. Shared chrome for the seven editor
+// confirmation dialogs (`<q-card class="mat-aetherglass elevation-3 revert-confirm-dialog">`).
+// The dialog body uses the existing copy; this rule only sets sane padding /
+// min-width so Aetherglass's inset gold-rule frames the message cleanly.
+.revert-confirm-dialog {
+	min-width: 320px;
+	max-width: 460px;
+	padding: 4px;
+	border-radius: 8px;
+}
+
+// ELPIS-218 — Edit/Preview toggle as a Crystal-faceted segmented control.
+// Originally scoped to `.page-edit-character__button-bar` (seven character
+// editors). ELPIS-304 generalises it: the EventCalendar Kalender/Liste view
+// toggle (`.page-event-calendar__view-toggle`) opts in via the same selector
+// list. New consumers can be added by extending the parent list — the markup
+// must use `toggle-color="secondary"` so the active segment lands on
+// `.bg-secondary`.
+.page-edit-character__button-bar .q-btn-toggle,
+.page-event-calendar__view-toggle .q-btn-toggle {
+	border: 1px solid var(--rule-gold-soft);
+	border-radius: 6px;
+	overflow: hidden;
+	background-color: var(--surface-vellum);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.6),
+		0 1px 2px rgba(43, 36, 24, 0.08);
+}
+
+.page-edit-character__button-bar .q-btn-toggle .q-btn,
+.page-event-calendar__view-toggle .q-btn-toggle .q-btn {
+	font-family: var(--font-display);
+	font-size: var(--type-scale-1);
+	letter-spacing: var(--ls-eyebrow);
+	text-transform: uppercase;
+	color: var(--surface-ink);
+	transition:
+		background-color var(--motion-base) var(--ease-elpis),
+		color var(--motion-base) var(--ease-elpis);
+}
+
+// Active segment uses the prism crystal gradient so it reads as the "selected
+// facet" of the toggle. Both segments stay legible because the gradient sits
+// at a 45 % opacity tier on Hydaelyn / 55 % on Zodiark.
+.page-edit-character__button-bar .q-btn-toggle .q-btn.bg-secondary,
+.page-event-calendar__view-toggle .q-btn-toggle .q-btn.bg-secondary {
+	background: var(--crystal-prism) !important;
+	background-size: 200% 200%;
+	background-position: 0% 50%;
+	color: var(--surface-ink) !important;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+body.body--dark .page-edit-character__button-bar .q-btn-toggle,
+body.body--dark .page-event-calendar__view-toggle .q-btn-toggle {
+	background-color: var(--surface-deep);
+	border-color: var(--rule-arcane-soft);
+	box-shadow:
+		inset 0 1px 0 rgba(184, 165, 255, 0.18),
+		0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+body.body--dark .page-edit-character__button-bar .q-btn-toggle .q-btn,
+body.body--dark .page-event-calendar__view-toggle .q-btn-toggle .q-btn {
+	color: var(--ink-luminous);
+}
+
+body.body--dark .page-edit-character__button-bar .q-btn-toggle .q-btn.bg-secondary,
+body.body--dark .page-event-calendar__view-toggle .q-btn-toggle .q-btn.bg-secondary {
+	color: var(--surface-ink) !important;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+// ELPIS-411 — Membership status banners (Anfrage gesendet / abgelehnt /
+// Mitglied). Three semantic tiers:
+//   --applied   → semantic-info  (cool blue, awaiting review)
+//   --rejected  → semantic-danger (warm red, blocking)
+//   --confirmed → semantic-success (warm green, member)
+// Consumers add `.elpis-membership-banner` plus one of the modifier classes
+// to the legacy `.page-{venue,community}__membership-status` section. The
+// banner gets a 4 px left rail (Discord-embed cue), a leading icon column,
+// and tier-tinted background + ink. Same idiom ELPIS-216 applied to the
+// CharacterFinderField registration banners.
+.elpis-membership-banner {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 12px 0 18px;
+	padding: 14px 18px;
+	border: 1px solid var(--rule-gold-soft);
+	border-radius: 6px;
+	background: var(--surface-vellum);
+	color: var(--surface-ink);
+	font-family: var(--font-section);
+	font-size: var(--type-scale-2);
+	line-height: var(--lh-body);
+	box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
+}
+
+.elpis-membership-banner::before {
+	content: '';
+	font-family: 'Material Icons';
+	font-size: 22px;
+	line-height: 1;
+	flex: 0 0 auto;
+	color: var(--rule-gold);
+}
+
+.elpis-membership-banner--applied {
+	border-color: var(--semantic-info);
+	background: rgba(93, 169, 216, 0.10);
+	box-shadow:
+		inset 4px 0 0 var(--semantic-info),
+		0 1px 2px rgba(43, 36, 24, 0.06);
+	padding-left: 22px;
+}
+
+.elpis-membership-banner--applied::before {
+	content: 'hourglass_empty';
+	color: var(--semantic-info);
+}
+
+.elpis-membership-banner--rejected {
+	border-color: var(--semantic-danger);
+	background: rgba(199, 72, 79, 0.10);
+	box-shadow:
+		inset 4px 0 0 var(--semantic-danger),
+		0 1px 2px rgba(43, 36, 24, 0.06);
+	padding-left: 22px;
+}
+
+.elpis-membership-banner--rejected::before {
+	content: 'block';
+	color: var(--semantic-danger);
+}
+
+.elpis-membership-banner--confirmed {
+	border-color: var(--semantic-success);
+	background: rgba(79, 184, 144, 0.10);
+	box-shadow:
+		inset 4px 0 0 var(--semantic-success),
+		0 1px 2px rgba(43, 36, 24, 0.06);
+	padding-left: 22px;
+}
+
+.elpis-membership-banner--confirmed::before {
+	content: 'verified';
+	color: var(--semantic-success);
+}
+
+body.body--dark .elpis-membership-banner {
+	background: var(--surface-lift);
+	color: var(--ink-luminous);
+	border-color: var(--rule-arcane-soft);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+body.body--dark .elpis-membership-banner--applied {
+	background: rgba(93, 169, 216, 0.16);
+	box-shadow:
+		inset 4px 0 0 var(--semantic-info),
+		0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+body.body--dark .elpis-membership-banner--rejected {
+	background: rgba(199, 72, 79, 0.18);
+	box-shadow:
+		inset 4px 0 0 var(--semantic-danger),
+		0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+body.body--dark .elpis-membership-banner--confirmed {
+	background: rgba(79, 184, 144, 0.16);
+	box-shadow:
+		inset 4px 0 0 var(--semantic-success),
+		0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+// ELPIS-404 — Directory toolbar refinements. Targets the shared toolbar
+// wrapper across `Venues.vue`, `Communities.vue`, `FreeCompanies.vue`. The
+// toolbar's `q-input` (Suche) and `q-select` (Gebiet/Server) controls pick
+// up an Aetherglass-style focus state — gold-rule border with a soft warm
+// halo. The `__stats` counter inside the toolbar gets tabular numerals so
+// "12 von 47" reads with column-aligned digits as totals shift.
+.elpis-directory-toolbar .q-field--filled .q-field__control {
+	background: var(--surface-vellum);
+	border-radius: 6px;
+	border: 1px solid var(--rule-gold-soft);
+	transition:
+		border-color var(--motion-fast) var(--ease-elpis),
+		box-shadow var(--motion-fast) var(--ease-elpis),
+		background-color var(--motion-fast) var(--ease-elpis);
+}
+
+.elpis-directory-toolbar .q-field--filled .q-field__control::before,
+.elpis-directory-toolbar .q-field--filled .q-field__control::after {
+	display: none;
+}
+
+.elpis-directory-toolbar .q-field--filled:hover .q-field__control {
+	border-color: var(--rule-gold);
+}
+
+.elpis-directory-toolbar .q-field--filled.q-field--focused .q-field__control {
+	border-color: var(--rule-gold);
+	background: rgba(186, 155, 91, 0.06);
+	box-shadow:
+		0 0 0 3px rgba(186, 155, 91, 0.18),
+		inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.elpis-directory-toolbar .q-field__label,
+.elpis-directory-toolbar .q-field__native,
+.elpis-directory-toolbar .q-field__input {
+	color: var(--surface-ink);
+	font-family: var(--font-ui);
+}
+
+.elpis-directory-toolbar__stats {
+	font-variant-numeric: tabular-nums lining-nums;
+	font-feature-settings: 'tnum' 1, 'lnum' 1;
+}
+
+body.body--dark .elpis-directory-toolbar .q-field--filled .q-field__control {
+	background: var(--surface-lift);
+	border-color: var(--rule-arcane-soft);
+}
+
+body.body--dark .elpis-directory-toolbar .q-field--filled:hover .q-field__control {
+	border-color: var(--rule-arcane);
+}
+
+body.body--dark .elpis-directory-toolbar .q-field--filled.q-field--focused .q-field__control {
+	border-color: var(--rule-arcane);
+	background: rgba(107, 79, 168, 0.18);
+	box-shadow:
+		0 0 0 3px rgba(184, 165, 255, 0.22),
+		inset 0 1px 0 rgba(184, 165, 255, 0.18);
+}
+
+body.body--dark .elpis-directory-toolbar .q-field__label,
+body.body--dark .elpis-directory-toolbar .q-field__native,
+body.body--dark .elpis-directory-toolbar .q-field__input {
+	color: var(--ink-luminous);
+}
+
+// ELPIS-405 — Pagination input + chevron restyle. Used on the directory
+// pages (Venues / Communities / FreeCompanies) and any other consumer that
+// adds the class to a `q-pagination`. Page-jump input picks up the same
+// Aetherglass-focus idiom as the toolbar fields above; chevron buttons get
+// gold ink with a soft warm hover halo so they read as "navigate" rather
+// than as Quasar's default dark-grey utility buttons.
+//
+// Note: q-pagination renders its page-jump field with `borderless: true`,
+// so the input gets `q-field--borderless` (not `--filled`). The rules below
+// target the borderless variant explicitly and re-apply a Vellum / gold-rule
+// frame around it so it visually matches the toolbar's filled fields.
+.elpis-pagination .q-field--borderless .q-field__control {
+	background: var(--surface-vellum);
+	border-radius: 6px;
+	border: 1px solid var(--rule-gold-soft);
+	min-height: 32px;
+	padding: 0 6px;
+	font-feature-settings: 'tnum' 1, 'lnum' 1;
+	font-variant-numeric: tabular-nums lining-nums;
+	transition:
+		border-color var(--motion-fast) var(--ease-elpis),
+		box-shadow var(--motion-fast) var(--ease-elpis),
+		background-color var(--motion-fast) var(--ease-elpis);
+}
+
+.elpis-pagination .q-field--borderless .q-field__control::before,
+.elpis-pagination .q-field--borderless .q-field__control::after {
+	display: none;
+}
+
+.elpis-pagination .q-field--borderless:hover .q-field__control {
+	border-color: var(--rule-gold);
+}
+
+.elpis-pagination .q-field--borderless.q-field--focused .q-field__control {
+	border-color: var(--rule-gold);
+	background: rgba(186, 155, 91, 0.06);
+	box-shadow:
+		0 0 0 3px rgba(186, 155, 91, 0.22),
+		inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.elpis-pagination .q-field__native,
+.elpis-pagination .q-field__input {
+	color: var(--surface-ink);
+	font-family: var(--font-ui);
+	font-feature-settings: 'tnum' 1, 'lnum' 1;
+	font-variant-numeric: tabular-nums lining-nums;
+	text-align: center;
+}
+
+.elpis-pagination .q-pagination__content > .q-btn {
+	color: var(--rule-gold);
+	min-width: 32px;
+	min-height: 32px;
+	border-radius: 6px;
+	transition:
+		color var(--motion-fast) var(--ease-elpis),
+		background-color var(--motion-fast) var(--ease-elpis);
+}
+
+.elpis-pagination .q-pagination__content > .q-btn .q-icon {
+	font-size: 18px;
+}
+
+.elpis-pagination .q-pagination__content > .q-btn:hover {
+	background-color: rgba(186, 155, 91, 0.16);
+	color: var(--rule-gold);
+}
+
+.elpis-pagination .q-pagination__content > .q-btn:disabled,
+.elpis-pagination .q-pagination__content > .q-btn[disabled] {
+	opacity: 0.4;
+}
+
+body.body--dark .elpis-pagination .q-field--borderless .q-field__control {
+	background: var(--surface-lift);
+	border-color: var(--rule-arcane-soft);
+}
+
+body.body--dark .elpis-pagination .q-field--borderless:hover .q-field__control {
+	border-color: var(--rule-arcane);
+}
+
+body.body--dark .elpis-pagination .q-field--borderless.q-field--focused .q-field__control {
+	border-color: var(--rule-arcane);
+	background: rgba(107, 79, 168, 0.18);
+	box-shadow:
+		0 0 0 3px rgba(184, 165, 255, 0.24),
+		inset 0 1px 0 rgba(184, 165, 255, 0.18);
+}
+
+body.body--dark .elpis-pagination .q-field__native,
+body.body--dark .elpis-pagination .q-field__input {
+	color: var(--ink-luminous);
+}
+
+body.body--dark .elpis-pagination .q-pagination__content > .q-btn {
+	color: var(--rule-arcane);
+}
+
+body.body--dark .elpis-pagination .q-pagination__content > .q-btn:hover {
+	background-color: rgba(184, 165, 255, 0.18);
+	color: var(--ink-luminous);
+}
+
+// ELPIS-608 — Shared `.elpis-form` field chrome. Opted into per form (e.g.
+// StepImageDetails uses it on its `q-form` wrapper) so filled q-input /
+// q-select children pick up the Aetherium-token-driven Vellum-on-gold-rule
+// frame and gold-glow focus state. Lighter than `.elpis-directory-toolbar`
+// (no surrounding card chrome, just the field-level treatment) so it reads
+// well inside dialogs and wizards rather than competing with the dialog
+// surface itself.
+.elpis-form .q-field--filled .q-field__control {
+	background: var(--surface-vellum);
+	border-radius: 6px;
+	border: 1px solid var(--rule-gold-soft);
+	transition:
+		border-color var(--motion-fast) var(--ease-elpis),
+		box-shadow var(--motion-fast) var(--ease-elpis),
+		background-color var(--motion-fast) var(--ease-elpis);
+}
+
+.elpis-form .q-field--filled .q-field__control::before,
+.elpis-form .q-field--filled .q-field__control::after {
+	display: none;
+}
+
+.elpis-form .q-field--filled:hover .q-field__control {
+	border-color: var(--rule-gold);
+}
+
+.elpis-form .q-field--filled.q-field--focused .q-field__control {
+	border-color: var(--rule-gold);
+	background: rgba(186, 155, 91, 0.06);
+	box-shadow:
+		0 0 0 3px rgba(186, 155, 91, 0.18),
+		inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+// ELPIS-220 — Form error shake. When Quasar adds `q-field--error` to a filled
+// elpis-form field (e.g. after a failed `:rules` validation), the control
+// runs the `elpis-form-error-shake` keyframe once (3 px ± over 160 ms / motion-
+// fast). The base rule's transitions on border-color + box-shadow get a
+// matching transition-delay so the danger paint lands *after* the shake
+// completes — the shake reads as the attention cue, the colour shift confirms
+// the destination state. Reduced-motion guard at the bottom of this rule pair
+// suppresses the keyframe and zeroes the delay so the colour change is
+// immediate when the OS flag is on.
+.elpis-form .q-field--filled.q-field--error .q-field__control {
+	border-color: var(--semantic-danger);
+	box-shadow: inset 0 0 0 1px var(--semantic-danger);
+	animation: elpis-form-error-shake var(--motion-fast) var(--ease-zodiark);
+	transition:
+		border-color var(--motion-fast) var(--ease-elpis) var(--motion-fast),
+		box-shadow var(--motion-fast) var(--ease-elpis) var(--motion-fast),
+		background-color var(--motion-fast) var(--ease-elpis);
+}
+
+@keyframes elpis-form-error-shake {
+	0%, 100% {
+		transform: translateX(0);
+	}
+	20%, 60% {
+		transform: translateX(-3px);
+	}
+	40%, 80% {
+		transform: translateX(3px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.elpis-form .q-field--filled.q-field--error .q-field__control {
+		animation: none;
+		transition:
+			border-color var(--motion-instant) var(--ease-elpis),
+			box-shadow var(--motion-instant) var(--ease-elpis),
+			background-color var(--motion-instant) var(--ease-elpis);
+	}
+}
+
+.elpis-form .q-field__label,
+.elpis-form .q-field__native,
+.elpis-form .q-field__input {
+	color: var(--surface-ink);
+	font-family: var(--font-ui);
+}
+
+body.body--dark .elpis-form .q-field--filled .q-field__control {
+	background: var(--surface-lift);
+	border-color: var(--rule-arcane-soft);
+}
+
+body.body--dark .elpis-form .q-field--filled:hover .q-field__control {
+	border-color: var(--rule-arcane);
+}
+
+body.body--dark .elpis-form .q-field--filled.q-field--focused .q-field__control {
+	border-color: var(--rule-arcane);
+	background: rgba(107, 79, 168, 0.18);
+	box-shadow:
+		0 0 0 3px rgba(184, 165, 255, 0.22),
+		inset 0 1px 0 rgba(184, 165, 255, 0.18);
+}
+
+body.body--dark .elpis-form .q-field__label,
+body.body--dark .elpis-form .q-field__native,
+body.body--dark .elpis-form .q-field__input {
+	color: var(--ink-luminous);
+}
+
+// ELPIS-603 / 606 — Aetherium chrome over CropperJS. Opt-in by adding
+// `.elpis-cropper` to the wrapper that holds the cropper `<img>` (Cropper
+// transforms the `<img>` into a `.cropper-container` sibling tree). Shared
+// rule rather than per-component because the StepBannerCrop wizard step is
+// the canonical consumer today, but BannerEditSection or a future inline
+// crop-on-profile feature can opt in by adding the same class. Targets all
+// cropper internals (.cropper-view-box, .cropper-line, .cropper-point,
+// .cropper-dashed, .cropper-modal). Replaces the default cool-blue handles
+// + grey dashed grid with hex-faceted gold crystals + soft-gold rule-of-
+// thirds, on a deeper neutral modal so the gold reads cleanly.
+.elpis-cropper .cropper-view-box {
+	outline: 1px solid var(--rule-gold);
+	outline-color: var(--rule-gold);
+	box-shadow:
+		0 0 0 1px rgba(186, 155, 91, 0.32),
+		inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.elpis-cropper .cropper-line {
+	background-color: var(--rule-gold);
+	opacity: 0.45;
+}
+
+.elpis-cropper .cropper-dashed {
+	border-color: var(--rule-gold-soft);
+	opacity: 0.9;
+}
+
+.elpis-cropper .cropper-center {
+	opacity: 0;
+}
+
+.elpis-cropper .cropper-modal {
+	background-color: rgba(13, 17, 24, 0.65);
+}
+
+// Crystal-facet crop handles. Hex clip-path + warm gold gradient + soft
+// pearl ring + gold halo. Default Cropper handles are 5 px squares with
+// progressive media-query bumps up to 20 px on small screens — the rules
+// below normalise to 12 px across breakpoints (large enough to grab on
+// touch, small enough not to drown the crop box).
+.elpis-cropper .cropper-point {
+	width: 12px;
+	height: 12px;
+	background: linear-gradient(135deg, #f5d585 0%, var(--rule-gold) 55%, #8a6a2c 100%);
+	opacity: 1;
+	clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+	box-shadow:
+		0 0 0 1px rgba(255, 255, 255, 0.55),
+		0 0 8px rgba(186, 155, 91, 0.55);
+	transition:
+		transform var(--motion-fast) var(--ease-elpis),
+		filter var(--motion-fast) var(--ease-elpis);
+}
+
+.elpis-cropper .cropper-point:hover {
+	transform: scale(1.18);
+	filter: drop-shadow(0 0 6px rgba(186, 155, 91, 0.6));
+}
+
+.elpis-cropper .cropper-point.point-e { margin-top: -6px; right: -6px; }
+.elpis-cropper .cropper-point.point-n { margin-left: -6px; top: -6px; }
+.elpis-cropper .cropper-point.point-w { margin-top: -6px; left: -6px; }
+.elpis-cropper .cropper-point.point-s { margin-left: -6px; bottom: -6px; }
+.elpis-cropper .cropper-point.point-ne { right: -6px; top: -6px; }
+.elpis-cropper .cropper-point.point-nw { left: -6px; top: -6px; }
+.elpis-cropper .cropper-point.point-sw { left: -6px; bottom: -6px; }
+
+// .point-se has cascading width / height / opacity rules in cropper.css
+// across four media-query tiers (20 px → 15 → 10 → 5). The bare selector
+// below is enough to win on specificity at all four tiers because we
+// match `.elpis-cropper .cropper-point.point-se`, but cropper.css's
+// media queries use `.cropper-point.point-se` so are equal-specificity;
+// the !important on size keeps our 12 px stable across breakpoints.
+.elpis-cropper .cropper-point.point-se {
+	width: 12px !important;
+	height: 12px !important;
+	right: -6px;
+	bottom: -6px;
+	opacity: 1 !important;
+}
+
+body.body--dark .elpis-cropper .cropper-view-box {
+	outline-color: var(--rule-arcane);
+	box-shadow:
+		0 0 0 1px rgba(193, 155, 255, 0.32),
+		inset 0 0 0 1px rgba(184, 165, 255, 0.18);
+}
+
+body.body--dark .elpis-cropper .cropper-line {
+	background-color: var(--rule-arcane);
+	opacity: 0.5;
+}
+
+body.body--dark .elpis-cropper .cropper-dashed {
+	border-color: var(--rule-arcane-soft);
+}
+
+body.body--dark .elpis-cropper .cropper-modal {
+	background-color: rgba(0, 0, 0, 0.72);
+}
+
+body.body--dark .elpis-cropper .cropper-point {
+	background: linear-gradient(135deg, #d8c8ff 0%, var(--rule-arcane) 55%, #3d2a6e 100%);
+	box-shadow:
+		0 0 0 1px rgba(184, 165, 255, 0.42),
+		0 0 8px rgba(184, 165, 255, 0.55);
+}
+
+body.body--dark .elpis-cropper .cropper-point:hover {
+	filter: drop-shadow(0 0 6px rgba(184, 165, 255, 0.6));
+}
+
+// ELPIS-605 — StepSelectImage drag-drop overlay. The wizard image-picker
+// already supports dragenter / dragover / dragleave / drop via its own
+// pointer events; the rule below tints the surrounding panel when the
+// `--dragging` modifier is applied. Aether glow on Hydaelyn / arcane on
+// Zodiark; both ride `--motion-fast` so reduced-motion collapses them
+// to ~80 ms via the global guard.
+.elpis-drop-zone {
+	position: relative;
+	border: 2px dashed var(--rule-gold-soft);
+	border-radius: 6px;
+	background: rgba(186, 155, 91, 0.04);
+	transition:
+		border-color var(--motion-fast) var(--ease-elpis),
+		background-color var(--motion-fast) var(--ease-elpis),
+		box-shadow var(--motion-fast) var(--ease-elpis);
+}
+
+.elpis-drop-zone--dragging {
+	border-color: var(--rule-gold);
+	border-style: solid;
+	background: rgba(186, 155, 91, 0.12);
+	box-shadow:
+		0 0 0 3px rgba(186, 155, 91, 0.22),
+		inset 0 0 0 1px rgba(255, 255, 255, 0.45),
+		0 0 24px rgba(186, 155, 91, 0.35);
+}
+
+body.body--dark .elpis-drop-zone {
+	border-color: var(--rule-arcane-soft);
+	background: rgba(107, 79, 168, 0.06);
+}
+
+body.body--dark .elpis-drop-zone--dragging {
+	border-color: var(--rule-arcane);
+	background: rgba(107, 79, 168, 0.18);
+	box-shadow:
+		0 0 0 3px rgba(184, 165, 255, 0.24),
+		inset 0 0 0 1px rgba(184, 165, 255, 0.22),
+		0 0 24px rgba(184, 165, 255, 0.4);
+}
+
+// ELPIS-310 / -311 / -604 — Shared `.elpis-stepper` chrome. Originally
+// introduced as scoped rules inside EditEvent.vue (ELPIS-310 / -311);
+// promoted to a shared utility by ELPIS-604 so UploadDialog can opt in
+// without duplicating the keyframes. Two effects:
+//   1. Active step's tab gets a 3 px Crystal-prism rule below the dot+label
+//      (horizontal layout) or along the right edge (vertical layout). The
+//      rule slowly shimmers via --motion-ambient × 1.2 so reduced-motion
+//      zeroes the duration.
+//   2. Completed step dots become Crystal-prism with a faceted hex SVG
+//      layered on top via ::after; the default Quasar checkmark icon is
+//      hidden via opacity: 0. Shimmer rides on --motion-ambient × 1.3 so
+//      reduced-motion zeroes it. Active-step dot keeps Quasar's default
+//      brand colour — only completed steps get the Crystal treatment.
+.elpis-stepper .q-stepper__tab {
+	position: relative;
+	transition: color var(--motion-fast) var(--ease-elpis);
+}
+
+.elpis-stepper .q-stepper__tab--active::after {
+	content: '';
+	position: absolute;
+	left: 14%;
+	right: 14%;
+	bottom: 0;
+	height: 3px;
+	border-radius: 2px;
+	background: var(--crystal-prism);
+	background-size: 200% 100%;
+	box-shadow: 0 0 12px rgba(167, 226, 255, 0.42);
+	pointer-events: none;
+	animation: elpis-stepper-prism-shift calc(var(--motion-ambient) * 1.2) ease-in-out infinite;
+}
+
+@keyframes elpis-stepper-prism-shift {
+	0%   { background-position: 0% 50%; }
+	50%  { background-position: 100% 50%; }
+	100% { background-position: 0% 50%; }
+}
+
+// Vertical (xs/md) layout: the active tab is rendered as a row, so
+// `bottom: 0` would underline only the dot row. Move the rule to the right
+// edge instead so it reads as a column-side accent.
+.elpis-stepper.q-stepper--vertical .q-stepper__tab--active::after {
+	left: auto;
+	right: 0;
+	top: 14%;
+	bottom: 14%;
+	width: 3px;
+	height: auto;
+	background-size: 100% 200%;
+	animation-name: elpis-stepper-prism-shift-vertical;
+}
+
+@keyframes elpis-stepper-prism-shift-vertical {
+	0%   { background-position: 50% 0%; }
+	50%  { background-position: 50% 100%; }
+	100% { background-position: 50% 0%; }
+}
+
+.elpis-stepper .q-stepper__tab--done .q-stepper__dot {
+	position: relative;
+	background: var(--crystal-prism);
+	background-size: 220% 220%;
+	background-position: 0% 50%;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.7),
+		inset 0 -1px 0 rgba(167, 226, 255, 0.45),
+		0 2px 8px rgba(127, 230, 226, 0.32);
+	animation: elpis-stepper-step-shimmer calc(var(--motion-ambient) * 1.3) ease-in-out infinite;
+}
+
+.elpis-stepper .q-stepper__tab--done .q-stepper__dot .q-icon {
+	opacity: 0;
+}
+
+.elpis-stepper .q-stepper__tab--done .q-stepper__dot::after {
+	content: '';
+	position: absolute;
+	inset: 4px;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><polygon points='12,2 22,7 22,17 12,22 2,17 2,7' fill='none' stroke='%23ffffff' stroke-width='1.4' opacity='0.92'/><polygon points='12,6 18,9 18,15 12,18 6,15 6,9' fill='none' stroke='%23ffffff' stroke-width='1' opacity='0.7'/><line x1='12' y1='2' x2='12' y2='22' stroke='%23ffffff' stroke-width='0.6' opacity='0.5'/><line x1='2' y1='7' x2='22' y2='17' stroke='%23ffffff' stroke-width='0.6' opacity='0.45'/><line x1='22' y1='7' x2='2' y2='17' stroke='%23ffffff' stroke-width='0.6' opacity='0.45'/></svg>");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	pointer-events: none;
+}
+
+@keyframes elpis-stepper-step-shimmer {
+	0%   { background-position: 0% 50%; }
+	50%  { background-position: 100% 50%; }
+	100% { background-position: 0% 50%; }
+}
+
+body.body--dark .elpis-stepper .q-stepper__tab--active::after {
+	box-shadow: 0 0 14px rgba(184, 165, 255, 0.45);
+}
+
+body.body--dark .elpis-stepper .q-stepper__tab--done .q-stepper__dot {
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.55),
+		inset 0 -1px 0 rgba(193, 155, 255, 0.45),
+		0 2px 8px rgba(184, 165, 255, 0.3);
+}
+
+// ELPIS-503 — Scroll progress rule. Thin gold gradient pinned to the top of
+// the viewport while the reader scrolls long-form content (Story, Wiki,
+// long-tail blog views). Native <progress> drives semantics; CSS owns paint.
+// The bar self-suppresses at value=0 so short pages or initial paint don't
+// show a sliver of gold under the header.
+.elpis-scroll-progress {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	width: 100%;
+	height: 3px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	appearance: none;
+	-webkit-appearance: none;
+	background: transparent;
+	z-index: 1000;
+	pointer-events: none;
+	overflow: hidden;
+	transition: opacity var(--motion-base) var(--ease-elpis);
+}
+
+.elpis-scroll-progress[value="0"] {
+	opacity: 0;
+}
+
+.elpis-scroll-progress::-webkit-progress-bar {
+	background: transparent;
+}
+
+.elpis-scroll-progress::-webkit-progress-value {
+	background: linear-gradient(
+		90deg,
+		rgba(186, 155, 91, 0.45) 0%,
+		var(--rule-gold) 55%,
+		rgba(245, 213, 133, 0.92) 100%
+	);
+	box-shadow: 0 0 6px rgba(186, 155, 91, 0.5);
+	transition: width var(--motion-instant) linear;
+}
+
+.elpis-scroll-progress::-moz-progress-bar {
+	background: linear-gradient(
+		90deg,
+		rgba(186, 155, 91, 0.45) 0%,
+		var(--rule-gold) 55%,
+		rgba(245, 213, 133, 0.92) 100%
+	);
+	box-shadow: 0 0 6px rgba(186, 155, 91, 0.5);
+}
+
+body.body--dark .elpis-scroll-progress::-webkit-progress-value {
+	background: linear-gradient(
+		90deg,
+		rgba(184, 165, 255, 0.45) 0%,
+		var(--rule-arcane) 55%,
+		rgba(213, 196, 255, 0.92) 100%
+	);
+	box-shadow: 0 0 8px rgba(184, 165, 255, 0.55);
+}
+
+body.body--dark .elpis-scroll-progress::-moz-progress-bar {
+	background: linear-gradient(
+		90deg,
+		rgba(184, 165, 255, 0.45) 0%,
+		var(--rule-arcane) 55%,
+		rgba(213, 196, 255, 0.92) 100%
+	);
+	box-shadow: 0 0 8px rgba(184, 165, 255, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.elpis-scroll-progress {
+		transition: none;
+	}
+	.elpis-scroll-progress::-webkit-progress-value {
+		transition: none;
+	}
+}
+
+// ELPIS-219 — Save confirmation pulse + 7-mote burst. Bound to a save
+// button via `v-elpis-save-pulse` (see `src/directives/elpis-save-pulse.ts`).
+// The directive adds `.elpis-save-pulse--active` for one frame to play the
+// pulse keyframe, and appends a `.elpis-save-burst` span containing 7
+// `.elpis-save-mote` children that radiate outward via `--mote-angle` /
+// `--mote-distance` custom properties. Reduced-motion → directive no-ops; the
+// CSS rule's `@media (prefers-reduced-motion)` block is a belt-and-suspenders
+// guard for any element that ends up with the active class regardless.
+.q-btn.elpis-save-pulse--active {
+	position: relative;
+	animation: elpis-save-pulse var(--motion-base) var(--ease-aether);
+	animation-iteration-count: 1;
+}
+
+@keyframes elpis-save-pulse {
+	0%   { transform: scale(1); }
+	50%  { transform: scale(1.04); }
+	100% { transform: scale(1); }
+}
+
+.elpis-save-burst {
+	position: absolute;
+	pointer-events: none;
+	inset: 0;
+	display: block;
+	overflow: visible;
+	z-index: 1;
+}
+
+.elpis-save-mote {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 7px;
+	height: 7px;
+	margin: -3.5px 0 0 -3.5px;
+	border-radius: 50%;
+	background: radial-gradient(
+		circle,
+		rgba(245, 213, 133, 0.95) 0%,
+		rgba(186, 155, 91, 0.7) 55%,
+		rgba(186, 155, 91, 0) 100%
+	);
+	box-shadow: 0 0 6px rgba(245, 213, 133, 0.6);
+	opacity: 0;
+	transform-origin: center center;
+	animation: elpis-save-mote var(--motion-cinematic) var(--ease-aether) var(--mote-delay, 0ms) forwards;
+}
+
+@keyframes elpis-save-mote {
+	0% {
+		opacity: 0;
+		transform: rotate(var(--mote-angle, 0deg)) translateX(0) scale(0.4);
+	}
+	18% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+		transform: rotate(var(--mote-angle, 0deg)) translateX(var(--mote-distance, 80px)) scale(1);
+	}
+}
+
+body.body--dark .elpis-save-mote {
+	background: radial-gradient(
+		circle,
+		rgba(213, 196, 255, 0.95) 0%,
+		rgba(184, 165, 255, 0.7) 55%,
+		rgba(184, 165, 255, 0) 100%
+	);
+	box-shadow: 0 0 8px rgba(213, 196, 255, 0.65);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.q-btn.elpis-save-pulse--active {
+		animation: none;
+	}
+	.elpis-save-mote {
+		animation: none;
+		opacity: 0;
+	}
 }
 
 // Mobile usability improvements

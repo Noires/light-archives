@@ -7,15 +7,15 @@
       </section>
       <section
         v-else-if="community.membershipStatus === MembershipStatus.APPLIED"
-        class="page-community__edit-bar page-community__membership-status"
+        class="page-community__membership-status elpis-membership-banner elpis-membership-banner--applied"
       >
-        Du hast eine Anfrage für eine Mitgliedschaft in dieser Community gesendet. Eine Führungsperson muss deine Bewerbung überprüfen bevor du beitreten kannst.
-        </section>
+        <span>Du hast eine Anfrage für eine Mitgliedschaft in dieser Community gesendet. Eine Führungsperson muss deine Bewerbung überprüfen bevor du beitreten kannst.</span>
+      </section>
       <section
         v-else-if="community.membershipStatus === MembershipStatus.REJECTED"
-        class="page-community__edit-bar page-community__membership-status"
+        class="page-community__membership-status elpis-membership-banner elpis-membership-banner--rejected"
       >
-        Deine Mitgliedschaftsanfrage wurde abgelehnt.
+        <span>Deine Mitgliedschaftsanfrage wurde abgelehnt.</span>
       </section>
       <section v-else-if="community.canEdit" class="page-community__edit-bar">
         <q-btn flat color="secondary" label="Community bearbeiten" :to="`/edit-community/${community.id}`" />
@@ -23,9 +23,9 @@
       </section>
       <section
         v-else-if="community.membershipStatus === MembershipStatus.CONFIRMED"
-        class="page-community__edit-bar page-community__membership-status"
+        class="page-community__membership-status elpis-membership-banner elpis-membership-banner--confirmed"
       >
-        Du bist ein Mitglied dieser Community.
+        <span>Du bist ein Mitglied dieser Community.</span>
       </section>
       <community-profile :community="community" />
       <template v-if="!community.canManageMembers">

@@ -62,19 +62,27 @@ export default class FreeCompanyNameList extends Vue.with(Props) {
   background: transparent;
 }
 
+// ELPIS-403 — FC tile mirrors VenueList/CommunityList: Vellum, hairline gold
+// rule, hover lift. Visual parity with home activity grid + directory pages.
 .free-company-name-list__item {
-  border: 1px solid rgba(221, 180, 118, 0.3);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
-  border-radius: 2px;
+  border: 1px solid var(--rule-gold-soft);
+  background: var(--surface-vellum);
+  color: var(--surface-ink);
+  box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
+  transition:
+    transform var(--motion-fast) var(--ease-elpis),
+    box-shadow var(--motion-fast) var(--ease-elpis),
+    border-color var(--motion-fast) var(--ease-elpis);
+  border-radius: 6px;
   padding: 16px 20px;
 }
 
 .free-company-name-list__item:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), 0 20px 40px rgba(0, 0, 0, 0.08);
-  border-color: rgba(221, 180, 118, 0.5);
+  transform: translateY(-4px);
+  box-shadow:
+    0 2px 4px rgba(43, 36, 24, 0.08),
+    0 12px 24px rgba(43, 36, 24, 0.12);
+  border-color: var(--rule-gold);
 }
 
 .free-company-name-list__crest {
@@ -86,32 +94,53 @@ export default class FreeCompanyNameList extends Vue.with(Props) {
 }
 
 .free-company-name-list__name {
-  font-weight: 700;
-  color: #1f2c38;
-  font-size: 1.05rem;
-  letter-spacing: 0.01em;
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--surface-ink);
+  font-size: var(--type-scale-2);
+  letter-spacing: var(--ls-display);
 }
 
 .free-company-name-list__goal {
-  color: rgba(35, 35, 35, 0.7);
-  font-size: 0.9rem;
+  color: var(--ink-muted);
+  font-size: var(--type-scale-1);
   line-height: 1.5;
 }
 
 .free-company-name-list__server {
+  font-family: var(--font-ui);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.75rem;
-  color: rgba(35, 35, 35, 0.55);
+  letter-spacing: var(--ls-eyebrow);
+  font-size: var(--type-scale-0);
+  color: var(--ink-muted);
   font-weight: 600;
   margin-top: 4px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .free-company-name-list__item {
-    transition: none;
-  }
+body.body--dark .free-company-name-list__item {
+  background: var(--surface-lift);
+  color: var(--ink-luminous);
+  border-color: var(--rule-arcane-soft);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
 
+body.body--dark .free-company-name-list__item:hover {
+  border-color: var(--rule-arcane);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.45),
+    0 12px 24px rgba(0, 0, 0, 0.45);
+}
+
+body.body--dark .free-company-name-list__name {
+  color: var(--ink-luminous);
+}
+
+body.body--dark .free-company-name-list__goal,
+body.body--dark .free-company-name-list__server {
+  color: rgba(236, 227, 247, 0.74);
+}
+
+@media (prefers-reduced-motion: reduce) {
   .free-company-name-list__item:hover {
     transform: none;
   }

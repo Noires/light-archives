@@ -17,7 +17,7 @@
     </header>
 
     <section class="page-free-companies__content">
-      <div class="page-free-companies__toolbar">
+      <div class="page-free-companies__toolbar elpis-directory-toolbar">
         <q-input
           class="page-free-companies__search"
           v-model="searchQuery"
@@ -39,11 +39,11 @@
           dense
           @update:model-value="onFilterChange"
         />
-        <div class="page-free-companies__stats">
+        <div class="page-free-companies__stats elpis-directory-toolbar__stats">
           {{ filteredCount }} von {{ freeCompanies.length }}
         </div>
         <q-pagination
-          class="page-free-companies__pagination"
+          class="page-free-companies__pagination elpis-pagination"
           :model-value="page"
           :max="maxPage"
           input
@@ -247,11 +247,8 @@ export default class PageFreeCompanies extends Vue {
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
 }
 
-.page-free-companies__search .q-field__control,
-.page-free-companies__server-select .q-field__control {
-  background: #f6f1e8;
-  border-radius: 0;
-}
+// ELPIS-404 — Toolbar field chrome lives in app.scss under
+// `.elpis-directory-toolbar`. The previous local override is gone.
 
 .page-free-companies__stats {
   text-align: right;

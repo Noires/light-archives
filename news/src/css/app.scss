@@ -1,3 +1,8 @@
+// Aetherium — design tokens and material utility classes.
+// Import first so :root tokens are available to every downstream rule.
+// Mirrored from client/src/css/aetherium/ — keep the trees in lockstep.
+@import 'aetherium/index';
+
 // font definition
 @font-face {
 	font-family: 'Cinzel Eorzea';
@@ -98,4 +103,136 @@ h6 {
 
 .striped-list .q-item:nth-child(even), .striped-list thead tr, .striped-list tr:nth-child(even) {
 	background: $striped-list-bg-even;
+}
+
+// ELPIS-218 (mirrored from client) / ELPIS-709 — Bearbeitung/Vorschau toggle
+// as a Crystal-faceted segmented control. New consumers opt in by extending
+// the parent selector list and using `toggle-color="secondary"` so the
+// active segment lands on `.bg-secondary`.
+.page-edit-article__button-bar .q-btn-toggle {
+	border: 1px solid var(--rule-gold-soft);
+	border-radius: 6px;
+	overflow: hidden;
+	background-color: var(--surface-vellum);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.6),
+		0 1px 2px rgba(43, 36, 24, 0.08);
+}
+
+.page-edit-article__button-bar .q-btn-toggle .q-btn {
+	font-family: var(--font-display);
+	font-size: var(--type-scale-1);
+	letter-spacing: var(--ls-eyebrow);
+	text-transform: uppercase;
+	color: var(--surface-ink);
+	transition:
+		background-color var(--motion-base) var(--ease-elpis),
+		color var(--motion-base) var(--ease-elpis);
+}
+
+.page-edit-article__button-bar .q-btn-toggle .q-btn.bg-secondary {
+	background: var(--crystal-prism) !important;
+	background-size: 200% 200%;
+	background-position: 0% 50%;
+	color: var(--surface-ink) !important;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+body.body--dark .page-edit-article__button-bar .q-btn-toggle {
+	background-color: var(--surface-deep);
+	border-color: var(--rule-arcane-soft);
+	box-shadow:
+		inset 0 1px 0 rgba(184, 165, 255, 0.18),
+		0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+body.body--dark .page-edit-article__button-bar .q-btn-toggle .q-btn {
+	color: var(--ink-luminous);
+}
+
+body.body--dark .page-edit-article__button-bar .q-btn-toggle .q-btn.bg-secondary {
+	color: var(--surface-ink) !important;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+// ELPIS-705 (mirrored from client app's ELPIS-503) — Scroll progress rule.
+// Thin gold gradient pinned to the top of the viewport while the reader
+// scrolls a long-form article. Native <progress> drives semantics; CSS owns
+// paint. Self-suppresses at value=0 so short articles don't paint a sliver
+// of gold under the masthead.
+.elpis-scroll-progress {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	width: 100%;
+	height: 3px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	appearance: none;
+	-webkit-appearance: none;
+	background: transparent;
+	z-index: 1000;
+	pointer-events: none;
+	overflow: hidden;
+	transition: opacity var(--motion-base) var(--ease-elpis);
+}
+
+.elpis-scroll-progress[value="0"] {
+	opacity: 0;
+}
+
+.elpis-scroll-progress::-webkit-progress-bar {
+	background: transparent;
+}
+
+.elpis-scroll-progress::-webkit-progress-value {
+	background: linear-gradient(
+		90deg,
+		rgba(186, 155, 91, 0.45) 0%,
+		var(--rule-gold) 55%,
+		rgba(245, 213, 133, 0.92) 100%
+	);
+	box-shadow: 0 0 6px rgba(186, 155, 91, 0.5);
+	transition: width var(--motion-instant) linear;
+}
+
+.elpis-scroll-progress::-moz-progress-bar {
+	background: linear-gradient(
+		90deg,
+		rgba(186, 155, 91, 0.45) 0%,
+		var(--rule-gold) 55%,
+		rgba(245, 213, 133, 0.92) 100%
+	);
+	box-shadow: 0 0 6px rgba(186, 155, 91, 0.5);
+}
+
+body.body--dark .elpis-scroll-progress::-webkit-progress-value {
+	background: linear-gradient(
+		90deg,
+		rgba(184, 165, 255, 0.45) 0%,
+		var(--rule-arcane) 55%,
+		rgba(213, 196, 255, 0.92) 100%
+	);
+	box-shadow: 0 0 8px rgba(184, 165, 255, 0.55);
+}
+
+body.body--dark .elpis-scroll-progress::-moz-progress-bar {
+	background: linear-gradient(
+		90deg,
+		rgba(184, 165, 255, 0.45) 0%,
+		var(--rule-arcane) 55%,
+		rgba(213, 196, 255, 0.92) 100%
+	);
+	box-shadow: 0 0 8px rgba(184, 165, 255, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.elpis-scroll-progress {
+		transition: none;
+	}
+	.elpis-scroll-progress::-webkit-progress-value {
+		transition: none;
+	}
 }

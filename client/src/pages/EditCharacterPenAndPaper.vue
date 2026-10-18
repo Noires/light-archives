@@ -87,7 +87,7 @@
         <div class="page-edit-character__revert-submit">
           <q-btn label="Zurücksetzen" color="secondary" @click="onRevertClick" />
           &nbsp;
-          <q-btn label="Änderungen speichern" type="submit" color="primary" />
+          <q-btn label="Änderungen speichern" type="submit" color="primary" v-elpis-save-pulse="savePulseTrigger" />
         </div>
       </div>
       <q-inner-loading :showing="saving" />
@@ -96,7 +96,7 @@
   <q-spinner v-else />
 
   <q-dialog v-model="confirmRevert" persistent>
-    <q-card>
+    <q-card class="mat-aetherglass elevation-3 revert-confirm-dialog">
       <q-card-section class="row items-center">
         <span class="q-ml-sm">Möchtest du die ungespeicherten Änderungen auf die letzte gespeicherte Version zurücksetzen?</span>
       </q-card-section>
@@ -117,12 +117,10 @@ import { notifyError, notifySuccess } from 'src/common/notify';
 import { useStore } from 'src/store';
 import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
-import { ref } from 'vue';
 import { Dialog } from 'quasar';
 import CharacterPenAndPaper from 'src/components/character/CharacterPenAndPaper.vue';
 
 const $api = useApi();
-const isDirty = ref(false);
 
 async function load(params: RouteParams): Promise<CharacterProfileDto> {
   const id = parseInt(params.id as string, 10);
@@ -143,12 +141,11 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
     CharacterPenAndPaper,
   },
   async beforeRouteEnter(to, _, next) {
-    isDirty.value = false;
     const character = await load(to.params);
     next((vm) => (vm as PageEditCharacterPenAndPaper).setContent(character));
   },
   beforeRouteLeave(to, from, next) {
-    if (isDirty.value) {
+    if ((this as PageEditCharacterPenAndPaper).isDirty) {
       Dialog.create({
         title: 'Warnung',
         message: 'Ungespeicherte Änderungen gehen verloren. Möchtest du fortfahren?',
@@ -187,6 +184,8 @@ export default class PageEditCharacterPenAndPaper extends Vue {
   preview = false;
   saving = false;
   confirmRevert = false;
+  isDirty = false;
+  savePulseTrigger = 0;
 
   setContent(character: CharacterProfileDto) {
     this.characterBackup = character;
@@ -194,7 +193,7 @@ export default class PageEditCharacterPenAndPaper extends Vue {
   }
 
   onChange() {
-    isDirty.value = true;
+    this.isDirty = true;
   }
 
   onRevertClick() {
@@ -203,7 +202,7 @@ export default class PageEditCharacterPenAndPaper extends Vue {
 
   onConfirmRevert() {
     this.character = new CharacterProfileDto(this.characterBackup);
-    isDirty.value = false;
+    this.isDirty = false;
   }
 
   async onSubmit() {
@@ -213,6 +212,7 @@ export default class PageEditCharacterPenAndPaper extends Vue {
       await this.$api.characters.saveCharacter(this.character);
       this.characterBackup = new CharacterProfileDto(this.character);
       this.$emit('updateCharacter', this.characterBackup);
+      this.savePulseTrigger++;
 
       notifySuccess('Charakter gespeichert.', {
         label: 'Anschauen',
@@ -223,7 +223,7 @@ export default class PageEditCharacterPenAndPaper extends Vue {
       notifyError(e);
     } finally {
       this.saving = false;
-      isDirty.value = false;
+      this.isDirty = false;
     }
   }
 

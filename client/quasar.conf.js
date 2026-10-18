@@ -36,6 +36,7 @@ module.exports = configure(function (ctx) {
       'display',
       'iframe-resizer',
       'polyfills',
+      'directives',
     ],
 
     // https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css

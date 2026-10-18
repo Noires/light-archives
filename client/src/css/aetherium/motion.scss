@@ -1,0 +1,37 @@
+// Aetherium — motion tokens (easings, durations, ambient timings).
+// Source of truth: UI_UX_REWORK_PLAN.md §4 ("Anima" motion language).
+// Motion is theme-agnostic — Hydaelyn and Zodiark animate identically — so
+// every token lives on :root. No body.body--dark overrides here.
+
+:root {
+	// 4.1 Easing curves
+	--ease-elpis: cubic-bezier(0.16, 1, 0.3, 1);      // hovers, drawer slides — quick start, gentle settle
+	--ease-aether: cubic-bezier(0.34, 1.56, 0.64, 1); // confirmations, badge pops — slight overshoot
+	--ease-zodiark: cubic-bezier(0.7, 0, 0.84, 0);    // modals closing, errors disappearing — heavy in/light out
+	--ease-tide: cubic-bezier(0.45, 0, 0.55, 1);      // long ambient loops (cloud drift, glow pulse)
+
+	// 4.2 Duration scale
+	--motion-instant: 80ms;
+	--motion-fast: 160ms;
+	--motion-base: 260ms;
+	--motion-slow: 420ms;
+	--motion-cinematic: 720ms;
+	--motion-ambient: 6000ms;
+}
+
+// Reduced-motion guard.
+// Plan §4.2 (last paragraph) and Hard Constraint #5: every duration token
+// collapses to --motion-instant when the user requests reduced motion, and
+// ambient loops are silenced outright (0ms, not 80ms) so any consumer that
+// wires `animation-duration: var(--motion-ambient)` becomes a no-op rather
+// than a 12.5 Hz flicker. Easing curves are NOT touched — they remain valid
+// expressions even when applied over a zero-length duration.
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		--motion-fast: var(--motion-instant);
+		--motion-base: var(--motion-instant);
+		--motion-slow: var(--motion-instant);
+		--motion-cinematic: var(--motion-instant);
+		--motion-ambient: 0ms;
+	}
+}

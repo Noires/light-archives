@@ -45,19 +45,27 @@ export default class CommunityList extends Vue.with(Props) {
   background: transparent;
 }
 
+// ELPIS-402 — Community tile mirrors VenueList: Vellum surface, hairline gold
+// rule, hover lift. Visual parity with home activity grid + venues directory.
 .community-list__item {
-  border: 1px solid rgba(221, 180, 118, 0.3);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
-  border-radius: 2px;
+  border: 1px solid var(--rule-gold-soft);
+  background: var(--surface-vellum);
+  color: var(--surface-ink);
+  box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
+  transition:
+    transform var(--motion-fast) var(--ease-elpis),
+    box-shadow var(--motion-fast) var(--ease-elpis),
+    border-color var(--motion-fast) var(--ease-elpis);
+  border-radius: 6px;
   padding: 16px 20px;
 }
 
 .community-list__item:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), 0 20px 40px rgba(0, 0, 0, 0.08);
-  border-color: rgba(221, 180, 118, 0.5);
+  transform: translateY(-4px);
+  box-shadow:
+    0 2px 4px rgba(43, 36, 24, 0.08),
+    0 12px 24px rgba(43, 36, 24, 0.12);
+  border-color: var(--rule-gold);
 }
 
 .community-list__content {
@@ -65,23 +73,42 @@ export default class CommunityList extends Vue.with(Props) {
 }
 
 .community-list__name {
-  font-weight: 700;
-  color: #1f2c38;
-  font-size: 1.05rem;
-  letter-spacing: 0.01em;
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--surface-ink);
+  font-size: var(--type-scale-2);
+  letter-spacing: var(--ls-display);
 }
 
 .community-list__goal {
-  color: rgba(35, 35, 35, 0.7);
-  font-size: 0.9rem;
+  color: var(--ink-muted);
+  font-size: var(--type-scale-1);
   line-height: 1.5;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .community-list__item {
-    transition: none;
-  }
+body.body--dark .community-list__item {
+  background: var(--surface-lift);
+  color: var(--ink-luminous);
+  border-color: var(--rule-arcane-soft);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
 
+body.body--dark .community-list__item:hover {
+  border-color: var(--rule-arcane);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.45),
+    0 12px 24px rgba(0, 0, 0, 0.45);
+}
+
+body.body--dark .community-list__name {
+  color: var(--ink-luminous);
+}
+
+body.body--dark .community-list__goal {
+  color: rgba(236, 227, 247, 0.74);
+}
+
+@media (prefers-reduced-motion: reduce) {
   .community-list__item:hover {
     transform: none;
   }

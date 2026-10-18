@@ -56,7 +56,7 @@
           />
           <div class="page-edit-story__revert-submit">
             <q-btn label="Zurücksetzen" color="secondary" @click="revert" />&nbsp;
-            <q-btn label="Änderungen speichern" type="submit" color="primary" />
+            <q-btn label="Änderungen speichern" type="submit" color="primary" v-elpis-save-pulse="savePulseTrigger" />
           </div>
         </div>
         <q-inner-loading :showing="saving" />
@@ -129,6 +129,7 @@ export default class PageEditStory extends Vue {
   preview = false;
   loaded = false;
   saving = false;
+  savePulseTrigger = 0;
 
   confirmRevert = false;
 
@@ -196,6 +197,7 @@ export default class PageEditStory extends Vue {
       }
 
       this.storyBackup = new StoryDto(this.story);
+      this.savePulseTrigger++;
 
       notifySuccess('Story saved.', {
         label: 'View',

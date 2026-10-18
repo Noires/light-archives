@@ -1,22 +1,35 @@
 <template>
   <div class="step-select-image">
-    <q-file
-      filled
-      label="Bild auswählen"
-      :model-value="modelValue.file"
-      @update:model-value="selectFile"
+    <div
+      class="step-select-image__dropzone elpis-drop-zone elpis-form"
+      :class="{ 'elpis-drop-zone--dragging': isDragging }"
+      @dragenter.prevent="onDragEnter"
+      @dragover.prevent="onDragOver"
+      @dragleave.prevent="onDragLeave"
+      @drop.prevent="onDrop"
     >
-      <template v-slot:prepend>
-        <q-icon name="image" @click.stop />
-      </template>
-      <template v-slot:append>
-        <q-icon
-          name="close"
-          @click.stop.prevent="selectFile(null)"
-          class="cursor-pointer"
-        />
-      </template>
-    </q-file>
+      <q-file
+        filled
+        label="Bild auswählen"
+        :model-value="modelValue.file"
+        @update:model-value="selectFile"
+      >
+        <template v-slot:prepend>
+          <q-icon name="image" @click.stop />
+        </template>
+        <template v-slot:append>
+          <q-icon
+            name="close"
+            @click.stop.prevent="selectFile(null)"
+            class="cursor-pointer"
+          />
+        </template>
+      </q-file>
+      <div v-show="isDragging" class="step-select-image__dropzone-overlay">
+        <q-icon name="cloud_upload" size="44px" />
+        <div class="step-select-image__dropzone-label">Bilddatei hier ablegen</div>
+      </div>
+    </div>
     <q-banner
       v-if="isEventIconMode"
       class="step-select-image__mode-hint bg-info text-black"
@@ -24,8 +37,8 @@
       Event-Icon-Modus: Das Icon wird in der Eventansicht auf ca. 50x50 dargestellt.
       Waehle im naechsten Schritt einen klaren quadratischen Ausschnitt.
     </q-banner>
-    <section v-if="!modelValue.file" class="text-caption">
-      Du kannst deine Bilddatei auch per Drag & Drop hier hochladen.
+    <section v-if="!modelValue.file" class="step-select-image__hint">
+      Du kannst deine Bilddatei auch per Drag &amp; Drop hier hochladen.
     </section>
     <template v-if="modelValue.image">
       <h6>Vorschau</h6>
@@ -175,6 +188,39 @@ class Props {
 })
 export default class StepSelectImage extends Vue.with(Props) {
   readonly ImageFormat = ImageFormat;
+
+  isDragging = false;
+  private dragCounter = 0;
+
+  onDragEnter(event: DragEvent) {
+    if (!event.dataTransfer || !Array.from(event.dataTransfer.types).includes('Files')) {
+      return;
+    }
+    this.dragCounter += 1;
+    this.isDragging = true;
+  }
+
+  onDragOver(event: DragEvent) {
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  }
+
+  onDragLeave() {
+    this.dragCounter = Math.max(0, this.dragCounter - 1);
+    if (this.dragCounter === 0) {
+      this.isDragging = false;
+    }
+  }
+
+  onDrop(event: DragEvent) {
+    this.dragCounter = 0;
+    this.isDragging = false;
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      void this.selectFile(files[0]);
+    }
+  }
 
   async selectFile(file: File | null, format?: ImageFormat | null) {
     try {
@@ -353,6 +399,42 @@ export default class StepSelectImage extends Vue.with(Props) {
   max-height: 50vh;
 }
 
+.step-select-image__dropzone {
+  position: relative;
+  padding: 4px;
+}
+
+.step-select-image__dropzone-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 6px;
+  background: rgba(186, 155, 91, 0.16);
+  color: var(--rule-gold);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.step-select-image__dropzone-label {
+  font-family: var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
+  font-size: var(--type-scale-1);
+  color: var(--rule-gold);
+}
+
+.step-select-image__hint {
+  margin-top: 8px;
+  font-family: var(--font-section);
+  font-style: italic;
+  color: var(--ink-muted);
+  font-size: var(--type-scale-1);
+}
+
 .step-select-image__mode-hint {
   margin-top: 8px;
   margin-bottom: 8px;
@@ -367,5 +449,18 @@ export default class StepSelectImage extends Vue.with(Props) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+body.body--dark .step-select-image__dropzone-overlay {
+  background: rgba(107, 79, 168, 0.28);
+  color: var(--ink-luminous);
+}
+
+body.body--dark .step-select-image__dropzone-label {
+  color: var(--ink-luminous);
+}
+
+body.body--dark .step-select-image__hint {
+  color: rgba(236, 227, 247, 0.74);
 }
 </style>

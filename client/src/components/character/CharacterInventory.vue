@@ -1,5 +1,5 @@
 <template>
-  <div class="character-rumors">
+  <div class="character-inventory">
     <section>
       <h6>Besitz</h6>
       <html-viewer :content="character.possession" />
@@ -11,13 +11,8 @@
 
 <script lang="ts">
 import { CharacterProfileDto } from '@app/shared/dto/characters/character-profile.dto';
-import { PageType } from '@app/shared/enums/page-type.enum';
 import { Options, prop, Vue } from 'vue-class-component';
-import BannerView from '../common/BannerView.vue';
 import HtmlViewer from '../common/HtmlViewer.vue';
-import ReportViolationSection from '../common/ReportViolationSection.vue';
-import CharacterDetail from './CharacterDetail.vue';
-import CharacterDetailsBox from './CharacterDetailsBox.vue';
 
 class Props {
   character = prop<CharacterProfileDto>({
@@ -31,17 +26,10 @@ class Props {
 
 @Options({
   components: {
-    CharacterDetail,
-    CharacterDetailsBox,
-    BannerView,
     HtmlViewer,
-    ReportViolationSection,
   },
 })
-export default class CharacterRumors extends Vue.with(Props) {
-  PageType = PageType;
-
-
+export default class CharacterInventory extends Vue.with(Props) {
 }
 </script>
 

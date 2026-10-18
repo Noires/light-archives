@@ -19,9 +19,10 @@
               <template #append>
                 <div class="page-edit-character__color-pair">
                   <div class="page-edit-character__color-control">
-                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.haircolorShade1)">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.haircolorShade1 }" :style="colorButtonStyle(character.haircolorShade1)">
                       <q-popup-proxy transition-show="scale" transition-hide="scale">
                         <q-color
+                          class="crystal-color-picker"
                           :model-value="pickerColor(character.haircolorShade1)"
                           format-model="hex"
                           @update:model-value="onColorPicked('haircolorShade1', $event)"
@@ -40,9 +41,10 @@
                     />
                   </div>
                   <div class="page-edit-character__color-control">
-                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.haircolorShade2)">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.haircolorShade2 }" :style="colorButtonStyle(character.haircolorShade2)">
                       <q-popup-proxy transition-show="scale" transition-hide="scale">
                         <q-color
+                          class="crystal-color-picker"
                           :model-value="pickerColor(character.haircolorShade2)"
                           format-model="hex"
                           @update:model-value="onColorPicked('haircolorShade2', $event)"
@@ -73,9 +75,10 @@
               <template #append>
                 <div class="page-edit-character__color-pair">
                   <div class="page-edit-character__color-control">
-                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.eyecolorShade1)">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.eyecolorShade1 }" :style="colorButtonStyle(character.eyecolorShade1)">
                       <q-popup-proxy transition-show="scale" transition-hide="scale">
                         <q-color
+                          class="crystal-color-picker"
                           :model-value="pickerColor(character.eyecolorShade1)"
                           format-model="hex"
                           @update:model-value="onColorPicked('eyecolorShade1', $event)"
@@ -94,9 +97,10 @@
                     />
                   </div>
                   <div class="page-edit-character__color-control">
-                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.eyecolorShade2)">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.eyecolorShade2 }" :style="colorButtonStyle(character.eyecolorShade2)">
                       <q-popup-proxy transition-show="scale" transition-hide="scale">
                         <q-color
+                          class="crystal-color-picker"
                           :model-value="pickerColor(character.eyecolorShade2)"
                           format-model="hex"
                           @update:model-value="onColorPicked('eyecolorShade2', $event)"
@@ -127,9 +131,10 @@
               <template #append>
                 <div class="page-edit-character__color-pair">
                   <div class="page-edit-character__color-control">
-                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.skintoneShade1)">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.skintoneShade1 }" :style="colorButtonStyle(character.skintoneShade1)">
                       <q-popup-proxy transition-show="scale" transition-hide="scale">
                         <q-color
+                          class="crystal-color-picker"
                           :model-value="pickerColor(character.skintoneShade1)"
                           format-model="hex"
                           @update:model-value="onColorPicked('skintoneShade1', $event)"
@@ -148,9 +153,10 @@
                     />
                   </div>
                   <div class="page-edit-character__color-control">
-                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :style="colorButtonStyle(character.skintoneShade2)">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.skintoneShade2 }" :style="colorButtonStyle(character.skintoneShade2)">
                       <q-popup-proxy transition-show="scale" transition-hide="scale">
                         <q-color
+                          class="crystal-color-picker"
                           :model-value="pickerColor(character.skintoneShade2)"
                           format-model="hex"
                           @update:model-value="onColorPicked('skintoneShade2', $event)"
@@ -219,7 +225,7 @@
           <q-btn-toggle v-model="preview" :options="previewOptions" toggle-color="secondary" />
           <div class="page-edit-character__revert-submit">
             <q-btn label="Zurücksetzen" color="secondary" @click="onRevertClick" />&nbsp;
-            <q-btn label="Änderungen speichern" type="submit" color="primary" />
+            <q-btn label="Änderungen speichern" type="submit" color="primary" v-elpis-save-pulse="savePulseTrigger" />
           </div>
         </div>
         <q-inner-loading :showing="saving" />
@@ -228,7 +234,7 @@
     <q-spinner v-else />
 
     <q-dialog v-model="confirmRevert" persistent>
-      <q-card>
+      <q-card class="mat-aetherglass elevation-3 revert-confirm-dialog">
         <q-card-section class="row items-center">
           <span class="q-ml-sm">Möchtest du die ungespeicherten Änderungen auf die letzte gespeicherte Version zurücksetzen?</span>
         </q-card-section>
@@ -261,7 +267,6 @@ import CharacterAppearance from 'src/components/character/CharacterAppearance.vu
 import type { ParsedCharacterData } from 'src/common/wiki-import';
 
 const $api = useApi();
-const isDirty = ref(false);
 type CharacterColorField =
   | 'haircolorShade1'
   | 'haircolorShade2'
@@ -292,12 +297,11 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
     CarrdEditSection,
   },
   async beforeRouteEnter(to, _, next) {
-    isDirty.value = false;
     const character = await load(to.params);
     next((vm) => (vm as PageEditProfile).setContent(character));
   },
   beforeRouteLeave(to, from, next) {
-    if (isDirty.value) {
+    if ((this as PageEditProfile).isDirty) {
       Dialog.create({
         title: 'Warnung',
         message: 'Ungespeicherte Änderungen gehen verloren. Möchtest du fortfahren?',
@@ -342,6 +346,8 @@ export default class PageEditProfile extends Vue {
   confirmRevert = false;
   drawer = ref(false);
   miniState = true;
+  isDirty = false;
+  savePulseTrigger = 0;
 
   setContent(character: CharacterProfileDto) {
     this.characterBackup = character;
@@ -382,7 +388,7 @@ export default class PageEditProfile extends Vue {
   }
 
   onChange() {
-    isDirty.value = true;
+    this.isDirty = true;
   }
 
   resolveColor(rawColor?: string | null): string | null {
@@ -534,7 +540,7 @@ export default class PageEditProfile extends Vue {
 
   onConfirmRevert() {
     this.character = new CharacterProfileDto(this.characterBackup);
-    isDirty.value = false;
+    this.isDirty = false;
   }
 
   async onSubmit() {
@@ -543,6 +549,7 @@ export default class PageEditProfile extends Vue {
     try {
       await this.$api.characters.saveCharacter(this.character);
       this.characterBackup = new CharacterProfileDto(this.character);
+      this.savePulseTrigger++;
 
       notifySuccess('Charakter gespeichert.', {
         label: 'Anschauen',
@@ -553,7 +560,7 @@ export default class PageEditProfile extends Vue {
       notifyError(e);
     } finally {
       this.saving = false;
-      isDirty.value = false;
+      this.isDirty = false;
     }
   }
 
@@ -620,20 +627,37 @@ export default class PageEditProfile extends Vue {
   height: 20px;
   min-width: 20px;
   border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  background-image:
-    repeating-linear-gradient(
-      -45deg,
-      rgba(0, 0, 0, 0.14) 0,
-      rgba(0, 0, 0, 0.14) 3px,
-      rgba(255, 255, 255, 0.85) 3px,
-      rgba(255, 255, 255, 0.85) 6px
-    );
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--rule-gold);
+  // Filled state: user-defined backgroundColor flows in via :style binding.
+  // Crystal facet chrome stays subtle so the user's hue dominates.
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 0 0 2px var(--surface-pearl),
+    0 1px 3px rgba(43, 36, 24, 0.18);
+  transition:
+    box-shadow var(--motion-fast) var(--ease-elpis),
+    border-color var(--motion-fast) var(--ease-elpis);
+}
+
+.page-edit-character__color-picker-btn:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 0 0 2px var(--surface-pearl),
+    0 2px 8px rgba(186, 155, 91, 0.32);
+}
+
+// Empty swatch — paints with the prism gradient + slow shimmer (mat-crystal),
+// reading as a "facet awaiting a hue" rather than an inert checker pattern.
+// The shimmer is throttled by --motion-ambient so reduced-motion zeroes it.
+.page-edit-character__color-picker-btn--empty {
+  background: var(--crystal-prism);
+  background-size: 200% 200%;
+  background-position: 0% 50%;
+  animation: mat-crystal-shimmer calc(var(--motion-ambient) * 1.5) ease-in-out infinite;
 }
 
 .page-edit-character__color-clear-btn {
-  color: rgba(0, 0, 0, 0.58);
+  color: var(--ink-muted, rgba(0, 0, 0, 0.58));
 }
 
 .page-edit-character__appearance-image-section {
@@ -667,12 +691,22 @@ export default class PageEditProfile extends Vue {
 }
 
 body.body--dark .page-edit-character__color-picker-btn {
-  border-color: rgba(213, 226, 240, 0.44);
-  box-shadow: 0 0 0 2px rgba(10, 15, 24, 0.86);
+  border-color: var(--rule-arcane);
+  box-shadow:
+    inset 0 1px 0 rgba(184, 165, 255, 0.32),
+    0 0 0 2px var(--surface-deep),
+    0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+body.body--dark .page-edit-character__color-picker-btn:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(184, 165, 255, 0.44),
+    0 0 0 2px var(--surface-deep),
+    0 2px 8px rgba(184, 165, 255, 0.28);
 }
 
 body.body--dark .page-edit-character__color-clear-btn {
-  color: rgba(213, 226, 240, 0.62);
+  color: rgba(236, 227, 247, 0.7);
 }
 
 body.body--dark .page-edit-character__appearance-media {
@@ -682,6 +716,59 @@ body.body--dark .page-edit-character__appearance-media {
 
 body.body--dark .page-edit-character__appearance-image-placeholder {
   color: #b0c0d1;
+}
+
+// Crystal frame around the q-color popup launched from the appearance swatches.
+// Applied via class="crystal-color-picker" on the q-color element; the rule lives
+// here (unscoped style block) so it reaches the popup body regardless of where
+// q-popup-proxy teleports it. The ::before sweep is a one-shot prism wash that
+// rides over the picker chrome on open, then fades out — the q-popup-proxy's
+// own scale transition handles the geometry.
+.q-color-picker.crystal-color-picker {
+  border-radius: 8px;
+  box-shadow:
+    inset 0 0 0 1px var(--rule-gold),
+    inset 0 0 0 4px var(--rule-gold-soft),
+    0 16px 40px rgba(43, 36, 24, 0.22);
+  position: relative;
+  overflow: hidden;
+}
+
+.q-color-picker.crystal-color-picker::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--crystal-prism);
+  background-size: 200% 200%;
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  animation: crystal-color-picker-sweep var(--motion-cinematic) var(--ease-elpis) 1 forwards;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.q-color-picker.crystal-color-picker > * {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes crystal-color-picker-sweep {
+  0%   { opacity: 0.55; background-position: 0% 50%; }
+  60%  { opacity: 0.32; background-position: 100% 50%; }
+  100% { opacity: 0;    background-position: 100% 50%; }
+}
+
+body.body--dark .q-color-picker.crystal-color-picker {
+  box-shadow:
+    inset 0 0 0 1px var(--rule-arcane),
+    inset 0 0 0 4px var(--rule-arcane-soft),
+    0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+body.body--dark .q-color-picker.crystal-color-picker::before {
+  opacity: 0.4;
+  mix-blend-mode: lighten;
 }
 
 .page-edit-character__lodestone-info {

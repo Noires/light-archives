@@ -5,8 +5,20 @@
       <div class="step-banner-crop__label">
         Wähle den Ausschnitt im Verhältnis {{ aspectRatioHint }}. Ausgabe: {{ outputWidth }}x{{ outputHeight }}.
       </div>
+      <div class="step-banner-crop__actions">
+        <q-btn
+          flat
+          dense
+          no-caps
+          color="secondary"
+          icon="restart_alt"
+          label="Zurücksetzen"
+          class="step-banner-crop__reset"
+          @click="onResetClick"
+        />
+      </div>
     </section>
-    <section class="step-banner-crop__image">
+    <section class="step-banner-crop__image elpis-cropper">
       <img ref="cropper" :src="image.src" />
     </section>
   </div>
@@ -92,6 +104,10 @@ export default class StepBannerCrop extends Vue.with(Props) {
       this.cropper = null;
     }
   }
+
+  onResetClick() {
+    this.cropper?.reset();
+  }
 }
 </script>
 
@@ -112,9 +128,30 @@ export default class StepBannerCrop extends Vue.with(Props) {
 
 .step-banner-crop__label {
   margin-bottom: 8px;
+  font-family: var(--font-section);
+  color: var(--ink-muted);
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.step-banner-crop__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}
+
+.step-banner-crop__reset .q-btn__content {
+  font-family: var(--font-ui);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  font-size: var(--type-scale-0);
 }
 
 .step-banner-crop__image {
   width: 100%;
+}
+
+body.body--dark .step-banner-crop__label {
+  color: rgba(236, 227, 247, 0.74);
 }
 </style>

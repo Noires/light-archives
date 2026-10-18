@@ -1,0 +1,261 @@
+// Aetherium — material utility classes (news app mirror).
+// Five named materials per UI_UX_REWORK_PLAN.md §3.3, composed from the colour,
+// rule, and motion tokens. Use these via class= on the surface that needs them
+// — never hand-roll backgrounds or blurs in component SCSS.
+//
+//   .mat-vellum      — cream surface for cards / panels (subtle noise overlay)
+//   .mat-aetherglass — frosted translucent panel for masthead / sidebars / dialogs
+//   .mat-obsidian    — deep purple-black with slow gradient drift; dark page bg
+//   .mat-crystal     — refractive prism accent; masthead medallion / dice
+//   .mat-parchment   — cream + ink-rule horizontals; ArticleView body
+//
+// Elevation variants for Aetherglass mirror the §3.2 layering rule:
+//   .elevation-1     card-level (blur 14)
+//   .elevation-2     popover-level (blur 22, hairline gold rule)
+//   .elevation-3     dialog-level (blur 30, double hairline)
+//
+// Safari fallback: `@supports not (backdrop-filter: ...)` swaps the glass for
+// a solid surface so the panel never goes transparent. Both `-webkit-` and
+// unprefixed properties ship together.
+
+// 4% opacity SVG fractal-noise tile, ~3 KB inline. Reused by Vellum + Parchment.
+$aether-noise: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.45'/></svg>");
+
+// -----------------------------------------------------------------------------
+// VELLUM — cards, panels, sidebar tiles. Calm, warm, lightly textured.
+// -----------------------------------------------------------------------------
+.mat-vellum {
+	position: relative;
+	background-color: var(--surface-vellum);
+	color: var(--surface-ink);
+	border: 1px solid var(--rule-gold-soft);
+	border-radius: 6px;
+	box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
+	isolation: isolate;
+}
+
+.mat-vellum::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background-image: $aether-noise;
+	background-size: 160px 160px;
+	opacity: 0.04;
+	mix-blend-mode: multiply;
+	border-radius: inherit;
+	z-index: 0;
+}
+
+.mat-vellum > * {
+	position: relative;
+	z-index: 1;
+}
+
+body.body--dark .mat-vellum {
+	background-color: var(--surface-lift);
+	color: var(--ink-luminous);
+	border-color: var(--rule-arcane-soft);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+body.body--dark .mat-vellum::before {
+	mix-blend-mode: screen;
+	opacity: 0.025;
+}
+
+// -----------------------------------------------------------------------------
+// AETHERGLASS — masthead, sidebars, dialogs. Frosted, with a 2 px inner gold
+// rule and a soft top highlight that catches light like polished crystal.
+// -----------------------------------------------------------------------------
+.mat-aetherglass {
+	background-color: rgba(245, 239, 226, 0.88); // --surface-pearl @ 88%
+	-webkit-backdrop-filter: blur(14px) saturate(1.05);
+	backdrop-filter: blur(14px) saturate(1.05);
+	color: var(--surface-ink);
+	border-radius: 8px;
+	box-shadow:
+		inset 0 0 0 2px var(--rule-gold-soft),
+		inset 0 1px 0 rgba(255, 255, 255, 0.6),
+		0 6px 18px rgba(43, 36, 24, 0.08);
+}
+
+.mat-aetherglass.elevation-2 {
+	background-color: rgba(245, 239, 226, 0.92);
+	-webkit-backdrop-filter: blur(22px) saturate(1.08);
+	backdrop-filter: blur(22px) saturate(1.08);
+	box-shadow:
+		inset 0 0 0 1px var(--rule-gold),
+		inset 0 1px 0 rgba(255, 255, 255, 0.7),
+		0 12px 28px rgba(43, 36, 24, 0.12);
+}
+
+.mat-aetherglass.elevation-3 {
+	background-color: rgba(251, 246, 234, 0.96); // --surface-vellum @ 96%
+	-webkit-backdrop-filter: blur(30px) saturate(1.1);
+	backdrop-filter: blur(30px) saturate(1.1);
+	box-shadow:
+		inset 0 0 0 1px var(--rule-gold),
+		inset 0 0 0 4px var(--rule-gold-soft),
+		inset 0 1px 0 rgba(255, 255, 255, 0.75),
+		0 24px 48px rgba(43, 36, 24, 0.18);
+}
+
+body.body--dark .mat-aetherglass {
+	background-color: rgba(21, 11, 35, 0.78); // --surface-deep @ 78%
+	color: var(--ink-luminous);
+	box-shadow:
+		inset 0 0 0 2px var(--rule-arcane-soft),
+		inset 0 1px 0 rgba(184, 165, 255, 0.18),
+		0 6px 18px rgba(0, 0, 0, 0.5);
+}
+
+body.body--dark .mat-aetherglass.elevation-2 {
+	background-color: rgba(31, 17, 48, 0.86);
+	box-shadow:
+		inset 0 0 0 1px var(--rule-arcane),
+		inset 0 1px 0 rgba(184, 165, 255, 0.22),
+		0 12px 28px rgba(0, 0, 0, 0.55);
+}
+
+body.body--dark .mat-aetherglass.elevation-3 {
+	background-color: rgba(31, 17, 48, 0.94);
+	box-shadow:
+		inset 0 0 0 1px var(--rule-arcane),
+		inset 0 0 0 4px var(--rule-arcane-soft),
+		inset 0 1px 0 rgba(184, 165, 255, 0.28),
+		0 24px 48px rgba(0, 0, 0, 0.6);
+}
+
+// Safari < 16 / Firefox without `layout.css.backdrop-filter.enabled`: drop the
+// glass effect entirely and serve a solid surface so contrast never breaks.
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+	.mat-aetherglass {
+		background-color: var(--surface-pearl);
+	}
+
+	body.body--dark .mat-aetherglass {
+		background-color: var(--surface-deep);
+	}
+}
+
+// -----------------------------------------------------------------------------
+// OBSIDIAN — Zodiark page surface. Deep purple-black with a 40 s gradient
+// drift suggesting aether currents under the skin. Drift is on --motion-ambient
+// so the reduced-motion guard zeroes its duration → static surface.
+// -----------------------------------------------------------------------------
+.mat-obsidian {
+	background-color: var(--surface-obsidian);
+	background-image: linear-gradient(
+		135deg,
+		var(--surface-obsidian) 0%,
+		var(--surface-deep) 38%,
+		var(--surface-obsidian) 62%,
+		var(--surface-deep) 100%
+	);
+	background-size: 220% 220%;
+	background-position: 0% 0%;
+	color: var(--ink-luminous);
+	animation: mat-obsidian-drift calc(var(--motion-ambient) * 6.6667) linear infinite;
+}
+
+@keyframes mat-obsidian-drift {
+	0%   { background-position: 0% 0%; }
+	50%  { background-position: 100% 100%; }
+	100% { background-position: 0% 0%; }
+}
+
+// -----------------------------------------------------------------------------
+// CRYSTAL — refractive faceted accent. Use sparingly: masthead medallion,
+// edition CTA, dice. The prism gradient lives in color.scss as
+// --crystal-prism; here we add a slow shimmer pass that catches the facets.
+// -----------------------------------------------------------------------------
+.mat-crystal {
+	background: var(--crystal-prism);
+	background-size: 200% 200%;
+	background-position: 0% 50%;
+	color: var(--surface-ink);
+	border-radius: 6px;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.7),
+		inset 0 -1px 0 rgba(167, 226, 255, 0.4),
+		0 4px 14px rgba(127, 230, 226, 0.25);
+	animation: mat-crystal-shimmer calc(var(--motion-ambient) * 1.5) ease-in-out infinite;
+}
+
+@keyframes mat-crystal-shimmer {
+	0%   { background-position: 0% 50%; }
+	50%  { background-position: 100% 50%; }
+	100% { background-position: 0% 50%; }
+}
+
+body.body--dark .mat-crystal {
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.55),
+		inset 0 -1px 0 rgba(193, 155, 255, 0.4),
+		0 4px 14px rgba(184, 165, 255, 0.3);
+}
+
+// -----------------------------------------------------------------------------
+// PARCHMENT — ArticleView body, drop-cap stories. Vellum tone with faint
+// horizontal ink-rule lines suggesting a printed page.
+// -----------------------------------------------------------------------------
+.mat-parchment {
+	position: relative;
+	background-color: var(--surface-vellum);
+	background-image:
+		repeating-linear-gradient(
+			to bottom,
+			transparent 0,
+			transparent calc(1.6em - 1px),
+			rgba(110, 95, 70, 0.08) calc(1.6em - 1px),
+			rgba(110, 95, 70, 0.08) 1.6em
+		);
+	color: var(--surface-ink);
+	border: 1px solid var(--rule-gold-soft);
+	border-radius: 4px;
+	box-shadow:
+		0 1px 2px rgba(43, 36, 24, 0.05),
+		inset 0 0 28px rgba(186, 155, 91, 0.06);
+	isolation: isolate;
+}
+
+.mat-parchment::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background-image: $aether-noise;
+	background-size: 160px 160px;
+	opacity: 0.05;
+	mix-blend-mode: multiply;
+	border-radius: inherit;
+	z-index: 0;
+}
+
+.mat-parchment > * {
+	position: relative;
+	z-index: 1;
+}
+
+body.body--dark .mat-parchment {
+	background-color: var(--surface-lift);
+	background-image:
+		repeating-linear-gradient(
+			to bottom,
+			transparent 0,
+			transparent calc(1.6em - 1px),
+			rgba(184, 165, 255, 0.07) calc(1.6em - 1px),
+			rgba(184, 165, 255, 0.07) 1.6em
+		);
+	color: var(--ink-luminous);
+	border-color: var(--rule-arcane-soft);
+	box-shadow:
+		0 1px 2px rgba(0, 0, 0, 0.4),
+		inset 0 0 28px rgba(107, 79, 168, 0.12);
+}
+
+body.body--dark .mat-parchment::before {
+	mix-blend-mode: screen;
+	opacity: 0.03;
+}

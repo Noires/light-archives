@@ -18,9 +18,13 @@
 						class="page-free-company__member-card"
 					>
 						<router-link :to="getLink(profile)" class="page-free-company__member-link">
-							<q-avatar round size="56px" class="page-free-company__member-avatar">
-								<img :src="profile.avatar" />
-							</q-avatar>
+							<aetheryte-badge
+								size="md"
+								shape="round"
+								:src="profile.avatar"
+								:alt="profile.name"
+								class="page-free-company__member-avatar"
+							/>
 							<div class="page-free-company__member-body">
 								<div class="page-free-company__member-name">{{ profile.name }}</div>
 								<div class="page-free-company__member-meta">
@@ -64,6 +68,7 @@ import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import errors from '@app/shared/errors';
 import FreeCompanyProfile from 'components/free-company/FreeCompanyProfile.vue';
 import FreeCompanyMemberPermissionEditor from 'components/free-company/FreeCompanyMemberPermissionEditor.vue';
+import AetheryteBadge from 'components/aetherium/AetheryteBadge.vue';
 import { useApi } from 'src/boot/axios';
 import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
@@ -138,6 +143,7 @@ async function load(params: RouteParams): Promise<Content> {
 		FreeCompanyProfile,
     FreeCompanyMemberPermissionEditor,
 		ReportViolationSection,
+		AetheryteBadge,
 	},
 	async beforeRouteEnter(to, _, next) {
 		const content = await load(to.params);
@@ -191,6 +197,10 @@ export default class PageFreeCompany extends Vue {
 </script>
 
 <style lang="scss">
+// ELPIS-410: Free Company member grid uses round AetheryteBadge for the avatar
+// and pulls the surrounding member-card chrome onto Aetherium tokens so the
+// grid harmonises with the rest of the directory family (401/402/403 directory
+// list cards, 111 home activity grid).
 .page-free-company__members {
   margin: 32px 0;
 }
@@ -205,21 +215,26 @@ export default class PageFreeCompany extends Vue {
   align-items: center;
   margin-bottom: 18px;
   padding: 20px 22px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--rule-gold-soft);
+  background: var(--surface-vellum);
+  box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
+  border-radius: 6px;
 }
 
 .page-free-company__members-header h3 {
   margin: 0;
-  font-family: $header-font;
-  letter-spacing: 0.02em;
+  font-family: var(--font-display);
+  font-size: var(--type-scale-3);
+  letter-spacing: var(--ls-display);
+  color: var(--surface-ink);
 }
 
 .page-free-company__members-count {
-  font-family: $header-font;
-  font-size: 1.05rem;
-  color: #20323d;
+  font-family: var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
+  font-size: var(--type-scale-0);
+  color: var(--ink-muted);
 }
 
 .page-free-company__members-grid {
@@ -227,22 +242,29 @@ export default class PageFreeCompany extends Vue {
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px;
   padding: 12px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--rule-gold-soft);
+  background: var(--surface-vellum);
+  box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
+  border-radius: 6px;
 }
 
 .page-free-company__member-card {
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: #ffffff;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  border: 1px solid var(--rule-gold-soft);
+  background: var(--surface-vellum);
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
+  transition:
+    transform var(--motion-fast) var(--ease-elpis),
+    box-shadow var(--motion-fast) var(--ease-elpis),
+    border-color var(--motion-fast) var(--ease-elpis);
 }
 
 .page-free-company__member-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
-  border-color: rgba(221, 180, 118, 0.4);
+  transform: translateY(-4px);
+  box-shadow:
+    0 1px 2px rgba(43, 36, 24, 0.06),
+    0 12px 28px rgba(43, 36, 24, 0.12);
+  border-color: var(--rule-gold);
 }
 
 .page-free-company__member-link {
@@ -250,38 +272,69 @@ export default class PageFreeCompany extends Vue {
   grid-template-columns: auto 1fr;
   gap: 12px;
   align-items: center;
-  padding: 16px;
+  padding: 14px 16px;
   color: inherit;
   text-decoration: none;
 }
 
-.page-free-company__member-avatar {
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
-}
-
 .page-free-company__member-name {
-  font-weight: 700;
-  color: #1f2c38;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--type-scale-2);
+  letter-spacing: var(--ls-display);
+  color: var(--surface-ink);
 }
 
 .page-free-company__member-meta {
-  color: rgba(35, 35, 35, 0.7);
-  font-size: 0.85rem;
+  font-family: var(--font-ui);
+  color: var(--ink-muted);
+  font-size: var(--type-scale-0);
 }
 
 .page-free-company__member-profession {
-  color: rgba(35, 35, 35, 0.65);
-  font-size: 0.85rem;
+  font-family: var(--font-section);
+  font-style: italic;
+  color: var(--ink-muted);
+  font-size: var(--type-scale-1);
 }
 
 .page-free-company__members-empty {
   margin: 0;
   padding: 18px;
-  color: rgba(35, 35, 35, 0.7);
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  color: var(--ink-muted);
+  border: 1px solid var(--rule-gold-soft);
+  background: var(--surface-vellum);
+  box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
+  border-radius: 6px;
   text-align: center;
+}
+
+body.body--dark .page-free-company__members-header,
+body.body--dark .page-free-company__members-grid,
+body.body--dark .page-free-company__member-card,
+body.body--dark .page-free-company__members-empty {
+  background: var(--surface-lift);
+  border-color: var(--rule-arcane-soft);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+body.body--dark .page-free-company__members-header h3,
+body.body--dark .page-free-company__member-name {
+  color: var(--ink-luminous);
+}
+
+body.body--dark .page-free-company__members-count,
+body.body--dark .page-free-company__member-meta,
+body.body--dark .page-free-company__member-profession,
+body.body--dark .page-free-company__members-empty {
+  color: rgba(236, 227, 247, 0.74);
+}
+
+body.body--dark .page-free-company__member-card:hover {
+  border-color: var(--rule-arcane);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 12px 28px rgba(0, 0, 0, 0.45);
 }
 
 @media screen and (max-width: $breakpoint-sm) {
@@ -297,10 +350,6 @@ export default class PageFreeCompany extends Vue {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .page-free-company__member-card {
-    transition: none;
-  }
-
   .page-free-company__member-card:hover {
     transform: none;
   }

@@ -1,0 +1,41 @@
+// Aetherium — color tokens (news app mirror).
+// Hydaelyn (light) lives on :root, Zodiark (dark) on body.body--dark.
+// Tokens are additive: do not modify the legacy rules in news/src/css/app.scss.
+// Source of truth: UI_UX_REWORK_PLAN.md §3.2.
+
+:root {
+	// Hydaelyn surfaces
+	--surface-pearl:     #F5EFE2;
+	--surface-vellum:    #FBF6EA;
+	--surface-ink:       #2B2418;
+	--ink-muted:         #6E5F46;
+
+	// Hydaelyn rules + auras
+	--rule-gold:         #BA9B5B;
+	--rule-gold-soft:    rgba(186, 155, 91, 0.28);
+	--glow-aether:       #7FE6E2;
+	--glow-elpis:        #FFD3B0;
+
+	// Reserved accent material — used by masthead medallion, edition CTA.
+	--crystal-prism:     linear-gradient(135deg, #A7E2FF 0%, #FFFFFF 45%, #E8C9FF 100%);
+
+	// Semantic — all four pass AA on --surface-pearl and --surface-vellum.
+	--semantic-success:  #4FB890;
+	--semantic-warning:  #E5B25E;
+	--semantic-danger:   #C7484F;
+	--semantic-info:     #5DA9D8;
+}
+
+body.body--dark {
+	// Zodiark surfaces
+	--surface-obsidian:  #0B0612;
+	--surface-deep:      #150B23;
+	--surface-lift:      #1F1130;
+	--ink-luminous:      #ECE3F7;
+
+	// Zodiark rules + auras
+	--rule-arcane:       #6B4FA8;
+	--rule-arcane-soft:  rgba(107, 79, 168, 0.32);
+	--glow-aether-d:     #B8A5FF;
+	--glow-zodiark:      #C19BFF;
+}

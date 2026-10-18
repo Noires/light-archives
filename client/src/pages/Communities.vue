@@ -17,7 +17,7 @@
     </header>
 
     <section class="page-communities__content">
-      <div class="page-communities__toolbar">
+      <div class="page-communities__toolbar elpis-directory-toolbar">
         <q-input
           class="page-communities__search"
           v-model="searchQuery"
@@ -28,11 +28,11 @@
           clearable
           @update:model-value="onFilterChange"
         />
-        <div class="page-communities__stats">
+        <div class="page-communities__stats elpis-directory-toolbar__stats">
           {{ filteredCount }} von {{ communities.length }}
         </div>
         <q-pagination
-          class="page-communities__pagination"
+          class="page-communities__pagination elpis-pagination"
           :model-value="page"
           :max="maxPage"
           input
@@ -224,10 +224,8 @@ export default class PageCommunities extends Vue {
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
 }
 
-.page-communities__search .q-field__control {
-  background: #f6f1e8;
-  border-radius: 0;
-}
+// ELPIS-404 — Toolbar field chrome lives in app.scss under
+// `.elpis-directory-toolbar`. The previous local override is gone.
 
 .page-communities__stats {
   text-align: right;

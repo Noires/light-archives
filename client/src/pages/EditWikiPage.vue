@@ -35,7 +35,7 @@
           />
           <div class="page-edit-wiki-page__revert-submit">
             <q-btn label="Zurücksetzen" color="secondary" @click="revert" />&nbsp;
-            <q-btn label="Änderungen speichern" type="submit" color="primary" />
+            <q-btn label="Änderungen speichern" type="submit" color="primary" v-elpis-save-pulse="savePulseTrigger" />
           </div>
         </div>
         <q-inner-loading :showing="saving" />
@@ -109,6 +109,7 @@ export default class PageEditWikiPage extends Vue {
   preview = false;
   loaded = false;
   saving = false;
+  savePulseTrigger = 0;
 
   confirmRevert = false;
 
@@ -171,6 +172,7 @@ export default class PageEditWikiPage extends Vue {
       }
 
       this.wikiPageBackup = new WikiPageDto(this.wikiPage);
+      this.savePulseTrigger++;
 
       notifySuccess('Wikibeitrag gespeichert.', {
         label: 'Anschauen',

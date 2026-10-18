@@ -1,5 +1,5 @@
 <template>
-  <q-page class="page-index">
+  <q-page :class="['page-index', { 'page-index--first-load': revealEnabled }]">
     <header class="page-index__hero">
       <div class="page-index__hero-text">
         <span class="page-index__eyebrow">Übersicht</span>
@@ -55,7 +55,7 @@
     </header>
 
     <section class="page-index__grid">
-      <section id="neueste-aenderungen" class="page-index__panel page-index__panel--wide page-index__section--changes">
+      <section id="neueste-aenderungen" class="page-index__panel mat-vellum page-index__panel--wide page-index__section--changes">
         <div class="page-index__panel-header">
           <h5>Neueste Änderungen</h5>
           <router-link class="page-index__panel-link" to="/changes">Komplette Liste</router-link>
@@ -88,7 +88,7 @@
         </div>
       </section>
 
-      <section class="page-index__panel page-index__section--stories">
+      <section class="page-index__panel mat-vellum page-index__section--stories">
         <div class="page-index__panel-header">
           <h5>Neue Geschichten</h5>
           <router-link class="page-index__panel-link" to="/stories">Alle Geschichten</router-link>
@@ -116,7 +116,7 @@
         </div>
       </section>
 
-      <section class="page-index__panel page-index__panel--media page-index__section--artwork">
+      <section class="page-index__panel mat-vellum page-index__panel--media page-index__section--artwork">
         <div class="page-index__panel-header">
           <h5>Neue Kunstwerke</h5>
           <router-link class="page-index__panel-link" to="/gallery/artwork">Zur Galerie</router-link>
@@ -127,7 +127,7 @@
         </div>
       </section>
 
-      <section class="page-index__panel page-index__section--noticeboard">
+      <section class="page-index__panel mat-vellum page-index__section--noticeboard">
         <div class="page-index__panel-header">
           <h5>Neue Aushänge</h5>
           <router-link class="page-index__panel-link" to="/noticeboard">Zum Anschlagbrett</router-link>
@@ -141,7 +141,7 @@
         </div>
       </section>
 
-      <section class="page-index__panel page-index__section--profiles">
+      <section class="page-index__panel mat-vellum page-index__section--profiles">
         <div class="page-index__panel-header">
           <h5>Neue Charaktere</h5>
           <router-link class="page-index__panel-link" to="/profiles">Alle Charaktere</router-link>
@@ -166,7 +166,7 @@
         </div>
       </section>
 
-      <section class="page-index__panel page-index__section--free-companies">
+      <section class="page-index__panel mat-vellum page-index__section--free-companies">
         <div class="page-index__panel-header">
           <h5>Neue Freie Gesellschaften</h5>
           <router-link class="page-index__panel-link" to="/free-companies">Alle Gesellschaften</router-link>
@@ -180,7 +180,7 @@
         </div>
       </section>
 
-      <section class="page-index__panel page-index__section--venues">
+      <section class="page-index__panel mat-vellum page-index__section--venues">
         <div class="page-index__panel-header">
           <h5>Neue Treffpunkte</h5>
           <router-link class="page-index__panel-link" to="/venues">Alle Treffpunkte</router-link>
@@ -191,7 +191,7 @@
         </div>
       </section>
 
-      <section class="page-index__panel page-index__section--communities">
+      <section class="page-index__panel mat-vellum page-index__section--communities">
         <div class="page-index__panel-header">
           <h5>Neue Communities</h5>
           <router-link class="page-index__panel-link" to="/communities">Alle Communities</router-link>
@@ -202,7 +202,7 @@
         </div>
       </section>
 
-      <section class="page-index__panel page-index__panel--media page-index__section--screenshots">
+      <section class="page-index__panel mat-vellum page-index__panel--media page-index__section--screenshots">
         <div class="page-index__panel-header">
           <h5>Neue Screenshots</h5>
           <router-link class="page-index__panel-link" to="/gallery/screenshot">Zur Galerie</router-link>
@@ -293,6 +293,76 @@ export default class PageIndex extends Vue {
   recentChanges: ChangeItemDto[] = [];
 
   loaded = false;
+  revealEnabled = false;
+
+  // ELPIS-110 — IntersectionObserver-driven diagonal-wave reveal of activity
+  // panels, gated to once per session via sessionStorage.
+  private revealObserver: IntersectionObserver | null = null;
+
+  created() {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      const flag = window.sessionStorage.getItem('elpis.indexRevealed');
+      if (!flag) {
+        this.revealEnabled = true;
+        window.sessionStorage.setItem('elpis.indexRevealed', '1');
+      }
+    } catch (_) {
+      // Storage unavailable (private mode etc.) — skip the reveal rather than
+      // throwing; the page still renders correctly without animation.
+      this.revealEnabled = false;
+    }
+  }
+
+  mounted() {
+    if (!this.revealEnabled) {
+      return;
+    }
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+      // No IO support — just unhide every panel immediately.
+      this.markAllRevealed();
+      return;
+    }
+    const reduced = window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      this.markAllRevealed();
+      return;
+    }
+
+    const panels = (this.$el as HTMLElement).querySelectorAll('.page-index__panel');
+    if (!panels.length) {
+      return;
+    }
+
+    this.revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            (entry.target as HTMLElement).classList.add('page-index__panel--revealed');
+            this.revealObserver?.unobserve(entry.target);
+          }
+        });
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.04 },
+    );
+
+    panels.forEach((panel) => {
+      this.revealObserver!.observe(panel);
+    });
+  }
+
+  beforeUnmount() {
+    this.revealObserver?.disconnect();
+    this.revealObserver = null;
+  }
+
+  private markAllRevealed() {
+    const panels = (this.$el as HTMLElement).querySelectorAll('.page-index__panel');
+    panels.forEach((panel) => panel.classList.add('page-index__panel--revealed'));
+  }
 
   setContent(content: MainPageContentDto, recentChanges: ChangeItemDto[]) {
     this.content = content;
@@ -547,20 +617,28 @@ export default class PageIndex extends Vue {
   gap: 24px;
 }
 
+// .mat-vellum owns the cream surface, hairline rule (--rule-gold-soft @ 0.28),
+// noise overlay and dark-mode flip. Local rule layers structure (flex column,
+// min-height) and the ELPIS-111 hover lift on top.
 .page-index__panel {
-  border: 1px solid rgba(221, 180, 118, 0.3);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   min-height: 120px;
-  border-radius: 2px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow:
+    0 1px 2px rgba(43, 36, 24, 0.06),
+    0 4px 12px rgba(43, 36, 24, 0.06);
+  transition:
+    transform var(--motion-base) var(--ease-elpis),
+    box-shadow var(--motion-base) var(--ease-elpis),
+    border-color var(--motion-base) var(--ease-elpis);
 }
 
 .page-index__panel:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1), 0 20px 40px rgba(0, 0, 0, 0.08);
+  transform: translateY(-4px);
+  border-color: var(--rule-gold);
+  box-shadow:
+    0 2px 4px rgba(43, 36, 24, 0.08),
+    0 12px 28px rgba(43, 36, 24, 0.12);
 }
 
 .page-index__panel--wide {
@@ -738,19 +816,26 @@ export default class PageIndex extends Vue {
 }
 
 .page-index .page-stories__card {
+  position: relative;
   height: 100%;
-  border-radius: 0;
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: #ffffff;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  border: 1px solid var(--rule-gold-soft);
+  background: var(--surface-vellum);
+  color: var(--surface-ink);
+  box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform var(--motion-fast) var(--ease-elpis),
+    box-shadow var(--motion-fast) var(--ease-elpis),
+    border-color var(--motion-fast) var(--ease-elpis);
 }
 
 .page-index .page-stories__card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
-  border-color: rgba(221, 180, 118, 0.4);
+  border-color: var(--rule-gold);
+  box-shadow:
+    0 2px 4px rgba(43, 36, 24, 0.08),
+    0 12px 24px rgba(43, 36, 24, 0.12);
 }
 
 .page-index .page-stories__card-link {
@@ -773,21 +858,25 @@ export default class PageIndex extends Vue {
 .page-index .page-stories__card-type {
   align-self: flex-start;
   padding: 4px 10px;
-  border-radius: 0;
-  background: rgba(221, 180, 118, 0.2);
-  color: #6b4c21;
+  border-radius: 999px;
+  background: rgba(186, 155, 91, 0.18);
+  border: 1px solid var(--rule-gold-soft);
+  color: var(--rule-gold);
+  font-family: var(--font-ui);
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: var(--type-scale-0);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--ls-eyebrow);
 }
 
 .page-index .page-stories__card-title {
   margin: 0;
-  font-family: $header-font;
-  font-size: 1.05rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--type-scale-2);
   line-height: 1.3;
-  color: #1f2c38;
+  color: var(--surface-ink);
+  letter-spacing: var(--ls-display);
 }
 
 .page-index .page-stories__card-meta {
@@ -795,15 +884,16 @@ export default class PageIndex extends Vue {
   justify-items: end;
   text-align: right;
   gap: 2px;
-  color: rgba(35, 35, 35, 0.65);
-  font-size: 0.8rem;
+  color: var(--ink-muted);
+  font-size: var(--type-scale-0);
 }
 
 .page-index .page-stories__card-excerpt {
   margin: 0;
-  color: rgba(35, 35, 35, 0.72);
-  font-size: 0.92rem;
-  line-height: 1.5;
+  color: var(--ink-muted);
+  font-family: var(--font-section);
+  font-size: var(--type-scale-1);
+  line-height: 1.55;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -812,15 +902,18 @@ export default class PageIndex extends Vue {
 
 .page-index .page-stories__card-action {
   margin-top: auto;
+  font-family: var(--font-ui);
   font-weight: 600;
-  color: #1f4d64;
-  letter-spacing: 0.01em;
+  color: var(--rule-gold);
+  font-size: var(--type-scale-0);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
 }
 
 .page-index .page-stories__card-link:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 2px rgba(31, 77, 100, 0.3);
-  border-radius: 0;
+  box-shadow: inset 0 0 0 2px var(--rule-gold);
+  border-radius: 6px;
 }
 
 .page-index__profiles-grid {
@@ -830,16 +923,23 @@ export default class PageIndex extends Vue {
 }
 
 .page-index .page-characters__card {
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: #ffffff;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  border: 1px solid var(--rule-gold-soft);
+  background: var(--surface-vellum);
+  color: var(--surface-ink);
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
+  transition:
+    transform var(--motion-fast) var(--ease-elpis),
+    box-shadow var(--motion-fast) var(--ease-elpis),
+    border-color var(--motion-fast) var(--ease-elpis);
 }
 
 .page-index .page-characters__card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
-  border-color: rgba(221, 180, 118, 0.4);
+  transform: translateY(-4px);
+  border-color: var(--rule-gold);
+  box-shadow:
+    0 2px 4px rgba(43, 36, 24, 0.08),
+    0 12px 24px rgba(43, 36, 24, 0.12);
 }
 
 .page-index .page-characters__card-link {
@@ -948,15 +1048,26 @@ body.body--dark .page-index .page-index__changes-title {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-body.body--dark .page-index__hero,
-body.body--dark .page-index__panel {
+// Hero stays on its own legacy chrome (Aetherglass-light pattern); panels are
+// fully owned by .mat-vellum's body.body--dark variant — only the hover lift
+// shadow is redefined here so the lift reads on Obsidian.
+body.body--dark .page-index__hero {
   background: rgba(17, 24, 34, 0.94);
   border-color: rgba(141, 181, 223, 0.28);
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
 }
 
+body.body--dark .page-index__panel {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 body.body--dark .page-index__panel:hover {
-  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.38);
+  border-color: var(--rule-arcane);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.45),
+    0 12px 28px rgba(0, 0, 0, 0.45);
 }
 
 body.body--dark .page-index__panel-header {
@@ -1020,24 +1131,32 @@ body.body--dark .page-index__changes-item {
 
 body.body--dark .page-index .page-stories__card,
 body.body--dark .page-index .page-characters__card {
-  background: rgba(18, 26, 37, 0.96);
-  border-color: rgba(141, 181, 223, 0.24);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  background: var(--surface-lift);
+  color: var(--ink-luminous);
+  border-color: var(--rule-arcane-soft);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 body.body--dark .page-index .page-stories__card:hover,
 body.body--dark .page-index .page-characters__card:hover {
-  border-color: rgba(141, 181, 223, 0.44);
-  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.34);
+  border-color: var(--rule-arcane);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.45),
+    0 12px 24px rgba(0, 0, 0, 0.45);
 }
 
 body.body--dark .page-index .page-stories__card-type {
-  color: rgba(196, 221, 247, 0.95);
-  background: rgba(141, 181, 223, 0.2);
+  color: var(--glow-aether-d);
+  background: rgba(193, 155, 255, 0.16);
+  border-color: var(--rule-arcane-soft);
+}
+
+body.body--dark .page-index .page-stories__card-action {
+  color: var(--glow-aether-d);
 }
 
 body.body--dark .page-index .page-stories__card-link:focus-visible {
-  box-shadow: inset 0 0 0 2px rgba(141, 181, 223, 0.44);
+  box-shadow: inset 0 0 0 2px var(--rule-arcane);
 }
 
 @media screen and (max-width: 1100px) {
@@ -1087,6 +1206,55 @@ body.body--dark .page-index .page-stories__card-link:focus-visible {
   .page-index .page-characters__card:hover,
   .page-index__panel-content .thumb-gallery__image-wrapper:hover,
   .page-index__discord-button:hover {
+    transform: none;
+  }
+}
+
+// ELPIS-110 — Diagonal-wave reveal on first session load. Each panel starts
+// hidden; IntersectionObserver adds .page-index__panel--revealed as it enters
+// the viewport, triggering a per-section delayed fade-rise. Delays are tuned
+// to read as a top-left → bottom-right wave on the 2-col desktop grid; on
+// single-col layouts they collapse to a sequential top-down reveal which
+// reads cleanly. `animation-fill-mode: backwards` holds the from-state during
+// the delay; after the animation the panel returns to its specified style so
+// hover lift transitions still fire normally.
+.page-index--first-load .page-index__panel:not(.page-index__panel--revealed) {
+  opacity: 0;
+}
+
+.page-index--first-load .page-index__panel--revealed {
+  animation: elpis-panel-reveal var(--motion-base) var(--ease-elpis) var(--reveal-delay, 0ms) backwards;
+}
+
+@keyframes elpis-panel-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Diagonal indices on the 2-col grid (one panel per row at row 0, then two
+// panels per row from row 1 onward). Same-diagonal panels share a delay so
+// the wave reads as a 60 ms-stepped front rather than a sequential cascade.
+.page-index__section--changes        { --reveal-delay: 0ms; }
+.page-index__section--noticeboard    { --reveal-delay: 60ms; }
+.page-index__section--stories        { --reveal-delay: 120ms; }
+.page-index__section--profiles       { --reveal-delay: 120ms; }
+.page-index__section--free-companies { --reveal-delay: 180ms; }
+.page-index__section--venues         { --reveal-delay: 180ms; }
+.page-index__section--communities    { --reveal-delay: 240ms; }
+.page-index__section--screenshots    { --reveal-delay: 240ms; }
+.page-index__section--artwork        { --reveal-delay: 300ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .page-index--first-load .page-index__panel:not(.page-index__panel--revealed),
+  .page-index--first-load .page-index__panel--revealed {
+    opacity: 1;
+    animation: none;
     transform: none;
   }
 }

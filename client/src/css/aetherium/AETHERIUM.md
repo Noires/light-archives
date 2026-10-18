@@ -1,0 +1,331 @@
+# Aetherium
+
+The design system for Light Archives' **"Elpis Reborn"** visual rework. This
+folder contains the token vocabulary, material utilities, and motion contract
+that every visible surface in the client should be expressed in.
+
+> **Companions:** [`UI_UX_AUDIT.md`](../../../../UI_UX_AUDIT.md) ·
+> [`UI_UX_REWORK_PLAN.md`](../../../../UI_UX_REWORK_PLAN.md) ·
+> [`UI_UX_REWORK_BACKLOG.md`](../../../../UI_UX_REWORK_BACKLOG.md) ·
+> [`memory.md`](../../../../memory.md) (cold-start handoff)
+
+The plan documents are the *source of truth*. This file is a working
+contributor reference — quick to read, opinionated, with do/don't examples.
+
+---
+
+## Why Aetherium exists
+
+Before the rework, components reached for `#fdfdffee`, `rgba(221,180,118,...)`,
+`2.5rem`, and bespoke `transition: 0.3s ease` strings inline. The result drifted
+across pages, broke contrast in dark mode, and made motion feel arbitrary.
+
+Aetherium is a single, named vocabulary. Every colour, gap, font face,
+duration, and elevation has a token. Every recurring panel has a material.
+Components reference the system; the system references the plan.
+
+If a component needs a value that isn't in the system, **add it to the system
+first**, then use it. Don't bypass.
+
+---
+
+## File map
+
+```
+client/src/css/aetherium/
+├── index.scss        ← imports the rest in order; pulled in at app.scss line 1
+├── color.scss        ← Hydaelyn (light, :root) + Zodiark (dark, body.body--dark)
+├── space.scss        ← 8 px baseline scale, --space-0 … --space-12
+├── type.scss         ← font families, 1.250 modular scale, .text-* utilities
+├── motion.scss       ← easings, durations, prefers-reduced-motion guard
+├── materials.scss    ← .mat-vellum / -aetherglass / -obsidian / -crystal / -parchment
+└── AETHERIUM.md      ← this file
+```
+
+Import order is intentional. Materials reference colour and motion tokens, so
+tokens load first. Don't reorder unless you also move the dependency.
+
+---
+
+## Token categories
+
+### Colour (`color.scss`)
+
+Hydaelyn lives on `:root`; Zodiark lives on `body.body--dark`. Same token names
+exist on both themes where the role is identical (e.g. `--rule-gold-soft` and
+`--rule-arcane-soft` are theme-specific because the *colour* of "rule" differs,
+but `--semantic-success` is theme-shared).
+
+| Token group | Hydaelyn | Zodiark |
+|---|---|---|
+| Page surface | `--surface-pearl` | `--surface-obsidian` |
+| Card/panel surface | `--surface-vellum` | `--surface-deep` / `--surface-lift` |
+| Body text | `--surface-ink` | `--ink-luminous` |
+| Muted text | `--ink-muted` | *(use `--ink-luminous` at lower opacity)* |
+| Hairline rule | `--rule-gold` / `--rule-gold-soft` | `--rule-arcane` / `--rule-arcane-soft` |
+| Hover/focus aura | `--glow-aether` / `--glow-elpis` | `--glow-aether-d` / `--glow-zodiark` |
+| Brand accent | `--crystal-prism` *(linear-gradient)* | *(same — theme-agnostic)* |
+| Semantic | `--semantic-{success,warning,danger,info}` | *(same)* |
+
+`--semantic-danger` is `#C7484F`. The legacy `#C10015` is **gone** — it failed
+AA on `--surface-pearl`. Don't reintroduce it.
+
+### Spacing (`space.scss`)
+
+8 px baseline. `--space-0: 0`, then `4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 48 /
+64 / 80 / 96`. Theme-agnostic.
+
+Use `--space-2` (8 px) for inner padding inside small chips, `--space-4` (16 px)
+for card padding, `--space-7` (32 px) for section gutters, `--space-10` (64 px)
+for hero spacing.
+
+### Typography (`type.scss`)
+
+**Faces** — referenced by token, never by bare name:
+
+| Token | Family chain | Use |
+|---|---|---|
+| `--font-display`  | Cinzel → Cinzel Eorzea → serif | Hero, h1, FFXIV-flavored titles |
+| `--font-section`  | Spectral → Georgia → serif | h2 / h3 default |
+| `--font-body`     | Spectral → Noto Sans → serif | Body copy |
+| `--font-ui`       | Inter → Noto Sans → system-ui | Labels, dense UI, numerals |
+| `--font-lore`     | IM Fell English → Spectral → serif | Character background, Story body, Wiki h-roman |
+| `--font-mono`     | system mono | Code, hashes, ids |
+| `--font-ornament` | Cinzel Eorzea → Cinzel → serif | Drop caps, ornament-only Eorzean glyphs |
+
+Spectral, Inter, and IM Fell English self-host via Fontsource lands with
+**ELPIS-001** (deferred). Until then the fallback chains keep pages legible.
+
+**Modular scale 1.250 (Major Third), base 16 px:**
+
+| Token | Size | Typical use |
+|---|---|---|
+| `--type-scale-0` | 12 px | Eyebrow, micro labels |
+| `--type-scale-1` | 14 px | Small UI, footer, h6 |
+| `--type-scale-2` | 16 px | Body, h5 |
+| `--type-scale-3` | 20 px | Large body, h4 |
+| `--type-scale-4` | 25 px | h3 / section heading |
+| `--type-scale-5` | 31 px | h2 / page title |
+| `--type-scale-6` | 39 px | Display medium |
+| `--type-scale-7` | 49 px | h1, display large |
+| `--type-scale-8` | 61 px | Home hero only |
+
+Plus three line-height tokens (`--lh-display`, `--lh-heading`, `--lh-body`,
+`--lh-ui`) and two letter-spacing tokens (`--ls-display`, `--ls-eyebrow`).
+
+**Utility classes** (use directly via `class=`):
+
+- `.text-display` — Cinzel 49 px, tight tracking. Hero pages, top-level callouts.
+- `.text-body-lore` — IM Fell English italic, body size. Lore quotes, journal flavour.
+- `.text-ui-mono` — Inter with tabular + lining numerals. Stat blocks, counts, timestamps.
+
+### Motion (`motion.scss`)
+
+**Easings** (named after the cosmology, not the curve):
+
+| Token | Curve | Use |
+|---|---|---|
+| `--ease-elpis`   | `cubic-bezier(0.16, 1, 0.3, 1)`     | Default — hovers, drawer slides |
+| `--ease-aether`  | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Confirmations, badge pops (overshoot) |
+| `--ease-zodiark` | `cubic-bezier(0.7, 0, 0.84, 0)`     | Modals closing, errors disappearing |
+| `--ease-tide`    | `cubic-bezier(0.45, 0, 0.55, 1)`    | Long ambient loops |
+
+**Durations:**
+
+| Token | Value | Use |
+|---|---|---|
+| `--motion-instant`   |   80 ms | Tap response, focus rings |
+| `--motion-fast`      |  160 ms | Hover lift, badge pop |
+| `--motion-base`      |  260 ms | Page-section reveal, drawer |
+| `--motion-slow`      |  420 ms | Modal open/close, stepper slide |
+| `--motion-cinematic` |  720 ms | Login-bloom, hero entrance |
+| `--motion-ambient`   | 6000 ms | Slow parallax, mote drift, glow pulse |
+
+### Reduced-motion contract
+
+`motion.scss` ends with a single `@media (prefers-reduced-motion: reduce)`
+block that:
+
+- Collapses every duration except `--motion-instant` to `--motion-instant`.
+- Sets `--motion-ambient` to **0 ms** (not 80 ms) so any consumer that wires
+  `animation-duration: var(--motion-ambient)` becomes a no-op rather than a
+  12.5 Hz flicker.
+
+The easing tokens are intentionally *not* touched — they remain valid
+expressions even at zero duration.
+
+**This is the only place reduced-motion logic lives.** Don't add per-component
+`@media (prefers-reduced-motion)` guards unless you have a specific reason
+documented in the ticket. Authoring through tokens means the guard is
+automatic.
+
+If your animation must run regardless (a layout-driven `transform` that breaks
+when zeroed), guard it explicitly and document the exception.
+
+---
+
+## Materials
+
+Five composed utility classes for recurring surface treatments. Each is a
+`class=` on the element that needs the treatment — not a mixin, not a Vue
+component.
+
+| Class | Reserved for |
+|---|---|
+| `.mat-vellum`      | Cards, profile boxes, directory tiles, calendar day cells |
+| `.mat-aetherglass` | Header, drawer, dialogs, popovers |
+| `.mat-obsidian`    | Zodiark page background only |
+| `.mat-crystal`     | Brand mark, theme toggle, primary CTA on hero, P&P dice |
+| `.mat-parchment`   | Story body, Wiki body, Character Diary cards |
+
+**Aetherglass elevation variants** mirror the §3.2 layering rule:
+
+```html
+<div class="mat-aetherglass">…</div>                  <!-- card-level (blur 14) -->
+<div class="mat-aetherglass elevation-2">…</div>      <!-- popover-level (blur 22) -->
+<div class="mat-aetherglass elevation-3">…</div>      <!-- dialog-level (blur 30, double rule) -->
+```
+
+**Safari fallback** — `materials.scss` includes a
+`@supports not (backdrop-filter)` block that swaps Aetherglass for a solid
+`--surface-pearl` / `--surface-deep` so the panel never goes transparent.
+Verified manually; do not remove.
+
+**Animations on Crystal and Obsidian** are timed off `--motion-ambient`, so
+the reduced-motion guard zeroes them automatically — they become static
+surfaces, not flickering ones.
+
+---
+
+## Do / don't
+
+### Colours
+
+```scss
+// ✅ Token reference — survives Hydaelyn ↔ Zodiark swap
+.character-bio {
+	color: var(--surface-ink);
+	background-color: var(--surface-vellum);
+	border-bottom: 1px solid var(--rule-gold-soft);
+}
+
+// ❌ Hardcoded hex — breaks dark mode, drifts over time
+.character-bio {
+	color: #2B2418;
+	background-color: #FBF6EA;
+	border-bottom: 1px solid rgba(186, 155, 91, 0.28);
+}
+```
+
+### Sizing
+
+```scss
+// ✅ Scale-aligned
+h2 { font-size: var(--type-scale-5); }
+.card { padding: var(--space-4); }
+
+// ❌ Arbitrary numbers that drift off the rhythm
+h2 { font-size: 31.5px; }
+.card { padding: 14px; }
+```
+
+### Motion
+
+```scss
+// ✅ Token-driven; reduced-motion guard fires automatically
+.menu-item {
+	transition: transform var(--motion-fast) var(--ease-elpis);
+}
+
+// ❌ Bare values; the reduced-motion guard can't reach this
+.menu-item {
+	transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+// ❌ Per-component @media reduced-motion that duplicates the global one
+@media (prefers-reduced-motion: reduce) {
+	.menu-item { transition: none; }
+}
+```
+
+### Materials
+
+```vue
+<!-- ✅ Compose a card from Vellum -->
+<q-card class="mat-vellum q-pa-md">…</q-card>
+
+<!-- ❌ Hand-rolled equivalent — drifts from the canon, no dark-mode guarantee -->
+<q-card style="background: #FBF6EA; border: 1px solid rgba(186,155,91,0.28); border-radius: 6px;">…</q-card>
+```
+
+```vue
+<!-- ✅ Aetherglass on a dialog -->
+<q-dialog>
+	<q-card class="mat-aetherglass elevation-3">…</q-card>
+</q-dialog>
+
+<!-- ❌ Custom backdrop-filter on a one-off — Safari will see no fallback -->
+<q-card style="backdrop-filter: blur(28px); background: rgba(255,255,255,0.6);">…</q-card>
+```
+
+### Theme awareness
+
+```scss
+// ✅ Token swap is automatic — Zodiark inherits the right value via :root vs body.body--dark
+.profile-card {
+	background-color: var(--surface-vellum);
+	color: var(--surface-ink);
+}
+
+// ❌ Hand-rolled dark variant — drifts the moment surface tokens shift
+.profile-card {
+	background-color: #FBF6EA;
+}
+body.body--dark .profile-card {
+	background-color: #1F1130;
+}
+```
+
+---
+
+## Adding a new token
+
+1. **Confirm it isn't already there** — `grep` `aetherium/` for the role you
+   need (e.g. "any rule colour for warning surfaces?"). Reuse before adding.
+2. **Pick the right file** — colour goes in `color.scss`, geometry in
+   `space.scss`, etc. New surface treatments are materials, not tokens.
+3. **Pick a name that describes the *role*, not the value.** `--rule-gold` is
+   right; `--colour-banana-gold` is wrong. Future themes may shift the hue;
+   the role stays.
+4. **Add Hydaelyn and Zodiark variants together** if the role is theme-aware.
+   Skip the dark block only if the value is genuinely identical across themes
+   (spacing, motion).
+5. **Verify AA contrast** if the token will sit on a text or chrome surface.
+   For body copy aim AAA.
+6. **Reference it from a real surface in the same PR.** Tokens that aren't
+   used become dead code.
+
+## Adding a new material
+
+Materials are composed utility classes — not Vue components. If a treatment
+recurs across ≥3 surfaces *and* has clear visual identity, promote it to a
+material:
+
+1. Add the rules to `materials.scss` under a `.mat-*` selector.
+2. Drive every colour, blur, shadow, and rule through tokens.
+3. Provide a Zodiark variant under `body.body--dark`.
+4. If it uses `backdrop-filter`, add a `@supports not (...)` solid fallback.
+5. If it animates ambient drift, time it off `--motion-ambient` so the
+   reduced-motion guard kills it automatically.
+6. Document its reservation here (which surfaces it's allowed on).
+
+---
+
+## Don't introduce
+
+- Tailwind, shadcn-vue, or any other CSS framework. Quasar stays.
+- Layout changes — Aetherium is *visual only*.
+- Google Fonts CDN — DSGVO blocks it. Self-host via Fontsource (ELPIS-001).
+- Per-component `@media (prefers-reduced-motion)` blocks. Use motion tokens.
+- Emojis in code or class names.
+- Direct hex / rgb / px values when a token covers the role.

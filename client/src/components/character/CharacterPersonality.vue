@@ -55,49 +55,48 @@ export default class CharacterPersonality extends Vue.with(Props) {
 </script>
 
 <style lang="scss">
-@import url($extraGoogleFonts);
-
-.character-profile__header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16px;
+// ELPIS-207 — Personality re-skin. Section h6 → Cinzel via --font-display;
+// readonly inputs lift onto a Vellum surface so the data reads as inscribed
+// rather than fading into the page chrome.
+.character-personality h6 {
+  margin: 18px 0 10px;
+  font-family: var(--font-display);
+  font-size: var(--type-scale-2);
+  letter-spacing: var(--ls-display);
+  color: var(--surface-ink);
 }
 
-.character-profile__header-title {
-  margin: 0;
-  line-height: auto;
+.character-personality h6:first-child {
+  margin-top: 0;
 }
 
-.character-profile__header-names {
-  text-align: center;
+.character-personality .q-field--readonly .q-field__control,
+.character-personality .q-field--readonly .q-field__control::before {
+  background-color: var(--surface-vellum);
 }
 
-.character-profile__header-subtitle {
-  font-family: $header-font;
-  font-size: 1.6em;
+.character-personality .q-field--readonly .q-field__control::before {
+  border: 1px solid var(--rule-gold-soft);
 }
 
-.character-profile__details td {
-  padding: 4px 8px;
+.character-personality .q-field--readonly:hover .q-field__control::before {
+  border-color: var(--rule-gold);
 }
 
-.character-profile__details tr>td:first-child {
-  font-weight: bold;
+body.body--dark .character-personality h6 {
+  color: var(--ink-luminous);
 }
 
-.character-profile__appearance-background {
-  margin-bottom: 24px;
+body.body--dark .character-personality .q-field--readonly .q-field__control,
+body.body--dark .character-personality .q-field--readonly .q-field__control::before {
+  background-color: var(--surface-lift);
 }
 
-.character-profile__appearance-background_no-header {
-  margin-top: 24px;
+body.body--dark .character-personality .q-field--readonly .q-field__control::before {
+  border-color: var(--rule-arcane-soft);
 }
 
-.character-profile__personality-box {
-  margin-bottom: 24px;
-}
-
-.character-profile__carrd-iframe {
-  border: none;
+body.body--dark .character-personality .q-field--readonly:hover .q-field__control::before {
+  border-color: var(--rule-arcane);
 }
 </style>

@@ -4,7 +4,7 @@
       <h2>{{ eventId ? 'Event bearbeiten' : 'Neues Event erstellen' }}</h2>
       <q-stepper
         v-model="step"
-        class="page-edit-event__stepper"
+        class="page-edit-event__stepper elpis-stepper"
         color="secondary"
         animated
         bordered
@@ -117,16 +117,30 @@
                     />
                     <div class="page-edit-event__select-group">
                       <div class="page-edit-event__select-title">Event-Typ *</div>
-                      <q-option-group
-                        v-model="event.eventType"
-                        :options="eventTypeOptions"
-                        type="radio"
-                        color="secondary"
-                        class="page-edit-event__options-grid"
-                        :rules="[
-                          $rules.required('Dieses Feld ist erforderlich.'),
-                        ]"
-                      />
+                      <div
+                        class="page-edit-event__type-tile-grid"
+                        role="radiogroup"
+                        aria-label="Event-Typ"
+                      >
+                        <button
+                          v-for="option in eventTypeOptions"
+                          :key="option.value"
+                          type="button"
+                          class="page-edit-event__type-tile"
+                          :class="{
+                            'page-edit-event__type-tile--active': event.eventType === option.value,
+                          }"
+                          role="radio"
+                          :aria-checked="event.eventType === option.value"
+                          @click="event.eventType = option.value"
+                        >
+                          <q-icon
+                            :name="getEventTypeIcon(option.value)"
+                            class="page-edit-event__type-tile-icon"
+                          />
+                          <span class="page-edit-event__type-tile-label">{{ option.label }}</span>
+                        </button>
+                      </div>
                     </div>
                     <div class="page-edit-event__select-group">
                       <div class="page-edit-event__select-title">Nicht jugendfrei (18+)</div>
@@ -574,6 +588,7 @@
                 label="Änderungen speichern"
                 color="primary"
                 @click="onSubmit"
+                v-elpis-save-pulse="savePulseTrigger"
               />
             </div>
           </q-stepper-navigation>
@@ -619,7 +634,7 @@ import errors from '@app/shared/errors';
 import SharedConstants from '@app/shared/SharedConstants';
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
 import { QForm } from 'quasar';
-import { EventTypeOptions } from 'src/common/event-types';
+import { EventTypeOptions, getEventTypeIcon as resolveEventTypeIcon } from 'src/common/event-types';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
 import EventAnnouncementEditor from 'components/event/EventAnnouncementEditor.vue';
 import { DateTime } from 'luxon';
@@ -723,6 +738,7 @@ export default class PageEditEvent extends Vue {
   eventBackup = new EventEditDto();
   contentNoteOptions: { label: string; value: string }[] = [];
   readonly eventTypeOptions = EventTypeOptions;
+  readonly getEventTypeIcon = resolveEventTypeIcon;
   readonly minDiscordBannerAspectRatio = SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO;
   venueOptions: VenueOption[] = [];
 
@@ -734,6 +750,7 @@ export default class PageEditEvent extends Vue {
   step = this.STEP_LOCATION;
   loaded = false;
   saving = false;
+  savePulseTrigger = 0;
 
   confirmRevert = false;
 
@@ -1575,6 +1592,7 @@ export default class PageEditEvent extends Vue {
       }
 
       this.eventBackup = new EventEditDto(this.event);
+      this.savePulseTrigger++;
 
       notifySuccess('Event gespeichert.', {
         label: 'Anschauen',
@@ -1665,6 +1683,11 @@ body.body--dark .page-edit-event {
   background: transparent;
 }
 
+// ELPIS-310 / -311 prism-rule + Crystal-facet stepper chrome was promoted
+// to the shared `.elpis-stepper` rule in app.scss by ELPIS-604. The class
+// is co-applied on the q-stepper above; this leaves only the page-local
+// margin/background rule above.
+
 .page-edit-event__accordion {
   display: grid;
   gap: 12px;
@@ -1737,6 +1760,115 @@ body.body--dark .page-edit-event {
 
 .page-edit-event__options-grid .q-option-group__option {
   margin: 0;
+}
+
+// ELPIS-312 — event-type tile selector. Each option is a Vellum tile with
+// icon + label; selected state gets gold rule + glow. Replaces the prior
+// q-option-group radio rendering.
+.page-edit-event__type-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.page-edit-event__type-tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background-color: var(--surface-vellum);
+  border: 1px solid var(--rule-gold-soft);
+  border-radius: 6px;
+  color: var(--surface-ink);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-ui);
+  font-size: var(--type-scale-1);
+  transition:
+    border-color var(--motion-fast) var(--ease-elpis),
+    box-shadow var(--motion-fast) var(--ease-elpis),
+    transform var(--motion-fast) var(--ease-elpis),
+    background-color var(--motion-fast) var(--ease-elpis);
+}
+
+.page-edit-event__type-tile:hover {
+  border-color: var(--rule-gold);
+  background-color: rgba(186, 155, 91, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 2px 8px rgba(186, 155, 91, 0.18);
+  transform: translateY(-1px);
+}
+
+.page-edit-event__type-tile:focus-visible {
+  outline: none;
+  border-color: var(--rule-gold);
+  box-shadow:
+    inset 0 0 0 1px var(--rule-gold-soft),
+    0 0 0 3px var(--glow-aether);
+}
+
+.page-edit-event__type-tile--active {
+  background-color: rgba(186, 155, 91, 0.18);
+  border-color: var(--rule-gold);
+  box-shadow:
+    inset 0 0 0 1px var(--rule-gold-soft),
+    0 0 0 2px rgba(186, 155, 91, 0.18),
+    0 4px 14px rgba(186, 155, 91, 0.22);
+}
+
+.page-edit-event__type-tile-icon {
+  font-size: 22px;
+  color: var(--rule-gold);
+  flex: 0 0 auto;
+}
+
+.page-edit-event__type-tile--active .page-edit-event__type-tile-icon {
+  color: var(--rule-gold);
+  filter: drop-shadow(0 0 8px rgba(186, 155, 91, 0.5));
+}
+
+.page-edit-event__type-tile-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+body.body--dark .page-edit-event__type-tile {
+  background-color: var(--surface-deep);
+  border-color: var(--rule-arcane-soft);
+  color: var(--ink-luminous);
+}
+
+body.body--dark .page-edit-event__type-tile:hover {
+  border-color: var(--rule-arcane);
+  background-color: rgba(107, 79, 168, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 2px 8px rgba(107, 79, 168, 0.3);
+}
+
+body.body--dark .page-edit-event__type-tile:focus-visible {
+  border-color: var(--rule-arcane);
+  box-shadow:
+    inset 0 0 0 1px var(--rule-arcane-soft),
+    0 0 0 3px var(--glow-aether-d);
+}
+
+body.body--dark .page-edit-event__type-tile--active {
+  background-color: rgba(107, 79, 168, 0.24);
+  border-color: var(--rule-arcane);
+  box-shadow:
+    inset 0 0 0 1px var(--rule-arcane-soft),
+    0 0 0 2px rgba(107, 79, 168, 0.32),
+    0 4px 14px rgba(184, 165, 255, 0.22);
+}
+
+body.body--dark .page-edit-event__type-tile-icon {
+  color: var(--glow-aether-d);
+}
+
+body.body--dark .page-edit-event__type-tile--active .page-edit-event__type-tile-icon {
+  filter: drop-shadow(0 0 8px rgba(184, 165, 255, 0.55));
 }
 
 .page-edit-event__date-time-grid {

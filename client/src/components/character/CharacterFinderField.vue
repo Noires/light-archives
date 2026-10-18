@@ -36,13 +36,16 @@
 			</div>
 		</div>
 		<div class="character-finder-field__alerts" v-if="registrationStatus">
-			<q-banner v-if="registrationStatus === CharacterRegistrationStatus.CLAIMED_BY_ANOTHER_USER" class="bg-negative text-white">
+			<q-banner v-if="registrationStatus === CharacterRegistrationStatus.CLAIMED_BY_ANOTHER_USER" class="character-finder-field__banner character-finder-field__banner--claimed">
+				<template v-slot:avatar><q-icon name="block" /></template>
 				Dieser Charakter wurde bereits von einem anderen Nutzer beansprucht.
 			</q-banner>
-			<q-banner v-else-if="registrationStatus === CharacterRegistrationStatus.ALREADY_REGISTERED" class="bg-negative text-white">
+			<q-banner v-else-if="registrationStatus === CharacterRegistrationStatus.ALREADY_REGISTERED" class="character-finder-field__banner character-finder-field__banner--already">
+				<template v-slot:avatar><q-icon name="info" /></template>
 				Du hast diesen Charakter bereits registriert.
 			</q-banner>
-			<q-banner v-else-if="registrationStatus === CharacterRegistrationStatus.RENAMED" class="bg-dark text-white">
+			<q-banner v-else-if="registrationStatus === CharacterRegistrationStatus.RENAMED" class="character-finder-field__banner character-finder-field__banner--renamed">
+				<template v-slot:avatar><q-icon name="auto_awesome" /></template>
 				<p>
 					Du hast für diesen Charakter eine Charakterumbenennung benutzt und auf <strong>Elpisgarten</strong> ein Charakterprofil unter dem alten Namen. Du <strong>kannst</strong> ein gesondertes Profil unter dem neuen Namen erstellen; allerdings wirst du nicht mehr dazu in der Lage sein den alten Charakter auf <strong>Elpisgarten</strong> mit dem neuen Namen anzupassen.
 				</p>
@@ -182,5 +185,50 @@ export default class CharacterFinderField extends Vue.with(Props) {
 
 .character-finder-field__alerts .q-banner p:last-child {
 	margin-bottom: 0;
+}
+
+// ELPIS-216 — three semantic banner states. Claimed and already-registered
+// surface as semantic-danger; renamed reads as a warning/heads-up using the
+// pearl + violet accent pairing called out in the AC.
+.character-finder-field__banner {
+	border-radius: 4px;
+	border: 1px solid transparent;
+}
+
+.character-finder-field__banner--claimed,
+.character-finder-field__banner--already {
+	background: rgba(199, 72, 79, 0.10);
+	color: var(--surface-ink);
+	border-color: var(--semantic-danger);
+}
+
+.character-finder-field__banner--claimed .q-icon,
+.character-finder-field__banner--already .q-icon {
+	color: var(--semantic-danger);
+}
+
+.character-finder-field__banner--renamed {
+	background: var(--surface-pearl);
+	color: var(--surface-ink);
+	border-color: var(--rule-arcane);
+	box-shadow: inset 4px 0 0 var(--rule-arcane);
+}
+
+.character-finder-field__banner--renamed .q-icon {
+	color: var(--rule-arcane);
+}
+
+body.body--dark .character-finder-field__banner--claimed,
+body.body--dark .character-finder-field__banner--already {
+	background: rgba(199, 72, 79, 0.18);
+	color: var(--ink-luminous);
+	border-color: var(--semantic-danger);
+}
+
+body.body--dark .character-finder-field__banner--renamed {
+	background: var(--surface-deep);
+	color: var(--ink-luminous);
+	border-color: var(--rule-arcane);
+	box-shadow: inset 4px 0 0 var(--rule-arcane);
 }
 </style>

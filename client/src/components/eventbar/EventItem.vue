@@ -145,6 +145,33 @@ export default class EventItem extends Vue.with(Props) {
 </script>
 
 <style lang="scss">
+// ELPIS-309 — sidebar EventItem hover lift + expanded-meta fade.
+// Hover: card translates Y -1 px with a soft warm tint and gold-soft hairline
+// — reads as the "this is interactive" cue without competing with the q-item
+// router-link affordance the row already provides.
+.event-item.q-item {
+  border-radius: 6px;
+  transition:
+    transform var(--motion-fast) var(--ease-elpis),
+    background-color var(--motion-fast) var(--ease-elpis),
+    box-shadow var(--motion-fast) var(--ease-elpis);
+}
+
+.event-item.q-item:hover {
+  transform: translateY(-1px);
+  background-color: rgba(186, 155, 91, 0.10);
+  box-shadow:
+    inset 0 0 0 1px var(--rule-gold-soft),
+    0 4px 12px rgba(43, 36, 24, 0.10);
+}
+
+body.body--dark .event-item.q-item:hover {
+  background-color: rgba(184, 165, 255, 0.12);
+  box-shadow:
+    inset 0 0 0 1px var(--rule-arcane-soft),
+    0 4px 14px rgba(0, 0, 0, 0.36);
+}
+
 .event-item__label_original {
   font-weight: bold;
 }
@@ -156,6 +183,22 @@ export default class EventItem extends Vue.with(Props) {
 .event-item__details {
   margin: 0 -8px;
   overflow: visible;
+  // ELPIS-309 — meta block fades in over 140 ms with 80 ms delay so the
+  // q-slide-transition's height open lands first; the meta then settles in.
+  // The keyframe runs once on mount (when v-if flips true) — q-slide-transition
+  // owns the height animation, this owns the contents' opacity + Y nudge.
+  animation: event-item-details-enter var(--motion-fast) var(--motion-instant) var(--ease-elpis) both;
+}
+
+@keyframes event-item-details-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .event-item_button-bar {
@@ -215,5 +258,19 @@ export default class EventItem extends Vue.with(Props) {
   width: 32px;
   height: 32px;
   border-radius: 8px;
+}
+
+// ELPIS-309 — reduced-motion: hover transform is suppressed (background tint
+// is preserved as the affordance), and the meta-enter animation collapses to
+// a near-instant fade via the global motion-fast → motion-instant guard.
+@media (prefers-reduced-motion: reduce) {
+  .event-item.q-item:hover {
+    transform: none;
+  }
+
+  .event-item__details {
+    animation-duration: var(--motion-instant);
+    animation-delay: 0ms;
+  }
 }
 </style>

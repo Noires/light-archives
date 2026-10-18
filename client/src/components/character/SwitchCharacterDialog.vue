@@ -1,6 +1,10 @@
 <template>
   <q-dialog ref="dialog" no-backdrop-dismiss @hide="onDialogHide">
-    <q-card class="switch-character-dialog">
+    <q-card class="switch-character-dialog mat-aetherglass elevation-3">
+      <glyph-corner size="sm" position="tl" class="switch-character-dialog__corner" />
+      <glyph-corner size="sm" position="tr" class="switch-character-dialog__corner" />
+      <glyph-corner size="sm" position="br" class="switch-character-dialog__corner" />
+      <glyph-corner size="sm" position="bl" class="switch-character-dialog__corner" />
       <h5>Charakter wechseln</h5>
       <character-name-list
         class="switch-character-dialog__character-list"
@@ -34,6 +38,7 @@ import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto'
 import { notifyError, notifySuccess } from 'src/common/notify';
 import { Options, Vue } from 'vue-class-component';
 import CharacterNameList from '../mainpage/CharacterNameList.vue';
+import GlyphCorner from '../aetherium/GlyphCorner.vue';
 import { CharacterSearchModel } from './character-search-model';
 import CharacterFinderField from './CharacterFinderField.vue';
 
@@ -46,6 +51,7 @@ interface DialogRef {
   components: {
     CharacterNameList,
     CharacterFinderField,
+    GlyphCorner,
   },
   emits: ['ok', 'hide'],
 })
@@ -147,7 +153,36 @@ export default class SwitchCharacterDialog extends Vue {
 <style lang="scss">
 .switch-character-dialog {
   width: 800px;
-  padding: 8px 24px;
+  padding: 18px 28px 12px;
+  position: relative;
+  // Aetherglass owns the surface; restate radius so the corner stamps sit on
+  // a defined edge rather than the Quasar default.
+  border-radius: 8px;
+}
+
+.switch-character-dialog__corner {
+  position: absolute;
+  z-index: 2;
+}
+
+.switch-character-dialog__corner.glyph-corner--tl { top: 6px;    left: 6px;    }
+.switch-character-dialog__corner.glyph-corner--tr { top: 6px;    right: 6px;   }
+.switch-character-dialog__corner.glyph-corner--br { bottom: 6px; right: 6px;   }
+.switch-character-dialog__corner.glyph-corner--bl { bottom: 6px; left: 6px;    }
+
+.switch-character-dialog h5 {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: var(--type-scale-4);
+  letter-spacing: var(--ls-display);
+  text-align: center;
+}
+
+.switch-character-dialog h6 {
+  margin: 12px 0 8px;
+  font-family: var(--font-display);
+  font-size: var(--type-scale-2);
+  letter-spacing: var(--ls-display);
 }
 
 .switch-character-dialog__character-list > * {
@@ -156,19 +191,38 @@ export default class SwitchCharacterDialog extends Vue {
   min-width: 200px;
 }
 
+// Gold-rule hover replaces the legacy --app-select-menu-item-hover-bg fill.
+// The hairline reads on the Aetherglass surface; alpha bumps from 0.28 → 0.6
+// on hover/focus/active per ELPIS-205's tier.
 .switch-character-dialog__character-list.character-name-list .q-item {
-  transition: background-color 0.16s ease, color 0.16s ease;
+  border-radius: 4px;
+  margin: 2px 0;
+  transition:
+    background-color var(--motion-fast) var(--ease-elpis),
+    box-shadow var(--motion-fast) var(--ease-elpis);
 }
 
 .switch-character-dialog__character-list.character-name-list .q-item:hover,
-.switch-character-dialog__character-list.character-name-list .q-item.q-manual-focusable--focused,
-.switch-character-dialog__character-list.character-name-list .q-item.character-name-list__item_active {
-  background: var(--app-select-menu-item-hover-bg);
-  color: var(--app-select-menu-item-hover);
+.switch-character-dialog__character-list.character-name-list .q-item.q-manual-focusable--focused {
+  background: rgba(186, 155, 91, 0.10);
+  box-shadow: inset 0 0 0 1px var(--rule-gold);
 }
 
 .switch-character-dialog__character-list.character-name-list .q-item.character-name-list__item_active {
+  background: rgba(186, 155, 91, 0.16);
+  box-shadow: inset 0 0 0 1px var(--rule-gold);
   font-weight: 600;
+}
+
+body.body--dark .switch-character-dialog__character-list.character-name-list .q-item:hover,
+body.body--dark .switch-character-dialog__character-list.character-name-list .q-item.q-manual-focusable--focused {
+  background: rgba(167, 139, 196, 0.12);
+  box-shadow: inset 0 0 0 1px var(--rule-arcane);
+}
+
+body.body--dark .switch-character-dialog__character-list.character-name-list .q-item.character-name-list__item_active {
+  background: rgba(167, 139, 196, 0.18);
+  box-shadow: inset 0 0 0 1px var(--rule-arcane);
 }
 
 .switch-character-dialog__add-form-buttons {

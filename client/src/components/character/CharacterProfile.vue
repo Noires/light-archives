@@ -3,14 +3,12 @@
     <banner-view :banner="character.banner" />
     <header class="character-profile__header">
       <div class="layout__filler">
-        <q-avatar round>
-          <img :src="character.avatar" />
-        </q-avatar>
+        <aetheryte-badge size="lg" shape="square" :src="character.avatar" :alt="character.name" />
       </div>
       <div class="character-profile__header-names">
-        <div v-if="character.title" class="character-profile__header-subtitle">{{ character.title }}</div>
+        <div v-if="character.title" class="character-profile__header-subtitle character-profile__header-title-text">{{ character.title }}</div>
         <h2 class="character-profile__header-title">{{ character.name }}</h2>
-        <div v-if="character.nickname" class="character-profile__header-subtitle">«{{ character.nickname }}»</div>
+        <div v-if="character.nickname" class="character-profile__header-subtitle character-profile__header-nickname">«{{ character.nickname }}»</div>
       </div>
       <div class="layout__filler"></div>
     </header>
@@ -29,10 +27,12 @@
       <character-detail label="Beziehungsstatus" :value="character.relationsshipstatus" v-if="character.relationsshipstatus" />
       <character-detail label="Freie&nbsp;Gesellschaft" :value="character.freeCompany.name" :router-link="fcLink" v-if="character.freeCompany" />
     </character-details-box>
-      <br>
-      <template v-if="character.background">
+    <template v-if="character.background">
+      <triskelion-divider class="character-profile__divider" />
+      <section class="character-profile__background mat-parchment">
         <html-viewer class="character-profile__appearance-background" :content="character.background" />
-      </template>
+      </section>
+    </template>
     <template v-if="!character.appearance && (character.combinedDescription || !character.background)">
       &nbsp;
     </template>
@@ -55,6 +55,8 @@ import { Options, prop, Vue } from 'vue-class-component';
 import BannerView from '../common/BannerView.vue';
 import HtmlViewer from '../common/HtmlViewer.vue';
 import ReportViolationSection from '../common/ReportViolationSection.vue';
+import AetheryteBadge from '../aetherium/AetheryteBadge.vue';
+import TriskelionDivider from '../aetherium/TriskelionDivider.vue';
 import CharacterDetail from './CharacterDetail.vue';
 import CharacterDetailsBox from './CharacterDetailsBox.vue';
 
@@ -70,11 +72,13 @@ class Props {
 
 @Options({
   components: {
+    AetheryteBadge,
     CharacterDetail,
     CharacterDetailsBox,
     BannerView,
     HtmlViewer,
     ReportViolationSection,
+    TriskelionDivider,
   },
 })
 export default class CharacterProfile extends Vue.with(Props) {
@@ -116,9 +120,18 @@ export default class CharacterProfile extends Vue.with(Props) {
   margin-bottom: 16px;
 }
 
+// ELPIS-204 — character header typography pass.
+// h2 name → Cinzel display @ scale-7 (49 px); the chronicled-title chrome above
+// it → Spectral italic (font-section / lore-adjacent serif); the nickname below
+// it → IM Fell English italic (font-lore) so the «» reads as an inscribed alias.
+// h2 picks up Cinzel Eorzea + scale-5 (31 px) globally — locally bumped to
+// scale-7 here only because the character page treats the name as the hero.
 .character-profile__header-title {
   margin: 0;
-  line-height: auto;
+  line-height: var(--lh-display);
+  font-family: 'Cinzel Eorzea', var(--font-display);
+  font-size: var(--type-scale-7);
+  letter-spacing: var(--ls-display);
 }
 
 .character-profile__header-names {
@@ -126,8 +139,28 @@ export default class CharacterProfile extends Vue.with(Props) {
 }
 
 .character-profile__header-subtitle {
-  font-family: $header-font;
-  font-size: 1.6em;
+  font-size: var(--type-scale-3);
+  line-height: var(--lh-heading);
+  color: var(--ink-muted);
+}
+
+.character-profile__header-title-text {
+  font-family: var(--font-section);
+  font-style: italic;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.character-profile__header-nickname {
+  font-family: var(--font-lore);
+  font-style: italic;
+  font-weight: 400;
+  margin-top: 6px;
+  letter-spacing: 0.01em;
+}
+
+body.body--dark .character-profile__header-subtitle {
+  color: rgba(236, 227, 247, 0.74); // --ink-luminous channel @ 74%
 }
 
 .character-profile__details td {
@@ -144,6 +177,22 @@ export default class CharacterProfile extends Vue.with(Props) {
 
 .character-profile__appearance-background_no-header {
   margin-top: 24px;
+}
+
+// ELPIS-203 — background prose lives on a Parchment surface, separated from
+// the details box above by a Triskelion ornament. Inner padding gives the
+// ruled-line backdrop room to breathe under typical body line-heights.
+.character-profile__divider {
+  margin: 28px auto 20px;
+}
+
+.character-profile__background {
+  padding: 24px 28px;
+  margin-bottom: 24px;
+}
+
+.character-profile__background .character-profile__appearance-background {
+  margin-bottom: 0;
 }
 
 .character-profile__personality-box {
@@ -170,9 +219,10 @@ export default class CharacterProfile extends Vue.with(Props) {
   }
 
   .character-profile__header-title {
-    line-height: 1.2;
+    line-height: 1.15;
     text-align: center;
     overflow-wrap: anywhere;
+    font-size: var(--type-scale-5); // 31 px on mobile — keep the hero readable
   }
 
   .character-profile__header-names {
@@ -180,12 +230,16 @@ export default class CharacterProfile extends Vue.with(Props) {
   }
 
   .character-profile__header-subtitle {
-    font-size: 1.25em;
-    line-height: 1.25;
+    font-size: var(--type-scale-2);
+    line-height: 1.3;
   }
 
   .character-profile__appearance-background {
     margin-bottom: 16px;
+  }
+
+  .character-profile__background {
+    padding: 18px 16px;
   }
 
   .character-profile__carrd-iframe {

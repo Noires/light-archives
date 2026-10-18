@@ -95,7 +95,7 @@
                   />
                   <q-input v-model="venue.purpose" label="Zweck" />
                   <q-input v-model="venue.status" label="Status" />
-                  <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername]], in <strong>Zweck</strong> und <strong>Status</strong> nutzen.</div>
+                  <wikilink-hint note="Wikilinks funktionieren in Zweck und Status." />
                   <q-input
                     :model-value="tags"
                     @update:model-value="onTagsChanged"
@@ -523,7 +523,7 @@
               />
               <div class="page-edit-venue__revert-submit">
                 <q-btn label="Zurücksetzen" color="secondary" @click="revert" />&nbsp;
-                <q-btn label="Änderungen speichern" type="submit" color="primary" />
+                <q-btn label="Änderungen speichern" type="submit" color="primary" v-elpis-save-pulse="savePulseTrigger" />
               </div>
             </div>
             <q-inner-loading :showing="saving" />
@@ -572,6 +572,7 @@ import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
 import CarrdEditSection from 'src/components/common/CarrdEditSection.vue';
 import CharacterSelector from 'src/components/common/CharacterSelector.vue';
+import WikilinkHint from 'src/components/common/WikilinkHint.vue';
 import WorldSelect from 'src/components/common/WorldSelect.vue';
 import AdultOnlySelector from 'src/components/event/AdultOnlySelector.vue';
 import EventIconEditSection from 'src/components/event/EventIconEditSection.vue';
@@ -630,6 +631,7 @@ async function load(params: RouteParams): Promise<{ venue: VenueDto | null; cont
     BannerEditSection,
     CarrdEditSection,
     CharacterSelector,
+    WikilinkHint,
     WorldSelect,
     AdultOnlySelector,
     EventIconEditSection,
@@ -740,6 +742,7 @@ export default class PageEditVenue extends Vue {
   preview = false;
   loaded = false;
   saving = false;
+  savePulseTrigger = 0;
 
   confirmRevert = false;
 
@@ -1189,6 +1192,8 @@ export default class PageEditVenue extends Vue {
         this.venueBackup = new VenueDto(this.venue);
         isDirty.value = false;
       }
+
+      this.savePulseTrigger++;
 
       notifySuccess('Treffpunkt gespeichert.', {
         label: 'Anschauen',

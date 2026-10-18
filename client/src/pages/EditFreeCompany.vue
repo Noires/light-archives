@@ -17,7 +17,7 @@
             <q-input v-model="fc.status" label="Status" />
             <q-input v-model="fc.areaOfOperations" label="Tätigkeitsbereich" />
             <q-input v-model="fc.recruitingOfficers" label="Rekrutierer" />
-            <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername]], in allen Feldern außer Webseite nutzen.</div>
+            <wikilink-hint note="Wikilinks funktionieren in allen Feldern außer Webseite." />
           </section>
           <h6>Description</h6>
           <html-editor v-model="fc.description" />
@@ -34,7 +34,7 @@
           <q-btn-toggle v-model="preview" :options="previewOptions" toggle-color="secondary" />
           <div class="page-edit-free-company__revert-submit">
             <q-btn label="Zurücksetzen" color="secondary" @click="onRevertClick" />&nbsp;
-            <q-btn label="Änderungen speichern" type="submit" color="primary" />
+            <q-btn label="Änderungen speichern" type="submit" color="primary" v-elpis-save-pulse="savePulseTrigger" />
           </div>
         </div>
         <q-inner-loading :showing="saving" />
@@ -65,6 +65,7 @@ import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
 import CarrdEditSection from 'src/components/common/CarrdEditSection.vue';
+import WikilinkHint from 'src/components/common/WikilinkHint.vue';
 import { useRouter } from 'src/router';
 import { useStore } from 'src/store';
 import { Options, Vue } from 'vue-class-component';
@@ -106,6 +107,7 @@ async function load(params: RouteParams): Promise<FreeCompanyDto> {
     FreeCompanyProfile,
     BannerEditSection,
     CarrdEditSection,
+    WikilinkHint,
   },
   async beforeRouteEnter(to, __, next) {
     const fc = await load(to.params);
@@ -126,6 +128,7 @@ export default class PageEditFreeCompany extends Vue {
   fcBackup = new FreeCompanyDto();
   preview = false;
   saving = false;
+  savePulseTrigger = 0;
 
   confirmRevert = false;
 
@@ -148,6 +151,7 @@ export default class PageEditFreeCompany extends Vue {
     try {
       await this.$api.freeCompanies.saveFreeCompany(this.fc);
       this.fcBackup = new FreeCompanyDto(this.fc);
+      this.savePulseTrigger++;
 
       notifySuccess('Freie Gesellschaft gespeichert.', {
         label: 'Anschauen',

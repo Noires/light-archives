@@ -2,14 +2,18 @@
   <q-dialog ref="dialog" no-backdrop-dismiss @hide="onDialogHide">
     <q-card
       ref="card"
-      class="upload-dialog q-dialog-plugin"
+      class="upload-dialog q-dialog-plugin mat-aetherglass elevation-3"
       :class="{ 'upload-dialog_dragging': dragging }"
       @dragenter.capture="onDragEnter"
       @dragover.capture="onDragOver"
       @drop.capture="onDrop"
     >
+      <glyph-corner size="sm" position="tl" class="upload-dialog__corner" />
+      <glyph-corner size="sm" position="tr" class="upload-dialog__corner" />
+      <glyph-corner size="sm" position="br" class="upload-dialog__corner" />
+      <glyph-corner size="sm" position="bl" class="upload-dialog__corner" />
       <q-stepper
-        class="upload-dialog__stepper"
+        class="upload-dialog__stepper elpis-stepper"
         v-model="step"
         color="primary"
         animated
@@ -65,7 +69,7 @@
           <step-image-details v-model="detailsModel" />
         </q-step>
       </q-stepper>
-      <q-card-actions align="right">
+      <q-card-actions class="upload-dialog__actions" align="right">
         <q-btn flat color="secondary" label="Abbrechen" @click="onCancelClick" />
         <q-btn
           v-if="canGoBack"
@@ -98,7 +102,8 @@
         @dragleave="onDragLeave"
         @drop.capture="onDrop"
       >
-        Datei hier einfügen
+        <q-icon name="cloud_upload" size="56px" class="upload-dialog__drag-icon" />
+        <span class="upload-dialog__drag-label">Datei hier einfügen</span>
       </div>
       <q-inner-loading :showing="uploading || transitioning" />
     </q-card>
@@ -118,6 +123,7 @@ import { ImageBannerCropModel } from './image-banner-crop-model';
 import { ImageDetailsModel } from './image-details-model';
 import { ImageSelectModel } from './image-select-model';
 import { ImageThumbModel } from './image-thumb-model';
+import GlyphCorner from '../aetherium/GlyphCorner.vue';
 import StepBannerCrop from './StepBannerCrop.vue';
 import StepImageDetails from './StepImageDetails.vue';
 import StepSelectImage from './StepSelectImage.vue';
@@ -159,6 +165,7 @@ const MIN_BANNER_ASPECT_RATIO = SharedConstants.MIN_BANNER_ASPECT_RATIO;
 
 @Options({
   components: {
+    GlyphCorner,
     StepBannerCrop,
     StepSelectImage,
     StepThumbnail,
@@ -505,14 +512,43 @@ export default class UploadDialog extends Vue.with(Props) {
 </script>
 
 <style lang="scss">
+// ELPIS-604 — UploadDialog wears the dialog-tier Aetherglass treatment
+// (mat-aetherglass elevation-3 on the q-card). Four GlyphCorner stamps inset
+// 8 px from each edge mark it as ornamental, matching the
+// SwitchCharacterDialog / RefreshCharacterDialog / ConfirmImageDeleteDialog
+// idiom. The q-stepper opts into the shared `.elpis-stepper` rule so the
+// active step gets the prism rule and completed dots get the Crystal facet
+// without duplicating the keyframes from EditEvent. Step transitions stay
+// owned by Quasar's `animated` prop on the q-stepper itself.
 .upload-dialog {
   width: 800px;
+  position: relative;
+  // Aetherglass owns the surface; restate radius so the corner stamps sit on
+  // a defined edge rather than the Quasar default.
+  border-radius: 8px;
 }
+
+.upload-dialog__corner {
+  position: absolute;
+  z-index: 2;
+}
+
+.upload-dialog__corner.glyph-corner--tl { top: 8px;    left: 8px;    }
+.upload-dialog__corner.glyph-corner--tr { top: 8px;    right: 8px;   }
+.upload-dialog__corner.glyph-corner--br { bottom: 8px; right: 8px;   }
+.upload-dialog__corner.glyph-corner--bl { bottom: 8px; left: 8px;    }
 
 @media (min-width: 1280px) {
   .q-dialog__inner--minimized > .upload-dialog {
     max-width: 800px;
   }
+}
+
+// Stepper rests on a transparent background so the Aetherglass below shows
+// through. The shared `.elpis-stepper` rule handles tab + dot ornament.
+.upload-dialog__stepper {
+  background: transparent;
+  box-shadow: none;
 }
 
 .upload-dialog .q-stepper--horizontal .q-stepper__step-inner {
@@ -529,35 +565,83 @@ export default class UploadDialog extends Vue.with(Props) {
 }
 
 .upload-dialog h6 {
-  font-family: $form-header-font;
-  font-size: 1.2em;
+  font-family: var(--font-display);
+  font-size: var(--type-scale-3);
+  letter-spacing: var(--ls-display);
 }
 
-.upload-dialog_dragging > * {
+// Action bar gets a top hairline gold-soft rule so it reads as a stamped
+// closing band beneath the wizard rather than a flat row of buttons.
+.upload-dialog__actions {
+  border-top: 1px solid var(--rule-gold-soft);
+  padding: 10px 16px;
+}
+
+.upload-dialog__actions .q-btn {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+}
+
+.upload-dialog_dragging > *:not(.upload-dialog__drag-overlay):not(.upload-dialog__corner) {
   visibility: hidden;
 }
 
 .upload-dialog__drag-overlay {
   visibility: visible;
   position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   z-index: 9999;
   overflow: hidden;
   display: flex;
+  flex-direction: column;
+  gap: 12px;
   align-items: center;
   justify-content: center;
-  font-size: 1.5em;
-  background: white;
-  color: #777;
-  outline: 2px dashed #aaa;
-  outline-offset: -5px;
+  border-radius: 8px;
+  background: rgba(186, 155, 91, 0.10);
+  color: var(--surface-ink);
+  outline: 2px dashed var(--rule-gold);
+  outline-offset: -10px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.45),
+    0 0 24px rgba(186, 155, 91, 0.35);
+}
+
+.upload-dialog__drag-icon {
+  color: var(--rule-gold);
+  filter: drop-shadow(0 2px 4px rgba(186, 155, 91, 0.32));
+}
+
+.upload-dialog__drag-label {
+  font-family: var(--font-ui);
+  font-size: var(--type-scale-2);
+  font-weight: 600;
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
 }
 
 .upload-dialog .q-inner-loading {
   z-index: 2;
+}
+
+body.body--dark .upload-dialog__drag-overlay {
+  background: rgba(107, 79, 168, 0.20);
+  color: var(--ink-luminous);
+  outline-color: var(--rule-arcane);
+  box-shadow:
+    inset 0 0 0 1px rgba(184, 165, 255, 0.22),
+    0 0 24px rgba(184, 165, 255, 0.40);
+}
+
+body.body--dark .upload-dialog__drag-icon {
+  color: var(--rule-arcane);
+  filter: drop-shadow(0 2px 4px rgba(184, 165, 255, 0.42));
+}
+
+body.body--dark .upload-dialog__actions {
+  border-top-color: var(--rule-arcane-soft);
 }
 </style>
 

@@ -1,13 +1,15 @@
 <template>
   <div class="venue-profile">
     <banner-view :banner="venue.banner" />
-    <header class="venue-profile__header">
-      <div class="layout__filler"></div>
+    <header class="venue-profile__header mat-aetherglass">
+      <glyph-corner size="md" position="tl" class="venue-profile__corner" />
+      <glyph-corner size="md" position="tr" class="venue-profile__corner" />
+      <glyph-corner size="md" position="br" class="venue-profile__corner" />
+      <glyph-corner size="md" position="bl" class="venue-profile__corner" />
       <div class="venue-profile__header-names">
         <h2 class="venue-profile__header-title">{{ venue.name }}</h2>
         <div class="venue-profile__header-subtitle">{{ address }}</div>
       </div>
-      <div class="layout__filler"></div>
     </header>
     <character-details-box class="venue-profile__infobox">
       <character-detail label="Welt" :value="venue.server" v-if="venue.server" />
@@ -18,7 +20,10 @@
       <character-detail label="Status" :value="venue.status" v-if="venue.status" />
     </character-details-box>
     <template v-if="venue.description">
-      <html-viewer class="venue-profile__description" :content="venue.description" />
+      <triskelion-divider class="venue-profile__divider" />
+      <section class="venue-profile__description-body mat-parchment">
+        <html-viewer class="venue-profile__description" :content="venue.description" />
+      </section>
     </template>
     <section v-if="plannedEvents.length" class="venue-profile__events">
       <h3>Geplante Events</h3>
@@ -64,6 +69,8 @@ import CharacterDetail from 'components/character/CharacterDetail.vue';
 import CharacterDetailsBox from 'components/character/CharacterDetailsBox.vue';
 import { VenueLocation } from '@app/shared/enums/venue-location.enum';
 import HtmlViewer from '../common/HtmlViewer.vue';
+import GlyphCorner from '../aetherium/GlyphCorner.vue';
+import TriskelionDivider from '../aetherium/TriskelionDivider.vue';
 
 class Props {
   venue = prop<VenueDto>({
@@ -86,6 +93,8 @@ class Props {
     CharacterDetailsBox,
     BannerView,
     HtmlViewer,
+    GlyphCorner,
+    TriskelionDivider,
   },
 })
 export default class VenueProfile extends Vue.with(Props) {
@@ -138,15 +147,37 @@ export default class VenueProfile extends Vue.with(Props) {
 <style lang="scss">
 @import url($extraGoogleFonts);
 
+// ELPIS-407: ornamental Aetherglass hero with corner-glyph stamps. Cinzel
+// display title + Spectral italic subtitle, mirroring the EventView (305) and
+// CharacterProfile (204) header idioms.
 .venue-profile__header {
+  position: relative;
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  justify-content: center;
+  padding: 22px 28px;
+  margin-bottom: 18px;
+  text-align: center;
+  border-radius: 8px;
 }
+
+.venue-profile__corner {
+  position: absolute;
+  z-index: 1;
+}
+
+.venue-profile__corner.glyph-corner--tl { top: 8px;    left: 8px;    }
+.venue-profile__corner.glyph-corner--tr { top: 8px;    right: 8px;   }
+.venue-profile__corner.glyph-corner--br { bottom: 8px; right: 8px;   }
+.venue-profile__corner.glyph-corner--bl { bottom: 8px; left: 8px;    }
 
 .venue-profile__header-title {
   margin: 0;
-  line-height: auto;
+  font-family: 'Cinzel Eorzea', var(--font-display);
+  font-size: var(--type-scale-6); // 39 px per ELPIS-407 AC
+  line-height: var(--lh-display);
+  letter-spacing: var(--ls-display);
+  color: var(--surface-ink);
 }
 
 .venue-profile__header-names {
@@ -154,8 +185,34 @@ export default class VenueProfile extends Vue.with(Props) {
 }
 
 .venue-profile__header-subtitle {
-  font-family: $header-font;
-  font-size: 1.6em;
+  margin-top: 6px;
+  font-family: var(--font-section);
+  font-style: italic;
+  font-weight: 500;
+  font-size: var(--type-scale-2);
+  color: var(--ink-muted);
+}
+
+body.body--dark .venue-profile__header-title {
+  color: var(--ink-luminous);
+}
+
+body.body--dark .venue-profile__header-subtitle {
+  color: rgba(236, 227, 247, 0.74);
+}
+
+@media screen and (max-width: 600px) {
+  .venue-profile__header {
+    padding: 18px 18px;
+  }
+
+  .venue-profile__header-title {
+    font-size: var(--type-scale-5);
+  }
+
+  .venue-profile__header-subtitle {
+    font-size: var(--type-scale-1);
+  }
 }
 
 .venue-profile__details td {
@@ -164,6 +221,29 @@ export default class VenueProfile extends Vue.with(Props) {
 
 .venue-profile__details tr > td:first-child {
   font-weight: bold;
+}
+
+// ELPIS-408: description body lifts onto Parchment with a TriskelionDivider
+// seal between the infobox and the prose. Same idiom Story / Wiki / Noticeboard
+// already use.
+.venue-profile__divider {
+  margin: 8px auto 16px;
+}
+
+.venue-profile__description-body {
+  margin-bottom: 24px;
+  padding: 28px 32px;
+  border-radius: 6px;
+}
+
+.venue-profile__description-body .venue-profile__description {
+  margin-bottom: 0;
+}
+
+@media screen and (max-width: 600px) {
+  .venue-profile__description-body {
+    padding: 20px 18px;
+  }
 }
 
 .venue-profile__description {

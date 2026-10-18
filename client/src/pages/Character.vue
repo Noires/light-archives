@@ -1,7 +1,7 @@
 <template>
 	<q-layout class="page-character-layout rounded-borders no-outline">
 		<q-drawer
-			class="border-radius-inherit"
+			class="border-radius-inherit page-character-layout__drawer mat-aetherglass"
 			v-model="drawer"
 			show-if-above
 			:mini="isMobileSidebar || miniState"
@@ -117,7 +117,7 @@
 				</q-list>
 			</q-scroll-area>
 		</q-drawer>
-		<q-page class="page-character">
+		<q-page class="page-character mat-vellum">
 			<q-page-container>
 			<template v-if="notFound">
 				<h2>Charakter konnte nicht gefunden werden.</h2>
@@ -405,5 +405,37 @@ body.body--dark .page-character-layout {
 .page-character-layout .q-item.edit-profile .q-icon,
 .page-character-layout .q-item.edit-profile .q-item-section {
 	transition: color 0.25s ease;
+}
+
+// ELPIS-201 — neutralize the global MainLayout drawer chrome for this nested
+// drawer so .mat-aetherglass paints cleanly. MainLayout's `.q-drawer--left`
+// rule uses `background:` shorthand (resetting background-color), sets a
+// 12 px blur, a hairline border, and a top-glow `::before` overlay. Those tie
+// on specificity with `.mat-aetherglass`, so the SFC source order picks the
+// winner — to be deterministic we restate Aetherglass's surface values at
+// higher specificity (.q-drawer.q-drawer--left.mat-aetherglass = 0,3,0).
+.page-character-layout .q-drawer.q-drawer--left.mat-aetherglass {
+	background-image: none;
+	background-color: rgba(245, 239, 226, 0.88);
+	border-right: none;
+	-webkit-backdrop-filter: blur(14px) saturate(1.05);
+	backdrop-filter: blur(14px) saturate(1.05);
+}
+
+body.body--dark .page-character-layout .q-drawer.q-drawer--left.mat-aetherglass {
+	background-color: rgba(21, 11, 35, 0.78);
+}
+
+.page-character-layout .q-drawer.q-drawer--left.mat-aetherglass::before {
+	display: none;
+}
+
+// Page chrome: vellum is full-bleed against the q-layout edges, so drop the
+// material's default 6 px radius and border so it reads as a panel, not a
+// card. The cream surface, noise overlay, and warm shadow stay.
+.page-character-layout .q-page.mat-vellum {
+	border-radius: 0;
+	border: none;
+	min-height: 100%;
 }
 </style>

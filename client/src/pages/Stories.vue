@@ -420,14 +420,22 @@ export default class PageStories extends Vue {
   padding: 0;
 }
 
+// ELPIS-505 — Story directory tile reads as Vellum: cream surface, hairline
+// gold rule, ornament-faced typography. Matches home activity grid + Epic 4
+// directory cards.
 .page-stories__card {
+  position: relative;
   height: 100%;
-  border-radius: 0;
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: #ffffff;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  border: 1px solid var(--rule-gold-soft);
+  background: var(--surface-vellum);
+  color: var(--surface-ink);
+  box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform var(--motion-fast) var(--ease-elpis),
+    box-shadow var(--motion-fast) var(--ease-elpis),
+    border-color var(--motion-fast) var(--ease-elpis);
   animation: page-stories-card-rise 360ms ease-out both;
 }
 
@@ -451,21 +459,25 @@ export default class PageStories extends Vue {
 .page-stories__card-type {
   align-self: flex-start;
   padding: 4px 10px;
-  border-radius: 0;
-  background: rgba(221, 180, 118, 0.2);
-  color: #6b4c21;
+  border-radius: 999px;
+  background: rgba(186, 155, 91, 0.18);
+  border: 1px solid var(--rule-gold-soft);
+  color: var(--rule-gold);
+  font-family: var(--font-ui);
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: var(--type-scale-0);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--ls-eyebrow);
 }
 
 .page-stories__card-title {
   margin: 0;
-  font-family: $header-font;
-  font-size: 1.05rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--type-scale-3);
   line-height: 1.3;
-  color: #1f2c38;
+  color: var(--surface-ink);
+  letter-spacing: var(--ls-display);
 }
 
 .page-stories__card-meta {
@@ -473,15 +485,16 @@ export default class PageStories extends Vue {
   justify-items: end;
   text-align: right;
   gap: 2px;
-  color: rgba(35, 35, 35, 0.65);
-  font-size: 0.8rem;
+  color: var(--ink-muted);
+  font-size: var(--type-scale-0);
 }
 
 .page-stories__card-excerpt {
   margin: 0;
-  color: rgba(35, 35, 35, 0.72);
-  font-size: 0.92rem;
-  line-height: 1.5;
+  color: var(--ink-muted);
+  font-family: var(--font-section);
+  font-size: var(--type-scale-1);
+  line-height: 1.55;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -490,21 +503,63 @@ export default class PageStories extends Vue {
 
 .page-stories__card-action {
   margin-top: auto;
+  font-family: var(--font-ui);
   font-weight: 600;
-  color: #1f4d64;
-  letter-spacing: 0.01em;
+  color: var(--rule-gold);
+  font-size: var(--type-scale-0);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
 }
 
 .page-stories__card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
-  border-color: rgba(221, 180, 118, 0.4);
+  box-shadow:
+    0 2px 4px rgba(43, 36, 24, 0.08),
+    0 12px 24px rgba(43, 36, 24, 0.12);
+  border-color: var(--rule-gold);
 }
 
 .page-stories__card-link:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 2px rgba(31, 77, 100, 0.3);
-  border-radius: 0;
+  box-shadow: inset 0 0 0 2px var(--rule-gold);
+  border-radius: 6px;
+}
+
+body.body--dark .page-stories__card {
+  background: var(--surface-lift);
+  color: var(--ink-luminous);
+  border-color: var(--rule-arcane-soft);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+body.body--dark .page-stories__card:hover {
+  border-color: var(--rule-arcane);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.45),
+    0 12px 24px rgba(0, 0, 0, 0.45);
+}
+
+body.body--dark .page-stories__card-title {
+  color: var(--ink-luminous);
+}
+
+body.body--dark .page-stories__card-meta,
+body.body--dark .page-stories__card-excerpt {
+  color: rgba(236, 227, 247, 0.74);
+}
+
+body.body--dark .page-stories__card-type {
+  background: rgba(193, 155, 255, 0.16);
+  border-color: var(--rule-arcane-soft);
+  color: var(--glow-aether-d);
+}
+
+body.body--dark .page-stories__card-action {
+  color: var(--glow-aether-d);
+}
+
+body.body--dark .page-stories__card-link:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--rule-arcane);
 }
 
 .page-stories__empty {

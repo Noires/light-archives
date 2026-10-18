@@ -1,6 +1,6 @@
 <template>
   <q-page class="page-event-calendar">
-    <header class="page-event-calendar__header">
+    <header class="page-event-calendar__header mat-aetherglass">
       <div>
         <h2>Eventkalender</h2>
         <transition name="page-event-calendar__subtitle" mode="out-in">
@@ -11,7 +11,7 @@
         <q-btn-toggle
           v-model="viewMode"
           :options="viewOptions"
-          toggle-color="primary"
+          toggle-color="secondary"
           unelevated
         />
       </div>
@@ -69,7 +69,10 @@
               <template v-slot:day="{ scope: { timestamp } }">
                 <div
                   class="page-event-calendar__day"
-                  :class="{ 'page-event-calendar__day_selected': isSelected(timestamp.date) }"
+                  :class="{
+                    'page-event-calendar__day_selected': isSelected(timestamp.date),
+                    'page-event-calendar__day--today': isToday(timestamp.date),
+                  }"
                   @click="selectDate(timestamp.date)"
                 >
                   <div class="page-event-calendar__day-icons">
@@ -533,6 +536,11 @@ export default class PageEventCalendar extends Vue {
     return this.selectedDate === dateStr;
   }
 
+  isToday(dateStr: string) {
+    const today = DateTime.now().setZone(SharedConstants.FFXIV_SERVER_TIMEZONE).toISODate();
+    return dateStr === today;
+  }
+
   dayIconEvents(dateStr: string) {
     const events = this.eventMap[dateStr] || [];
     return events.slice(0, 3);
@@ -806,6 +814,9 @@ export default class PageEventCalendar extends Vue {
   letter-spacing: 0.02em;
 }
 
+// ELPIS-301: header is now Aetherglass (.mat-aetherglass on the element).
+// We restate padding / layout here but drop the legacy hardcoded background,
+// border-color, and box-shadow — Aetherglass owns those.
 .page-event-calendar__header {
   display: flex;
   align-items: flex-end;
@@ -813,11 +824,15 @@ export default class PageEventCalendar extends Vue {
   gap: 16px;
   margin-bottom: 18px;
   padding: 20px 22px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
   position: relative;
   z-index: 1;
+}
+
+// Defensive override: the .page-event-calendar parent paints a full-bleed
+// gradient + radial wash via ::before. Restate Aetherglass radius so the
+// header doesn't pick up the page's 30 px corner-clip on certain breakpoints.
+.page-event-calendar__header.mat-aetherglass {
+  border-radius: 8px;
 }
 
 .page-event-calendar__subtitle {
@@ -826,14 +841,9 @@ export default class PageEventCalendar extends Vue {
   color: rgba(35, 35, 35, 0.7);
 }
 
-.page-event-calendar__view-toggle .q-btn {
-  text-transform: none;
-  border-radius: 0;
-}
-
-.page-event-calendar__view-toggle .q-btn:hover {
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
-}
+// ELPIS-304: legacy `.page-event-calendar__view-toggle .q-btn` rules removed.
+// The Crystal-faceted treatment now flows from the shared rule in app.scss
+// (the same one that paints `.page-edit-character__button-bar` toggles).
 
 .page-event-calendar__navbar {
   display: flex;
@@ -921,12 +931,17 @@ export default class PageEventCalendar extends Vue {
   height: 100%;
 }
 
+// ELPIS-301: weekday header row gets a soft gold tint that reads on Vellum.
 .page-event-calendar .q-calendar-month__head {
-  background: rgba(221, 180, 118, 0.08);
+  background: rgba(186, 155, 91, 0.10);
+  border-bottom: 1px solid var(--rule-gold-soft);
 }
 
+// Day cells adopt Vellum: cream surface, hairline gold rule, warm shadow on
+// hover. The shadow is on the inner .page-event-calendar__day so the cell can
+// lift independently of the calendar grid.
 .page-event-calendar .q-calendar-month__day {
-  background: rgba(255, 255, 255, 0.35);
+  background: var(--surface-vellum);
 }
 
 .page-event-calendar__day {
@@ -935,21 +950,55 @@ export default class PageEventCalendar extends Vue {
   cursor: pointer;
   position: relative;
   border: 1px solid transparent;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background-color var(--motion-fast) var(--ease-elpis),
+    border-color var(--motion-fast) var(--ease-elpis),
+    transform var(--motion-fast) var(--ease-elpis),
+    box-shadow var(--motion-fast) var(--ease-elpis);
 }
 
 .page-event-calendar__day:hover {
-  background: rgba(221, 180, 118, 0.12);
-  border-color: rgba(221, 180, 118, 0.35);
+  background-color: rgba(186, 155, 91, 0.12);
+  border-color: var(--rule-gold-soft);
   transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 14px rgba(43, 36, 24, 0.12);
 }
 
 .page-event-calendar__day_selected {
-  background: rgba(22, 98, 149, 0.18);
-  border-color: transparent;
-  box-shadow: 0 10px 22px rgba(22, 98, 149, 0.18);
+  background-color: rgba(186, 155, 91, 0.22);
+  border-color: var(--rule-gold);
+  box-shadow:
+    inset 0 0 0 1px var(--rule-gold-soft),
+    0 10px 22px rgba(186, 155, 91, 0.20);
   animation: page-event-calendar-select 260ms ease-out;
+}
+
+// ELPIS-302: today cell wears an Aetheryte motif behind the day number.
+// The motif is a soft hexagonal halo + crystal silhouette painted via a
+// background-image SVG data URL. Decorative; sits behind the icons (z 0).
+// On Hydaelyn the halo is gold; on Zodiark we re-tint via the dark variant.
+.page-event-calendar__day--today {
+  background-color: rgba(186, 155, 91, 0.14);
+  border-color: var(--rule-gold);
+  box-shadow: inset 0 0 0 1px var(--rule-gold-soft);
+}
+
+.page-event-calendar__day--today::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='none' stroke='%23BA9B5B' stroke-width='1.4'><circle cx='32' cy='32' r='22' opacity='0.18' fill='%23BA9B5B'/><path d='M32 12 L46 22 L46 42 L32 52 L18 42 L18 22 Z' opacity='0.55'/><path d='M32 18 L40 24 L40 38 L32 44 L24 38 L24 24 Z' opacity='0.7'/><line x1='32' y1='12' x2='32' y2='52' opacity='0.5'/><line x1='18' y1='22' x2='46' y2='42' opacity='0.4'/><line x1='46' y1='22' x2='18' y2='42' opacity='0.4'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 56% auto;
+  opacity: 0.55;
+  z-index: 0;
+}
+
+.page-event-calendar__day--today > * {
+  position: relative;
+  z-index: 1;
 }
 
 .page-event-calendar__day-icons {
@@ -959,6 +1008,11 @@ export default class PageEventCalendar extends Vue {
   flex-wrap: wrap;
 }
 
+// ELPIS-303 — calendar day icon hover lift. The icon translates 2 px up,
+// gains a 1 px gold-soft ring + warm drop on hover; transitions ride
+// `--motion-fast` so the global reduced-motion guard zeroes them. Tooltip
+// behaviour preserved (q-tooltip is a child element, not a hover affordance
+// on the wrapper).
 .page-event-calendar__day-icon {
   width: 20px;
   height: 20px;
@@ -967,6 +1021,19 @@ export default class PageEventCalendar extends Vue {
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition:
+    transform var(--motion-fast) var(--ease-elpis),
+    box-shadow var(--motion-fast) var(--ease-elpis),
+    background-color var(--motion-fast) var(--ease-elpis);
+}
+
+.page-event-calendar__day-icon:hover {
+  transform: translateY(-2px);
+  background: rgba(186, 155, 91, 0.18);
+  box-shadow:
+    0 0 0 1px var(--rule-gold-soft),
+    0 6px 12px rgba(186, 155, 91, 0.32);
 }
 
 .page-event-calendar__day-icon-img {
@@ -1251,7 +1318,9 @@ body.body--dark .page-event-calendar::before {
     radial-gradient(circle at 80% 0%, rgba(90, 125, 166, 0.16), transparent 50%);
 }
 
-body.body--dark .page-event-calendar__header,
+// Header is now Aetherglass and owns its own dark-mode chrome; do NOT restate
+// background / border / shadow here. Navbar / calendar / sidebar still live on
+// the legacy chrome until their own tickets land.
 body.body--dark .page-event-calendar__navbar,
 body.body--dark .page-event-calendar__calendar,
 body.body--dark .page-event-calendar__sidebar {
@@ -1308,25 +1377,49 @@ body.body--dark .page-event-calendar__filters .text-primary {
 }
 
 body.body--dark .page-event-calendar__day:hover {
-  background: rgba(141, 181, 223, 0.16);
-  border-color: rgba(141, 181, 223, 0.36);
+  background-color: rgba(107, 79, 168, 0.20);
+  border-color: var(--rule-arcane-soft);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
 }
 
 body.body--dark .page-event-calendar .q-calendar-month__head {
-  background: rgba(141, 181, 223, 0.12);
+  background: rgba(107, 79, 168, 0.18);
+  border-bottom-color: var(--rule-arcane-soft);
 }
 
 body.body--dark .page-event-calendar .q-calendar-month__day {
-  background: rgba(12, 18, 27, 0.5);
+  background: var(--surface-lift);
 }
 
 body.body--dark .page-event-calendar__day_selected {
-  background: rgba(90, 125, 166, 0.3);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+  background-color: rgba(107, 79, 168, 0.36);
+  border-color: var(--rule-arcane);
+  box-shadow:
+    inset 0 0 0 1px var(--rule-arcane-soft),
+    0 10px 22px rgba(0, 0, 0, 0.4);
+}
+
+body.body--dark .page-event-calendar__day--today {
+  background-color: rgba(107, 79, 168, 0.24);
+  border-color: var(--rule-arcane);
+  box-shadow: inset 0 0 0 1px var(--rule-arcane-soft);
+}
+
+// Re-stroke the Aetheryte motif in arcane violet on Zodiark.
+body.body--dark .page-event-calendar__day--today::before {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='none' stroke='%23B8A5FF' stroke-width='1.4'><circle cx='32' cy='32' r='22' opacity='0.20' fill='%236B4FA8'/><path d='M32 12 L46 22 L46 42 L32 52 L18 42 L18 22 Z' opacity='0.6'/><path d='M32 18 L40 24 L40 38 L32 44 L24 38 L24 24 Z' opacity='0.78'/><line x1='32' y1='12' x2='32' y2='52' opacity='0.55'/><line x1='18' y1='22' x2='46' y2='42' opacity='0.42'/><line x1='46' y1='22' x2='18' y2='42' opacity='0.42'/></svg>");
+  opacity: 0.65;
 }
 
 body.body--dark .page-event-calendar__day-icon {
   background: rgba(141, 181, 223, 0.2);
+}
+
+body.body--dark .page-event-calendar__day-icon:hover {
+  background: rgba(184, 165, 255, 0.22);
+  box-shadow:
+    0 0 0 1px var(--rule-arcane-soft),
+    0 6px 12px rgba(184, 165, 255, 0.38);
 }
 
 body.body--dark .page-event-calendar__event-card,

@@ -2,7 +2,7 @@
   <div class="event-view">
     <banner-view :banner="event.banner" />
 
-    <header class="event-view__header">
+    <header class="event-view__header mat-aetherglass">
       <div class="event-view__icon">
         <q-img
           v-if="event.icon"
@@ -306,20 +306,29 @@ export default class EventView extends Vue.with(Props) {
 <style lang="scss">
 @import url($extraGoogleFonts);
 
+// ELPIS-305: hero header is now Aetherglass (.mat-aetherglass on the element).
+// We restate padding so the inset gold rule frames the icon + title cleanly.
 .event-view__header {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   margin-bottom: 16px;
+  padding: 16px 18px;
 }
 
+// ELPIS-305: 50x50 event icon refinement. Stronger gold ring, soft inset
+// highlight, warm drop-shadow keyed off Aetherium tokens. Border-radius keeps
+// the existing 12 px rounded square (looks like a stamped tile, not a circle).
 .event-view__icon {
   width: 50px;
   height: 50px;
   border-radius: 12px;
-  background: rgba(221, 180, 118, 0.18);
-  border: 1px solid rgba(221, 180, 118, 0.35);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  background: rgba(186, 155, 91, 0.14);
+  border: 1px solid var(--rule-gold);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.18),
+    0 4px 12px rgba(43, 36, 24, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -329,7 +338,7 @@ export default class EventView extends Vue.with(Props) {
 
 .event-view__icon .q-icon {
   font-size: 28px;
-  color: rgba(35, 35, 35, 0.65);
+  color: var(--rule-gold);
 }
 
 .event-view__icon-img {
@@ -342,24 +351,31 @@ export default class EventView extends Vue.with(Props) {
   margin-bottom: 6px;
 }
 
+// ELPIS-305: subtitle in Spectral (--font-section). Time + type labels share
+// the same row; the type pill keeps its eyebrow styling.
 .event-view__subtitle {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  align-items: center;
-  color: rgba(35, 35, 35, 0.7);
-  font-weight: 600;
+  align-items: baseline;
+  color: var(--ink-muted);
+  font-family: var(--font-section);
+  font-weight: 500;
 }
 
 .event-view__time {
-  font-size: 0.95rem;
+  font-size: var(--type-scale-2);
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .event-view__type {
-  font-size: 0.9rem;
+  font-family: var(--font-ui);
+  font-size: var(--type-scale-0);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(35, 35, 35, 0.55);
+  letter-spacing: var(--ls-eyebrow);
+  color: var(--ink-muted);
 }
 
 .event-view__meta {
@@ -377,7 +393,7 @@ export default class EventView extends Vue.with(Props) {
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  color: rgba(35, 35, 35, 0.75);
+  color: var(--surface-ink);
 }
 
 .event-view__meta-body {
@@ -385,15 +401,23 @@ export default class EventView extends Vue.with(Props) {
   gap: 2px;
 }
 
+// ELPIS-306: labels in Inter 500 with eyebrow letter-spacing; values in Spectral
+// 500 with tabular numerals so dates / times line up across rows.
 .event-view__meta-label {
+  font-family: var(--font-ui);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 0.75rem;
-  color: rgba(35, 35, 35, 0.55);
+  letter-spacing: var(--ls-eyebrow);
+  font-size: var(--type-scale-0);
+  color: var(--ink-muted);
 }
 
 .event-view__meta-value {
-  font-weight: 600;
+  font-family: var(--font-section);
+  font-weight: 500;
+  font-size: var(--type-scale-2);
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .event-view__warnings {
@@ -463,6 +487,32 @@ export default class EventView extends Vue.with(Props) {
 
 .event-view__details {
   margin-bottom: 24px;
+}
+
+// Zodiark: re-tint the hero icon ring and refresh subtitle ink. Aetherglass
+// owns the header surface itself via its body--dark variant.
+body.body--dark .event-view__icon {
+  background: rgba(107, 79, 168, 0.20);
+  border-color: var(--rule-arcane);
+  box-shadow:
+    inset 0 1px 0 rgba(184, 165, 255, 0.30),
+    inset 0 0 0 2px rgba(184, 165, 255, 0.10),
+    0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+body.body--dark .event-view__icon .q-icon {
+  color: var(--glow-aether-d);
+}
+
+body.body--dark .event-view__subtitle,
+body.body--dark .event-view__type,
+body.body--dark .event-view__meta-label {
+  color: rgba(236, 227, 247, 0.74);
+}
+
+body.body--dark .event-view__meta-row,
+body.body--dark .event-view__meta-value {
+  color: var(--ink-luminous);
 }
 
 @media screen and (max-width: $breakpoint-sm) {
