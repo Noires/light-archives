@@ -245,6 +245,10 @@
         </div>
 
         <div class="page-events__card">
+          <recurring-events-card :events="upcomingEvents" />
+        </div>
+
+        <div class="page-events__card">
           <h2 class="page-events__card-title">Nie wieder verpassen</h2>
           <p class="page-events__card-text">
             Jede Eventseite hat einen Knopf „In Kalender (.ics)“, damit landet der Termin direkt in deinem Kalender.
@@ -287,6 +291,7 @@ import EventCard from 'components/vision/EventCard.vue';
 import EmptyState from 'components/vision/EmptyState.vue';
 import type { EventCardEvent, SectionTab } from 'components/vision/types';
 import EventMiniCalendar from 'components/event/EventMiniCalendar.vue';
+import RecurringEventsCard from 'components/event/RecurringEventsCard.vue';
 import {
   SERVER_ZONE,
   countLabel,
@@ -364,6 +369,7 @@ function sameMonthParams(to: RouteLocationNormalized, from: RouteLocationNormali
     EventCard,
     EmptyState,
     EventMiniCalendar,
+    RecurringEventsCard,
   },
   async beforeRouteEnter(to, _, next) {
     const { date, events } = await load(to.params);
