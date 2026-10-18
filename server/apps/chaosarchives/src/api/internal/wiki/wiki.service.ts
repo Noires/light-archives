@@ -39,7 +39,8 @@ export class WikiService {
       .select(['wp', 'character.id', 'character.name', 'user.id', 'server.name'])
       .getOne();
 
-    if (!wikiPage) {
+    // ER2-810: drafts are only visible to their owner
+    if (!wikiPage || (wikiPage.published === false && !(user && wikiPage.owner.user.id === user.id))) {
       throw new NotFoundException('Wiki page not found');
     }
 
@@ -56,6 +57,7 @@ export class WikiService {
       content: wikiPage.content,
       createdAt: wikiPage.createdAt!.getTime(),
       editPermission: wikiPage.editPermission,
+      published: wikiPage.published,
     });
   }
 
@@ -101,6 +103,7 @@ export class WikiService {
         title: wikiPageDto.title,
         content: html.sanitize(wikiPageDto.content),
         editPermission: EditPermission.ME,
+        published: wikiPageDto.published ?? true,
       });
 
       return wikiPageRepo.save(wikiPage);
@@ -133,6 +136,10 @@ export class WikiService {
         title: wikiPageDto.title,
         content: html.sanitize(wikiPageDto.content),
       });
+
+      if (wikiPageDto.published !== undefined) {
+        wikiPage.published = wikiPageDto.published;
+      }
 
       await wikiPageRepo.save(wikiPage);
     });

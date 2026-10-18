@@ -37,7 +37,10 @@ export class StoriesService {
       .select(['story', 'character.id', 'character.name', 'user.id', 'server.name', 'notes.name'])
       .getOne();
 
-    if (!story) {
+    const mine = !!story && !!user && story.owner.user.id === user.id;
+
+    // ER2-810: drafts are only visible to their owner
+    if (!story || (story.published === false && !mine)) {
       throw new NotFoundException('Story not found');
     }
 
@@ -48,20 +51,28 @@ export class StoriesService {
       .select('tag')
       .getMany();
 
-    const seriesCount = story.seriesTitle
-      ? await this.storyRepo
+    let seriesCount: number | undefined;
+
+    if (story.seriesTitle) {
+      const seriesQuery = this.storyRepo
         .createQueryBuilder('story')
         .where('story.ownerId = :ownerId', { ownerId: story.owner.id })
-        .andWhere('story.seriesTitle = :seriesTitle', { seriesTitle: story.seriesTitle })
-        .getCount()
-      : undefined;
+        .andWhere('story.seriesTitle = :seriesTitle', { seriesTitle: story.seriesTitle });
+
+      if (!mine) {
+        seriesQuery.andWhere('story.published = :published', { published: true });
+      }
+
+      seriesCount = await seriesQuery.getCount();
+    }
 
     return new StoryDto({
       seriesTitle: story.seriesTitle,
       seriesIndex: story.seriesIndex,
       seriesCount,
+      published: story.published,
       id: story.id,
-      mine: user ? story.owner.user.id === user.id : false,
+      mine,
       author: story.owner.name,
       authorServer: story.owner.server.name,
       title: story.title,
@@ -113,6 +124,7 @@ export class StoriesService {
         type: storyDto.type,
         seriesTitle: this.normalizeSeriesTitle(storyDto.seriesTitle),
         seriesIndex: storyDto.seriesIndex ?? null,
+        published: storyDto.published ?? true,
       });
 
       story.tags = storyDto.tags.filter(tag => tag !== '').map(
@@ -166,6 +178,10 @@ export class StoriesService {
 
       if (storyDto.seriesIndex !== undefined) {
         story.seriesIndex = storyDto.seriesIndex ?? null;
+      }
+
+      if (storyDto.published !== undefined) {
+        story.published = storyDto.published;
       }
 
       if (storyDto.tags.length > 0) {
@@ -230,14 +246,23 @@ export class StoriesService {
     });
   }
 
-  async getStoryList(filter: StoryFilterDto): Promise<PagingResultDto<StorySummaryDto>> {
+  async getStoryList(filter: StoryFilterDto, user?: UserInfo): Promise<PagingResultDto<StorySummaryDto>> {
     const query = this.storyRepo
       .createQueryBuilder('story')
       .innerJoinAndSelect('story.owner', 'character')
       .orderBy('story.createdAt', 'DESC')
-      .select(['story.id', 'character.name', 'story.title', 'story.content', 'story.createdAt', 'story.type'])
+      .select(['story.id', 'character.name', 'story.title', 'story.content', 'story.createdAt', 'story.type', 'story.published'])
       .offset(filter.offset)
       .limit(filter.limit);
+
+    // ER2-810: drafts only for their owner
+    if (user) {
+      query
+        .innerJoin('character.user', 'ownerUser')
+        .andWhere('(story.published = :published OR ownerUser.id = :userId)', { published: true, userId: user.id });
+    } else {
+      query.andWhere('story.published = :published', { published: true });
+    }
 
       if (filter.searchQuery) {
         query.andWhere('(story.title LIKE :searchQuery OR character.name LIKE :searchQuery)', {
@@ -275,6 +300,7 @@ export class StoriesService {
         createdAt: story.createdAt!.getTime(),
         type: story.type,
         excerpt: this.buildExcerpt(story.content || ''),
+        published: story.published,
       }))
     };
   }
@@ -284,28 +310,37 @@ export class StoriesService {
     return trimmed.length > 0 ? trimmed : null;
   }
 
-  async getStorySeries(id: number): Promise<StorySeriesDto> {
+  async getStorySeries(id: number, user?: UserInfo): Promise<StorySeriesDto> {
     const story = await this.storyRepo
       .createQueryBuilder('story')
       .innerJoinAndSelect('story.owner', 'character')
       .innerJoinAndSelect('character.server', 'server')
+      .innerJoinAndSelect('character.user', 'user')
       .where('story.id = :id', { id })
       .select(['story.id', 'story.title', 'story.seriesTitle', 'story.seriesIndex', 'story.createdAt',
-        'character.id', 'character.name', 'server.name'])
+        'story.published', 'character.id', 'character.name', 'server.name', 'user.id'])
       .getOne();
+    const mine = !!story && !!user && story.owner.user.id === user.id;
 
-    if (!story) {
+    if (!story || (story.published === false && !mine)) {
       throw new NotFoundException('Story not found');
     }
 
-    const parts = story.seriesTitle
-      ? await this.storyRepo
+    let parts: Story[] = [story];
+
+    if (story.seriesTitle) {
+      const partsQuery = this.storyRepo
         .createQueryBuilder('story')
         .where('story.ownerId = :ownerId', { ownerId: story.owner.id })
         .andWhere('story.seriesTitle = :seriesTitle', { seriesTitle: story.seriesTitle })
-        .select(['story.id', 'story.title', 'story.seriesIndex', 'story.createdAt'])
-        .getMany()
-      : [story];
+        .select(['story.id', 'story.title', 'story.seriesIndex', 'story.createdAt']);
+
+      if (!mine) {
+        partsQuery.andWhere('story.published = :published', { published: true });
+      }
+
+      parts = await partsQuery.getMany();
+    }
 
     // Parts with an index first (ascending), then by creation date
     parts.sort((a, b) => {

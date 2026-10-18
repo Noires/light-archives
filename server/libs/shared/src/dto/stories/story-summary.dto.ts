@@ -7,4 +7,6 @@ export interface StorySummaryDto {
 	createdAt: number;
 	type: StoryType;
 	excerpt?: string;
+	// ER2-810 (optional)
+	published?: boolean;
 }

@@ -110,7 +110,7 @@ export class CommunitiesService {
     const query = this.communityRepo
       .createQueryBuilder('community')
       .orderBy(orderByDate ? { 'community.foundedAt': 'DESC' } : { 'community.name': 'ASC' })
-      .select(['community.id', 'community.name', 'community.goal']);
+      .select(['community.id', 'community.name', 'community.goal', 'community.recruiting']);
 
     if (filter.limit) {
       query.limit(filter.limit);
@@ -125,6 +125,7 @@ export class CommunitiesService {
       id: community.id,
       name: community.name,
       goal: community.goal,
+      recruiting: community.recruiting ?? null,
     };
   }
 
@@ -184,6 +185,7 @@ export class CommunitiesService {
       discord: community.discord,
       status: community.status,
       recruitingOfficers: community.recruitingOfficers,
+      recruiting: community.recruiting ?? null,
       carrdProfile: community.carrdProfile,
       tags: community.tags.map((tag) => tag.name),
       banner: !banner
@@ -276,6 +278,9 @@ export class CommunitiesService {
     community.goal = communityDto.goal;
     community.status = communityDto.status;
     community.recruitingOfficers = communityDto.recruitingOfficers;
+    if (communityDto.recruiting !== undefined) {
+      community.recruiting = communityDto.recruiting;
+    }
     community.carrdProfile = checkCarrdProfile(communityDto.carrdProfile, user);
 
     // Validate founding date

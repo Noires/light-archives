@@ -27,8 +27,9 @@ export class StoriesController {
 	}
 
 	@Get(':id/series')
-	async getStorySeries(@Param('id', ParseIntPipe) id: number): Promise<StorySeriesDto> {
-		return this.storiesService.getStorySeries(id);
+	@UseGuards(OptionalJwtAuthGuard)
+	async getStorySeries(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: UserInfo): Promise<StorySeriesDto> {
+		return this.storiesService.getStorySeries(id, user);
 	}
 
 	@Get(':id')
@@ -65,7 +66,8 @@ export class StoriesController {
 	}
 
 	@Get()
-	async getStoryList(@Query() filter: StoryFilterDto): Promise<PagingResultDto<StorySummaryDto>> {
-		return this.storiesService.getStoryList(filter);
+	@UseGuards(OptionalJwtAuthGuard)
+	async getStoryList(@Query() filter: StoryFilterDto, @CurrentUser() user?: UserInfo): Promise<PagingResultDto<StorySummaryDto>> {
+		return this.storiesService.getStoryList(filter, user);
 	}
 }

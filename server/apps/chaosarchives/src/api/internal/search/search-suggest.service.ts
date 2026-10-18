@@ -143,7 +143,8 @@ export class SearchSuggestService {
       this.storyRepo
         .createQueryBuilder('s')
         .innerJoin('s.owner', 'owner')
-        .select('s.id', 'id').addSelect('s.title', 'title').addSelect('owner.name', 'author'),
+        .select('s.id', 'id').addSelect('s.title', 'title').addSelect('owner.name', 'author')
+        .where('s.published = :published', { published: true }),
       's.title',
       params,
     ).getRawMany<{ id: number; title: string; author: string }>();
@@ -160,7 +161,8 @@ export class SearchSuggestService {
     const rows = await this.matchName(
       this.wikiPageRepo
         .createQueryBuilder('w')
-        .select('w.id', 'id').addSelect('w.title', 'title'),
+        .select('w.id', 'id').addSelect('w.title', 'title')
+        .where('w.published = :published', { published: true }),
       'w.title',
       params,
     ).getRawMany<{ id: number; title: string }>();

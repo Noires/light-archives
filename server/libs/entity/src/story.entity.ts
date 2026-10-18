@@ -61,4 +61,11 @@ export class Story extends BasicEntity {
     nullable: true,
   })
   seriesIndex: number | null;
+
+  // ER2-810: unpublished (draft) items are hidden from public lists, feeds and search
+  @Column({
+    nullable: false,
+    default: true,
+  })
+  published: boolean;
 }

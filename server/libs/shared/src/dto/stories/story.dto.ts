@@ -59,6 +59,11 @@ export class StoryDto {
   @IsOptional()
   seriesIndex?: number | null;
 
+  // ER2-810: draft flag. Defaults to true on create; omit to keep on edit.
+  @IsBoolean()
+  @IsOptional()
+  published?: boolean;
+
   // Read only: number of visible parts in the series
   @IsOptional()
   seriesCount?: number;

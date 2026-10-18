@@ -32,6 +32,12 @@
             @update:model-value="onTagsChanged"
             label="Schlagworte (mit Komma getrennt)"
           />
+          <!-- ER2-810: draft flag -->
+          <q-toggle
+            :model-value="story.published !== false"
+            @update:model-value="story.published = $event"
+            label="Veröffentlicht (sonst nur für dich sichtbar)"
+          />
           <!-- ER2-808: story series -->
           <div class="page-edit-story__series">
             <q-input

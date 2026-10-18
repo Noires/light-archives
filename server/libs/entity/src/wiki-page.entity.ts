@@ -35,4 +35,11 @@ export class WikiPage extends BasicEntity {
     default: EditPermission.ME,
   })
   editPermission: EditPermission;
+
+  // ER2-810: unpublished (draft) items are hidden from public lists, feeds and search
+  @Column({
+    nullable: false,
+    default: true,
+  })
+  published: boolean;
 }

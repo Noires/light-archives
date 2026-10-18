@@ -14,7 +14,8 @@ export default class StoriesAPI {
   }
 
   async getStories(filter?: StoryFilterDto): Promise<PagingResultDto<StorySummaryDto>> {
-    return this.transport.get<PagingResultDto<StorySummaryDto>>('', filter as QueryParams);
+    // Token optional: owners also get their own unpublished stories (ER2-810)
+    return this.transport.tokenGet<PagingResultDto<StorySummaryDto>>('', filter as QueryParams);
   }
 
   async getStory(id: number): Promise<StoryDto> {
@@ -35,7 +36,7 @@ export default class StoriesAPI {
 
   /** ER2-808: ordered parts of the story's series (same seriesTitle and author). */
   async getStorySeries(id: number): Promise<StorySeriesDto> {
-    return this.transport.get<StorySeriesDto>(`${id}/series`);
+    return this.transport.tokenGet<StorySeriesDto>(`${id}/series`);
   }
 
   async getTags(): Promise<string[]> {

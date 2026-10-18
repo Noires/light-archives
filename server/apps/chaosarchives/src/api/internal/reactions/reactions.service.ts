@@ -174,7 +174,7 @@ export class ReactionsService {
     let exists = false;
 
     if (targetType === ReactionTargetType.STORY) {
-      exists = !!(await this.storyRepo.findOne({ where: { id: targetId }, select: ['id'] }));
+      exists = !!(await this.storyRepo.findOne({ where: { id: targetId, published: true }, select: ['id'] }));
     } else if (targetType === ReactionTargetType.IMAGE) {
       const image = await this.imageRepo.findOne({ where: { id: targetId }, select: ['id', 'category'] });
       exists = !!image && image.category !== ImageCategory.UNLISTED;

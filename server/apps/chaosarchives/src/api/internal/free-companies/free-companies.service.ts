@@ -187,7 +187,7 @@ export class FreeCompaniesService {
       .where('fc.claimedAt IS NOT NULL')
       .orderBy('fc.name', 'ASC')
       .innerJoinAndSelect('fc.server', 'server')
-      .select(['fc.id', 'fc.name', 'fc.crest', 'fc.goal', 'server.name']);
+      .select(['fc.id', 'fc.name', 'fc.crest', 'fc.goal', 'fc.recruiting', 'server.name']);
 
     const fcs = await query.getMany();
 
@@ -196,6 +196,7 @@ export class FreeCompaniesService {
       crest: fc.getCrest(),
       goal: fc.goal,
       server: fc.server.name,
+      recruiting: fc.recruiting ?? null,
     }));
   }
 
@@ -258,6 +259,9 @@ export class FreeCompaniesService {
       fc.status = fcDto.status;
       fc.areaOfOperations = fcDto.areaOfOperations;
       fc.recruitingOfficers = fcDto.recruitingOfficers;
+      if (fcDto.recruiting !== undefined) {
+        fc.recruiting = fcDto.recruiting;
+      }
       fc.carrdProfile = checkCarrdProfile(fcDto.carrdProfile, user);
 
       // Set banner
@@ -507,6 +511,7 @@ export class FreeCompaniesService {
       status: fc.status,
       areaOfOperations: fc.areaOfOperations,
       recruitingOfficers: fc.recruitingOfficers,
+      recruiting: fc.recruiting ?? null,
       carrdProfile: fc.carrdProfile,
       banner: !banner
         ? null

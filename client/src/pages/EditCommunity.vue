@@ -69,6 +69,12 @@
               v-model="community.recruitingOfficers"
               label="Rekrutierer"
             />
+            <!-- ER2-810 -->
+            <q-checkbox
+              :model-value="community.recruiting === true"
+              @update:model-value="community.recruiting = $event"
+              label="Wir suchen gerade Mitglieder"
+            />
             <wikilink-hint note="Wikilinks funktionieren in Ziel, Status und Rekrutierer." />
             <q-input
               :model-value="tags"
