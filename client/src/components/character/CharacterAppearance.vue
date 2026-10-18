@@ -6,7 +6,7 @@
     >
       <section class="character-appearance__details page-edit-character__form-controls">
         <template v-if="showGeneral">
-          <h6>Allgemeines</h6>
+          <h6 aria-level="2">Allgemeines</h6>
           <character-text-field
             v-for="field in colorFields"
             :key="field.label"
@@ -36,18 +36,18 @@
       </section>
 
       <aside v-if="hasAppearanceImage" class="character-appearance__visual">
-        <q-img :src="appearanceImageUrl" class="character-appearance__visual-image" fit="cover" />
+        <q-img :src="appearanceImageUrl" alt="Erscheinungsbild" class="character-appearance__visual-image" fit="cover" />
       </aside>
     </section>
 
     <template v-if="owner || !isEmpty(character.appearance)">
-      <h6>Erscheinungsbild</h6>
+      <h6 aria-level="2">Erscheinungsbild</h6>
       <p v-if="isEmpty(character.appearance)" class="character-appearance__empty">{{ emptyLabel }}</p>
       <html-viewer v-else :content="character.appearance" />
     </template>
 
     <template v-if="owner || !isEmpty(character.aether)">
-      <h6>Äther</h6>
+      <h6 aria-level="2">Äther</h6>
       <p v-if="isEmpty(character.aether)" class="character-appearance__empty">{{ emptyLabel }}</p>
       <html-viewer v-else :content="character.aether" />
     </template>

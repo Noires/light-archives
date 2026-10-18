@@ -13,8 +13,8 @@
             <q-item-label caption>{{community.goal}}</q-item-label>
         </q-item-section>
         <q-item-section side v-if="community.canEdit">
-          <q-btn flat dense icon="edit" :to="`/edit-community/${community.id}`" @click.stop="" />
-          <q-btn v-if="community.canDelete" flat dense icon="delete" @click.stop.prevent="onDeleteClick(community)" />
+          <q-btn flat dense icon="edit" aria-label="Community bearbeiten" :to="`/edit-community/${community.id}`" @click.stop="" />
+          <q-btn v-if="community.canDelete" flat dense icon="delete" aria-label="Community löschen" @click.stop.prevent="onDeleteClick(community)" />
         </q-item-section>
         <q-item-section side v-else-if="community.membershipStatus === MembershipStatus.APPLIED">
           Beworben

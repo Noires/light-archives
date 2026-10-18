@@ -52,6 +52,8 @@
       <p class="communities-dir__summary" aria-live="polite">{{ filteredCount }} von {{ communities.length }}</p>
     </section>
 
+    <!-- ER2-902: keeps the outline h1 > h2 > h3 (card titles) without a visible label. -->
+    <h2 class="vision-sr-only">Liste der Communities</h2>
     <ul v-if="shownCommunities.length > 0" class="communities-dir__grid">
       <li v-for="community in shownCommunities" :key="community.id" class="communities-dir__item">
         <directory-card

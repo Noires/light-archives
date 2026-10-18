@@ -50,7 +50,7 @@
     <section v-if="factSections.length > 0" class="character-sheet__ledger character-sheet__page">
       <article v-for="section in factSections" :key="section.title" class="character-sheet__panel">
         <div class="character-sheet__panel-head">
-          <h6>{{ section.title }}</h6>
+          <h6 aria-level="3">{{ section.title }}</h6>
           <span>{{ section.entries.length }} Einträge</span>
         </div>
 
@@ -69,7 +69,7 @@
     <section v-if="textBlocks.length > 0" class="character-sheet__notes character-sheet__page">
       <article v-for="block in textBlocks" :key="block.title" :class="block.accent ? 'character-sheet__note character-sheet__note--accent' : 'character-sheet__note'">
         <div class="character-sheet__panel-head">
-          <h6>{{ block.title }}</h6>
+          <h6 aria-level="3">{{ block.title }}</h6>
           <span>{{ block.kind }}</span>
         </div>
 
@@ -79,7 +79,7 @@
     </section>
 
     <section v-if="factSections.length === 0 && textBlocks.length === 0" class="character-sheet__empty character-sheet__page">
-      <h6>Noch kein Dossier</h6>
+      <h6 aria-level="3">Noch kein Dossier</h6>
       <p>
         Für diesen Pen-&amp;-Paper-Bogen wurden noch keine kompakten Sheet-Angaben hinterlegt.
       </p>

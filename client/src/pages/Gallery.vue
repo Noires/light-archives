@@ -58,6 +58,8 @@
       </div>
     </div>
 
+    <!-- ER2-902: keeps the outline h1 > h2 > h3 (card titles) without a visible label. -->
+    <h2 class="vision-sr-only">Bilder</h2>
     <ul v-if="images.length" class="page-gallery__grid">
       <li v-for="(image, index) in images" :key="image.id" class="page-gallery__tile">
         <a

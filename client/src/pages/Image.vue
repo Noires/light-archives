@@ -14,7 +14,7 @@
 					<router-link :to="`/gallery/${image.category}`">{{ $display.imageCategories[image.category] }}</router-link>
 				</div>
 			</section>
-			<a :href="image.url" :title="image.title" target="_blank"><q-img :src="image.url" :ratio="image.width / image.height" /></a>
+			<a :href="image.url" :title="image.title" target="_blank"><q-img :src="image.url" :ratio="image.width / image.height" :alt="image.title || 'Bild ohne Titel'" /></a>
 			<template v-if="image.description">
 				<html-viewer class="page-image__description" :content="image.description" />
 				<hr />

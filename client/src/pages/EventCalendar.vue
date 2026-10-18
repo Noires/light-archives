@@ -132,6 +132,8 @@
         </div>
 
         <template v-if="viewMode === 'liste'">
+          <!-- ER2-902: h1 > h2 > h3 (EmptyState title) outline. -->
+          <h2 v-if="listGroups.length === 0" class="vision-sr-only">Termine</h2>
           <empty-state
             v-if="listGroups.length === 0"
             icon="event_busy"

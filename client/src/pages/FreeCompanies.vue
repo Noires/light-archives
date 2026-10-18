@@ -58,6 +58,8 @@
       <p class="fc-dir__summary" aria-live="polite">{{ filteredCount }} von {{ freeCompanies.length }}</p>
     </section>
 
+    <!-- ER2-902: keeps the outline h1 > h2 > h3 (card titles) without a visible label. -->
+    <h2 class="vision-sr-only">Liste der Freien Gesellschaften</h2>
     <ul v-if="shownFreeCompanies.length > 0" class="fc-dir__grid">
       <li v-for="fc in shownFreeCompanies" :key="`${fc.name}_${fc.server}`" class="fc-dir__item">
         <directory-card

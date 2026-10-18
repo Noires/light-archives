@@ -1,7 +1,7 @@
 <template>
   <div class="character-rumors">
     <section class="character-rumors__intro">
-      <h6>Gerüchte</h6>
+      <h6 aria-level="2">Gerüchte</h6>
       <p>Die hier aufgelisteten Gerüchte können im RP verwendet werden. Die Kategorien geben an, wie hoch die
           Wahrscheinlichkeit ist, dass ein Gerücht in der Öffentlichkeit geteilt wird und man es gehört haben kann. Gerüchte
           der Kategorie "Häufig" kann potentiell jeder gehört haben. Gerüchte der der Kategorie "Selten" sind Gerüchte, die
@@ -9,17 +9,17 @@
         </p>
     </section>
     <section v-if="owner || !isEmpty(character.openinformation)" class="character-rumors__section character-rumors__section--open mat-parchment">
-      <h6 class="character-rumors__heading">Offene Informationen</h6>
+      <h6 class="character-rumors__heading" aria-level="3">Offene Informationen</h6>
       <p v-if="isEmpty(character.openinformation)" class="character-rumors__empty">{{ emptyLabel }}</p>
       <html-viewer v-else :content="character.openinformation" />
     </section>
     <section v-if="owner || !isEmpty(character.commonrumors)" class="character-rumors__section character-rumors__section--common mat-parchment">
-      <h6 class="character-rumors__heading">Häufige Gerüchte</h6>
+      <h6 class="character-rumors__heading" aria-level="3">Häufige Gerüchte</h6>
       <p v-if="isEmpty(character.commonrumors)" class="character-rumors__empty">{{ emptyLabel }}</p>
       <html-viewer v-else :content="character.commonrumors" />
     </section>
     <section v-if="owner || !isEmpty(character.rarerumors)" class="character-rumors__section character-rumors__section--rare mat-parchment">
-      <h6 class="character-rumors__heading">Seltene Gerüchte</h6>
+      <h6 class="character-rumors__heading" aria-level="3">Seltene Gerüchte</h6>
       <p v-if="isEmpty(character.rarerumors)" class="character-rumors__empty">{{ emptyLabel }}</p>
       <html-viewer v-else :content="character.rarerumors" />
     </section>

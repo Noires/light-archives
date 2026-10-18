@@ -105,3 +105,20 @@
 			0 0 0 3px var(--vision-focus-edge);
 	}
 }
+
+// -----------------------------------------------------------------------------
+// Screen-reader-only text (ER2-902), e.g. a section heading that keeps the
+// heading outline without a visible label:
+//   <h2 class="vision-sr-only">Ergebnisse</h2>
+// -----------------------------------------------------------------------------
+.vision-sr-only {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	margin: -1px !important;
+	padding: 0 !important;
+	overflow: hidden !important;
+	clip: rect(0 0 0 0) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
+}

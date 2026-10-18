@@ -2,7 +2,7 @@
   <div class="character-personality">
     <section class="page-edit-character__form-controls">
       <template v-if="showSection(preferenceFields)">
-        <h6>Vorlieben und Abneigungen</h6>
+        <h6 aria-level="2">Vorlieben und Abneigungen</h6>
         <character-text-field
           v-for="field in preferenceFields"
           :key="field.label"
@@ -12,7 +12,7 @@
         />
       </template>
       <template v-if="showSection(traitFields)">
-        <h6>Charakteristika</h6>
+        <h6 aria-level="2">Charakteristika</h6>
         <character-text-field
           v-for="field in traitFields"
           :key="field.label"
@@ -23,7 +23,7 @@
       </template>
     </section>
     <template v-if="!personalityEmpty || owner">
-      <h6>Persönlichkeit</h6>
+      <h6 aria-level="2">Persönlichkeit</h6>
       <p v-if="personalityEmpty" class="character-personality__empty">{{ emptyLabel }}</p>
       <html-viewer v-else :content="character.personality" />
     </template>

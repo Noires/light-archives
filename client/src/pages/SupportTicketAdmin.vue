@@ -40,7 +40,7 @@
               inputmode="numeric"
             >
               <template v-slot:append>
-                <q-btn v-if="currentUserId" flat round dense icon="person" @click="assignToMe">
+                <q-btn v-if="currentUserId" flat round dense icon="person" aria-label="Mir zuweisen" @click="assignToMe">
                   <q-tooltip>Mir zuweisen</q-tooltip>
                 </q-btn>
               </template>

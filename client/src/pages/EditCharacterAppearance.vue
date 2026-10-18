@@ -19,7 +19,7 @@
               <template #append>
                 <div class="page-edit-character__color-pair">
                   <div class="page-edit-character__color-control">
-                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.haircolorShade1 }" :style="colorButtonStyle(character.haircolorShade1)">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.haircolorShade1 }" :style="colorButtonStyle(character.haircolorShade1)" aria-label="Farbe wählen: Haarfarbe, Ton 1">
                       <q-popup-proxy transition-show="scale" transition-hide="scale">
                         <q-color
                           class="crystal-color-picker"
@@ -37,11 +37,12 @@
                       icon="close"
                       size="xs"
                       class="page-edit-character__color-clear-btn"
+                      aria-label="Farbe entfernen: Haarfarbe, Ton 1"
                       @click="onColorCleared('haircolorShade1')"
                     />
                   </div>
                   <div class="page-edit-character__color-control">
-                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.haircolorShade2 }" :style="colorButtonStyle(character.haircolorShade2)">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.haircolorShade2 }" :style="colorButtonStyle(character.haircolorShade2)" aria-label="Farbe wählen: Haarfarbe, Ton 2">
                       <q-popup-proxy transition-show="scale" transition-hide="scale">
                         <q-color
                           class="crystal-color-picker"
@@ -59,6 +60,7 @@
                       icon="close"
                       size="xs"
                       class="page-edit-character__color-clear-btn"
+                      aria-label="Farbe entfernen: Haarfarbe, Ton 2"
                       @click="onColorCleared('haircolorShade2')"
                     />
                   </div>
@@ -75,7 +77,7 @@
               <template #append>
                 <div class="page-edit-character__color-pair">
                   <div class="page-edit-character__color-control">
-                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.eyecolorShade1 }" :style="colorButtonStyle(character.eyecolorShade1)">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.eyecolorShade1 }" :style="colorButtonStyle(character.eyecolorShade1)" aria-label="Farbe wählen: Augenfarbe, Ton 1">
                       <q-popup-proxy transition-show="scale" transition-hide="scale">
                         <q-color
                           class="crystal-color-picker"
@@ -93,11 +95,12 @@
                       icon="close"
                       size="xs"
                       class="page-edit-character__color-clear-btn"
+                      aria-label="Farbe entfernen: Augenfarbe, Ton 1"
                       @click="onColorCleared('eyecolorShade1')"
                     />
                   </div>
                   <div class="page-edit-character__color-control">
-                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.eyecolorShade2 }" :style="colorButtonStyle(character.eyecolorShade2)">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.eyecolorShade2 }" :style="colorButtonStyle(character.eyecolorShade2)" aria-label="Farbe wählen: Augenfarbe, Ton 2">
                       <q-popup-proxy transition-show="scale" transition-hide="scale">
                         <q-color
                           class="crystal-color-picker"
@@ -115,6 +118,7 @@
                       icon="close"
                       size="xs"
                       class="page-edit-character__color-clear-btn"
+                      aria-label="Farbe entfernen: Augenfarbe, Ton 2"
                       @click="onColorCleared('eyecolorShade2')"
                     />
                   </div>
@@ -131,7 +135,7 @@
               <template #append>
                 <div class="page-edit-character__color-pair">
                   <div class="page-edit-character__color-control">
-                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.skintoneShade1 }" :style="colorButtonStyle(character.skintoneShade1)">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.skintoneShade1 }" :style="colorButtonStyle(character.skintoneShade1)" aria-label="Farbe wählen: Hautton, Ton 1">
                       <q-popup-proxy transition-show="scale" transition-hide="scale">
                         <q-color
                           class="crystal-color-picker"
@@ -149,11 +153,12 @@
                       icon="close"
                       size="xs"
                       class="page-edit-character__color-clear-btn"
+                      aria-label="Farbe entfernen: Hautton, Ton 1"
                       @click="onColorCleared('skintoneShade1')"
                     />
                   </div>
                   <div class="page-edit-character__color-control">
-                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.skintoneShade2 }" :style="colorButtonStyle(character.skintoneShade2)">
+                    <q-btn dense flat round class="page-edit-character__color-picker-btn" :class="{ 'page-edit-character__color-picker-btn--empty': !character.skintoneShade2 }" :style="colorButtonStyle(character.skintoneShade2)" aria-label="Farbe wählen: Hautton, Ton 2">
                       <q-popup-proxy transition-show="scale" transition-hide="scale">
                         <q-color
                           class="crystal-color-picker"
@@ -171,6 +176,7 @@
                       icon="close"
                       size="xs"
                       class="page-edit-character__color-clear-btn"
+                      aria-label="Farbe entfernen: Hautton, Ton 2"
                       @click="onColorCleared('skintoneShade2')"
                     />
                   </div>

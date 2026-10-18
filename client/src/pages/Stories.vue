@@ -101,6 +101,8 @@
       {{ statsLabel }}
     </p>
 
+    <!-- ER2-902: keeps the outline h1 > h2 > h3 (card titles) without a visible label. -->
+    <h2 class="vision-sr-only">Geschichtenliste</h2>
     <div v-if="visibleStories.length" class="page-stories__grid">
       <story-card v-for="story in visibleStories" :key="story.id" :story="story" />
     </div>

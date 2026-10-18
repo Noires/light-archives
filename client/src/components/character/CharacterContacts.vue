@@ -2,7 +2,7 @@
   <div class="character-contacts">
     <section>
       <template v-if="showSection(contactFields)">
-        <h6>Kontakte</h6>
+        <h6 aria-level="2">Kontakte</h6>
         <character-text-field
           v-for="field in contactFields"
           :key="field.label"
@@ -12,7 +12,7 @@
         />
       </template>
       <template v-if="showSection(connectionFields)">
-        <h6>Verbindungen</h6>
+        <h6 aria-level="2">Verbindungen</h6>
         <character-text-field
           v-for="field in connectionFields"
           :key="field.label"

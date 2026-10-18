@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<a class="thumb-link" :href="modelValue.url" target="_blank"><img :src="modelValue.thumbUrl" /></a>
+		<a class="thumb-link" :href="modelValue.url" target="_blank"><img :src="modelValue.thumbUrl" alt="Vorschau" /></a>
 		<step-image-details v-model="imageDetails" />
 		<div class="image-editor__button-bar">
 			<q-btn v-if="!fullPage" flat color="secondary" label="Abbrechen" @click="onCancelClick" />

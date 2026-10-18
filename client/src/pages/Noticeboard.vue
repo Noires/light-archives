@@ -60,6 +60,8 @@
 
     <p class="page-noticeboard__stats" aria-live="polite">{{ statsLabel }}</p>
 
+    <!-- ER2-902: keeps the outline h1 > h2 > h3 (card titles) without a visible label. -->
+    <h2 class="vision-sr-only">Aushänge</h2>
     <div v-if="pagedItems.length" class="page-noticeboard__masonry">
       <noticeboard-card v-for="item in pagedItems" :key="item.id" :item="item" />
     </div>
