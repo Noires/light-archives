@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
-import { EventSeriesRule } from './enums/event-series-rule.enum';
-import { computeNextOccurrences, EventSeriesSpec, formatEventSeriesLabel, validateEventSeriesSpec } from './event-series';
+import { EventSeriesRule } from '../src/enums/event-series-rule.enum';
+import { computeNextOccurrences, EventSeriesSpec, formatEventSeriesLabel, validateEventSeriesSpec } from '../src/event-series';
 
 const ZONE = 'Europe/Berlin';
 

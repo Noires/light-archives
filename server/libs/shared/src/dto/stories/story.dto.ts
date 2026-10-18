@@ -1,7 +1,6 @@
 import { StoryType } from "@app/shared/enums/story-type.enum";
 import { Type } from "class-transformer";
 import { IsBoolean, IsEnum, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
-import { ContentNoteDto } from "../content-notes/content-note.dto";
 import { ReactionCountsDto } from "../reactions/reaction.dto";
 import { ReactionKind } from "../../enums/reaction.enum";
 

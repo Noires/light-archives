@@ -1,6 +1,6 @@
 import { UserInfo } from '@app/auth/model/user-info';
 import { serverConfiguration } from '@app/configuration';
-import { Character, ContentNote, Event, EventAnnouncement, EventLocation, EventRegistration, EventSeries, Image, Server, Venue } from '@app/entity';
+import { ContentNote, Event, EventAnnouncement, EventLocation, EventRegistration, EventSeries, Image, Server, Venue } from '@app/entity';
 import { BannerDto } from '@app/shared/dto/characters/banner.dto';
 import { BaseEventDto } from '@app/shared/dto/events/base-event.dto';
 import { EventAnnouncementDto } from '@app/shared/dto/events/event-announcement.dto';
@@ -28,7 +28,7 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from '@nes
 import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime, Duration } from 'luxon';
 import { firstValueFrom } from 'rxjs';
-import { Connection, EntityManager, In, IsNull, MoreThanOrEqual, Not, Repository } from 'typeorm';
+import { Connection, EntityManager, In, MoreThanOrEqual, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { getVerifiedCharacter } from '../../../common/api-checks';
 import { Contains } from '../../../common/db';

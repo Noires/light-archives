@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { computeOpeningStatus, deriveOpeningHoursFromTemplate, OpeningHoursSlot } from './opening-hours';
+import { computeOpeningStatus, deriveOpeningHoursFromTemplate, OpeningHoursSlot } from '../src/opening-hours';
 
 const ZONE = 'Europe/Berlin';
 

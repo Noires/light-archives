@@ -1,11 +1,11 @@
-import { RpStatus } from './enums/rp-status.enum';
+import { RpStatus } from '../src/enums/rp-status.enum';
 import {
   computeRpStatusExpiry,
   normalizeRpLocation,
   resolveRpPresence,
   RP_STATUS_DEFAULT_MINUTES,
   RP_STATUS_MAX_MINUTES,
-} from './presence';
+} from '../src/presence';
 
 const NOW = Date.UTC(2024, 0, 6, 20, 0, 0);
 const MINUTE = 60 * 1000;

@@ -9,7 +9,6 @@ import { EventRegistrationRequestDto } from '@app/shared/dto/events/event-regist
 import { EventSearchResultDto } from '@app/shared/dto/events/event-search-result.dto';
 import { EventSummariesDto } from '@app/shared/dto/events/event-summaries.dto';
 import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
-import { EventDto } from '@app/shared/dto/events/event.dto';
 import { Role } from '@app/shared/enums/role.enum';
 import {
   BadRequestException,
