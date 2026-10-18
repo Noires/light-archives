@@ -161,6 +161,7 @@ export class SearchService {
 
     return (
       await andWhereMatches(qb, 's', properties, keywords)
+        .andWhere('s.published = :published', { published: true })
         .select(['s.id', ...this.expandProperties('s', properties), 's.updatedAt'])
         .orderBy('s.updatedAt', 'DESC')
         .limit(this.MAX_RESULTS)
@@ -197,6 +198,7 @@ export class SearchService {
 
     return (
       await andWhereMatches(qb, 'wp', properties, keywords)
+        .andWhere('wp.published = :published', { published: true })
         .select(['wp.id', ...this.expandProperties('wp', properties), 'wp.updatedAt'])
         .orderBy('wp.updatedAt', 'DESC')
         .limit(this.MAX_RESULTS)
