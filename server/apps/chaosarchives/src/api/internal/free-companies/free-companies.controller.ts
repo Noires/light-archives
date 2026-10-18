@@ -3,6 +3,7 @@ import { RoleRequired } from '@app/auth/decorators/role-required.decorator';
 import { OptionalJwtAuthGuard } from '@app/auth/guards/optional-jwt-auth.guard';
 import { UserInfo } from '@app/auth/model/user-info';
 import { CharacterIdWrapper } from '@app/shared/dto/common/character-id-wrapper.dto';
+import { FreeCompanyApplicationDto, FreeCompanyApplyRequestDto } from '@app/shared/dto/fcs/free-company-application.dto';
 import { FreeCompanyMemberEditFlagDto } from '@app/shared/dto/fcs/free-company-member-edit-flag.dto';
 import { FreeCompanyMemberPermissionDto } from '@app/shared/dto/fcs/free-company-member-permission.dto';
 import { FreeCompanySummaryDto } from '@app/shared/dto/fcs/free-company-summary.dto';
@@ -89,6 +90,57 @@ export class FreeCompaniesController {
     @CurrentUser() user: UserInfo,
   ): Promise<void> {
 		await this.freeCompaniesService.setMemberEditPermission(id, characterId, editFlag, user);
+	}
+
+	// ER2 round 2: applications ("Bewerben")
+
+	@Post(':id/applications')
+	@RoleRequired(Role.USER)
+	async applyToFreeCompany(
+		@Param('id', ParseIntPipe) id: number,
+		@Body() request: FreeCompanyApplyRequestDto,
+		@CurrentUser() user: UserInfo,
+	): Promise<void> {
+		await this.freeCompaniesService.applyToFreeCompany(id, request, user);
+	}
+
+	@Get(':id/applications')
+	@RoleRequired(Role.USER)
+	async getApplications(
+		@Param('id', ParseIntPipe) id: number,
+		@CurrentUser() user: UserInfo,
+	): Promise<FreeCompanyApplicationDto[]> {
+		return this.freeCompaniesService.getApplications(id, user);
+	}
+
+	@Post(':id/applications/withdraw')
+	@RoleRequired(Role.USER)
+	async withdrawApplication(
+		@Param('id', ParseIntPipe) id: number,
+		@Body() characterIdWrapper: CharacterIdWrapper,
+		@CurrentUser() user: UserInfo,
+	): Promise<void> {
+		await this.freeCompaniesService.withdrawApplication(id, characterIdWrapper, user);
+	}
+
+	@Post(':id/applications/:applicationId/accept')
+	@RoleRequired(Role.USER)
+	async acceptApplication(
+		@Param('id', ParseIntPipe) id: number,
+		@Param('applicationId', ParseIntPipe) applicationId: number,
+		@CurrentUser() user: UserInfo,
+	): Promise<void> {
+		await this.freeCompaniesService.decideApplication(id, applicationId, 'accept', user);
+	}
+
+	@Post(':id/applications/:applicationId/reject')
+	@RoleRequired(Role.USER)
+	async rejectApplication(
+		@Param('id', ParseIntPipe) id: number,
+		@Param('applicationId', ParseIntPipe) applicationId: number,
+		@CurrentUser() user: UserInfo,
+	): Promise<void> {
+		await this.freeCompaniesService.decideApplication(id, applicationId, 'reject', user);
 	}
 
 	@Put(':id')

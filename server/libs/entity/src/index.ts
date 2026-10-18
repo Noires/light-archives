@@ -39,4 +39,5 @@ export { Weather } from './weather.entity';
 export { WikiPage } from './wiki-page.entity';
 // ER2 round 2 (content features)
 export { Album } from './album.entity';
+export { FreeCompanyApplication } from './free-company-application.entity';
 export { WikiPageRevision } from './wiki-page-revision.entity';

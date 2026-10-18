@@ -5,7 +5,7 @@ import { CommunityTag } from '@app/entity/community-tag.entity';
 import { Community } from '@app/entity/community.entity';
 import { VenueTag } from '@app/entity/venue-tag.entity';
 // ER2 round 2 (content features)
-import { Album, WikiPageRevision } from '@app/entity';
+import { Album, FreeCompanyApplication, WikiPageRevision } from '@app/entity';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import config from 'config';
 import { DbConfigInterface } from './interfaces/db-config.interface';
@@ -60,6 +60,7 @@ export const dbConfiguration: TypeOrmModuleOptions = {
     Weather,
     // ER2 round 2 (content features)
     Album,
+    FreeCompanyApplication,
     WikiPageRevision,
   ],
   synchronize: dbConfig.synchronize,
