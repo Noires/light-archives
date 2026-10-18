@@ -35,8 +35,10 @@
     </button>
   </nav>
 
-  <q-dialog v-model="sheetOpen" position="bottom" class="shell-sheet-dialog">
-    <div class="shell-sheet" role="dialog" aria-modal="true" aria-labelledby="shell-sheet-title">
+  <!-- QDialog renders role="dialog" + aria-modal on its root, traps focus,
+       closes on Esc and refocuses the "Mehr" button on close. -->
+  <q-dialog v-model="sheetOpen" position="bottom" class="shell-sheet-dialog" aria-labelledby="shell-sheet-title">
+    <div class="shell-sheet">
       <div class="shell-sheet__head">
         <h2 id="shell-sheet-title" class="shell-sheet__title">Mehr</h2>
         <q-btn

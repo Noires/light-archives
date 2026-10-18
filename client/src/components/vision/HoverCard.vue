@@ -121,6 +121,7 @@ export default class HoverCard extends Vue {
 	readonly hideHoverCard = hideHoverCard;
 
 	private scrollHandler: (() => void) | null = null;
+	private keyHandler: ((event: KeyboardEvent) => void) | null = null;
 
 	get card(): HoverCardData | null {
 		return this.state.data;
@@ -163,12 +164,24 @@ export default class HoverCard extends Vue {
 		};
 		window.addEventListener('scroll', this.scrollHandler, { passive: true, capture: true });
 		window.addEventListener('resize', this.scrollHandler, { passive: true });
+		// Esc dismisses the card wherever focus is (WCAG 1.4.13), not only
+		// inside a bound container. Focus never moves into the card; the link
+		// keeps it, so there is nothing to return.
+		this.keyHandler = (event: KeyboardEvent) => {
+			if (event.key === 'Escape' && hoverCardState.visible) {
+				hideHoverCard();
+			}
+		};
+		document.addEventListener('keydown', this.keyHandler);
 	}
 
 	beforeUnmount() {
 		if (this.scrollHandler) {
 			window.removeEventListener('scroll', this.scrollHandler, { capture: true });
 			window.removeEventListener('resize', this.scrollHandler);
+		}
+		if (this.keyHandler) {
+			document.removeEventListener('keydown', this.keyHandler);
 		}
 		hideHoverCard();
 	}
