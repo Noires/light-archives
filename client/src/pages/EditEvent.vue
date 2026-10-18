@@ -345,6 +345,70 @@
                   </section>
                 </div>
               </q-expansion-item>
+              <!-- ER2-804-C: recurring series ("Wiederkehrend") -->
+              <q-expansion-item
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-facts"
+                icon="event_repeat"
+                label="Wiederkehrend"
+                :caption="seriesCaption"
+              >
+                <div class="page-edit-event__expansion-body">
+                  <section class="page-edit-event__form-controls">
+                    <p v-if="!seriesAvailable" class="page-edit-event__section-hint">
+                      Wiederkehrende Reihen sind derzeit nicht verfügbar.
+                    </p>
+                    <template v-else>
+                      <q-toggle
+                        v-model="seriesEnabled"
+                        label="Dieses Event gehört zu einer wiederkehrenden Reihe"
+                      />
+                      <template v-if="seriesEnabled">
+                        <q-select
+                          v-model="seriesChoice"
+                          :options="seriesOptions"
+                          emit-value
+                          map-options
+                          label="Reihe"
+                        />
+                        <template v-if="seriesChoice === 'new'">
+                          <q-input v-model="newSeries.title" label="Name der Reihe" maxlength="200" />
+                          <q-select
+                            v-model="newSeries.rule"
+                            :options="seriesRuleOptions"
+                            emit-value
+                            map-options
+                            label="Rhythmus"
+                          />
+                          <q-select
+                            v-if="newSeries.rule === 'monthly-nth'"
+                            v-model="newSeries.nth"
+                            :options="seriesNthOptions"
+                            emit-value
+                            map-options
+                            label="Welcher Wochentag im Monat"
+                          />
+                          <q-select
+                            v-model="newSeries.weekday"
+                            :options="seriesWeekdayOptions"
+                            emit-value
+                            map-options
+                            label="Wochentag"
+                          />
+                          <div class="page-edit-event__date-time-grid">
+                            <q-input v-model="newSeries.startTime" label="Beginn" mask="##:##" placeholder="20:00" />
+                            <q-input v-model="newSeries.endTime" label="Ende (optional)" mask="##:##" placeholder="23:00" />
+                          </div>
+                        </template>
+                        <p v-if="seriesPreview" class="page-edit-event__section-hint">
+                          {{ seriesPreview }}
+                        </p>
+                      </template>
+                    </template>
+                  </section>
+                </div>
+              </q-expansion-item>
             </div>
           </q-form>
         </q-step>
@@ -391,6 +455,40 @@
               >
                 <div class="page-edit-event__expansion-body">
                   <html-editor v-model="event.extraInfo" />
+                </div>
+              </q-expansion-item>
+              <!-- ER2-803: optional programme -->
+              <q-expansion-item
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-content"
+                icon="schedule"
+                label="Programm (optional)"
+                :caption="programmeCaption"
+              >
+                <div class="page-edit-event__expansion-body">
+                  <p class="page-edit-event__section-hint">
+                    Ein kurzer Ablauf hilft Gästen bei der Planung, z. B. „20:00 – Einlass“.
+                  </p>
+                  <div
+                    v-for="(item, index) in (event.programme || [])"
+                    :key="`programme-${index}`"
+                    class="page-edit-event__programme-row"
+                  >
+                    <q-input v-model="item.time" label="Uhrzeit" maxlength="20" placeholder="20:00" />
+                    <q-input v-model="item.title" label="Programmpunkt" maxlength="120" />
+                    <q-input v-model="item.note" label="Hinweis (optional)" maxlength="300" />
+                    <q-btn
+                      flat
+                      color="negative"
+                      icon="delete"
+                      aria-label="Programmpunkt entfernen"
+                      @click="removeProgrammeItem(index)"
+                    />
+                  </div>
+                  <div class="page-edit-event__inline-actions">
+                    <q-btn flat color="secondary" icon="add" label="Programmpunkt hinzufügen" @click="addProgrammeItem" />
+                  </div>
                 </div>
               </q-expansion-item>
             </div>
@@ -626,6 +724,9 @@ import { EventAnnouncementDto } from '@app/shared/dto/events/event-announcement.
 import { EventEditDto } from '@app/shared/dto/events/event-edit.dto';
 import { EventLinkDto } from '@app/shared/dto/events/event-link.dto';
 import { EventLocationDto } from '@app/shared/dto/events/event-location.dto';
+import { EventSeriesDto } from '@app/shared/dto/events/event-series.dto';
+import { EventSeriesRule } from '@app/shared/enums/event-series-rule.enum';
+import { computeNextOccurrences, formatEventSeriesLabel, GERMAN_WEEKDAYS } from '@app/shared/event-series';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { EventType } from '@app/shared/enums/event-type.enum';
@@ -706,6 +807,11 @@ async function load(params: RouteParams): Promise<{
 		(this as PageEditEvent).setContent(await load(to.params));
 	},
   watch: {
+    seriesChoice(value: number | 'new' | null) {
+      if (value === 'new') {
+        (this as PageEditEvent).prefillNewSeriesFromEvent();
+      }
+    },
     startDate() {
       (this as PageEditEvent).syncStartDateTime();
     },
@@ -759,6 +865,33 @@ export default class PageEditEvent extends Vue {
   factsTimingExpanded = false;
   eventLinksExpanded = false;
   private syncingDateTimeFields = false;
+
+  // ER2-804-C: recurring series state
+  seriesAvailable = true;
+  seriesEnabled = false;
+  seriesChoice: number | 'new' | null = null;
+  mySeries: EventSeriesDto[] = [];
+  newSeries = {
+    title: '',
+    rule: EventSeriesRule.WEEKLY as EventSeriesRule,
+    weekday: 6,
+    nth: 1 as number | null,
+    startTime: '20:00',
+    endTime: '' as string | null,
+  };
+  readonly seriesRuleOptions = [
+    { label: 'Wöchentlich', value: EventSeriesRule.WEEKLY },
+    { label: 'Alle zwei Wochen', value: EventSeriesRule.BIWEEKLY },
+    { label: 'Monatlich (z. B. jeden ersten Freitag)', value: EventSeriesRule.MONTHLY_NTH },
+  ];
+  readonly seriesNthOptions = [
+    { label: 'Erster', value: 1 },
+    { label: 'Zweiter', value: 2 },
+    { label: 'Dritter', value: 3 },
+    { label: 'Vierter', value: 4 },
+    { label: 'Letzter', value: -1 },
+  ];
+  readonly seriesWeekdayOptions = GERMAN_WEEKDAYS.map((label, index) => ({ label, value: index + 1 }));
 
   get canGoBack() {
     return this.step > this.STEP_LOCATION;
@@ -844,6 +977,120 @@ export default class PageEditEvent extends Vue {
     this.factsBasicsExpanded = true;
     this.factsTimingExpanded = false;
     this.eventLinksExpanded = (this.event.links?.length || 0) > 0;
+    this.resetSeriesState();
+  }
+
+  // ER2-804-C: recurring series
+  private resetSeriesState() {
+    this.seriesEnabled = !!this.event.seriesId;
+    this.seriesChoice = this.event.seriesId || null;
+    void this.loadMySeries();
+  }
+
+  private async loadMySeries() {
+    try {
+      this.mySeries = await this.$api.eventSeries.getMySeries();
+      this.seriesAvailable = true;
+    } catch (e) {
+      // Older API versions do not know event series
+      this.mySeries = [];
+      this.seriesAvailable = false;
+    }
+  }
+
+  get seriesOptions() {
+    return [
+      ...this.mySeries.map((series) => ({
+        label: `${series.title} (${series.label || ''})`,
+        value: series.id as number,
+      })),
+      { label: 'Neue Reihe anlegen …', value: 'new' as const },
+    ];
+  }
+
+  get seriesCaption() {
+    if (!this.seriesEnabled || this.seriesChoice === null) {
+      return 'Einmaliges Event';
+    }
+
+    if (this.seriesChoice === 'new') {
+      return 'Neue Reihe';
+    }
+
+    const series = this.mySeries.find((candidate) => candidate.id === this.seriesChoice);
+    return series?.label || 'Teil einer Reihe';
+  }
+
+  get seriesPreview(): string {
+    let spec: Parameters<typeof computeNextOccurrences>[0] | null = null;
+
+    if (this.seriesChoice === 'new') {
+      spec = { ...this.newSeries, endTime: this.newSeries.endTime || null };
+    } else if (this.seriesChoice !== null) {
+      const series = this.mySeries.find((candidate) => candidate.id === this.seriesChoice);
+      spec = series ? { ...series } : null;
+    }
+
+    if (!spec) {
+      return '';
+    }
+
+    const next = computeNextOccurrences(spec, Date.now(), 3, SharedConstants.FFXIV_SERVER_TIMEZONE);
+    if (next.length === 0) {
+      return 'Bitte Rhythmus, Wochentag und Beginn (HH:MM) angeben.';
+    }
+
+    const dates = next
+      .map((occurrence) => DateTime.fromMillis(occurrence.startDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE })
+        .toFormat('dd.MM.yyyy HH:mm'))
+      .join(', ');
+    return `${formatEventSeriesLabel(spec)} – nächste Termine: ${dates}`;
+  }
+
+  prefillNewSeriesFromEvent() {
+    this.newSeries.title = this.newSeries.title || this.event.title || '';
+
+    if (this.event.startDateTime) {
+      const start = DateTime.fromMillis(this.event.startDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE });
+      this.newSeries.weekday = start.weekday;
+      this.newSeries.startTime = start.toFormat('HH:mm');
+      this.newSeries.nth = Math.min(4, Math.ceil(start.day / 7));
+    }
+
+    if (this.event.endDateTime) {
+      this.newSeries.endTime = DateTime.fromMillis(this.event.endDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE })
+        .toFormat('HH:mm');
+    }
+  }
+
+  /** Resolves the series selection into event.seriesId; creates a new series when requested. */
+  private async applySeriesSelection() {
+    if (!this.seriesAvailable) {
+      return;
+    }
+
+    if (!this.seriesEnabled || this.seriesChoice === null) {
+      this.event.seriesId = null;
+      return;
+    }
+
+    if (this.seriesChoice === 'new') {
+      const characterId = this.selectedCharacterId || this.$store.getters.characterId;
+      const created = await this.$api.eventSeries.createSeries(new EventSeriesDto({
+        characterId: characterId || undefined,
+        title: (this.newSeries.title || this.event.title || '').trim(),
+        rule: this.newSeries.rule,
+        weekday: this.newSeries.weekday,
+        nth: this.newSeries.rule === EventSeriesRule.MONTHLY_NTH ? this.newSeries.nth : null,
+        startTime: this.newSeries.startTime,
+        endTime: this.newSeries.endTime || null,
+        venueId: this.event.locations[0]?.venueId || null,
+      }));
+      this.mySeries = [...this.mySeries, created];
+      this.seriesChoice = created.id as number;
+    }
+
+    this.event.seriesId = this.seriesChoice;
   }
 
   private normalizeEvent(target: EventEditDto) {
@@ -865,6 +1112,8 @@ export default class PageEditEvent extends Vue {
       target.registrationDeadlineTime = null;
     }
     target.extraInfo = target.extraInfo || '';
+    // ER2-803: copy so that edits never leak into the backup
+    target.programme = (target.programme || []).map((item) => ({ ...item }));
     target.links = this.normalizeLinks(target.links, target.link, target.linkText);
     target.link = target.links[0]?.url || '';
     target.linkText = target.links[0]?.label || '';
@@ -1158,6 +1407,24 @@ export default class PageEditEvent extends Vue {
 
   removeAnnouncement(index: number) {
     this.event.announcements.splice(index, 1);
+  }
+
+  // ER2-803: programme
+  get programmeCaption() {
+    const count = this.event.programme?.length || 0;
+    return count > 0 ? `${count} ${count === 1 ? 'Programmpunkt' : 'Programmpunkte'}` : 'Kein Programm';
+  }
+
+  addProgrammeItem() {
+    if (!this.event.programme) {
+      this.event.programme = [];
+    }
+
+    this.event.programme.push({ time: '', title: '', note: '' });
+  }
+
+  removeProgrammeItem(index: number) {
+    this.event.programme?.splice(index, 1);
   }
 
   addEventLink() {
@@ -1576,6 +1843,7 @@ export default class PageEditEvent extends Vue {
       }
 
       this.applyAnnouncementDefaults();
+      await this.applySeriesSelection();
 
       if (!this.eventId) {
         if (!this.selectedCharacterId) {
@@ -1888,6 +2156,20 @@ body.body--dark .page-edit-event__type-tile--active .page-edit-event__type-tile-
   gap: 10px;
   align-items: center;
   margin-bottom: 8px;
+}
+
+.page-edit-event__programme-row {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 599px) {
+  .page-edit-event__programme-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .page-edit-event__inline-actions {

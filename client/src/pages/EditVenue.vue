@@ -199,6 +199,64 @@
                   entity-type="venue"
                   v-model="venue.carrdProfile"
                 />
+                <!-- ER2-805: opening hours -->
+                <h6>Öffnungszeiten</h6>
+                <section class="page-edit-venue__form-controls">
+                  <p v-if="!openingHoursAvailable" class="text-caption">
+                    Öffnungszeiten sind derzeit nicht verfügbar.
+                  </p>
+                  <template v-else>
+                    <p class="text-caption">
+                      Alle Zeiten in Serverzeit. Ohne Einträge wird der wöchentliche Event-Termin als Öffnungszeit verwendet.
+                    </p>
+                    <div
+                      v-for="(slot, index) in openingHours.hours"
+                      :key="`opening-${index}`"
+                      class="page-edit-venue__opening-row"
+                    >
+                      <q-select
+                        v-model="slot.weekday"
+                        :options="openingWeekdayOptions"
+                        emit-value
+                        map-options
+                        label="Wochentag"
+                      />
+                      <q-input v-model="slot.openTime" label="Öffnet" mask="##:##" placeholder="20:00" />
+                      <q-input v-model="slot.closeTime" label="Schließt" mask="##:##" placeholder="02:00" />
+                      <q-checkbox v-model="slot.overnight" label="bis zum Folgetag" />
+                      <q-btn
+                        flat
+                        color="negative"
+                        icon="delete"
+                        aria-label="Öffnungszeit entfernen"
+                        @click="removeOpeningSlot(index)"
+                      />
+                    </div>
+                    <div>
+                      <q-btn flat color="secondary" icon="add" label="Öffnungszeit hinzufügen" @click="addOpeningSlot" />
+                    </div>
+                    <div class="text-subtitle2">Ausnahmen</div>
+                    <div
+                      v-for="(exception, index) in openingHours.exceptions"
+                      :key="`opening-exception-${index}`"
+                      class="page-edit-venue__opening-row"
+                    >
+                      <q-input v-model="exception.date" type="date" label="Datum" stack-label />
+                      <q-checkbox v-model="exception.closed" label="Geschlossen" />
+                      <q-input v-model="exception.note" label="Hinweis (optional)" maxlength="200" />
+                      <q-btn
+                        flat
+                        color="negative"
+                        icon="delete"
+                        aria-label="Ausnahme entfernen"
+                        @click="removeOpeningException(index)"
+                      />
+                    </div>
+                    <div>
+                      <q-btn flat color="secondary" icon="add" label="Ausnahme hinzufügen" @click="addOpeningException" />
+                    </div>
+                  </template>
+                </section>
               </section>
 
               <section v-else-if="editSection === 'rules'" class="page-edit-venue__section">
@@ -558,6 +616,8 @@
 <script lang="ts">
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { VenueOfferingsDto } from '@app/shared/dto/venues/venue-offering.dto';
+import { VenueOpeningHoursDto } from '@app/shared/dto/venues/venue-opening-hours.dto';
+import { GERMAN_WEEKDAYS } from '@app/shared/event-series';
 import { HousingArea } from '@app/shared/enums/housing-area.enum';
 import { NoticeboardType } from '@app/shared/enums/noticeboard-type.enum';
 import { EventType } from '@app/shared/enums/event-type.enum';
@@ -704,6 +764,14 @@ async function load(params: RouteParams): Promise<{ venue: VenueDto | null; cont
     venueOfferings() {
       (this as PageEditVenue).markDirty();
     },
+    openingHours: {
+      deep: true,
+      handler() {
+        if (!(this as PageEditVenue).openingHoursSuppressDirty) {
+          (this as PageEditVenue).markDirty();
+        }
+      },
+    },
     selectedCharacterId(newValue: number | null, oldValue: number | null) {
       (this as PageEditVenue).onSelectedCharacterIdChanged(newValue, oldValue);
     },
@@ -743,6 +811,77 @@ export default class PageEditVenue extends Vue {
   loaded = false;
   saving = false;
   savePulseTrigger = 0;
+
+  // ER2-805: opening hours (saved via a separate endpoint after the venue itself)
+  openingHours: VenueOpeningHoursDto = { hours: [], exceptions: [] };
+  openingHoursAvailable = true;
+  openingHoursSuppressDirty = false;
+  readonly openingWeekdayOptions = GERMAN_WEEKDAYS.map((label, index) => ({ label, value: index + 1 }));
+
+  private async loadOpeningHours(venueId: number | null) {
+    this.openingHoursSuppressDirty = true;
+
+    try {
+      this.openingHours = venueId
+        ? await this.$api.venues.getOpeningHours(venueId)
+        : { hours: [], exceptions: [] };
+      this.openingHoursAvailable = true;
+    } catch (e) {
+      // Older API versions do not know opening hours
+      this.openingHours = { hours: [], exceptions: [] };
+      this.openingHoursAvailable = !venueId;
+    } finally {
+      await this.$nextTick();
+      this.openingHoursSuppressDirty = false;
+    }
+  }
+
+  addOpeningSlot() {
+    const last = this.openingHours.hours[this.openingHours.hours.length - 1];
+    this.openingHours.hours.push({
+      weekday: last ? (last.weekday % 7) + 1 : 5,
+      openTime: last?.openTime || '20:00',
+      closeTime: last?.closeTime || '23:00',
+      overnight: last?.overnight || false,
+    });
+  }
+
+  removeOpeningSlot(index: number) {
+    this.openingHours.hours.splice(index, 1);
+  }
+
+  addOpeningException() {
+    this.openingHours.exceptions.push({ date: '', closed: true, note: '' });
+  }
+
+  removeOpeningException(index: number) {
+    this.openingHours.exceptions.splice(index, 1);
+  }
+
+  private async saveOpeningHours(venueId: number) {
+    if (!this.openingHoursAvailable) {
+      return;
+    }
+
+    const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
+    const hours = this.openingHours.hours.filter((slot) => timePattern.test(slot.openTime) && timePattern.test(slot.closeTime));
+    const exceptions = this.openingHours.exceptions.filter((exception) => /^\d{4}-\d{2}-\d{2}$/.test(exception.date));
+    this.openingHoursSuppressDirty = true;
+
+    try {
+      this.openingHours = await this.$api.venues.saveOpeningHours(venueId, { hours, exceptions });
+    } catch (e) {
+      if (errors.getStatusCode(e) !== 404) {
+        throw e;
+      }
+
+      // Older API versions do not know opening hours
+      this.openingHoursAvailable = false;
+    } finally {
+      await this.$nextTick();
+      this.openingHoursSuppressDirty = false;
+    }
+  }
 
   confirmRevert = false;
 
@@ -859,6 +998,7 @@ export default class PageEditVenue extends Vue {
     this.editSection = 'basic';
     this.venue = new VenueDto(this.venueBackup);
     this.ensureVenueTemplateDefaults(this.venue);
+    void this.loadOpeningHours(this.venueId);
 
     void this.$nextTick(() => {
       this.suppressDirtyTracking = false;
@@ -1181,6 +1321,7 @@ export default class PageEditVenue extends Vue {
         this.venue.id = result.id;
         this.venueId = result.id;
         await this.$api.venues.saveOfferings(this.venueId, this.venueOfferings);
+        await this.saveOpeningHours(this.venueId);
         this.savedOfferingImageIds = this.collectOfferingImageIds(this.venueOfferings);
         this.venueBackup = new VenueDto(this.venue);
         isDirty.value = false;
@@ -1188,6 +1329,7 @@ export default class PageEditVenue extends Vue {
       } else {
         await this.$api.venues.editVenue(this.venue);
         await this.$api.venues.saveOfferings(this.venueId, this.venueOfferings);
+        await this.saveOpeningHours(this.venueId);
         this.savedOfferingImageIds = this.collectOfferingImageIds(this.venueOfferings);
         this.venueBackup = new VenueDto(this.venue);
         isDirty.value = false;
@@ -1216,6 +1358,19 @@ export default class PageEditVenue extends Vue {
 </script>
 
 <style lang="scss">
+.page-edit-venue__opening-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) 6rem 6rem auto auto;
+  gap: 10px;
+  align-items: center;
+}
+
+@media (max-width: 599px) {
+  .page-edit-venue__opening-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .page-edit-venue-layout {
   --edit-venue-select-group-border: rgba(221, 180, 118, 0.25);
   --edit-venue-select-group-bg: rgba(249, 247, 242, 0.95);

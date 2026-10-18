@@ -12,6 +12,7 @@ import { AppService } from './app.service';
 import { GlobalExceptionsFilter } from './global-exceptions.filter';
 import { SentryUserContextInterceptor } from './sentry-user-context.interceptor';
 import { UpdatesModule } from './websocket/updates/updates.module';
+import { PresenceModule } from './websocket/presence/presence.module';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
 
 @Module({
@@ -24,6 +25,7 @@ import { RedisModule } from '@liaoliaots/nestjs-redis';
     InternalApiModule,
     RppModule,
     UpdatesModule,
+    PresenceModule,
   ],
   controllers: [AppController],
   providers: [

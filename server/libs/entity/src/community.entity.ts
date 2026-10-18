@@ -65,6 +65,13 @@ export class Community extends BasicEntity {
   })
   recruitingOfficers: string;
 
+  // ER2-810: currently recruiting? null = not specified
+  @Column({
+    type: 'boolean',
+    nullable: true,
+  })
+  recruiting: boolean | null;
+
   @Column({
     nullable: false,
     width: 100,

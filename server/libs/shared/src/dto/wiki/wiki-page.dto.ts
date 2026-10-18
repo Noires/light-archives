@@ -37,6 +37,11 @@ export class WikiPageDto {
 	@IsEnum(EditPermission)
 	editPermission: EditPermission;
 
+	// ER2-810: draft flag. Defaults to true on create; omit to keep on edit.
+	@IsBoolean()
+	@IsOptional()
+	published?: boolean;
+
 	constructor(properties?: Readonly<WikiPageDto>) {
     if (properties) {
       Object.assign(this, properties);

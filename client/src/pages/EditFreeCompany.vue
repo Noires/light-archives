@@ -17,6 +17,12 @@
             <q-input v-model="fc.status" label="Status" />
             <q-input v-model="fc.areaOfOperations" label="Tätigkeitsbereich" />
             <q-input v-model="fc.recruitingOfficers" label="Rekrutierer" />
+            <!-- ER2-810 -->
+            <q-checkbox
+              :model-value="fc.recruiting === true"
+              @update:model-value="fc.recruiting = $event"
+              label="Wir rekrutieren gerade"
+            />
             <wikilink-hint note="Wikilinks funktionieren in allen Feldern außer Webseite." />
           </section>
           <h6>Description</h6>

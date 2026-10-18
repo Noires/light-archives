@@ -1,6 +1,6 @@
 import { UserInfo } from '@app/auth/model/user-info';
 import { serverConfiguration } from '@app/configuration';
-import { Character, ContentNote, Event, EventAnnouncement, EventLocation, EventRegistration, Image, Server, Venue } from '@app/entity';
+import { ContentNote, Event, EventAnnouncement, EventLocation, EventRegistration, EventSeries, Image, Server, Venue } from '@app/entity';
 import { BannerDto } from '@app/shared/dto/characters/banner.dto';
 import { BaseEventDto } from '@app/shared/dto/events/base-event.dto';
 import { EventAnnouncementDto } from '@app/shared/dto/events/event-announcement.dto';
@@ -10,13 +10,16 @@ import { EventIconDto } from '@app/shared/dto/events/event-icon.dto';
 import { EventLinkDto } from '@app/shared/dto/events/event-link.dto';
 import { EventLocationDto } from '@app/shared/dto/events/event-location.dto';
 import { EventParticipantDto } from '@app/shared/dto/events/event-participant.dto';
+import { EventProgrammeItemDto } from '@app/shared/dto/events/event-programme-item.dto';
 import { EventSearchResultDto } from '@app/shared/dto/events/event-search-result.dto';
 import { EventSummariesDto } from '@app/shared/dto/events/event-summaries.dto';
 import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
 import { EventDto } from '@app/shared/dto/events/event.dto';
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 import { EventSource } from '@app/shared/enums/event-source.enum';
+import { EventRegistrationKind } from '@app/shared/enums/event-registration-kind.enum';
 import { EventType } from '@app/shared/enums/event-type.enum';
+import { computeNextOccurrences, formatEventSeriesLabel } from '@app/shared/event-series';
 import html from '@app/shared/html';
 import SharedConstants from '@app/shared/SharedConstants';
 import { isValidUrl } from '@app/shared/validation/validators';
@@ -25,16 +28,18 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from '@nes
 import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime, Duration } from 'luxon';
 import { firstValueFrom } from 'rxjs';
-import { Connection, EntityManager, In, IsNull, MoreThanOrEqual, Not, Repository } from 'typeorm';
+import { Connection, EntityManager, In, MoreThanOrEqual, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { getVerifiedCharacter } from '../../../common/api-checks';
 import { Contains } from '../../../common/db';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import utils from '../../../common/utils';
+import { toEventSeriesSpec } from '../event-series/event-series.service';
 import { ImagesService } from '../images/images.service';
 import { ChocoboChronicleService } from './chocobo-chronicle.service';
 import { CrescentMoonPublishingService } from './crescent-moon-publishing.service';
 import { ExternalEvent } from './model/external-event';
+import { buildIcsCalendar, htmlToIcsPlainText, IcsEvent } from './ics';
 import { Redis } from 'ioredis';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 
@@ -80,6 +85,7 @@ export class EventsService {
         'registrations',
         'registrations.character',
         'registrations.character.server',
+        'series',
       ],
     });
 
@@ -121,7 +127,7 @@ export class EventsService {
             },
           },
         },
-        relations: ['owner', 'owner.user', 'locations', 'locations.server', 'locations.venue', 'banner', 'banner.owner', 'discordBanner', 'discordBanner.owner', 'icon', 'icon.owner', 'contentNotes'],
+        relations: ['owner', 'owner.user', 'locations', 'locations.server', 'locations.venue', 'banner', 'banner.owner', 'discordBanner', 'discordBanner.owner', 'icon', 'icon.owner', 'contentNotes', 'series'],
       });
 
       if (!event) {
@@ -166,6 +172,31 @@ export class EventsService {
       ? this.normalizeOptionalTime(eventDto.registrationDeadlineTime, 'registrationDeadlineTime')
       : null;
     event.extraInfo = html.sanitize(eventDto.extraInfo || '');
+    if (eventDto.programme !== undefined) {
+      event.programme = this.normalizeProgramme(eventDto.programme);
+    }
+    if (eventDto.seriesId !== undefined) {
+      if (!eventDto.seriesId) {
+        event.series = null;
+      } else {
+        const series = await em.getRepository(EventSeries).findOne({
+          where: {
+            id: eventDto.seriesId,
+            owner: {
+              user: {
+                id: event.owner.user.id,
+              },
+            },
+          },
+        });
+
+        if (!series) {
+          throw new BadRequestException('Event series not found');
+        }
+
+        event.series = series;
+      }
+    }
     if (eventDto.contentNotes !== undefined) {
       event.contentNotes = eventDto.contentNotes
         .filter(note => note !== '')
@@ -395,7 +426,12 @@ export class EventsService {
     void this.notifySteward(eventEntity); // no await
   }
 
-  async registerForEvent(eventId: number, characterId: number, user: UserInfo): Promise<void> {
+  async registerForEvent(
+    eventId: number,
+    characterId: number,
+    user: UserInfo,
+    kind: EventRegistrationKind = EventRegistrationKind.GOING,
+  ): Promise<void> {
     await this.connection.transaction(async (em) => {
       const event = await em.getRepository(Event).findOne({
         where: {
@@ -420,12 +456,17 @@ export class EventsService {
       });
 
       if (existingRegistration) {
+        if (existingRegistration.kind !== kind) {
+          existingRegistration.kind = kind;
+          await registrationRepo.save(existingRegistration);
+        }
         return;
       }
 
       const registration = registrationRepo.create({
         event,
         character,
+        kind,
       });
       await registrationRepo.save(registration);
     });
@@ -443,7 +484,11 @@ export class EventsService {
         throw new NotFoundException('Event not found');
       }
 
-      this.assertRegistrationAllowed(event);
+      // Open events: withdrawing an RSVP is always allowed. Closed events keep the deadline rules.
+      if (event.closedEvent) {
+        this.assertRegistrationAllowed(event);
+      }
+
       const character = await getVerifiedCharacter(em, characterId, user);
       const registrationRepo = em.getRepository(EventRegistration);
       const registration = await registrationRepo.findOne({
@@ -460,6 +505,75 @@ export class EventsService {
 
       await registrationRepo.remove(registration);
     });
+  }
+
+  async getEventIcs(eventId: number): Promise<string> {
+    const event = await this.eventRepo.findOne({
+      where: { id: eventId },
+      relations: ['locations', 'locations.server', 'locations.venue'],
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    return buildIcsCalendar([this.toIcsEvent(event)], {
+      timezone: SharedConstants.FFXIV_SERVER_TIMEZONE,
+    });
+  }
+
+  async getMyEventsIcs(user: UserInfo): Promise<string> {
+    const characterIds = user.characters.map((character) => character.id);
+    let events: Event[] = [];
+
+    if (characterIds.length > 0) {
+      const since = DateTime.now().minus({ days: 30 }).toJSDate();
+      events = await this.eventRepo
+        .createQueryBuilder('event')
+        .innerJoin('event.registrations', 'registration')
+        .leftJoinAndSelect('event.locations', 'location')
+        .leftJoinAndSelect('location.server', 'server')
+        .leftJoinAndSelect('location.venue', 'venue')
+        .where('registration.characterId IN (:...characterIds)', { characterIds })
+        .andWhere('event.hidden = :hidden', { hidden: false })
+        .andWhere('(event.startDateTime >= :since OR event.endDateTime >= :since)', { since })
+        .orderBy('event.startDateTime', 'ASC')
+        .distinct(true)
+        .take(500)
+        .getMany();
+    }
+
+    return buildIcsCalendar(events.map((event) => this.toIcsEvent(event)), {
+      name: 'Elpisgarten – Meine Veranstaltungen',
+      timezone: SharedConstants.FFXIV_SERVER_TIMEZONE,
+    });
+  }
+
+  private toIcsEvent(event: Event): IcsEvent {
+    const frontendRoot = (serverConfiguration.frontendRoot || '').replace(/\/+$/, '');
+    let host = 'elpisgarten';
+
+    try {
+      host = new URL(frontendRoot).host || host;
+    } catch {
+      // keep fallback host
+    }
+
+    const location = (event.locations || [])
+      .map((loc) => [loc.name, loc.address, loc.server?.name].filter((part) => !!part && part.trim()).join(', '))
+      .filter((loc) => loc.length > 0)
+      .join(' / ');
+
+    return {
+      uid: `event-${event.id}@${host}`,
+      start: event.startDateTime,
+      end: event.endDateTime,
+      summary: event.title,
+      location: location || null,
+      url: frontendRoot ? `${frontendRoot}/event/${event.id}` : null,
+      description: htmlToIcsPlainText(event.details || '') || null,
+      lastModified: event.updatedAt || null,
+    };
   }
 
   private async notifySteward(event: Event): Promise<void> {
@@ -526,10 +640,10 @@ export class EventsService {
         createdAt: 'ASC',
       },
       take: this.MAX_RESULTS,
-      relations: ['locations', 'locations.server', 'locations.venue', 'icon', 'icon.owner', 'contentNotes'],
+      relations: ['locations', 'locations.server', 'locations.venue', 'icon', 'icon.owner', 'contentNotes', 'series'],
     });
 
-    return Promise.all(events.map((event) => this.toEventSummaryDto(event)));
+    return this.toEventSummaryDtos(events);
   }
 
   private async saveEvents(events: ExternalEvent[]): Promise<void> {
@@ -684,6 +798,7 @@ export class EventsService {
       .leftJoinAndSelect('event.icon', 'icon')
       .leftJoinAndSelect('icon.owner', 'iconOwner')
       .leftJoinAndSelect('event.contentNotes', 'contentNotes')
+      .leftJoinAndSelect('event.series', 'series')
       .where('event.startDateTime >= :startOfMonth', { startOfMonth: startOfMonth.toJSDate() })
       .andWhere('event.startDateTime < :endOfMonth', { endOfMonth: endOfMonth.toJSDate() })
       .andWhere('event.hidden = :hidden', { hidden: false })
@@ -693,7 +808,7 @@ export class EventsService {
       })
       .getMany();
 
-    return Promise.all(events.map((event) => this.toEventSummaryDto(event)));
+    return this.toEventSummaryDtos(events);
   }
 
   async getEventsForVenue(
@@ -709,6 +824,7 @@ export class EventsService {
       .leftJoinAndSelect('event.icon', 'icon')
       .leftJoinAndSelect('icon.owner', 'iconOwner')
       .leftJoinAndSelect('event.contentNotes', 'contentNotes')
+      .leftJoinAndSelect('event.series', 'series')
       .where('venue.id = :venueId', { venueId })
       .andWhere('event.hidden = :hidden', { hidden: false });
 
@@ -737,7 +853,7 @@ export class EventsService {
 
     const events = await query.distinct(true).getMany();
 
-    return Promise.all(events.map((event) => this.toEventSummaryDto(event)));
+    return this.toEventSummaryDtos(events);
   }
 
   private normalizeEventType(eventType?: EventType | null): EventType {
@@ -772,6 +888,12 @@ export class EventsService {
   }
 
   private isRegistrationOpen(event: Event): boolean {
+    if (!event.closedEvent) {
+      // Open events accept RSVPs ("going" / "interested") until the event is over
+      const endAt = event.endDateTime || event.startDateTime;
+      return Date.now() <= endAt.getTime();
+    }
+
     const deadlineAt = this.getRegistrationDeadlineAt(event);
     if (!deadlineAt) {
       return false;
@@ -781,13 +903,60 @@ export class EventsService {
   }
 
   private assertRegistrationAllowed(event: Event): void {
-    if (!event.closedEvent) {
-      throw new BadRequestException('Registrations are only available for closed events');
+    if (!this.isRegistrationOpen(event)) {
+      throw new BadRequestException(
+        event.closedEvent ? 'Registration deadline has passed' : 'Event is already over',
+      );
+    }
+  }
+
+  private async getRegistrationCounts(
+    eventIds: number[],
+  ): Promise<Map<number, { goingCount: number; interestedCount: number }>> {
+    const result = new Map<number, { goingCount: number; interestedCount: number }>();
+
+    if (eventIds.length === 0) {
+      return result;
     }
 
-    if (!this.isRegistrationOpen(event)) {
-      throw new BadRequestException('Registration deadline has passed');
+    const rows: { eventId: number; kind: string; count: string }[] = await this.connection
+      .getRepository(EventRegistration)
+      .createQueryBuilder('registration')
+      .select('registration.eventId', 'eventId')
+      .addSelect('registration.kind', 'kind')
+      .addSelect('COUNT(*)', 'count')
+      .where('registration.eventId IN (:...eventIds)', { eventIds })
+      .groupBy('registration.eventId')
+      .addGroupBy('registration.kind')
+      .getRawMany();
+
+    for (const row of rows) {
+      const eventId = Number(row.eventId);
+      const counts = result.get(eventId) || { goingCount: 0, interestedCount: 0 };
+
+      if (row.kind === EventRegistrationKind.INTERESTED) {
+        counts.interestedCount += Number(row.count);
+      } else {
+        counts.goingCount += Number(row.count);
+      }
+
+      result.set(eventId, counts);
     }
+
+    return result;
+  }
+
+  private async toEventSummaryDtos(events: Event[]): Promise<EventSummaryDto[]> {
+    const [summaries, counts] = await Promise.all([
+      Promise.all(events.map((event) => this.toEventSummaryDto(event))),
+      this.getRegistrationCounts(events.map((event) => event.id)),
+    ]);
+
+    return summaries.map((summary) => ({
+      ...summary,
+      goingCount: counts.get(summary.id)?.goingCount ?? 0,
+      interestedCount: counts.get(summary.id)?.interestedCount ?? 0,
+    }));
   }
 
   private async toEventSummaryDto(event: Event): Promise<EventSummaryDto> {
@@ -824,6 +993,8 @@ export class EventsService {
       registrationDeadlineDays: event.registrationDeadlineDays,
       registrationDeadlineTime: event.registrationDeadlineTime || null,
       contentNotes: (event.contentNotes || []).map((note) => note.name),
+      seriesId: event.series?.id ?? null,
+      seriesLabel: event.series ? formatEventSeriesLabel(toEventSeriesSpec(event.series)) : null,
       locations: event.locations.map((location) => ({
         id: location.id,
         name: location.name,
@@ -848,9 +1019,18 @@ export class EventsService {
     const registrations = (event.registrations || []).slice().sort((a, b) =>
       utils.compareNumbers(a.createdAt.getTime(), b.createdAt.getTime()),
     );
-    const myRegistrationCharacterIds = registrations
-      .map((registration) => registration.character?.id)
-      .filter((characterId): characterId is number => !!characterId && userCharacterIds.includes(characterId));
+    const myRegistrations = registrations.filter(
+      (registration) => !!registration.character?.id && userCharacterIds.includes(registration.character.id),
+    );
+    const myRegistrationCharacterIds = myRegistrations.map((registration) => registration.character.id);
+    const myRegistrationKinds: { [characterId: number]: EventRegistrationKind } = {};
+    for (const registration of myRegistrations) {
+      myRegistrationKinds[registration.character.id] = registration.kind || EventRegistrationKind.GOING;
+    }
+    const interestedCount = registrations.filter(
+      (registration) => registration.kind === EventRegistrationKind.INTERESTED,
+    ).length;
+    const goingCount = registrations.length - interestedCount;
     const canManageParticipants = event.owner?.user?.id === user?.id;
     const participants = registrations.map((registration) =>
       new EventParticipantDto({
@@ -859,6 +1039,7 @@ export class EventsService {
         server: registration.character.server?.name || '',
         avatar: registration.character.avatar,
         registeredAt: registration.createdAt.getTime(),
+        kind: registration.kind || EventRegistrationKind.GOING,
       }),
     );
     let announcements: EventAnnouncement[] = [];
@@ -892,6 +1073,8 @@ export class EventsService {
       registrationDeadlineTime: event.registrationDeadlineTime || null,
       contentNotes: (event.contentNotes || []).map((note) => note.name),
       extraInfo: event.extraInfo || '',
+      programme: (event.programme || []).map((item) => new EventProgrammeItemDto(item)),
+      seriesId: event.series?.id ?? null,
       banner: !banner
         ? null
         : new BannerDto({
@@ -935,9 +1118,16 @@ export class EventsService {
         images,
         registrationDeadlineAt: registrationDeadlineAt ? registrationDeadlineAt.getTime() : null,
         registrationOpen,
-        participantCount: registrations.length,
+        participantCount: goingCount,
         userRegistered: myRegistrationCharacterIds.length > 0,
         myRegistrationCharacterIds,
+        goingCount,
+        interestedCount,
+        myRegistrationKinds,
+        seriesLabel: event.series ? formatEventSeriesLabel(toEventSeriesSpec(event.series)) : undefined,
+        nextOccurrences: event.series && event.series.active
+          ? computeNextOccurrences(toEventSeriesSpec(event.series), Date.now(), 3, SharedConstants.FFXIV_SERVER_TIMEZONE)
+          : undefined,
         canManageParticipants,
         participants: canManageParticipants ? participants : [],
       });
@@ -985,6 +1175,21 @@ export class EventsService {
     }
 
     return normalized;
+  }
+
+  private normalizeProgramme(
+    programme: EventProgrammeItemDto[] | null,
+  ): { time: string; title: string; note?: string }[] | null {
+    const items = (programme || [])
+      .map((item) => ({
+        time: (item.time || '').trim(),
+        title: (item.title || '').trim(),
+        note: (item.note || '').trim(),
+      }))
+      .filter((item) => item.title.length > 0)
+      .map((item) => (item.note ? item : { time: item.time, title: item.title }));
+
+    return items.length > 0 ? items : null;
   }
 
   private normalizeRegistrationDeadlineDays(value: number | null | undefined): number | null {

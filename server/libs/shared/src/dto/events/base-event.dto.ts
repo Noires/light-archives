@@ -1,10 +1,11 @@
 import { Type } from "class-transformer";
-import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Matches, MinLength, ValidateNested } from "class-validator";
+import { ArrayMaxSize, IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Matches, MinLength, ValidateNested } from "class-validator";
 import { BannerDto } from "../characters/banner.dto";
 import { EventType } from "../../enums/event-type.enum";
 import { EventIconDto } from "./event-icon.dto";
 import { EventLinkDto } from "./event-link.dto";
 import { EventLocationDto } from "./event-location.dto";
+import { EventProgrammeItemDto, MAX_EVENT_PROGRAMME_ITEMS } from "./event-programme-item.dto";
 
 export abstract class BaseEventDto {
 	@IsString()
@@ -99,4 +100,18 @@ export abstract class BaseEventDto {
 	@ValidateNested({ each: true })
 	@IsArray()
 	locations: EventLocationDto[];
+
+  // ER2-804: series this event belongs to. Omit to keep, null to detach.
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  seriesId?: number | null;
+
+  // ER2-803: optional programme. Omit to keep the stored value; send [] or null to clear.
+  @Type(() => EventProgrammeItemDto)
+  @ValidateNested({ each: true })
+  @ArrayMaxSize(MAX_EVENT_PROGRAMME_ITEMS)
+  @IsArray()
+  @IsOptional()
+  programme?: EventProgrammeItemDto[] | null;
 }

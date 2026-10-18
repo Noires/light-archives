@@ -4,6 +4,7 @@ import { EventSearchResultDto } from '@app/shared/dto/events/event-search-result
 import { EventSummariesDto } from '@app/shared/dto/events/event-summaries.dto';
 import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
 import { EventDto } from '@app/shared/dto/events/event.dto';
+import { EventRegistrationKind } from '@app/shared/enums/event-registration-kind.enum';
 import APITransport from './api-transport';
 
 export default class EventsAPI {
@@ -39,12 +40,29 @@ export default class EventsAPI {
     return this.transport.authDelete<void>(`${id}`);
   }
 
-  async registerForEvent(id: number, characterId: number): Promise<void> {
-    return this.transport.authPost<void>(`${id}/registrations`, { characterId });
+  /**
+   * Register (closed events) or RSVP (open events). `kind` defaults to 'going' on the server.
+   * Calling again with a different kind switches the existing registration.
+   */
+  async registerForEvent(id: number, characterId: number, kind?: EventRegistrationKind): Promise<void> {
+    return this.transport.authPost<void>(`${id}/registrations`, kind ? { characterId, kind } : { characterId });
   }
 
   async unregisterForEvent(id: number, characterId: number): Promise<void> {
     return this.transport.authDelete<void>(`${id}/registrations/${characterId}`);
+  }
+
+  /** Public download URL of a single event as iCalendar (text/calendar). Usable directly as an <a href>. */
+  getEventIcsUrl(id: number): string {
+    return `${this.transport.prefix}${id}/ics`;
+  }
+
+  /**
+   * iCalendar feed (as text) of all events the current user's characters registered for.
+   * Requires a token, so it cannot be used as a plain link; wrap the result in a Blob to download.
+   */
+  async getMyEventsIcs(): Promise<string> {
+    return this.transport.authGet<string>('my.ics');
   }
 
   async searchEvents(query: string): Promise<EventSearchResultDto[]> {

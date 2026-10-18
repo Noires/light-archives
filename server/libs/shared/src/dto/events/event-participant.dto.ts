@@ -1,4 +1,5 @@
 import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { EventRegistrationKind } from '../../enums/event-registration-kind.enum';
 
 export class EventParticipantDto {
   @IsNumber()
@@ -16,6 +17,10 @@ export class EventParticipantDto {
 
   @IsNumber()
   registeredAt: number;
+
+  // ER2-801: absent on older API versions; treat as 'going'
+  @IsOptional()
+  kind?: EventRegistrationKind;
 
   constructor(properties?: Readonly<EventParticipantDto>) {
     if (properties) {

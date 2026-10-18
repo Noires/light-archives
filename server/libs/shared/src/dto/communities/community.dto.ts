@@ -62,6 +62,11 @@ export class CommunityDto {
   @IsString()
 	recruitingOfficers: string;
 
+  // ER2-810: null = not specified. Omit to keep.
+  @IsBoolean()
+  @IsOptional()
+  recruiting?: boolean | null;
+
   @IsString()
   carrdProfile: string;
 

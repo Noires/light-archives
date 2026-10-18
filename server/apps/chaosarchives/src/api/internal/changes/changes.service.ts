@@ -160,6 +160,9 @@ export class ChangesService {
     }
 
     return this.storyRepo.find({
+      where: {
+        published: true,
+      },
       relations: ['owner'],
       order: {
         updatedAt: 'DESC',

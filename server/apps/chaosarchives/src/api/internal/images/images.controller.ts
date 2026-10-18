@@ -21,6 +21,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Transform } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 import { ImagesService } from './images.service';
+import { ReactionsService } from '../reactions/reactions.service';
+import { ReactionTargetType } from '@app/shared/enums/reaction.enum';
 import { PayloadTooLargeInterceptor } from './payload-too-large.interceptor';
 
 class DeleteImageParamsDto {
@@ -31,7 +33,10 @@ class DeleteImageParamsDto {
 
 @Controller('images')
 export class ImagesController {
-  constructor(private imageService: ImagesService) {}
+  constructor(
+    private imageService: ImagesService,
+    private reactionsService: ReactionsService,
+  ) {}
 
   @Get()
   async getImages(@Query() filter: ImagesFilterDto): Promise<PagingResultDto<ImageSummaryDto>> {
@@ -45,7 +50,9 @@ export class ImagesController {
   @Get(':id')
   @UseGuards(OptionalJwtAuthGuard)
   async getImage(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: UserInfo): Promise<ImageDto> {
-    return this.imageService.getImage(id, user);
+    const image = await this.imageService.getImage(id, user);
+    const reactions = await this.reactionsService.getSummary(ReactionTargetType.IMAGE, id, user);
+    return { ...image, ...reactions };
   }
 
   @Post()

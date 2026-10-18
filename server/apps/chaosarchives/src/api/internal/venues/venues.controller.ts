@@ -7,6 +7,7 @@ import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { VenueMemberDto } from '@app/shared/dto/venues/venue-member.dto';
 import { VenueMemberFlagsDto } from '@app/shared/dto/venues/venue-member-flags.dto';
 import { VenueOfferingsDto } from '@app/shared/dto/venues/venue-offering.dto';
+import { VenueOpeningHoursDto } from '@app/shared/dto/venues/venue-opening-hours.dto';
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { Role } from '@app/shared/enums/role.enum';
@@ -15,6 +16,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional } from 'class-validator';
 import { VenuesService } from './venues.service';
+import { VenueOpeningHoursService } from './venue-opening-hours.service';
 
 class OptionalCharacterId {
   @IsInt()
@@ -25,7 +27,10 @@ class OptionalCharacterId {
 
 @Controller('venues')
 export class VenuesController {
-	constructor(private venuesService: VenuesService) {}
+	constructor(
+    private venuesService: VenuesService,
+    private openingHoursService: VenueOpeningHoursService,
+  ) {}
 
 	@Get()
 	async getVenues(@Query() filter: { characterId?: number }): Promise<VenueSummaryDto[]> {
@@ -161,6 +166,24 @@ export class VenuesController {
     @CurrentUser() user: UserInfo,
   ): Promise<void> {
     await this.venuesService.deleteOfferingImage(id, imageId, user);
+  }
+
+  // ─── Opening hours (ER2-805) ─────────────────────────────────────────────────
+
+  @Get(':id/opening-hours')
+  async getOpeningHours(@Param('id', ParseIntPipe) id: number): Promise<VenueOpeningHoursDto> {
+    return this.openingHoursService.getOpeningHours(id);
+  }
+
+  @Put(':id/opening-hours')
+  @RoleRequired(Role.USER)
+  async saveOpeningHours(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() openingHours: VenueOpeningHoursDto,
+    @CurrentUser() user: UserInfo,
+  ): Promise<VenueOpeningHoursDto> {
+    await this.venuesService.assertCanEditVenue(id, user);
+    return this.openingHoursService.saveOpeningHours(id, openingHours);
   }
 
 	@Get(':server/:name')

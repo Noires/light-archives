@@ -32,6 +32,29 @@
             @update:model-value="onTagsChanged"
             label="Schlagworte (mit Komma getrennt)"
           />
+          <!-- ER2-810: draft flag -->
+          <q-toggle
+            :model-value="story.published !== false"
+            @update:model-value="story.published = $event"
+            label="Veröffentlicht (sonst nur für dich sichtbar)"
+          />
+          <!-- ER2-808: story series -->
+          <div class="page-edit-story__series">
+            <q-input
+              v-model="story.seriesTitle"
+              label="Reihe (optional)"
+              hint="Teile mit gleichem Reihennamen werden als Kapitel verknüpft."
+              maxlength="120"
+            />
+            <q-input
+              :model-value="story.seriesIndex ?? ''"
+              @update:model-value="onSeriesIndexChanged"
+              type="number"
+              min="0"
+              label="Teil Nr."
+              :disable="!story.seriesTitle"
+            />
+          </div>
           <div class="page-edit-story__select-group">
             <div class="page-edit-story__select-title">Inhaltswarnungen</div>
             <q-option-group
@@ -124,6 +147,12 @@ export default class PageEditStory extends Vue {
   }));
 
   story = new StoryDto();
+
+  // ER2-808
+  onSeriesIndexChanged(value: string | number | null) {
+    const parsed = value === null || value === '' ? null : parseInt(String(value), 10);
+    this.story.seriesIndex = parsed === null || Number.isNaN(parsed) ? null : Math.max(0, parsed);
+  }
   storyBackup = new StoryDto();
   contentNoteOptions: {label: string, value: string}[];
   preview = false;
@@ -228,6 +257,12 @@ export default class PageEditStory extends Vue {
 </script>
 
 <style lang="scss">
+.page-edit-story__series {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 8rem;
+  gap: 10px;
+}
+
 .page-edit-story {
   --edit-story-select-group-border: rgba(221, 180, 118, 0.25);
   --edit-story-select-group-bg: rgba(249, 247, 242, 0.95);

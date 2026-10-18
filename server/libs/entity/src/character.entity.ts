@@ -585,4 +585,25 @@ export class Character extends BasicEntity {
     default: '',
   })
   slogan: string;
+
+  // ER2-806: opt-in RP presence ('ic' | 'lfrp' | 'ooc'); always expires, no history kept
+  @Column({
+    type: 'varchar',
+    length: 8,
+    nullable: true,
+  })
+  rpStatus: string | null;
+
+  @Column({
+    type: 'varchar',
+    length: 80,
+    nullable: true,
+  })
+  rpLocation: string | null;
+
+  @Column({
+    type: 'datetime',
+    nullable: true,
+  })
+  rpStatusExpiresAt: Date | null;
 }
