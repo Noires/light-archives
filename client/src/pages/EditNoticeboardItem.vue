@@ -40,6 +40,12 @@
             :loading="loadingVenues"
             hint="Stellenangebote/Stellengesuche können direkt mit einem Treffpunkt verknüpft werden."
           />
+          <banner-edit-section
+            :model-value="imageBanner"
+            title="Bild (optional)"
+            :character-id="!noticeboardItem.id ? selectedCharacterId : null"
+            @update:model-value="onImageChanged"
+          />
           <h6>Content *</h6>
           <html-editor v-model="noticeboardItem.content" />
           <template v-if="!noticeboardItem.id">
@@ -90,10 +96,12 @@
 </template>
 
 <script lang="ts">
+import { BannerDto } from '@app/shared/dto/characters/banner.dto';
 import { NoticeboardItemDto } from '@app/shared/dto/noticeboard/noticeboard-item.dto';
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { NoticeboardLocation } from '@app/shared/enums/noticeboard-location.enum';
 import { NoticeboardType } from '@app/shared/enums/noticeboard-type.enum';
+import BannerEditSection from 'components/common/BannerEditSection.vue';
 import CharacterSelector from 'components/common/CharacterSelector.vue';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
 import NoticeboardItemView from 'components/noticeboard/NoticeboardItemView.vue';
@@ -105,6 +113,7 @@ import { RouteLocationNormalized, RouteParams } from 'vue-router';
 @Options({
   name: 'PageEditNoticeboardItem',
   components: {
+    BannerEditSection,
     CharacterSelector,
     HtmlEditor,
     NoticeboardItemView,
@@ -186,6 +195,25 @@ export default class PageEditNoticeboardItem extends Vue {
 
     this.noticeboardItem = new NoticeboardItemDto(this.noticeboardItemBackup);
     this.onTypeChanged();
+  }
+
+  // Optional image: the server only needs the id; the preview keeps the banner ratio.
+  get imageBanner(): BannerDto | undefined {
+    if (!this.noticeboardItem.imageId || !this.noticeboardItem.imageUrl) {
+      return undefined;
+    }
+
+    return new BannerDto({
+      id: this.noticeboardItem.imageId,
+      url: this.noticeboardItem.imageUrl,
+      width: 4,
+      height: 1,
+    });
+  }
+
+  onImageChanged(banner: BannerDto | null) {
+    this.noticeboardItem.imageId = banner ? banner.id : null;
+    this.noticeboardItem.imageUrl = banner ? banner.url : null;
   }
 
   get canLinkVenueType(): boolean {

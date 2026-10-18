@@ -26,6 +26,11 @@ export default class NoticeboardAPI {
     return this.transport.authPut<void>(`${noticeboardItem.id || -1}`, noticeboardItem);
   }
 
+  /** ER2 round 2: moderators only. Pinned items are listed first. */
+  async setPinned(id: number, pinned: boolean): Promise<void> {
+    return this.transport.authPut<void>(`${id}/pinned`, { pinned });
+  }
+
   async deleteNoticeboardItem(id: number): Promise<void> {
     return this.transport.authDelete<void>(`${id}`);
   }

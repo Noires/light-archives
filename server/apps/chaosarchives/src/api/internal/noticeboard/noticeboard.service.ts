@@ -1,6 +1,6 @@
 import { UserInfo } from '@app/auth/model/user-info';
 import { serverConfiguration } from '@app/configuration';
-import { Character, NoticeboardItem, Venue } from '@app/entity';
+import { Character, Image, NoticeboardItem, Venue } from '@app/entity';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { NoticeboardItemSummaryDto } from '@app/shared/dto/noticeboard/noticeboard-item-summary.dto';
 import { NoticeboardItemDto } from '@app/shared/dto/noticeboard/noticeboard-item.dto';
@@ -12,7 +12,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
 import { firstValueFrom } from 'rxjs';
 import { getVerifiedCharacter } from '../../../common/api-checks';
+import { buildExcerpt } from '../../../common/plain-text';
+import { ImagesService } from '../images/images.service';
 import { VenuesService } from '../venues/venues.service';
+import { dropTruncatedTag, NOTICEBOARD_EXCERPT_LENGTH, NOTICEBOARD_EXCERPT_SOURCE_LENGTH } from './noticeboard.helpers';
 
 @Injectable()
 export class NoticeboardService {
@@ -23,6 +26,7 @@ export class NoticeboardService {
     @InjectRepository(NoticeboardItem) private noticeboardItemRepo: Repository<NoticeboardItem>,
 		private readonly httpService: HttpService,
     private readonly venuesService: VenuesService,
+    private readonly imagesService: ImagesService,
   ) {}
 
   async getNoticeboardItem(id: number, user?: UserInfo): Promise<NoticeboardItemDto> {
@@ -33,8 +37,11 @@ export class NoticeboardService {
       .innerJoinAndSelect('character.server', 'server')
       .leftJoinAndSelect('noticeboardItem.venue', 'venue')
       .leftJoinAndSelect('venue.server', 'venueServer')
+      .leftJoinAndSelect('noticeboardItem.image', 'image')
+      .leftJoinAndSelect('image.owner', 'imageOwner')
       .where('noticeboardItem.id = :id', { id })
-      .select(['noticeboardItem', 'character.id', 'character.name', 'user.id', 'server.name', 'venue.id', 'venue.name', 'venueServer.name'])
+      .select(['noticeboardItem', 'character.id', 'character.name', 'user.id', 'server.name', 'venue.id', 'venue.name', 'venueServer.name',
+        'image.id', 'image.hash', 'image.filename', 'imageOwner.id'])
       .getOne();
 
     if (!noticeboardItem) {
@@ -54,6 +61,10 @@ export class NoticeboardService {
       venueId: noticeboardItem.venue ? noticeboardItem.venue.id : undefined,
       venueName: noticeboardItem.venue ? noticeboardItem.venue.name : undefined,
       venueServer: noticeboardItem.venue ? noticeboardItem.venue.server.name : undefined,
+      imageId: noticeboardItem.image ? noticeboardItem.image.id : null,
+      imageUrl: noticeboardItem.image ? this.imagesService.getUrl(noticeboardItem.image) : null,
+      pinned: noticeboardItem.pinned,
+      discordPosted: noticeboardItem.discordPosted,
     });
   }
 
@@ -99,6 +110,7 @@ export class NoticeboardService {
         content: html.sanitize(noticeboardItemDto.content),
         location: noticeboardItemDto.location,
         type,
+        image: await this.resolveImage(noticeboardItemDto.imageId, user, em),
       });
 
       return noticeboardItemRepo.save(noticeboardItem);
@@ -140,6 +152,10 @@ export class NoticeboardService {
         type,
       });
 
+      if (noticeboardItemDto.imageId !== undefined) {
+        noticeboardItem.image = await this.resolveImage(noticeboardItemDto.imageId, user, em);
+      }
+
       await noticeboardItemRepo.save(noticeboardItem);
     });
   }
@@ -164,13 +180,19 @@ export class NoticeboardService {
     });
   }
 
-  async getNoticeboardItemList(params: { characterId?: number; venueId?: number; limit?: number }): Promise<NoticeboardItemSummaryDto[]> {
+  /**
+   * Pinned items come first (see comparePinnedFirst) unless `pinnedFirst` is false.
+   */
+  async getNoticeboardItemList(
+    params: { characterId?: number; venueId?: number; limit?: number; pinnedFirst?: boolean },
+  ): Promise<NoticeboardItemSummaryDto[]> {
     const query = this.noticeboardItemRepo
       .createQueryBuilder('noticeboardItem')
       .innerJoinAndSelect('noticeboardItem.owner', 'character')
       .leftJoinAndSelect('noticeboardItem.venue', 'venue')
       .leftJoinAndSelect('venue.server', 'venueServer')
-      .orderBy('noticeboardItem.createdAt', 'DESC')
+      .leftJoinAndSelect('noticeboardItem.image', 'image')
+      .leftJoinAndSelect('image.owner', 'imageOwner')
       .select([
         'noticeboardItem.id',
         'character.name',
@@ -178,11 +200,28 @@ export class NoticeboardService {
         'noticeboardItem.createdAt',
         'noticeboardItem.location',
         'noticeboardItem.type',
+        'noticeboardItem.pinned',
+        'noticeboardItem.pinnedAt',
+        'noticeboardItem.discordPosted',
         'venue.id',
         'venue.name',
         'venueServer.name',
+        'image.id',
+        'image.hash',
+        'image.filename',
+        'imageOwner.id',
       ])
       .limit(params.limit);
+
+    if (params.pinnedFirst !== false) {
+      // MariaDB sorts NULL last with DESC
+      query
+        .orderBy('noticeboardItem.pinned', 'DESC')
+        .addOrderBy('noticeboardItem.pinnedAt', 'DESC')
+        .addOrderBy('noticeboardItem.createdAt', 'DESC');
+    } else {
+      query.orderBy('noticeboardItem.createdAt', 'DESC');
+    }
 
     if (params.characterId) {
       query.where('character.id = :characterId', {
@@ -199,6 +238,7 @@ export class NoticeboardService {
     }
 
     const noticeboardItems = await query.getMany();
+    const excerpts = await this.getExcerpts(noticeboardItems.map((item) => item.id));
 
     return noticeboardItems.map((noticeboardItem) => ({
       id: noticeboardItem.id,
@@ -210,7 +250,79 @@ export class NoticeboardService {
       venueId: noticeboardItem.venue ? noticeboardItem.venue.id : undefined,
       venueName: noticeboardItem.venue ? noticeboardItem.venue.name : undefined,
       venueServer: noticeboardItem.venue ? noticeboardItem.venue.server.name : undefined,
+      pinned: noticeboardItem.pinned,
+      discordPosted: noticeboardItem.discordPosted,
+      imageUrl: noticeboardItem.image ? this.imagesService.getUrl(noticeboardItem.image) : null,
+      excerpt: excerpts.get(noticeboardItem.id) || '',
     }));
+  }
+
+  // ER2 round 2: excerpts from a content prefix, one query per list
+  private async getExcerpts(ids: number[]): Promise<Map<number, string>> {
+    const result = new Map<number, string>();
+
+    if (ids.length === 0) {
+      return result;
+    }
+
+    const rows: { id: number; content: string | null }[] = await this.noticeboardItemRepo
+      .createQueryBuilder('noticeboardItem')
+      .select('noticeboardItem.id', 'id')
+      .addSelect(`LEFT(noticeboardItem.content, ${NOTICEBOARD_EXCERPT_SOURCE_LENGTH})`, 'content')
+      .where('noticeboardItem.id IN (:...ids)', { ids })
+      .getRawMany();
+
+    for (const row of rows) {
+      result.set(Number(row.id), buildExcerpt(dropTruncatedTag(row.content || ''), NOTICEBOARD_EXCERPT_LENGTH));
+    }
+
+    return result;
+  }
+
+  async setPinned(id: number, pinned: boolean): Promise<void> {
+    const result = await this.noticeboardItemRepo
+      .createQueryBuilder()
+      .update(NoticeboardItem)
+      .set({
+        pinned,
+        pinnedAt: pinned ? new Date() : null,
+        // keep updatedAt so pinning does not show up as an edit in the activity feed
+        updatedAt: () => 'updatedAt',
+      })
+      .where('id = :id', { id })
+      .andWhere('deletedAt IS NULL')
+      .execute();
+
+    if (!result.affected) {
+      throw new NotFoundException('Noticeboard item not found');
+    }
+  }
+
+  private async resolveImage(
+    imageId: number | null | undefined,
+    user: UserInfo,
+    em: EntityManager,
+  ): Promise<Image | null> {
+    if (!imageId) {
+      return null;
+    }
+
+    const image = await em.getRepository(Image).findOne({
+      where: {
+        id: imageId,
+        owner: {
+          user: {
+            id: user.id,
+          },
+        },
+      },
+    });
+
+    if (!image) {
+      throw new BadRequestException('Image not found');
+    }
+
+    return image;
   }
 
   private async resolveVenue(

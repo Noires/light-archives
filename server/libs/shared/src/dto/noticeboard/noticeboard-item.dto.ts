@@ -55,9 +55,30 @@ export class NoticeboardItemDto {
 	@IsOptional()
 	type: NoticeboardType;
 
+	// ER2 round 2: optional image (own image id). Omit to keep on edit, null to remove.
+	@IsNumber()
+	@IsOptional()
+	imageId?: number | null;
+
+	// Read only (optional)
+	@IsOptional()
+	imageUrl?: string | null;
+
+	@IsOptional()
+	pinned?: boolean;
+
+	@IsOptional()
+	discordPosted?: boolean;
+
 	constructor(properties?: Readonly<NoticeboardItemDto>) {
     if (properties) {
       Object.assign(this, properties);
     }
   }
+}
+
+/** ER2 round 2: body of PUT /noticeboard/:id/pinned (moderators) */
+export class NoticeboardPinnedRequestDto {
+	@IsBoolean()
+	pinned: boolean;
 }

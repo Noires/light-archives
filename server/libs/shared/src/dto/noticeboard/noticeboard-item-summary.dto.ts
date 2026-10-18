@@ -11,4 +11,10 @@ export interface NoticeboardItemSummaryDto {
 	venueId?: number;
 	venueName?: string;
 	venueServer?: string;
+	// ER2 round 2 (optional, read only)
+	pinned?: boolean;
+	discordPosted?: boolean;
+	imageUrl?: string|null;
+	/** plain text, HTML stripped, ~240 characters */
+	excerpt?: string;
 }

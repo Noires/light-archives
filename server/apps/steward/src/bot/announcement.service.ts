@@ -100,6 +100,13 @@ export class AnnouncementService {
 		const subtitle = `${noticeboardLocations[noticeboardItem.location]} — by ${noticeboardItem.owner.name}`
 		try {
 			await this.botGateway.sendNoticeboardItem(this.buildNoticeboardMessage(noticeboardItem, subtitle));
+			// ER2 round 2: remember the Discord post; keep updatedAt so it is not shown as an edit
+			await this.noticeboardItemRepo
+				.createQueryBuilder()
+				.update(NoticeboardItem)
+				.set({ discordPosted: true, updatedAt: () => 'updatedAt' })
+				.where('id = :id', { id: noticeboardItem.id })
+				.execute();
 		} catch (e) {
 			if (e instanceof Error) {
 				this.logger.error(e.message, e.stack);
