@@ -1,12 +1,16 @@
 import type { NoticeboardItemSummaryDto } from '@app/shared/dto/noticeboard/noticeboard-item-summary.dto';
 import { NoticeboardType } from '@app/shared/enums/noticeboard-type.enum';
 
-/** List item plus fields a newer API may add (all optional). */
-export type NoticeboardCardItem = NoticeboardItemSummaryDto & {
-  excerpt?: string;
-  imageUrl?: string;
-  postedToDiscord?: boolean;
-};
+/**
+ * List item. ER2 round 2 added pinned, discordPosted / postedToDiscord,
+ * imageUrl and excerpt to the summary DTO; all optional, absent on older APIs.
+ */
+export type NoticeboardCardItem = NoticeboardItemSummaryDto;
+
+/** True when the notice was posted to Discord (either field name). */
+export function isPostedToDiscord(item: NoticeboardCardItem): boolean {
+  return !!(item.postedToDiscord || item.discordPosted);
+}
 
 // ER2-605 — type colours of the noticeboard (Penpot "I · Anschlagbrett").
 // Offers read green (live), searches read in the strong rule colour, news in
