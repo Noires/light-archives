@@ -10,9 +10,9 @@ import { StorySummaryDto } from '@app/shared/dto/stories/story-summary.dto';
 import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import { Role } from '@app/shared/enums/role.enum';
 import { BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { ReactionTargetType } from '@app/shared/enums/reaction.enum';
 import { StoriesService } from './stories.service';
 import { ReactionsService } from '../reactions/reactions.service';
-import { ReactionTargetType } from '@app/shared/enums/reaction.enum';
 
 @Controller('stories')
 export class StoriesController {

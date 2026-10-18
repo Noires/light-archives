@@ -22,18 +22,18 @@ import { BadRequestException, ConflictException, ForbiddenException, GoneExcepti
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
-import { assertUserCharacterId, checkCarrdProfile } from '../../../common/api-checks';
-import { andWhereExists, escapeForLike, isQueryFailedError } from '../../../common/db';
-import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
-import { ImagesService } from '../images/images.service';
 import { getTribeByName } from '@app/shared/enums/tribe.enum';
 import { RpPresenceDto } from '@app/shared/dto/characters/rp-presence.dto';
 import { RpStatusRequestDto } from '@app/shared/dto/characters/rp-status-request.dto';
 import { computeRpStatusExpiry, normalizeRpLocation, resolveRpPresence, RpPresence } from '@app/shared/presence';
-import { LodestoneService } from '../lodestone/lodestone.service';
 import { normalizeAccentColor, normalizePlayStyleTags } from '@app/shared/validation/profile-fields';
 import { CharacterLookupRequestDto, CharacterLookupResultDto } from '@app/shared/dto/characters/character-lookup.dto';
 import { communityRole, CommunityRole } from '@app/shared/dto/communities/community-member.dto';
+import { LodestoneService } from '../lodestone/lodestone.service';
+import { ImagesService } from '../images/images.service';
+import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
+import { andWhereExists, escapeForLike, isQueryFailedError } from '../../../common/db';
+import { assertUserCharacterId, checkCarrdProfile } from '../../../common/api-checks';
 import { lookupKey, normalizeLookupName, pickLookupMatch, profileLink } from './character-lookup';
 
 @Injectable()
@@ -974,7 +974,7 @@ export class CharactersService {
 
     // Set all previously existing characters with this Lodestone ID as inactive
     await characterRepo.update({
-      lodestoneId: lodestoneId,
+      lodestoneId,
       user,
       active: true,
     }, {

@@ -21,10 +21,10 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Transform } from 'class-transformer';
 import { IsOptional } from 'class-validator';
+import { ReactionTargetType } from '@app/shared/enums/reaction.enum';
 import { ImagesService } from './images.service';
 import { ImageTagsService } from './image-tags.service';
 import { ReactionsService } from '../reactions/reactions.service';
-import { ReactionTargetType } from '@app/shared/enums/reaction.enum';
 import { PayloadTooLargeInterceptor } from './payload-too-large.interceptor';
 
 class DeleteImageParamsDto {

@@ -102,9 +102,11 @@ export class EventReminderScheduler {
       const link = `/event/${reminder.eventId}`;
 
       try {
+        // eslint-disable-next-line no-await-in-loop -- sequential on purpose: keeps per-user reminders ordered and DM sends rate-friendly
         await this.notificationsService.notify(reminder.userId, { type: 'event-reminder', title, body, link });
 
         if (reminder.discordDm && reminder.discordId) {
+          // eslint-disable-next-line no-await-in-loop -- sequential on purpose: keeps per-user reminders ordered and DM sends rate-friendly
           await this.discordNotifier.sendDirectMessage(reminder.discordId, {
             title,
             body,

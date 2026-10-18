@@ -108,10 +108,12 @@ export class NotificationsListener {
       const venues = (event.locations || []).map((location) => location.venue).filter((venue): venue is Venue => !!venue);
 
       for (const venue of venues) {
+        // eslint-disable-next-line no-await-in-loop -- sequential on purpose: recipients are de-duplicated across venues
         const followers = await this.followsService.getFollowerUserIds('venue', [String(venue.id)]);
         const recipients = followers.filter((id) => !excluded.has(id) && !notified.has(id));
         recipients.forEach((id) => notified.add(id));
 
+        // eslint-disable-next-line no-await-in-loop -- sequential on purpose: recipients are de-duplicated across venues
         await this.notificationsService.notifyMany(recipients, {
           type: 'venue-event',
           title: `Neue Veranstaltung bei ${venue.name}`,

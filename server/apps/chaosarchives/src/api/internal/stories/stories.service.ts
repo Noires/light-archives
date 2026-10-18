@@ -12,10 +12,10 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { EventEmitter2 } from '@nestjs/event-emitter'; // ER2 social
 import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, EntityManager, In, IsNull, Not, Repository } from 'typeorm';
+import { ReactionTargetType } from '@app/shared/enums/reaction.enum';
 import { getVerifiedCharacter } from '../../../common/api-checks';
 import { escapeForLike } from '../../../common/db';
 import { buildExcerpt, countWords } from '../../../common/plain-text';
-import { ReactionTargetType } from '@app/shared/enums/reaction.enum';
 import { ImagesService } from '../images/images.service';
 import { ReactionsService } from '../reactions/reactions.service';
 import { excludeTestContentSql } from '../test-content.filter';
