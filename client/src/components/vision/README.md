@@ -293,3 +293,43 @@ Emits `update:modelValue`.
 ```html
 <command-palette v-model="paletteOpen" />
 ```
+
+## HoverCard
+
+Hover cards for character, venue and event links in prose (ER2-208). Two
+parts:
+
+- `HoverCard.vue`: the host. `layouts/MainLayout.vue` mounts exactly one
+  `<hover-card />`; it teleports a 320 px card (`role="dialog"`) to `<body>`.
+- `hover-card.ts`: the controller. `bindHoverCards(el)` delegates events on
+  anchors inside `el` and returns an unbind function. `HtmlViewer` and
+  `LinkField` call it in `mounted` and unbind in `beforeUnmount`.
+
+```ts
+import { bindHoverCards } from 'components/vision/hover-card';
+
+mounted() { this.unbind = bindHoverCards(this.$el as HTMLElement); }
+beforeUnmount() { this.unbind?.(); }
+```
+
+Matching hrefs (same host only): `/link/:name` (resolved with
+`$api.links.resolve`, same choice as `pages/Link.vue`), `/:Server/:Character`,
+`/venue/:id`, `/venue/:server/:name[/:section]`, `/event/:id`. Data comes from
+the character, venue and event detail getters and is cached per session
+(`resolveCard(target)`).
+
+Behaviour: mouse or pen hover shows the card after 300 ms, keyboard focus
+(`:focus-visible`) too; touch never shows it. Leaving the link or the card
+hides it after 150 ms; Esc, click, scroll, resize and navigation hide it at
+once. The link keeps focus and gets `aria-describedby="vision-hovercard"`
+while the card is open.
+
+Variants: character (banner strip, round avatar, title in `--font-lore`,
+name, "Volk · Welt", RP status badge once the DTO has one, free company,
+"Profil" link), venue (banner image, name, `StatusBadge type="open"` when
+the weekly template says it is open now, address), event (date block, title,
+weekday/date and time, first location).
+
+Other helpers exported from `hover-card.ts`: `parseHoverCardTarget(href)`,
+`showHoverCardFor(anchor, delay?)`, `scheduleHoverCardHide(delay?)`,
+`hideHoverCard()`.

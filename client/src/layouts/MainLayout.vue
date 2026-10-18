@@ -19,6 +19,9 @@
 
     <!-- ER2-206: command palette, loaded on first open -->
     <command-palette v-if="paletteLoaded" v-model="paletteOpen" />
+
+    <!-- ER2-208: single hover-card host for bindHoverCards() containers -->
+    <hover-card />
   </q-layout>
 </template>
 
@@ -50,6 +53,7 @@ import { isSentryConfigured } from 'src/common/sentry';
     ShellFooter,
     ShellMobileNav,
     CommandPalette: defineAsyncComponent(() => import('components/vision/CommandPalette.vue')),
+    HoverCard: defineAsyncComponent(() => import('components/vision/HoverCard.vue')),
   },
 })
 export default class MainLayout extends Vue {
