@@ -373,6 +373,65 @@ Each phase ships on its own and has a demo target.
 
 ---
 
-## 11. The one-line pitch
+## 11. Round 2 — closing the gaps
+
+> *Round 1 shipped the surfaces; several of them fall back to placeholders because the summary DTOs never carried the data, and the social layer (follow, notify, remember) was cut. Round 2 fills those gaps.* Same rules as Epic 8: additive schema only (`synchronize: true`), entity in `server/libs/entity/src`, DTO in `server/libs/shared`, endpoint under `server/apps/chaosarchives/src/api/internal/`, client call in `client-common/src/common/api/`, Jest test for every new endpoint. Tickets start as `**[planned]**`.
+
+### A. Data gaps
+
+| ID | Title | Size | Deps | AC |
+|---|---|---|---|---|
+| ER2-1001 | **[planned]** Venue summary fields | M | 507, 805 | `VenueSummaryDto` carries banner URL, tags, SFW flag and the next upcoming event (id, title, start); `pages/Venues.vue` cards render them instead of placeholders; no extra request per card |
+| ER2-1002 | **[planned]** Character summary fields | M | 406 | character summary DTO carries banner, title, last active (day precision) and play style; directory cards and hover cards show them; last active respects the existing privacy settings |
+| ER2-1003 | **[planned]** FC / community summary fields | M | 408 | FC and community summary DTOs carry tag, member count and the next event; directory cards show them; counts computed in one grouped query |
+| ER2-1004 | **[planned]** Story summary fields | M | 604, 807, 808 | story summary DTO carries content notes, series (id, title, index), word count and reaction counts; directory cards show CW badge, series chip, reading time from word count and reactions |
+| ER2-1005 | **[planned]** Noticeboard fields | M | 605 | `NoticeboardItem` gains nullable `pinned`, `imageId` and `postedToDiscord` (set by the announcement path); summary DTO carries a plain-text excerpt; ER2-605 pinned row, image and "auf Discord" indicator use real data; pinning restricted to moderators |
+| ER2-1006 | **[planned]** Change feed avatars and thumbnails | S | 305 | change feed items carry the actor avatar and, where the target has one, a thumbnail URL; `HomeActivityFeed` and `/changes` render them with initials fallback |
+| ER2-1007 | **[planned]** Contact avatars and diary image | S | 403, 305 | contacts lookup returns avatar URLs for linked characters in one batch call; diary entries accept an optional image; `CharacterContacts.vue` shows both |
+| ER2-1008 | **[planned]** FC / community tabs | M | 410, 1003 | FC and community pages gain Events, Galerie and Geschichten tabs fed by existing endpoints filtered by owner; empty states in German; tabs deep-linkable |
+
+### B. Social
+
+| ID | Title | Size | Deps | AC |
+|---|---|---|---|---|
+| ER2-1009 | **[planned]** Follows | L | – | `Follow` entity (follower character → character / FC / community / venue / story series); follow button on each profile; follower count in DTOs; unfollow; no public follower list unless the profile opts in |
+| ER2-1010 | **[planned]** Notifications and the bell | L | 1009 | `Notification` entity (recipient, kind, target, read flag); created on new event/story/chapter by a followed target and on RSVP to own events; bell in `ShellHeader` with unread count over the existing socket; mark read / mark all read; 90-day retention |
+| ER2-1011 | **[planned]** Reminder scheduler with optional Discord DM | M | 1010, 801 | registered/interested events create a reminder (default 1 h before, configurable); scheduler fires in-app notifications; opt-in Discord DM via steward; idempotent across restarts |
+| ER2-1012 | **[planned]** Bookmarks and the Gemerkt page | M | – | `Bookmark` entity for stories, events, venues, wiki pages, noticeboard items; bookmark toggle on cards and detail pages; `/gemerkt` page grouped by type; private to the user |
+| ER2-1013 | **[planned]** Calendar subscription token | S | 802 | per-user secret token for the `.ics` feed (`/events/feed/:token.ics`) so calendar apps can subscribe without a session; regenerate invalidates the old URL; shown in account settings |
+
+### C. Content
+
+| ID | Title | Size | Deps | AC |
+|---|---|---|---|---|
+| ER2-1014 | **[planned]** Wiki revisions | M | 607 | every save stores a `WikiPageRevision` (content, author, timestamp); history view with diff against the previous revision; restore by moderators |
+| ER2-1015 | **[planned]** Gallery albums | M | 701 | `Album` entity (owner character, title, ordered images); album view reuses `ThumbGallery` and the lightbox; images can belong to several albums |
+| ER2-1016 | **[planned]** FC applications | M | 810 | recruiting FCs and communities accept applications (character, message); leaders accept / decline; applicant notified (after 1010) |
+| ER2-1017 | **[planned]** Accent colour and play style | S | 402 | character fields `accentColour` (from a fixed Aetherium-safe palette) and `playStyle` (enum set); editor in profile settings; plate and hero tint use the accent; contrast checked in both themes |
+| ER2-1018 | **[planned]** FC "Was wir spielen" | S | 410, 1017 | FC and community profiles gain a "Was wir spielen" block (play style tags + free text); shown on the profile and as directory filter |
+| ER2-1019 | **[planned]** Image tags with consent | M | 701 | images can tag characters; tag stays hidden until the tagged character's owner accepts; owner can remove a tag at any time; tagged images appear on the character's Galerie tab |
+| ER2-1020 | **[planned]** CW veil on events | S | 602 | events with content notes show `CwVeil` on the event page and blur the banner on cards, same behaviour as stories |
+
+### D. Outlook
+
+| ID | Title | Size | Deps | AC |
+|---|---|---|---|---|
+| ER2-1021 | **[planned]** Venue map view | L | 1001 | `/venues` gains a map toggle: housing districts as schematic maps with ward / plot pins from structured locations; open-now state on pins; list and map share filters |
+| ER2-1022 | **[planned]** Relationship constellation | M | 1007 | character page shows contacts as a constellation graph (SVG, keyboard navigable, reduced-motion safe); list fallback for screen readers |
+| ER2-1023 | **[planned]** Plate PNG export | S | 402 | "Als Bild speichern" on the character plate renders a PNG client-side in both themes; no server round trip; image alt text in the share sheet |
+
+### E. Cleanup
+
+| ID | Title | Size | Deps | AC |
+|---|---|---|---|---|
+| ER2-1024 | **[done 2026-10-18]** Server ESLint | S | – | `server/.eslintrc.js` loads the `import/*` rules (extends `airbnb-base` as `airbnb-typescript` 17 expects); `npx eslint "{apps,libs}/**/*.ts"` runs; ER2 files clean; remaining legacy errors listed in the cleanup report |
+| ER2-1025 | **[done 2026-10-18]** Dead code | S | – | unused `CalendarSidebarWidget`, `SiteSearchField`, `EventList`/`EventItem`, `CommunityList`, `FreeCompanyNameList` and their global styles removed; store `events` state kept (still dispatched) |
+| ER2-1026 | **[done 2026-10-18]** Lifestream syntax | S | 509 | `/li` command matches Lifestream's parser: English district names, `W<ward> P<plot>` with subdivision plots 31–60, apartments as `W<ward> [sub] A<room>`; source cited in `venue-location.ts` |
+| ER2-1027 | **[planned]** Accessibility re-check | S | 901–903 | rerun focus, screen-reader and target-size checks on every Round 2 surface (bell, Gemerkt, tabs, map, constellation) |
+| ER2-1028 | **[planned]** Board conformance (ER2-906) | S | 906 | each Round 1 and Round 2 page compared with its Penpot board in Hydaelyn and Zodiark; deviations logged |
+
+---
+
+## 12. The one-line pitch
 
 > **Elpisgarten tells you, the moment you arrive, where Eorzea is alive tonight — and who you'll meet there.**
