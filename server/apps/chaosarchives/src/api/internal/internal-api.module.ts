@@ -26,6 +26,8 @@ import { ViolationsModule } from './violations/violations.module';
 import { WeatherModule } from './weather/weather.module';
 import { WikiModule } from "./wiki/wiki.module";
 import { LodestoneModule } from './lodestone/lodestone.module';
+// ER2 social
+import { FollowsModule } from './follows/follows.module';
 
 const controllerModules = [
 	MainPageModule,
@@ -53,7 +55,9 @@ const controllerModules = [
 	StatisticsModule,
 	WeatherModule,
 	WikiModule,
-	LodestoneModule
+	LodestoneModule,
+	// ER2 social
+	FollowsModule,
 ];
 
 @Module({

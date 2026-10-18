@@ -37,3 +37,5 @@ export { VenueTag } from './venue-tag.entity';
 export { Violation } from './violation.entity';
 export { Weather } from './weather.entity';
 export { WikiPage } from './wiki-page.entity';
+// ER2 social
+export { Follow } from './follow.entity';
