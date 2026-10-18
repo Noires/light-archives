@@ -308,8 +308,20 @@ export default class PageIndex extends Vue {
 
   // --- ER2-305: activity feed ----------------------------------------------
 
+  /**
+   * ER2 round 2: changes carry authorAvatar / thumbnailUrl themselves. The
+   * cross-reference with new profiles and images below is only needed for
+   * older APIs that send neither.
+   */
+  get changesEnriched(): boolean {
+    return this.recentChanges.some((change) => change.authorAvatar !== undefined || change.thumbnailUrl !== undefined);
+  }
+
   get profileAvatars(): Record<string, string> {
     const result: Record<string, string> = {};
+    if (this.changesEnriched) {
+      return result;
+    }
     this.content.newProfiles.forEach((profile) => {
       if (profile.avatar) {
         result[profile.name] = profile.avatar;
@@ -320,6 +332,9 @@ export default class PageIndex extends Vue {
 
   get imageThumbs(): Record<number, string> {
     const result: Record<number, string> = {};
+    if (this.changesEnriched) {
+      return result;
+    }
     [...this.content.newScreenshots, ...this.content.newArtwork].forEach((image) => {
       result[image.id] = image.thumbUrl;
     });
