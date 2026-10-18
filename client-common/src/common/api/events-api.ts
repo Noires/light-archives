@@ -4,6 +4,7 @@ import { EventSearchResultDto } from '@app/shared/dto/events/event-search-result
 import { EventSummariesDto } from '@app/shared/dto/events/event-summaries.dto';
 import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
 import { EventDto } from '@app/shared/dto/events/event.dto';
+import { EventRegistrationKind } from '@app/shared/enums/event-registration-kind.enum';
 import APITransport from './api-transport';
 
 export default class EventsAPI {
@@ -39,8 +40,12 @@ export default class EventsAPI {
     return this.transport.authDelete<void>(`${id}`);
   }
 
-  async registerForEvent(id: number, characterId: number): Promise<void> {
-    return this.transport.authPost<void>(`${id}/registrations`, { characterId });
+  /**
+   * Register (closed events) or RSVP (open events). `kind` defaults to 'going' on the server.
+   * Calling again with a different kind switches the existing registration.
+   */
+  async registerForEvent(id: number, characterId: number, kind?: EventRegistrationKind): Promise<void> {
+    return this.transport.authPost<void>(`${id}/registrations`, kind ? { characterId, kind } : { characterId });
   }
 
   async unregisterForEvent(id: number, characterId: number): Promise<void> {

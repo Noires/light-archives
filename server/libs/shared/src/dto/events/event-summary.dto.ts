@@ -21,4 +21,7 @@ export interface EventSummaryDto {
   registrationDeadlineTime?: string | null;
   locations: EventLocationDto[];
   contentNotes: string[];
+  // ER2-801 (optional; absent on older API versions)
+  goingCount?: number;
+  interestedCount?: number;
 }

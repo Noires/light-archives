@@ -2,11 +2,10 @@ import { CurrentUser } from '@app/auth/decorators/current-user.decorator';
 import { RoleRequired } from '@app/auth/decorators/role-required.decorator';
 import { OptionalJwtAuthGuard } from '@app/auth/guards/optional-jwt-auth.guard';
 import { UserInfo } from '@app/auth/model/user-info';
-import { CharacterIdWrapper } from '@app/shared/dto/common/character-id-wrapper.dto';
-import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { BaseEventDto } from '@app/shared/dto/events/base-event.dto';
 import { EventCreaterResultDto } from '@app/shared/dto/events/event-create-result.dto';
 import { EventEditDto } from '@app/shared/dto/events/event-edit.dto';
+import { EventRegistrationRequestDto } from '@app/shared/dto/events/event-registration-request.dto';
 import { EventSearchResultDto } from '@app/shared/dto/events/event-search-result.dto';
 import { EventSummariesDto } from '@app/shared/dto/events/event-summaries.dto';
 import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
@@ -120,10 +119,10 @@ export class EventsController {
   @RoleRequired(Role.USER)
   async registerForEvent(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: CharacterIdWrapper,
+    @Body() body: EventRegistrationRequestDto,
     @CurrentUser() user: UserInfo,
   ): Promise<void> {
-    return this.eventsService.registerForEvent(id, body.characterId, user);
+    return this.eventsService.registerForEvent(id, body.characterId, user, body.kind);
   }
 
   @Delete('/:id/registrations/:characterId')

@@ -16,6 +16,7 @@ import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
 import { EventDto } from '@app/shared/dto/events/event.dto';
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 import { EventSource } from '@app/shared/enums/event-source.enum';
+import { EventRegistrationKind } from '@app/shared/enums/event-registration-kind.enum';
 import { EventType } from '@app/shared/enums/event-type.enum';
 import html from '@app/shared/html';
 import SharedConstants from '@app/shared/SharedConstants';
@@ -395,7 +396,12 @@ export class EventsService {
     void this.notifySteward(eventEntity); // no await
   }
 
-  async registerForEvent(eventId: number, characterId: number, user: UserInfo): Promise<void> {
+  async registerForEvent(
+    eventId: number,
+    characterId: number,
+    user: UserInfo,
+    kind: EventRegistrationKind = EventRegistrationKind.GOING,
+  ): Promise<void> {
     await this.connection.transaction(async (em) => {
       const event = await em.getRepository(Event).findOne({
         where: {
@@ -420,12 +426,17 @@ export class EventsService {
       });
 
       if (existingRegistration) {
+        if (existingRegistration.kind !== kind) {
+          existingRegistration.kind = kind;
+          await registrationRepo.save(existingRegistration);
+        }
         return;
       }
 
       const registration = registrationRepo.create({
         event,
         character,
+        kind,
       });
       await registrationRepo.save(registration);
     });
@@ -443,7 +454,11 @@ export class EventsService {
         throw new NotFoundException('Event not found');
       }
 
-      this.assertRegistrationAllowed(event);
+      // Open events: withdrawing an RSVP is always allowed. Closed events keep the deadline rules.
+      if (event.closedEvent) {
+        this.assertRegistrationAllowed(event);
+      }
+
       const character = await getVerifiedCharacter(em, characterId, user);
       const registrationRepo = em.getRepository(EventRegistration);
       const registration = await registrationRepo.findOne({
@@ -529,7 +544,7 @@ export class EventsService {
       relations: ['locations', 'locations.server', 'locations.venue', 'icon', 'icon.owner', 'contentNotes'],
     });
 
-    return Promise.all(events.map((event) => this.toEventSummaryDto(event)));
+    return this.toEventSummaryDtos(events);
   }
 
   private async saveEvents(events: ExternalEvent[]): Promise<void> {
@@ -693,7 +708,7 @@ export class EventsService {
       })
       .getMany();
 
-    return Promise.all(events.map((event) => this.toEventSummaryDto(event)));
+    return this.toEventSummaryDtos(events);
   }
 
   async getEventsForVenue(
@@ -737,7 +752,7 @@ export class EventsService {
 
     const events = await query.distinct(true).getMany();
 
-    return Promise.all(events.map((event) => this.toEventSummaryDto(event)));
+    return this.toEventSummaryDtos(events);
   }
 
   private normalizeEventType(eventType?: EventType | null): EventType {
@@ -772,6 +787,12 @@ export class EventsService {
   }
 
   private isRegistrationOpen(event: Event): boolean {
+    if (!event.closedEvent) {
+      // Open events accept RSVPs ("going" / "interested") until the event is over
+      const endAt = event.endDateTime || event.startDateTime;
+      return Date.now() <= endAt.getTime();
+    }
+
     const deadlineAt = this.getRegistrationDeadlineAt(event);
     if (!deadlineAt) {
       return false;
@@ -781,13 +802,60 @@ export class EventsService {
   }
 
   private assertRegistrationAllowed(event: Event): void {
-    if (!event.closedEvent) {
-      throw new BadRequestException('Registrations are only available for closed events');
+    if (!this.isRegistrationOpen(event)) {
+      throw new BadRequestException(
+        event.closedEvent ? 'Registration deadline has passed' : 'Event is already over',
+      );
+    }
+  }
+
+  private async getRegistrationCounts(
+    eventIds: number[],
+  ): Promise<Map<number, { goingCount: number; interestedCount: number }>> {
+    const result = new Map<number, { goingCount: number; interestedCount: number }>();
+
+    if (eventIds.length === 0) {
+      return result;
     }
 
-    if (!this.isRegistrationOpen(event)) {
-      throw new BadRequestException('Registration deadline has passed');
+    const rows: { eventId: number; kind: string; count: string }[] = await this.connection
+      .getRepository(EventRegistration)
+      .createQueryBuilder('registration')
+      .select('registration.eventId', 'eventId')
+      .addSelect('registration.kind', 'kind')
+      .addSelect('COUNT(*)', 'count')
+      .where('registration.eventId IN (:...eventIds)', { eventIds })
+      .groupBy('registration.eventId')
+      .addGroupBy('registration.kind')
+      .getRawMany();
+
+    for (const row of rows) {
+      const eventId = Number(row.eventId);
+      const counts = result.get(eventId) || { goingCount: 0, interestedCount: 0 };
+
+      if (row.kind === EventRegistrationKind.INTERESTED) {
+        counts.interestedCount += Number(row.count);
+      } else {
+        counts.goingCount += Number(row.count);
+      }
+
+      result.set(eventId, counts);
     }
+
+    return result;
+  }
+
+  private async toEventSummaryDtos(events: Event[]): Promise<EventSummaryDto[]> {
+    const [summaries, counts] = await Promise.all([
+      Promise.all(events.map((event) => this.toEventSummaryDto(event))),
+      this.getRegistrationCounts(events.map((event) => event.id)),
+    ]);
+
+    return summaries.map((summary) => ({
+      ...summary,
+      goingCount: counts.get(summary.id)?.goingCount ?? 0,
+      interestedCount: counts.get(summary.id)?.interestedCount ?? 0,
+    }));
   }
 
   private async toEventSummaryDto(event: Event): Promise<EventSummaryDto> {
@@ -848,9 +916,18 @@ export class EventsService {
     const registrations = (event.registrations || []).slice().sort((a, b) =>
       utils.compareNumbers(a.createdAt.getTime(), b.createdAt.getTime()),
     );
-    const myRegistrationCharacterIds = registrations
-      .map((registration) => registration.character?.id)
-      .filter((characterId): characterId is number => !!characterId && userCharacterIds.includes(characterId));
+    const myRegistrations = registrations.filter(
+      (registration) => !!registration.character?.id && userCharacterIds.includes(registration.character.id),
+    );
+    const myRegistrationCharacterIds = myRegistrations.map((registration) => registration.character.id);
+    const myRegistrationKinds: { [characterId: number]: EventRegistrationKind } = {};
+    for (const registration of myRegistrations) {
+      myRegistrationKinds[registration.character.id] = registration.kind || EventRegistrationKind.GOING;
+    }
+    const interestedCount = registrations.filter(
+      (registration) => registration.kind === EventRegistrationKind.INTERESTED,
+    ).length;
+    const goingCount = registrations.length - interestedCount;
     const canManageParticipants = event.owner?.user?.id === user?.id;
     const participants = registrations.map((registration) =>
       new EventParticipantDto({
@@ -859,6 +936,7 @@ export class EventsService {
         server: registration.character.server?.name || '',
         avatar: registration.character.avatar,
         registeredAt: registration.createdAt.getTime(),
+        kind: registration.kind || EventRegistrationKind.GOING,
       }),
     );
     let announcements: EventAnnouncement[] = [];
@@ -935,9 +1013,12 @@ export class EventsService {
         images,
         registrationDeadlineAt: registrationDeadlineAt ? registrationDeadlineAt.getTime() : null,
         registrationOpen,
-        participantCount: registrations.length,
+        participantCount: goingCount,
         userRegistered: myRegistrationCharacterIds.length > 0,
         myRegistrationCharacterIds,
+        goingCount,
+        interestedCount,
+        myRegistrationKinds,
         canManageParticipants,
         participants: canManageParticipants ? participants : [],
       });
