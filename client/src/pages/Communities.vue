@@ -1,64 +1,115 @@
 <template>
-  <q-page class="page-communities">
+  <q-page class="communities-dir">
     <page-head
       :eyebrow="`Charaktere · ${communities.length} Communities`"
       title="Communities"
       lead="Gruppen, Netzwerke und gemeinsame Ziele im Elpisgarten."
     >
+      <template v-if="$store.getters.characterId" #actions>
+        <q-btn
+          class="elpis-btn elpis-btn--secondary"
+          flat
+          no-caps
+          label="Meine Communities"
+          to="/my-communities"
+        />
+        <q-btn
+          class="elpis-btn elpis-btn--primary"
+          unelevated
+          no-caps
+          icon="add"
+          label="Community gründen"
+          to="/create-community"
+        />
+      </template>
       <directory-area-tabs />
     </page-head>
 
-    <section class="page-communities__content">
-      <div class="page-communities__toolbar elpis-directory-toolbar">
-        <q-input
-          class="page-communities__search"
-          v-model="searchQuery"
-          label="Suche"
-          debounce="200"
-          filled
-          dense
-          clearable
-          @update:model-value="onFilterChange"
-        />
-        <div class="page-communities__stats elpis-directory-toolbar__stats">
-          {{ filteredCount }} von {{ communities.length }}
-        </div>
-        <q-pagination
-          class="page-communities__pagination elpis-pagination"
-          :model-value="page"
-          :max="maxPage"
-          input
-          @update:model-value="setPage"
-        />
+    <section class="communities-dir__toolbar" aria-label="Filter">
+      <q-input
+        v-model="searchQuery"
+        class="communities-dir__search"
+        label="Name oder Ziel suchen"
+        debounce="200"
+        outlined
+        dense
+        clearable
+        @update:model-value="onFilterChange"
+      >
+        <template #prepend>
+          <q-icon name="search" aria-hidden="true" />
+        </template>
+      </q-input>
+      <div v-if="hasRecruitingData" class="communities-dir__chips">
+        <button
+          type="button"
+          class="communities-dir__chip"
+          :class="{ 'communities-dir__chip--active': recruitingOnly }"
+          :aria-pressed="recruitingOnly ? 'true' : 'false'"
+          @click="toggleRecruiting"
+        >Nimmt Mitglieder auf</button>
       </div>
-      <div v-if="pagedCommunities.length > 0" class="page-communities__list">
-        <community-list :communities="pagedCommunities" />
-      </div>
-      <div v-else class="page-communities__empty">
-        {{ emptyMessage }}
-      </div>
+      <p class="communities-dir__summary" aria-live="polite">{{ filteredCount }} von {{ communities.length }}</p>
     </section>
+
+    <ul v-if="shownCommunities.length > 0" class="communities-dir__grid">
+      <li v-for="community in shownCommunities" :key="community.id" class="communities-dir__item">
+        <directory-card
+          class="communities-dir__card"
+          :to="getLink(community)"
+          avatar-shape="crest"
+          placeholder-icon="groups"
+          :title="community.name"
+          meta="Community · Light"
+        >
+          <template v-if="community.recruiting" #badges>
+            <status-badge type="open" label="Nimmt Mitglieder auf" />
+          </template>
+          <p v-if="community.goal" class="communities-dir__goal">{{ community.goal }}</p>
+        </directory-card>
+      </li>
+    </ul>
+    <empty-state
+      v-else
+      icon="groups"
+      :title="communities.length === 0 ? 'Noch keine Communities' : 'Keine Treffer'"
+      :text="communities.length === 0 ? 'Gründe die erste Community auf Elpisgarten.' : 'Für diese Filter gibt es keine Community.'"
+      :action-label="communities.length === 0 ? ($store.getters.characterId ? 'Community gründen' : '') : 'Filter zurücksetzen'"
+      :action-to="communities.length === 0 ? '/create-community' : null"
+      @action="onEmptyAction"
+    />
+
+    <div v-if="hasMore" class="communities-dir__more">
+      <q-btn class="elpis-btn elpis-btn--secondary" flat no-caps label="Mehr laden" @click="shownCount += perPage" />
+      <span class="communities-dir__more-count">{{ shownCommunities.length }} von {{ filteredCount }}</span>
+    </div>
   </q-page>
 </template>
 
 <script lang="ts">
 import { CommunitySummaryDto } from '@app/shared/dto/communities/community-summary.dto';
-import { useApi } from 'src/boot/axios';
-import PageHead from 'components/vision/PageHead.vue';
 import DirectoryAreaTabs from 'components/character/DirectoryAreaTabs.vue';
+import DirectoryCard from 'components/vision/DirectoryCard.vue';
+import EmptyState from 'components/vision/EmptyState.vue';
+import PageHead from 'components/vision/PageHead.vue';
+import StatusBadge from 'components/vision/StatusBadge.vue';
+import { useApi } from 'src/boot/axios';
 import { notifyError } from 'src/common/notify';
-import CommunityList from 'components/communities/CommunityList.vue';
 import { Options, Vue } from 'vue-class-component';
 
 const $api = useApi();
 
+const PER_PAGE = 24;
+
 @Options({
-	name: 'PageCommunities',
-	components: {
-		CommunityList,
-		DirectoryAreaTabs,
-		PageHead,
-	},
+  name: 'PageCommunities',
+  components: {
+    DirectoryAreaTabs,
+    DirectoryCard,
+    EmptyState,
+    PageHead,
+    StatusBadge,
+  },
   async beforeRouteEnter(_, __, next) {
     try {
       const communities = await $api.communities.getCommunities();
@@ -70,220 +121,177 @@ const $api = useApi();
   }
 })
 export default class PageCommunities extends Vue {
-	communities: CommunitySummaryDto[] = [];
+  readonly perPage = PER_PAGE;
+
+  communities: CommunitySummaryDto[] = [];
   searchQuery = '';
-  page = 1;
-  readonly perPage = 12;
+  recruitingOnly = false;
+  shownCount = PER_PAGE;
 
-	setContent(communities: CommunitySummaryDto[]) {
-		this.communities = communities;
-    this.page = 1;
-	}
+  setContent(communities: CommunitySummaryDto[]) {
+    this.communities = communities;
+    this.shownCount = PER_PAGE;
+  }
 
-  get filteredCommunities() {
-    const query = this.searchQuery.trim().toLowerCase();
-    if (!query) {
-      return this.communities;
-    }
+  /** The recruiting flag is optional (ER2-810); production does not send it yet. */
+  get hasRecruitingData(): boolean {
+    return this.communities.some((community) => community.recruiting === true);
+  }
+
+  get filteredCommunities(): CommunitySummaryDto[] {
+    const query = (this.searchQuery || '').trim().toLowerCase();
     return this.communities.filter((community) => {
-      const haystack = `${community.name} ${community.goal || ''}`.toLowerCase();
-      return haystack.includes(query);
+      if (this.recruitingOnly && !community.recruiting) {
+        return false;
+      }
+      if (!query) {
+        return true;
+      }
+      return `${community.name} ${community.goal || ''}`.toLowerCase().includes(query);
     });
   }
 
-  get filteredCount() {
+  get filteredCount(): number {
     return this.filteredCommunities.length;
   }
 
-  get pagedCommunities() {
-    const start = (this.page - 1) * this.perPage;
-    return this.filteredCommunities.slice(start, start + this.perPage);
+  get shownCommunities(): CommunitySummaryDto[] {
+    return this.filteredCommunities.slice(0, this.shownCount);
   }
 
-  get maxPage() {
-    return Math.max(1, Math.ceil(this.filteredCount / this.perPage));
+  get hasMore(): boolean {
+    return this.filteredCount > this.shownCount;
   }
 
-  get emptyMessage() {
-    if (this.communities.length == 0) {
-      return 'Es gibt noch keine Communities auf Elpisgarten.';
+  getLink(community: CommunitySummaryDto): string {
+    return `/community/${community.name.replace(/ /g, '_')}`;
+  }
+
+  toggleRecruiting() {
+    this.recruitingOnly = !this.recruitingOnly;
+    this.onFilterChange();
+  }
+
+  onEmptyAction() {
+    if (this.communities.length > 0) {
+      this.searchQuery = '';
+      this.recruitingOnly = false;
+      this.onFilterChange();
     }
-    return 'Keine Ergebnisse für die aktuellen Filter.';
   }
 
   onFilterChange() {
-    this.page = 1;
-  }
-
-  setPage(newPage: number) {
-    const clamped = Math.min(Math.max(newPage, 1), this.maxPage);
-    this.page = clamped;
+    this.shownCount = PER_PAGE;
   }
 }
 </script>
 
-<style lang="scss">
-.page-communities {
-  position: relative;
-  padding: 28px 18px 42px;
-  background: linear-gradient(180deg, #f8f4ee 0%, #ffffff 45%, #f2ede4 100%);
-  border-radius: 30px;
-  overflow: hidden;
+<style lang="scss" scoped>
+.communities-dir {
+  padding-top: 0;
 }
 
-.page-communities::before {
-  content: '';
-  position: absolute;
-  inset: -120px 0 auto;
-  height: 260px;
-  background: radial-gradient(circle at 20% 30%, rgba(221, 180, 118, 0.18), transparent 55%),
-    radial-gradient(circle at 80% 0%, rgba(15, 76, 104, 0.12), transparent 50%);
-  pointer-events: none;
-}
-
-.page-communities h2 {
-  margin: 0;
-  font-family: $header-font;
-  letter-spacing: 0.02em;
-}
-
-.page-communities__hero {
-  position: relative;
-  z-index: 1;
+.communities-dir__toolbar {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 24px;
-  padding: 20px 22px;
-  margin-bottom: 18px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
-.page-communities__eyebrow {
-  font-size: 0.75rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(139, 103, 58, 0.9);
+.communities-dir__search {
+  max-width: 480px;
+}
+
+.communities-dir__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.communities-dir__chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  background-color: transparent;
+  color: var(--ink-primary);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 18px;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--ease-elpis),
+    border-color var(--motion-fast) var(--ease-elpis);
+
+  &:hover {
+    background-color: var(--rule-tint);
+    border-color: var(--rule-strong);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--glow-aether),
+      0 0 0 3px var(--vision-focus-edge);
+  }
+}
+
+.communities-dir__chip--active,
+.communities-dir__chip--active:hover {
+  background-color: var(--vision-primary);
+  border-color: var(--vision-primary);
+  color: var(--vision-on-primary);
   font-weight: 600;
 }
 
-.page-communities__hero-text {
-  display: grid;
-  gap: 8px;
-}
-
-.page-communities__lead {
+.communities-dir__summary {
   margin: 0;
-  color: rgba(35, 35, 35, 0.7);
-  max-width: 520px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--ink-muted);
 }
 
-.page-communities__hero-meta {
+.communities-dir__grid {
   display: grid;
-  gap: 6px;
-  justify-items: end;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.page-communities__count {
-  display: grid;
-  justify-items: end;
-  line-height: 1;
+.communities-dir__item {
+  display: flex;
+  min-width: 0;
 }
 
-.page-communities__count-number {
-  font-family: $header-font;
-  font-size: 2rem;
-  color: #20323d;
+.communities-dir__card {
+  flex: 1 1 auto;
 }
 
-.page-communities__count-label {
-  font-size: 0.85rem;
-  color: rgba(35, 35, 35, 0.6);
+.communities-dir__goal {
+  margin: 0;
+  color: var(--ink-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.page-communities__content {
-  position: relative;
-  z-index: 1;
-}
-
-.page-communities__toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 12px;
+.communities-dir__more {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 12px 14px;
-  margin-bottom: 18px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  gap: 6px;
+  margin-top: 28px;
 }
 
-// ELPIS-404 — Toolbar field chrome lives in app.scss under
-// `.elpis-directory-toolbar`. The previous local override is gone.
-
-.page-communities__stats {
-  text-align: right;
-  white-space: nowrap;
-  font-family: $header-font;
-  font-size: 1.05rem;
-  color: #20323d;
-}
-
-.page-communities__pagination {
-  justify-self: end;
-}
-
-.page-communities__list {
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
-}
-
-.page-communities__list .q-list {
-  border: none;
-}
-
-.page-communities__empty {
-  padding: 18px;
-  color: rgba(35, 35, 35, 0.7);
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
-}
-
-@media screen and (max-width: 1100px) {
-  .page-communities__hero {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .page-communities__hero-meta {
-    width: 100%;
-    justify-items: start;
-  }
-
-  .page-communities__toolbar {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .page-communities__stats {
-    text-align: left;
-  }
-
-  .page-communities__pagination {
-    justify-self: start;
-  }
-}
-
-@media screen and (max-width: $breakpoint-sm) {
-  .page-communities {
-    padding: 20px 14px 36px;
-  }
-
-  .page-communities__hero {
-    padding: 16px;
-  }
+.communities-dir__more-count {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--ink-muted);
 }
 </style>
