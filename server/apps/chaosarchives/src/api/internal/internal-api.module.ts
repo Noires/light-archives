@@ -30,6 +30,7 @@ import { LodestoneModule } from './lodestone/lodestone.module';
 import { FollowsModule } from './follows/follows.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { BookmarksModule } from './bookmarks/bookmarks.module';
+import { CalendarTokenModule } from './calendar-token/calendar-token.module';
 
 const controllerModules = [
 	MainPageModule,
@@ -62,6 +63,7 @@ const controllerModules = [
 	FollowsModule,
 	NotificationsModule,
 	BookmarksModule,
+	CalendarTokenModule,
 ];
 
 @Module({

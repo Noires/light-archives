@@ -42,3 +42,4 @@ export { Follow } from './follow.entity';
 export { Notification } from './notification.entity';
 export { NotificationPreference } from './notification-preference.entity';
 export { Bookmark } from './bookmark.entity';
+export { CalendarToken } from './calendar-token.entity';

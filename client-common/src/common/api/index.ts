@@ -29,6 +29,7 @@ import LodestoneAPI from './lodestone-api';
 import FollowsAPI from './follows-api';
 import NotificationsAPI from './notifications-api';
 import BookmarksAPI from './bookmarks-api';
+import CalendarTokenAPI from './calendar-token-api';
 
 export default class API {
   private readonly transport = new APITransport();
@@ -65,6 +66,7 @@ export default class API {
   readonly follows = new FollowsAPI(this.transport);
   readonly notifications = new NotificationsAPI(this.transport);
   readonly bookmarks = new BookmarksAPI(this.transport);
+  readonly calendarToken = new CalendarTokenAPI(this.transport);
 
   // Token management
 
