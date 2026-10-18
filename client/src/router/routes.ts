@@ -633,7 +633,8 @@ const routes: RouteRecordRaw[] = [
       },
 
       {
-        path: ':server([A-Z][a-z]+)/:character([^/]+)',
+        // ER2-401 — optional section tab; without it the profile opens.
+        path: ':server([A-Z][a-z]+)/:character([^/]+)/:tab(profil|aussehen|persoenlichkeit|kontakte|geruechte|tagebuch|galerie|inventar|pen-and-paper)?',
         component: () => import('pages/Character.vue'),
         meta: {
           title(route: RouteLocationNormalized): string {

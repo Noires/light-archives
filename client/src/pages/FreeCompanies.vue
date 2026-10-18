@@ -1,79 +1,126 @@
 <template>
-  <q-page class="page-free-companies">
-    <header class="page-free-companies__hero">
-      <div class="page-free-companies__hero-text">
-        <span class="page-free-companies__eyebrow">Community</span>
-        <h2>Freie Gesellschaften</h2>
-        <p class="page-free-companies__lead">
-          Entdecke freie Gesellschaften, ihre Ziele und Geschichten.
-        </p>
-      </div>
-      <div class="page-free-companies__hero-meta">
-        <div class="page-free-companies__count">
-          <span class="page-free-companies__count-number">{{ freeCompanies.length }}</span>
-          <span class="page-free-companies__count-label">Einträge</span>
-        </div>
-      </div>
-    </header>
+  <q-page class="fc-dir">
+    <page-head
+      :eyebrow="`Charaktere · ${freeCompanies.length} Freie Gesellschaften`"
+      title="Freie Gesellschaften"
+      lead="Gruppen, ihre Ziele und ihr Sitz auf Light."
+    >
+      <template v-if="$store.getters.characterId" #actions>
+        <q-btn
+          class="elpis-btn elpis-btn--secondary"
+          flat
+          no-caps
+          icon="shield"
+          label="Meine Freie Gesellschaft"
+          to="/my-free-company"
+        />
+      </template>
+      <directory-area-tabs />
+    </page-head>
 
-    <section class="page-free-companies__content">
-      <div class="page-free-companies__toolbar elpis-directory-toolbar">
-        <q-input
-          class="page-free-companies__search"
-          v-model="searchQuery"
-          label="Suche"
-          debounce="200"
-          filled
-          dense
-          clearable
-          @update:model-value="onFilterChange"
-        />
-        <q-select
-          class="page-free-companies__server-select"
-          v-model="serverFilter"
-          label="Server"
-          emit-value
-          map-options
-          :options="serverOptions"
-          filled
-          dense
-          @update:model-value="onFilterChange"
-        />
-        <div class="page-free-companies__stats elpis-directory-toolbar__stats">
-          {{ filteredCount }} von {{ freeCompanies.length }}
+    <section class="fc-dir__toolbar" aria-label="Filter">
+      <q-input
+        v-model="searchQuery"
+        class="fc-dir__search"
+        label="Name oder Ziel suchen"
+        debounce="200"
+        outlined
+        dense
+        clearable
+        @update:model-value="onFilterChange"
+      >
+        <template #prepend>
+          <q-icon name="search" aria-hidden="true" />
+        </template>
+      </q-input>
+      <div class="fc-dir__chips">
+        <div v-if="servers.length > 1" class="fc-dir__chip-group" role="group" aria-label="Welt">
+          <span class="fc-dir__chip-label" aria-hidden="true">Welt</span>
+          <button
+            v-for="option in serverOptions"
+            :key="option.label"
+            type="button"
+            class="fc-dir__chip"
+            :class="{ 'fc-dir__chip--active': serverFilter === option.value }"
+            :aria-pressed="serverFilter === option.value ? 'true' : 'false'"
+            @click="setServer(option.value)"
+          >{{ option.label }}</button>
         </div>
-        <q-pagination
-          class="page-free-companies__pagination elpis-pagination"
-          :model-value="page"
-          :max="maxPage"
-          input
-          @update:model-value="setPage"
-        />
+        <button
+          v-if="hasRecruitingData"
+          type="button"
+          class="fc-dir__chip"
+          :class="{ 'fc-dir__chip--active': recruitingOnly }"
+          :aria-pressed="recruitingOnly ? 'true' : 'false'"
+          @click="toggleRecruiting"
+        >Nimmt Mitglieder auf</button>
       </div>
-      <div v-if="pagedFreeCompanies.length > 0" class="page-free-companies__list">
-        <free-company-name-list :free-companies="pagedFreeCompanies" />
-      </div>
-      <div v-else class="page-free-companies__empty">
-        {{ emptyMessage }}
-      </div>
+      <p class="fc-dir__summary" aria-live="polite">{{ filteredCount }} von {{ freeCompanies.length }}</p>
     </section>
+
+    <ul v-if="shownFreeCompanies.length > 0" class="fc-dir__grid">
+      <li v-for="fc in shownFreeCompanies" :key="`${fc.name}_${fc.server}`" class="fc-dir__item">
+        <directory-card
+          class="fc-dir__card"
+          :to="getLink(fc)"
+          avatar-shape="crest"
+          placeholder-icon="shield"
+          :avatar-alt="`Wappen von ${fc.name}`"
+          :title="fc.name"
+          :meta="`Sitz · ${fc.server} [Light]`"
+        >
+          <template v-if="fc.recruiting" #badges>
+            <status-badge type="open" label="Nimmt Mitglieder auf" />
+          </template>
+          <p v-if="fc.goal" class="fc-dir__goal">{{ fc.goal }}</p>
+        </directory-card>
+        <!-- The Lodestone crest is several stacked layers, so it sits on top of
+             the card's single-image crest slot. Pointer events pass through. -->
+        <free-company-crest v-if="fc.crest && fc.crest.length" class="fc-dir__crest" :images="fc.crest" :size="64" />
+      </li>
+    </ul>
+    <empty-state
+      v-else
+      icon="shield"
+      :title="freeCompanies.length === 0 ? 'Noch keine Freien Gesellschaften' : 'Keine Treffer'"
+      :text="freeCompanies.length === 0 ? 'Sobald eine Freie Gesellschaft beansprucht wird, erscheint sie hier.' : 'Für diese Filter gibt es keine Freie Gesellschaft.'"
+      :action-label="freeCompanies.length === 0 ? '' : 'Filter zurücksetzen'"
+      @action="resetFilters"
+    />
+
+    <div v-if="hasMore" class="fc-dir__more">
+      <q-btn class="elpis-btn elpis-btn--secondary" flat no-caps label="Mehr laden" @click="shownCount += perPage" />
+      <span class="fc-dir__more-count">{{ shownFreeCompanies.length }} von {{ filteredCount }}</span>
+    </div>
   </q-page>
 </template>
 
 <script lang="ts">
 import { FreeCompanySummaryDto } from '@app/shared/dto/fcs/free-company-summary.dto';
+import DirectoryAreaTabs from 'components/character/DirectoryAreaTabs.vue';
+import DirectoryCard from 'components/vision/DirectoryCard.vue';
+import EmptyState from 'components/vision/EmptyState.vue';
+import PageHead from 'components/vision/PageHead.vue';
+import StatusBadge from 'components/vision/StatusBadge.vue';
 import { useApi } from 'src/boot/axios';
 import { notifyError } from 'src/common/notify';
-import FreeCompanyNameList from 'src/components/free-company/FreeCompanyNameList.vue';
+import FreeCompanyCrest from 'src/components/free-company/FreeCompanyCrest.vue';
 import { Options, Vue } from 'vue-class-component';
 
 const $api = useApi();
 
+const PER_PAGE = 24;
+
 @Options({
-	name: 'PageFreeCompanies',
-	components: {
-		FreeCompanyNameList
-	},
+  name: 'PageFreeCompanies',
+  components: {
+    DirectoryAreaTabs,
+    DirectoryCard,
+    EmptyState,
+    FreeCompanyCrest,
+    PageHead,
+    StatusBadge,
+  },
   async beforeRouteEnter(_, __, next) {
     try {
       const freeCompanies = await $api.freeCompanies.getFreeCompanies();
@@ -85,286 +132,231 @@ const $api = useApi();
   }
 })
 export default class PageFreeCompanies extends Vue {
-	freeCompanies: FreeCompanySummaryDto[] = [];
+  readonly perPage = PER_PAGE;
+
+  freeCompanies: FreeCompanySummaryDto[] = [];
   searchQuery = '';
   serverFilter = '';
-  page = 1;
-  readonly perPage = 12;
+  recruitingOnly = false;
+  shownCount = PER_PAGE;
 
-	setContent(freeCompanies: FreeCompanySummaryDto[]) {
-		this.freeCompanies = freeCompanies;
-    this.page = 1;
-	}
+  setContent(freeCompanies: FreeCompanySummaryDto[]) {
+    this.freeCompanies = freeCompanies;
+    this.shownCount = PER_PAGE;
+  }
 
-  get serverOptions() {
-    const servers = Array.from(new Set(this.freeCompanies.map((fc) => fc.server))).sort();
+  get servers(): string[] {
+    return Array.from(new Set(this.freeCompanies.map((fc) => fc.server))).sort();
+  }
+
+  get serverOptions(): { label: string; value: string }[] {
     return [
-      { label: 'Alle Server', value: '' },
-      ...servers.map((server) => ({ label: server, value: server })),
+      { label: 'Alle', value: '' },
+      ...this.servers.map((server) => ({ label: server, value: server })),
     ];
   }
 
-  get filteredFreeCompanies() {
-    const query = this.searchQuery.trim().toLowerCase();
+  /** The recruiting flag is optional (ER2-810); production does not send it yet. */
+  get hasRecruitingData(): boolean {
+    return this.freeCompanies.some((fc) => fc.recruiting === true);
+  }
+
+  get filteredFreeCompanies(): FreeCompanySummaryDto[] {
+    const query = (this.searchQuery || '').trim().toLowerCase();
     return this.freeCompanies.filter((fc) => {
       if (this.serverFilter && fc.server !== this.serverFilter) {
+        return false;
+      }
+      if (this.recruitingOnly && !fc.recruiting) {
         return false;
       }
       if (!query) {
         return true;
       }
-      const haystack = `${fc.name} ${fc.goal || ''} ${fc.server}`.toLowerCase();
-      return haystack.includes(query);
+      return `${fc.name} ${fc.goal || ''} ${fc.server}`.toLowerCase().includes(query);
     });
   }
 
-  get filteredCount() {
+  get filteredCount(): number {
     return this.filteredFreeCompanies.length;
   }
 
-  get pagedFreeCompanies() {
-    const start = (this.page - 1) * this.perPage;
-    return this.filteredFreeCompanies.slice(start, start + this.perPage);
+  get shownFreeCompanies(): FreeCompanySummaryDto[] {
+    return this.filteredFreeCompanies.slice(0, this.shownCount);
   }
 
-  get maxPage() {
-    return Math.max(1, Math.ceil(this.filteredCount / this.perPage));
+  get hasMore(): boolean {
+    return this.filteredCount > this.shownCount;
   }
 
-  get emptyMessage() {
-    if (this.freeCompanies.length === 0) {
-      return 'Hier gibt es keine Freien Gesellschaften... noch!';
-    }
-    return 'Keine Ergebnisse für die aktuellen Filter.';
+  getLink(fc: FreeCompanySummaryDto): string {
+    return `/fc/${fc.server}/${fc.name.replace(/ /g, '_')}`;
+  }
+
+  setServer(server: string) {
+    this.serverFilter = server;
+    this.onFilterChange();
+  }
+
+  toggleRecruiting() {
+    this.recruitingOnly = !this.recruitingOnly;
+    this.onFilterChange();
+  }
+
+  resetFilters() {
+    this.searchQuery = '';
+    this.serverFilter = '';
+    this.recruitingOnly = false;
+    this.onFilterChange();
   }
 
   onFilterChange() {
-    this.page = 1;
-  }
-
-  setPage(newPage: number) {
-    const clamped = Math.min(Math.max(newPage, 1), this.maxPage);
-    this.page = clamped;
+    this.shownCount = PER_PAGE;
   }
 }
 </script>
 
-<style lang="scss">
-.page-free-companies {
-  position: relative;
-  padding: 28px 18px 42px;
-  background: linear-gradient(180deg, #f8f4ee 0%, #ffffff 45%, #f2ede4 100%);
-  border-radius: 30px;
-  overflow: hidden;
+<style lang="scss" scoped>
+.fc-dir {
+  padding-top: 0;
 }
 
-.page-free-companies::before {
-  content: '';
-  position: absolute;
-  inset: -120px 0 auto;
-  height: 260px;
-  background: radial-gradient(circle at 20% 30%, rgba(221, 180, 118, 0.18), transparent 55%),
-    radial-gradient(circle at 80% 0%, rgba(15, 76, 104, 0.12), transparent 50%);
-  pointer-events: none;
-}
-
-.page-free-companies h2 {
-  margin: 0;
-  font-family: $header-font;
-  letter-spacing: 0.02em;
-}
-
-.page-free-companies__hero {
-  position: relative;
-  z-index: 1;
+.fc-dir__toolbar {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 24px;
-  padding: 20px 22px;
-  margin-bottom: 18px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
-.page-free-companies__eyebrow {
-  font-size: 0.75rem;
-  letter-spacing: 0.16em;
+.fc-dir__search {
+  max-width: 480px;
+}
+
+.fc-dir__chips,
+.fc-dir__chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.fc-dir__chips {
+  gap: 10px 16px;
+}
+
+.fc-dir__chip-label {
+  min-width: 44px;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1.4px;
   text-transform: uppercase;
-  color: rgba(139, 103, 58, 0.9);
+  color: var(--ink-muted);
+}
+
+.fc-dir__chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  background-color: transparent;
+  color: var(--ink-primary);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 18px;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--ease-elpis),
+    border-color var(--motion-fast) var(--ease-elpis);
+
+  &:hover {
+    background-color: var(--rule-tint);
+    border-color: var(--rule-strong);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--glow-aether),
+      0 0 0 3px var(--vision-focus-edge);
+  }
+}
+
+.fc-dir__chip--active,
+.fc-dir__chip--active:hover {
+  background-color: var(--vision-primary);
+  border-color: var(--vision-primary);
+  color: var(--vision-on-primary);
   font-weight: 600;
 }
 
-.page-free-companies__hero-text {
-  display: grid;
-  gap: 8px;
-}
-
-.page-free-companies__lead {
+.fc-dir__summary {
   margin: 0;
-  color: rgba(35, 35, 35, 0.7);
-  max-width: 520px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--ink-muted);
 }
 
-.page-free-companies__hero-meta {
+.fc-dir__grid {
   display: grid;
-  gap: 6px;
-  justify-items: end;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.page-free-companies__count {
-  display: grid;
-  justify-items: end;
-  line-height: 1;
-}
-
-.page-free-companies__count-number {
-  font-family: $header-font;
-  font-size: 2rem;
-  color: #20323d;
-}
-
-.page-free-companies__count-label {
-  font-size: 0.85rem;
-  color: rgba(35, 35, 35, 0.6);
-}
-
-.page-free-companies__content {
+.fc-dir__item {
   position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.fc-dir__card {
+  flex: 1 1 auto;
+}
+
+.fc-dir__goal {
+  margin: 0;
+  color: var(--ink-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Sits exactly inside the DirectoryCard crest slot (104 px banner, -34 px
+// overlap, 16 px padding, 2 px border) and follows the card's hover lift.
+.fc-dir__crest {
+  position: absolute;
+  top: 72px;
+  left: 18px;
   z-index: 1;
+  overflow: hidden;
+  border-radius: 10px 10px 32px 32px;
+  pointer-events: none;
+  transition: transform var(--motion-fast) var(--ease-elpis);
 }
 
-.page-free-companies__toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(160px, 0.6fr) auto auto;
-  gap: 12px;
+.fc-dir__item:hover .fc-dir__crest,
+.fc-dir__item:focus-within .fc-dir__crest {
+  transform: translateY(-2px);
+}
+
+.fc-dir__more {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 12px 14px;
-  margin-bottom: 18px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  gap: 6px;
+  margin-top: 28px;
 }
 
-// ELPIS-404 — Toolbar field chrome lives in app.scss under
-// `.elpis-directory-toolbar`. The previous local override is gone.
-
-.page-free-companies__stats {
-  text-align: right;
-  white-space: nowrap;
-  font-family: $header-font;
-  font-size: 1.05rem;
-  color: #20323d;
-}
-
-.page-free-companies__pagination {
-  justify-self: end;
-}
-
-.page-free-companies__list {
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
-}
-
-.page-free-companies__list .q-list {
-  border: none;
-}
-
-.page-free-companies .free-company-name-list {
-  gap: 14px;
-  padding: 12px 16px 16px;
-}
-
-.page-free-companies .free-company-name-list__item {
-  min-height: 88px;
-  padding: 14px 16px;
-}
-
-.page-free-companies .free-company-name-list__crest {
-  min-width: 56px;
-  padding-right: 12px;
-}
-
-.page-free-companies .free-company-name-list__crest .free-company-crest {
-  width: 56px;
-  height: 56px;
-}
-
-.page-free-companies .free-company-name-list__crest .free-company-crest img {
-  width: 56px;
-  height: 56px;
-}
-
-.page-free-companies .free-company-name-list__content {
-  gap: 2px;
-}
-
-.page-free-companies .free-company-name-list__name {
-  font-size: 1rem;
-  line-height: 1.25;
-  font-weight: 700;
-  color: #1f2c38;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.page-free-companies .free-company-name-list__goal {
-  font-size: 0.85rem;
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.page-free-companies .free-company-name-list__server {
-  font-size: 0.75rem;
-  line-height: 1.2;
-}
-
-.page-free-companies__empty {
-  padding: 18px;
-  color: rgba(35, 35, 35, 0.7);
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
-}
-
-@media screen and (max-width: 1100px) {
-  .page-free-companies__hero {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .page-free-companies__hero-meta {
-    width: 100%;
-    justify-items: start;
-  }
-
-  .page-free-companies__toolbar {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .page-free-companies__stats {
-    text-align: left;
-  }
-
-  .page-free-companies__pagination {
-    justify-self: start;
-  }
-}
-
-@media screen and (max-width: $breakpoint-sm) {
-  .page-free-companies {
-    padding: 20px 14px 36px;
-  }
-
-  .page-free-companies__hero {
-    padding: 16px;
-  }
+.fc-dir__more-count {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--ink-muted);
 }
 </style>

@@ -1,61 +1,158 @@
 <template>
-  <q-page class="page-free-company">
+	<q-page class="fc-detail">
 		<template v-if="fc && fc.id">
-			<free-company-profile :free-company="fc" />
+			<group-plate
+				ref="plate"
+				:name="fc.name"
+				:banner-url="fc.banner ? fc.banner.url : ''"
+				:crest="fc.crest || []"
+				placeholder-icon="shield"
+				:eyebrow-parts="eyebrowParts"
+				:chips="chips"
+				:crumbs="crumbs"
+			>
+				<template #actions>
+					<q-btn
+						v-if="fc.canEdit"
+						class="elpis-btn group-plate__btn-media"
+						flat
+						no-caps
+						icon="edit"
+						label="Bearbeiten"
+						:to="editLink"
+					/>
+				</template>
+				<template #primary>
+					<q-btn
+						v-if="applyUrl"
+						class="elpis-btn elpis-btn--primary"
+						unelevated
+						no-caps
+						icon="how_to_reg"
+						label="Bewerben"
+						:href="applyUrl"
+						target="_blank"
+						rel="noopener noreferrer"
+					/>
+				</template>
+			</group-plate>
 
-			<section class="page-free-company__members">
-				<header class="page-free-company__members-header">
-					<h3>Mitglieder</h3>
-					<div class="page-free-company__members-count">
-						{{ members.total }} {{ members.total === 1 ? 'Mitglied' : 'Mitglieder' }}
-					</div>
-				</header>
+			<section-tabs
+				v-model="tab"
+				class="fc-detail__tabs"
+				glass
+				sync="query"
+				aria-label="Bereiche der Freien Gesellschaft"
+				:tabs="tabs"
+			/>
 
-				<div class="page-free-company__members-grid">
-					<div
-						v-for="profile in members.data"
-						:key="`${profile.name}_${profile.server}`"
-						class="page-free-company__member-card"
-					>
-						<router-link :to="getLink(profile)" class="page-free-company__member-link">
-							<aetheryte-badge
-								size="md"
-								shape="round"
-								:src="profile.avatar"
-								:alt="profile.name"
-								class="page-free-company__member-avatar"
-							/>
-							<div class="page-free-company__member-body">
-								<div class="page-free-company__member-name">{{ profile.name }}</div>
-								<div class="page-free-company__member-meta">
-									{{ $display.races[profile.race] }} - {{ profile.server }}
-								</div>
-								<div v-if="profile.profession" class="page-free-company__member-profession">
-									{{ profile.profession }}
-								</div>
+			<div class="fc-detail__body">
+				<div v-if="tab === 'uebersicht'" class="fc-detail__overview">
+					<div class="fc-detail__main">
+						<p v-if="!fc.claimed" class="fc-detail__note">
+							Die Leitung hat diese Freie Gesellschaft noch nicht auf <strong>Elpisgarten</strong> beansprucht.
+						</p>
+						<section v-if="fc.description" aria-labelledby="fc-about">
+							<h2 id="fc-about" class="fc-detail__heading">Über uns</h2>
+							<div class="fc-detail__about mat-parchment">
+								<html-viewer :content="fc.description" />
 							</div>
-						</router-link>
+						</section>
+						<iframe
+							v-if="fc.carrdProfile"
+							v-iframe-resize
+							class="fc-detail__carrd"
+							:src="carrdLink"
+							:title="`Carrd-Seite von ${fc.name}`"
+							width="100%"
+							height="500px"
+						></iframe>
+						<empty-state
+							v-if="fc.claimed && !fc.description && !fc.carrdProfile"
+							:variant="fc.canEdit ? 'owner' : 'visitor'"
+							icon="shield"
+							title="Noch keine Beschreibung"
+							:text="fc.canEdit ? 'Erzähl, wer ihr seid und was ihr gemeinsam spielt.' : 'Diese Freie Gesellschaft hat sich noch nicht vorgestellt.'"
+							:action-label="fc.canEdit ? 'Beschreibung schreiben' : ''"
+							:action-to="fc.canEdit ? editLink : null"
+						/>
 					</div>
+
+					<aside class="fc-detail__rail" aria-label="Eckdaten">
+						<section v-if="fc.recruiting" class="fc-detail__card fc-detail__card--seek" aria-labelledby="fc-seek">
+							<h2 id="fc-seek" class="fc-detail__card-title">Wir suchen</h2>
+							<p class="fc-detail__card-text">
+								{{ fc.name }} nimmt neue Mitglieder auf.
+								<template v-if="fc.recruitingOfficers"> Sprich am besten {{ fc.recruitingOfficers }} an.</template>
+							</p>
+							<q-btn
+								v-if="applyUrl"
+								class="elpis-btn elpis-btn--primary"
+								unelevated
+								no-caps
+								label="Bewerben"
+								:href="applyUrl"
+								target="_blank"
+								rel="noopener noreferrer"
+							/>
+						</section>
+
+						<group-facts :items="facts" />
+
+						<section v-if="members.total > 0" class="fc-detail__card" aria-labelledby="fc-members-preview">
+							<h2 id="fc-members-preview" class="fc-detail__card-title">Mitglieder</h2>
+							<avatar-stack :avatars="memberAvatars" :max="6" :label="memberLabel" />
+							<q-btn
+								class="elpis-btn elpis-btn--ghost fc-detail__card-link"
+								flat
+								no-caps
+								dense
+								label="Alle ansehen"
+								@click="tab = 'mitglieder'"
+							/>
+						</section>
+					</aside>
 				</div>
 
-				<div v-if="members.total === 0" class="page-free-company__members-empty">
-					Keine Mitglieder gefunden.
+				<div v-else-if="tab === 'mitglieder'" class="fc-detail__members">
+					<h2 class="fc-detail__heading">{{ memberLabel }}</h2>
+					<ul v-if="members.total > 0" class="fc-detail__member-grid">
+						<li v-for="profile in members.data" :key="`${profile.name}_${profile.server}`">
+							<member-card
+								:to="getLink(profile)"
+								:avatar-src="profile.avatar"
+								:name="profile.name"
+								:meta="`${$display.races[profile.race]} · ${profile.server}`"
+								:subtitle="profession(profile)"
+								:rp-status="rpStatus(profile)"
+							/>
+						</li>
+					</ul>
+					<empty-state
+						v-else
+						icon="group"
+						title="Noch keine Mitglieder"
+						text="Mitglieder erscheinen hier, sobald sie ihr Profil mit der Freien Gesellschaft verknüpfen."
+					/>
+
+					<section v-if="fc.mine" class="fc-detail__permissions" aria-labelledby="fc-permissions">
+						<h2 id="fc-permissions" class="fc-detail__heading">Bearbeitungsrechte</h2>
+						<free-company-member-permission-editor :members="memberPermissions" :free-company-id="fc.id" />
+					</section>
 				</div>
-			</section>
 
-      <section v-if="fc.mine" class="page-free-company__permissions">
-        <header class="page-free-company__members-header">
-          <h3>Bearbeitungsrechte</h3>
-        </header>
-        <free-company-member-permission-editor :members="memberPermissions" :free-company-id="fc.id" />
-      </section>
-
-    	<report-violation-section :pageType="PageType.FREE_COMPANY" :pageId="fc.id" />
+				<report-violation-section :pageType="PageType.FREE_COMPANY" :pageId="fc.id" />
+			</div>
 		</template>
-		<template v-else-if="notFound">
-			<h2>Freie Gesellschaft konnte nicht gefunden werden</h2>
-			<p>Die Freie Gesellschaft {{name}} ({{server}}) ist nicht auf <strong>Elpisgarten</strong> vertreten.</p>
-		</template>
+		<empty-state
+			v-else-if="notFound"
+			class="fc-detail__not-found"
+			icon="shield"
+			title="Freie Gesellschaft nicht gefunden"
+			:text="`Die Freie Gesellschaft ${name} (${server}) ist nicht auf Elpisgarten vertreten.`"
+			action-label="Zu den Freien Gesellschaften"
+			action-to="/free-companies"
+		/>
 	</q-page>
 </template>
 
@@ -65,10 +162,21 @@ import { FreeCompanyMemberPermissionDto } from '@app/shared/dto/fcs/free-company
 import type FreeCompaniesAPI from '@common/common/api/free-companies-api';
 import { CharacterSummaryDto } from '@app/shared/dto/characters/character-summary.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
+import { RpStatus } from '@app/shared/enums/rp-status.enum';
 import errors from '@app/shared/errors';
-import FreeCompanyProfile from 'components/free-company/FreeCompanyProfile.vue';
+import { isEmptyFieldValue } from 'components/character/empty-field';
+import { stripWikilinks } from 'components/character/profile-sections';
+import { keepTabsInView } from 'components/character/keep-tabs-in-view';
+import { activeRpStatus } from 'components/character/rp-status';
+import GroupFacts from 'components/communities/GroupFacts.vue';
+import GroupPlate from 'components/communities/GroupPlate.vue';
+import type { GroupFact, GroupPlateChip } from 'components/communities/group-plate';
 import FreeCompanyMemberPermissionEditor from 'components/free-company/FreeCompanyMemberPermissionEditor.vue';
-import AetheryteBadge from 'components/aetherium/AetheryteBadge.vue';
+import AvatarStack from 'components/vision/AvatarStack.vue';
+import EmptyState from 'components/vision/EmptyState.vue';
+import MemberCard from 'components/vision/MemberCard.vue';
+import SectionTabs from 'components/vision/SectionTabs.vue';
+import type { AvatarItem, BreadcrumbItem, SectionTab } from 'components/vision/types';
 import { useApi } from 'src/boot/axios';
 import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
@@ -78,6 +186,7 @@ import { useStore } from 'src/store';
 import { MetaOptions } from 'quasar/dist/types/meta';
 import { createMetaMixin } from 'quasar';
 import { PageType } from '@app/shared/enums/page-type.enum';
+import HtmlViewer from 'src/components/common/HtmlViewer.vue';
 import ReportViolationSection from 'src/components/common/ReportViolationSection.vue';
 
 const $api = useApi();
@@ -90,66 +199,76 @@ interface Content {
 	server: string;
 	fc: FreeCompanyDto;
 	members: PagingResultDto<CharacterSummaryDto>;
-  memberPermissions: FreeCompanyMemberPermissionDto[];
+	memberPermissions: FreeCompanyMemberPermissionDto[];
 	notFound: boolean;
 }
 
 async function load(params: RouteParams): Promise<Content> {
-		const server = params.server as string;
-		let name = params.fc as string;
+	const server = params.server as string;
+	let name = params.fc as string;
 
-		if (!name || !server) {
-			void $router.replace('/');
-			throw new Error();
+	if (!name || !server) {
+		void $router.replace('/');
+		throw new Error();
+	}
+
+	name = name.replace(/_/g, ' ');
+
+	try {
+		const characterId = $store.getters.characterId || undefined;
+		const fc = await freeCompaniesApi.getFreeCompany(name, server, characterId);
+		const members = await $api.characters.getCharacterProfiles({ freeCompanyId: fc.id, limit: 99999 });
+		const memberPermissions: FreeCompanyMemberPermissionDto[] = fc.mine
+			? await freeCompaniesApi.getMemberPermissions(fc.id)
+			: [];
+
+		return {
+			name,
+			server,
+			fc,
+			members,
+			memberPermissions,
+			notFound: false
 		}
-
-		name = name.replace(/_/g, ' ');
-
-		try {
-      const characterId = $store.getters.characterId || undefined;
-			const fc = await freeCompaniesApi.getFreeCompany(name, server, characterId);
-      const members = await $api.characters.getCharacterProfiles({ freeCompanyId: fc.id, limit: 99999 });
-      const memberPermissions: FreeCompanyMemberPermissionDto[] = fc.mine
-        ? await freeCompaniesApi.getMemberPermissions(fc.id)
-        : [];
-
+	} catch (e) {
+		if (errors.getStatusCode(e) === 404) {
 			return {
 				name,
 				server,
-				fc,
-				members,
-        memberPermissions,
-				notFound: false
+				fc: new FreeCompanyDto(),
+				members: { data: [], total: 0 },
+				memberPermissions: [],
+				notFound: true
 			}
-		} catch (e) {
-			if (errors.getStatusCode(e) === 404) {
-				return {
-					name,
-					server,
-					fc: new FreeCompanyDto(),
-					members: { data: [], total: 0 },
-          memberPermissions: [],
-					notFound: true
-				}
-			} else {
-				notifyError(e);
-				throw e;
-			}
+		} else {
+			notifyError(e);
+			throw e;
 		}
+	}
 }
 
 @Options({
 	components: {
-		FreeCompanyProfile,
-    FreeCompanyMemberPermissionEditor,
+		AvatarStack,
+		EmptyState,
+		FreeCompanyMemberPermissionEditor,
+		GroupFacts,
+		GroupPlate,
+		HtmlViewer,
+		MemberCard,
 		ReportViolationSection,
-		AetheryteBadge,
+		SectionTabs,
 	},
 	async beforeRouteEnter(to, _, next) {
 		const content = await load(to.params);
 		next(vm => (vm as PageFreeCompany).setContent(content));
 	},
-	async beforeRouteUpdate(to) {
+	async beforeRouteUpdate(to, from) {
+		// Tab changes only touch the query.
+		if (to.path === from.path && (this as PageFreeCompany).fc.id) {
+			keepTabsInView(((this as PageFreeCompany).$refs.plate as Vue | undefined)?.$el as HTMLElement | undefined);
+			return;
+		}
 		const content = await load(to.params);
 		(this as PageFreeCompany).setContent(content);
 	},
@@ -179,179 +298,247 @@ async function load(params: RouteParams): Promise<Content> {
 export default class PageFreeCompany extends Vue {
 	readonly PageType = PageType;
 
+	tab = 'uebersicht';
 	name = '';
 	server = '';
 	fc: FreeCompanyDto = new FreeCompanyDto();
 	members: PagingResultDto<CharacterSummaryDto> = { data: [], total: 0 };
-  memberPermissions: FreeCompanyMemberPermissionDto[] = [];
+	memberPermissions: FreeCompanyMemberPermissionDto[] = [];
 	notFound = false;
 
 	setContent(content: Content) {
 		Object.assign(this, content);
 	}
 
-	getLink(profile: CharacterSummaryDto) {
+	get tabs(): SectionTab[] {
+		return [
+			{ key: 'uebersicht', label: 'Übersicht', icon: 'shield' },
+			{ key: 'mitglieder', label: 'Mitglieder', icon: 'group', count: this.members.total },
+		];
+	}
+
+	get crumbs(): BreadcrumbItem[] {
+		return [
+			{ label: 'Freie Gesellschaften', to: '/free-companies' },
+			{ label: this.fc.name },
+		];
+	}
+
+	get eyebrowParts(): string[] {
+		return [
+			this.fc.tag ? `«${this.fc.tag}»` : '',
+			'Freie Gesellschaft',
+			this.fc.foundedAt ? `gegründet ${this.$display.formatDate(this.fc.foundedAt)}` : '',
+		].filter((part) => !!part);
+	}
+
+	get chips(): GroupPlateChip[] {
+		const chips: GroupPlateChip[] = [];
+		if (this.fc.server) {
+			chips.push({ label: `${this.fc.server} [Light]`, icon: 'public' });
+		}
+		if (this.fc.recruiting) {
+			chips.push({ label: 'Nimmt Mitglieder auf', live: true });
+		}
+		if (this.members.total > 0) {
+			chips.push({ label: this.memberLabel, icon: 'group' });
+		}
+		return chips;
+	}
+
+	get memberLabel(): string {
+		return `${this.members.total} ${this.members.total === 1 ? 'Mitglied' : 'Mitglieder'}`;
+	}
+
+	get memberAvatars(): AvatarItem[] {
+		return this.members.data.map((member) => ({ src: member.avatar, alt: member.name }));
+	}
+
+	get facts(): GroupFact[] {
+		const fc = this.fc;
+		return [
+			{ label: 'Welt', value: fc.server ? `${fc.server} [Light]` : '' },
+			{ label: 'Gründung', value: fc.foundedAt ? this.$display.formatDate(fc.foundedAt) : '' },
+			{ label: 'Ziel', value: fc.goal },
+			{ label: 'Status', value: fc.status },
+			{ label: 'Tätigkeit', value: fc.areaOfOperations },
+			{ label: 'Rekrutierer', value: fc.recruitingOfficers },
+			{ label: 'Webseite', value: fc.website, href: this.safeUrl(fc.website) },
+		];
+	}
+
+	/** No application flow for free companies; a recruiting FC links its website. */
+	get applyUrl(): string {
+		return this.fc.recruiting ? this.safeUrl(this.fc.website) : '';
+	}
+
+	get editLink(): string {
+		return `/edit-free-company/${this.fc.server}/${this.fc.name.replace(/ /g, '_')}`;
+	}
+
+	get carrdLink(): string {
+		return `${this.$api.prefix}carrd/character/preview/${this.fc.carrdProfile}`;
+	}
+
+	safeUrl(value?: string | null): string {
+		return value && /^https?:\/\//i.test(value.trim()) ? value.trim() : '';
+	}
+
+	getLink(profile: CharacterSummaryDto): string {
 		return `/${profile.server}/${profile.name.replace(/ /g, '_')}`;
+	}
+
+	profession(profile: CharacterSummaryDto): string {
+		return profile.profession && !isEmptyFieldValue(profile.profession) ? stripWikilinks(profile.profession) : '';
+	}
+
+	rpStatus(profile: CharacterSummaryDto): RpStatus | null {
+		return activeRpStatus(profile);
 	}
 }
 </script>
 
-<style lang="scss">
-// ELPIS-410: Free Company member grid uses round AetheryteBadge for the avatar
-// and pulls the surrounding member-card chrome onto Aetherium tokens so the
-// grid harmonises with the rest of the directory family (401/402/403 directory
-// list cards, 111 home activity grid).
-.page-free-company__members {
-  margin: 32px 0;
+<style lang="scss" scoped>
+.fc-detail {
+	padding: 0 0 48px;
 }
 
-.page-free-company__permissions {
-  margin: 32px 0;
+.fc-detail__not-found {
+	margin: 48px 24px;
 }
 
-.page-free-company__members-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-  padding: 20px 22px;
-  border: 1px solid var(--rule-gold-soft);
-  background: var(--surface-vellum);
-  box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
-  border-radius: 6px;
+.fc-detail__tabs {
+	position: sticky;
+	top: var(--nav-height, 68px);
+	z-index: 5;
 }
 
-.page-free-company__members-header h3 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--type-scale-3);
-  letter-spacing: var(--ls-display);
-  color: var(--surface-ink);
+.fc-detail__body {
+	padding: 24px 24px 0;
+
+	@media (max-width: 599px) {
+		padding: 16px 12px 0;
+	}
+
+	// "Teilen" in the header replaces the copy-link button of the report row.
+	:deep(.report-violation-section > .q-btn:first-child) {
+		display: none;
+	}
 }
 
-.page-free-company__members-count {
-  font-family: var(--font-ui);
-  text-transform: uppercase;
-  letter-spacing: var(--ls-eyebrow);
-  font-size: var(--type-scale-0);
-  color: var(--ink-muted);
+.fc-detail__overview {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 340px;
+	gap: 32px;
+	align-items: start;
+
+	@media (max-width: 1023px) {
+		grid-template-columns: minmax(0, 1fr);
+	}
 }
 
-.page-free-company__members-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid var(--rule-gold-soft);
-  background: var(--surface-vellum);
-  box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
-  border-radius: 6px;
+.fc-detail__main,
+.fc-detail__rail {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	min-width: 0;
 }
 
-.page-free-company__member-card {
-  border: 1px solid var(--rule-gold-soft);
-  background: var(--surface-vellum);
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
-  transition:
-    transform var(--motion-fast) var(--ease-elpis),
-    box-shadow var(--motion-fast) var(--ease-elpis),
-    border-color var(--motion-fast) var(--ease-elpis);
+.fc-detail__rail {
+	gap: 20px;
 }
 
-.page-free-company__member-card:hover {
-  transform: translateY(-4px);
-  box-shadow:
-    0 1px 2px rgba(43, 36, 24, 0.06),
-    0 12px 28px rgba(43, 36, 24, 0.12);
-  border-color: var(--rule-gold);
+.fc-detail__heading {
+	margin: 0 0 14px;
+	font-family: var(--font-display);
+	font-weight: 500;
+	font-size: 22px;
+	line-height: 1.3;
+	letter-spacing: 0;
+	color: var(--ink-primary);
 }
 
-.page-free-company__member-link {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px;
-  align-items: center;
-  padding: 14px 16px;
-  color: inherit;
-  text-decoration: none;
+.fc-detail__note {
+	margin: 0;
+	padding: 12px 16px;
+	border: 1px dashed var(--rule-strong);
+	border-radius: 12px;
+	font-family: var(--font-ui);
+	font-size: 14px;
+	color: var(--ink-primary);
 }
 
-.page-free-company__member-name {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: var(--type-scale-2);
-  letter-spacing: var(--ls-display);
-  color: var(--surface-ink);
+.fc-detail__about {
+	padding: 28px 32px;
+	border-radius: 12px;
+	font-size: 17px;
+	line-height: 1.7;
+
+	@media (max-width: 599px) {
+		padding: 20px 18px;
+	}
 }
 
-.page-free-company__member-meta {
-  font-family: var(--font-ui);
-  color: var(--ink-muted);
-  font-size: var(--type-scale-0);
+.fc-detail__carrd {
+	border: none;
+	min-height: 380px;
 }
 
-.page-free-company__member-profession {
-  font-family: var(--font-section);
-  font-style: italic;
-  color: var(--ink-muted);
-  font-size: var(--type-scale-1);
+.fc-detail__card {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 18px 20px 20px;
+	border: 1px solid var(--rule-soft);
+	border-radius: 12px;
+	background-color: var(--vision-card);
 }
 
-.page-free-company__members-empty {
-  margin: 0;
-  padding: 18px;
-  color: var(--ink-muted);
-  border: 1px solid var(--rule-gold-soft);
-  background: var(--surface-vellum);
-  box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
-  border-radius: 6px;
-  text-align: center;
+.fc-detail__card--seek {
+	border-color: var(--vision-live);
+	box-shadow: inset 4px 0 0 var(--vision-live);
+	padding-left: 24px;
 }
 
-body.body--dark .page-free-company__members-header,
-body.body--dark .page-free-company__members-grid,
-body.body--dark .page-free-company__member-card,
-body.body--dark .page-free-company__members-empty {
-  background: var(--surface-lift);
-  border-color: var(--rule-arcane-soft);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+.fc-detail__card-title {
+	margin: 0;
+	font-family: var(--font-display);
+	font-weight: 500;
+	font-size: 18px;
+	line-height: 1.3;
+	letter-spacing: 0;
+	color: var(--ink-primary);
 }
 
-body.body--dark .page-free-company__members-header h3,
-body.body--dark .page-free-company__member-name {
-  color: var(--ink-luminous);
+.fc-detail__card-text {
+	margin: 0;
+	font-family: var(--font-ui);
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--ink-primary);
 }
 
-body.body--dark .page-free-company__members-count,
-body.body--dark .page-free-company__member-meta,
-body.body--dark .page-free-company__member-profession,
-body.body--dark .page-free-company__members-empty {
-  color: rgba(236, 227, 247, 0.74);
+.fc-detail__member-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 12px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+
+	> li {
+		display: flex;
+		min-width: 0;
+
+		> * {
+			flex: 1 1 auto;
+		}
+	}
 }
 
-body.body--dark .page-free-company__member-card:hover {
-  border-color: var(--rule-arcane);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.35),
-    0 12px 28px rgba(0, 0, 0, 0.45);
-}
-
-@media screen and (max-width: $breakpoint-sm) {
-  .page-free-company__members-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .page-free-company__members-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .page-free-company__member-card:hover {
-    transform: none;
-  }
+.fc-detail__permissions {
+	margin-top: 40px;
 }
 </style>
