@@ -65,6 +65,8 @@
                 <html-viewer :content="community.description" />
               </div>
             </section>
+            <!-- ER2 round 2: "Was wir spielen" -->
+            <focus-items :items="community.focusItems" />
             <iframe
               v-if="community.carrdProfile"
               v-iframe-resize
@@ -75,7 +77,7 @@
               height="500px"
             ></iframe>
             <empty-state
-              v-if="!community.description && !community.carrdProfile"
+              v-if="!community.description && !community.carrdProfile && !(community.focusItems && community.focusItems.length)"
               :variant="community.canEdit ? 'owner' : 'visitor'"
               icon="groups"
               title="Noch keine Beschreibung"
@@ -199,6 +201,7 @@ import { isEmptyFieldValue } from 'components/character/empty-field';
 import { keepTabsInView } from 'components/character/keep-tabs-in-view';
 import { stripWikilinks } from 'components/character/profile-sections';
 import { activeRpStatus } from 'components/character/rp-status';
+import FocusItems from 'components/communities/FocusItems.vue';
 import GroupFacts from 'components/communities/GroupFacts.vue';
 import GroupPlate from 'components/communities/GroupPlate.vue';
 import type { GroupFact, GroupPlateChip } from 'components/communities/group-plate';
@@ -245,6 +248,7 @@ async function load(
     CommunityApplicantEditor,
     CommunityMemberEditor,
     EmptyState,
+    FocusItems,
     GroupFacts,
     GroupPlate,
     HtmlViewer,
