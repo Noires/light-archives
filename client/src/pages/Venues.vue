@@ -89,7 +89,35 @@
       <template v-if="openCount > 0"> · {{ openCount }} gerade geöffnet</template>
     </p>
 
-    <div v-if="pagedVenues.length > 0" class="page-venues__grid">
+    <!-- ER2 outlook: map -->
+    <div class="page-venues__view" role="group" aria-label="Ansicht">
+      <button
+        type="button"
+        class="page-venues__chip"
+        :class="{ 'page-venues__chip--active': viewMode === 'raster' }"
+        :aria-pressed="viewMode === 'raster' ? 'true' : 'false'"
+        @click="setView('raster')"
+      >
+        <q-icon name="grid_view" aria-hidden="true" />
+        <span>Raster</span>
+      </button>
+      <button
+        type="button"
+        class="page-venues__chip"
+        :class="{ 'page-venues__chip--active': viewMode === 'karte' }"
+        :aria-pressed="viewMode === 'karte' ? 'true' : 'false'"
+        @click="setView('karte')"
+      >
+        <q-icon name="map" aria-hidden="true" />
+        <span>Kartenansicht</span>
+      </button>
+    </div>
+    <venue-map
+      v-if="viewMode === 'karte' && filteredCount > 0"
+      :venues="filteredVenues"
+      :now="now"
+    />
+    <div v-else-if="viewMode !== 'karte' && pagedVenues.length > 0" class="page-venues__grid">
       <venue-card
         v-for="venue in pagedVenues"
         :key="venue.id"
@@ -109,7 +137,7 @@
     />
 
     <q-pagination
-      v-if="maxPage > 1"
+      v-if="viewMode !== 'karte' && maxPage > 1"
       class="page-venues__pagination elpis-pagination"
       :model-value="page"
       :max="maxPage"
@@ -118,6 +146,7 @@
       boundary-links
       @update:model-value="setPage"
     />
+    <!-- /ER2 outlook: map -->
   </q-page>
 </template>
 
@@ -131,6 +160,7 @@ import { notifyError } from 'src/common/notify';
 import PageHead from 'components/vision/PageHead.vue';
 import EmptyState from 'components/vision/EmptyState.vue';
 import VenueCard from 'components/venues/VenueCard.vue';
+import VenueMap from 'components/outlook/VenueMap.vue'; // ER2 outlook: map
 import { HOUSING_AREA_LABELS } from 'components/venues/venue-location';
 import { VenueOpenState, getVenueStatus, isOpenToday } from 'components/venues/venue-status';
 import { Options, Vue } from 'vue-class-component';
@@ -150,6 +180,7 @@ const STATE_ORDER: Record<VenueOpenState, number> = { open: 0, soon: 1, unknown:
     PageHead,
     EmptyState,
     VenueCard,
+    VenueMap, // ER2 outlook: map
   },
   async beforeRouteEnter(_, __, next) {
     try {
@@ -170,8 +201,31 @@ export default class PageVenues extends Vue {
   page = 1;
   now = Date.now();
   readonly perPage = 12;
+  // ER2 outlook: map — 'karte' from /venues/karte or ?view=karte
+  viewMode: 'raster' | 'karte' = 'raster';
 
   private timer: number | null = null;
+
+  // ER2 outlook: map
+  created() {
+    if (this.$route.meta.venueView === 'karte' || this.$route.query.view === 'karte') {
+      this.viewMode = 'karte';
+    }
+  }
+
+  // ER2 outlook: map
+  setView(mode: 'raster' | 'karte') {
+    this.viewMode = mode;
+    if (this.$route.meta.venueView !== 'karte') {
+      const query = { ...this.$route.query };
+      if (mode === 'karte') {
+        query.view = 'karte';
+      } else {
+        delete query.view;
+      }
+      void this.$router.replace({ query });
+    }
+  }
 
   mounted() {
     this.timer = window.setInterval(() => {
@@ -383,6 +437,14 @@ export default class PageVenues extends Vue {
   height: 8px;
   border-radius: 50%;
   background-color: var(--vision-live);
+}
+
+// ER2 outlook: map
+.page-venues__view {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
 }
 
 .page-venues__stats {
