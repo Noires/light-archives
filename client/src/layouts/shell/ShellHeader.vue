@@ -1,1041 +1,729 @@
 <template>
-  <q-header>
-    <q-toolbar class="layout__toolbar__header mat-aetherglass">
-      <div class="layout__filler layout__header-row">
-        <div class="layout__char-name cursor-pointer" @click="$emit('toggle-drawer')">
-          <template v-if="$store.getters.character">
-          <div>
-            <aetheryte-badge
-              size="md"
-              shape="round"
-              :src="$store.getters.character.avatar"
-              :alt="$store.getters.character?.name || ''"
-            />
-            <span header>{{ $store.getters.character?.name }}</span>
-          </div>
-          </template>
-          <template v-else>
-            <q-icon size="28px" name="account_circle" />
-            <span>Eine fremde Gestalt</span>
-          </template>
-        </div>
-        <nav class="layout__nav-links gt-lg">
-          <router-link
-            class="layout__nav-link"
-            to="/"
-            active-class=""
-            exact-active-class="router-link-active"
+  <q-header class="shell-bar">
+    <div class="shell-bar__inner">
+      <router-link to="/" class="shell-bar__logo" aria-label="Elpisgarten, zur Startseite">
+        <shell-logo img-class="shell-bar__logo-img" alt="" :width="186" :height="29" />
+      </router-link>
+
+      <nav class="shell-bar__nav" aria-label="Hauptnavigation">
+        <router-link
+          v-for="area in primaryAreas"
+          :key="area.key"
+          :to="area.to"
+          class="shell-bar__nav-item"
+          :class="{ 'shell-bar__nav-item--active': isActive(area) }"
+          active-class=""
+          exact-active-class=""
+          :aria-current="isActive(area) ? 'page' : undefined"
+        >
+          {{ area.label }}
+        </router-link>
+
+        <button
+          type="button"
+          class="shell-bar__nav-item shell-bar__nav-trigger"
+          :class="{ 'shell-bar__nav-item--active': isActive(wikiArea) }"
+          aria-haspopup="menu"
+          :aria-expanded="wikiMenuOpen ? 'true' : 'false'"
+        >
+          {{ wikiArea.label }}
+          <q-icon name="expand_more" size="16px" aria-hidden="true" />
+          <q-menu
+            v-model="wikiMenuOpen"
+            anchor="bottom left"
+            self="top left"
+            :offset="[0, 6]"
+            class="shell-menu"
           >
-            Startseite
-          </router-link>
-          <div
-            v-for="group in navGroups"
-            :key="group.key"
-            class="layout__nav-dropdown"
-            @mouseenter="openMenu(group.key)"
-            @mouseleave="scheduleMenuClose(group.key)"
+            <q-list dense class="shell-menu__list">
+              <q-item clickable v-close-popup class="shell-menu__item" @click="$emit('open-search')">
+                <q-item-section avatar><q-icon name="search" size="18px" /></q-item-section>
+                <q-item-section>Im Wiki suchen</q-item-section>
+              </q-item>
+              <q-separator class="shell-menu__sep" />
+              <q-item
+                v-for="link in wikiLinks"
+                :key="link.to"
+                clickable
+                v-close-popup
+                :to="link.to"
+                class="shell-menu__item"
+                active-class="shell-menu__item--active"
+              >
+                <q-item-section avatar><q-icon :name="link.icon" size="18px" /></q-item-section>
+                <q-item-section>{{ link.label }}</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </button>
+
+        <button
+          type="button"
+          class="shell-bar__nav-item shell-bar__nav-trigger"
+          :class="{ 'shell-bar__nav-item--active': isMoreActive }"
+          aria-haspopup="menu"
+          :aria-expanded="moreMenuOpen ? 'true' : 'false'"
+        >
+          Mehr
+          <q-icon name="expand_more" size="16px" aria-hidden="true" />
+          <q-menu
+            v-model="moreMenuOpen"
+            anchor="bottom left"
+            self="top left"
+            :offset="[0, 6]"
+            class="shell-menu"
           >
-            <button
-              type="button"
-              class="layout__nav-dropdown-trigger"
-              :class="{
-                'layout__nav-dropdown-trigger_active': isGroupRouteActive(group.key),
-                'layout__nav-dropdown-trigger_open': menuState[group.key],
-              }"
-              @focus="openMenu(group.key)"
-              @click="toggleMenu(group.key)"
-            >
-              <span>{{ group.label }}</span>
-              <q-icon name="expand_more" size="16px" />
-            </button>
-            <q-menu
-              v-model="menuState[group.key]"
-              anchor="bottom left"
-              self="top left"
-              fit
-              :offset="[0, 4]"
-              class="layout__nav-menu"
-              transition-show="jump-down"
-              transition-hide="jump-up"
-              @mouseenter="openMenu(group.key)"
-              @mouseleave="scheduleMenuClose(group.key)"
-            >
-              <q-list dense>
+            <q-list dense class="shell-menu__list">
+              <template v-for="(group, index) in moreGroups" :key="group.key">
+                <q-separator v-if="index > 0" class="shell-menu__sep" />
+                <q-item-label header class="shell-menu__header">{{ group.label }}</q-item-label>
                 <q-item
                   v-for="link in group.links"
-                  :key="link.label"
-                  class="layout__nav-menu-item"
+                  :key="link.to"
                   clickable
                   v-close-popup
                   :to="link.to"
+                  :exact="link.to === '/'"
+                  class="shell-menu__item"
+                  active-class="shell-menu__item--active"
                 >
-                  <q-item-section>
-                    <q-item-label class="layout__nav-menu-label">
-                      <span>{{ link.label }}</span>
-                    </q-item-label>
-                  </q-item-section>
+                  <q-item-section avatar><q-icon :name="link.icon" size="18px" /></q-item-section>
+                  <q-item-section>{{ link.label }}</q-item-section>
                 </q-item>
-              </q-list>
-            </q-menu>
+              </template>
+            </q-list>
+          </q-menu>
+        </button>
+      </nav>
+
+      <div class="shell-bar__spacer" />
+
+      <button
+        type="button"
+        class="shell-bar__search"
+        aria-label="Suchen (Strg K)"
+        aria-haspopup="dialog"
+        aria-keyshortcuts="Control+K Meta+K"
+        @click="$emit('open-search')"
+      >
+        <q-icon name="search" size="18px" aria-hidden="true" />
+        <span class="shell-bar__search-label">Suchen…</span>
+        <kbd class="shell-bar__kbd">Strg K</kbd>
+      </button>
+
+      <q-btn
+        flat
+        round
+        dense
+        class="shell-bar__icon-btn shell-bar__notifications"
+        icon="notifications_none"
+        aria-label="Benachrichtigungen"
+      >
+        <q-menu anchor="bottom right" self="top right" :offset="[0, 6]" class="shell-menu">
+          <div class="shell-menu__panel">
+            <slot name="notifications">
+              <p class="shell-menu__empty">Keine neuen Benachrichtigungen.</p>
+            </slot>
           </div>
-        </nav>
-        <q-btn
-          flat
-          round
-          dense
-          class="layout__theme-toggle"
-          :icon="themeIcon"
-          :aria-label="themeAriaLabel"
-          @click="onThemeToggleClick"
+        </q-menu>
+      </q-btn>
+
+      <q-btn
+        flat
+        round
+        dense
+        class="shell-bar__icon-btn shell-bar__theme"
+        :icon="themeIcon"
+        :aria-label="themeAriaLabel"
+        @click="onThemeToggleClick"
+      >
+        <q-tooltip>{{ themeTooltipLabel }}</q-tooltip>
+      </q-btn>
+
+      <button
+        type="button"
+        class="shell-bar__account"
+        :class="{ 'shell-bar__account--guest': !isLoggedIn }"
+        aria-haspopup="menu"
+        :aria-expanded="accountMenuOpen ? 'true' : 'false'"
+        :aria-label="accountAriaLabel"
+      >
+        <template v-if="character">
+          <aetheryte-badge
+            class="shell-bar__avatar"
+            size="xs"
+            shape="round"
+            :glyph-corners="false"
+            :src="character.avatar"
+            alt=""
+          />
+          <span class="shell-bar__account-text">
+            <span class="shell-bar__account-name">{{ character.name }}</span>
+            <span v-if="accountStatus" class="shell-bar__account-status">{{ accountStatus }}</span>
+          </span>
+        </template>
+        <template v-else-if="isLoggedIn">
+          <q-icon name="account_circle" size="24px" aria-hidden="true" />
+          <span class="shell-bar__account-text">
+            <span class="shell-bar__account-name">Konto</span>
+          </span>
+        </template>
+        <template v-else>
+          <q-icon name="login" size="20px" aria-hidden="true" />
+          <span class="shell-bar__account-text">
+            <span class="shell-bar__account-name">Anmelden</span>
+          </span>
+        </template>
+        <q-icon class="shell-bar__account-caret" name="expand_more" size="16px" aria-hidden="true" />
+        <q-menu
+          v-model="accountMenuOpen"
+          anchor="bottom right"
+          self="top right"
+          :offset="[0, 6]"
+          class="shell-menu shell-account-menu"
         >
-          <q-tooltip>
-            {{ themeTooltipLabel }}
-          </q-tooltip>
-        </q-btn>
-        <q-btn-dropdown
-          class="layout__toolbar-button-more lt-xl"
-          flat
-          dense
-          no-caps
-          dropdown-icon="menu"
-          tooltip="Menu"
-          aria-label="Menu"
-          content-class="layout__mobile-menu"
-        >
-          <q-list>
-            <q-item clickable v-close-popup to="/">
-              <q-item-section avatar>
-                <q-icon name="home" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>Startseite</q-item-label>
-              </q-item-section>
-            </q-item>
-            <q-separator />
-            <q-expansion-item
-              v-for="group in navGroups"
-              :key="group.key"
-              dense
-              dense-toggle
-              :icon="group.icon"
-              :label="group.label"
-            >
-              <q-list dense>
-                <q-item v-for="link in group.links" clickable v-close-popup :key="link.label" :to="link.to">
-                  <q-item-section>
-                    <q-item-label>{{ link.label }}</q-item-label>
-                  </q-item-section>
-                </q-item>
-              </q-list>
-            </q-expansion-item>
-          </q-list>
-        </q-btn-dropdown>
-      </div>
-    </q-toolbar>
+          <div class="shell-account-menu__body" @click="onAccountMenuClick">
+            <user-menu />
+          </div>
+        </q-menu>
+      </button>
+    </div>
   </q-header>
 </template>
 
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
 import AetheryteBadge from 'src/components/aetherium/AetheryteBadge.vue';
-import { ThemeMode, getNextThemeMode, getStoredThemeMode, toggleThemeMode } from 'src/common/theme';
+import UserMenu from 'src/components/sidebar/UserMenu.vue';
+import ShellLogo from './ShellLogo.vue';
+import {
+  MORE_GROUPS,
+  PRIMARY_AREAS,
+  ShellNavArea,
+  WIKI_AREA,
+  WIKI_LINKS,
+  isAreaActive,
+  isLinkActive,
+} from './nav';
+import { shellTheme, themeAriaLabel, themeIcon, themeTooltip, toggleShellTheme } from './theme-state';
 
-// Shell top bar: nameplate (opens the drawer via `toggle-drawer`), desktop
-// nav dropdowns, theme toggle and the mobile hamburger menu. Owns its own
-// nav-menu and theme state; the only outward signal is `toggle-drawer`.
-
-type NavGroupKey = 'database' | 'roleplay' | 'media' | 'knowledge';
-
-interface NavLink {
-  label: string;
-  to: string;
-}
-
-interface NavGroup {
-  key: NavGroupKey;
-  label: string;
-  icon: string;
-  links: NavLink[];
-  matchPrefixes: string[];
-}
+// ER2-201 — compact top bar: logo, seven primary areas (the seventh, Wiki,
+// is a menu because there is no wiki index route), "Mehr", search pill,
+// notifications slot, theme toggle and the account pill (UserMenu in a
+// q-menu). Emits `open-search` for the command palette. The nav model lives
+// in ./nav.ts. Unscoped styles: the q-menu content is teleported.
 
 @Options({
   name: 'ShellHeader',
   components: {
     AetheryteBadge,
+    ShellLogo,
+    UserMenu,
   },
-  emits: ['toggle-drawer'],
+  emits: ['open-search'],
+  watch: {
+    '$route.fullPath'() {
+      const self = this as ShellHeader;
+      self.accountMenuOpen = false;
+      self.wikiMenuOpen = false;
+      self.moreMenuOpen = false;
+    },
+  },
 })
 export default class ShellHeader extends Vue {
-  readonly navGroups: NavGroup[] = [
-    {
-      key: 'database',
-      label: 'Datenbank',
-      icon: 'storage',
-      links: [
-        { label: 'Charaktere', to: '/profiles' },
-        { label: 'Treffpunkte', to: '/venues' },
-        { label: 'Communities', to: '/communities' },
-        { label: 'Freie Gesellschaften', to: '/free-companies' },
-      ],
-      matchPrefixes: ['/profiles', '/venues', '/communities', '/free-companies'],
-    },
-    {
-      key: 'roleplay',
-      label: 'Rollenspiel',
-      icon: 'theater_comedy',
-      links: [
-        { label: 'Eventkalender', to: '/calendar' },
-        { label: 'Anschlagbrett', to: '/noticeboard' },
-        { label: 'Geschichten', to: '/stories' },
-      ],
-      matchPrefixes: ['/calendar', '/event', '/event-calendar', '/noticeboard', '/stories', '/story'],
-    },
-    {
-      key: 'media',
-      label: 'Medien',
-      icon: 'photo_library',
-      links: [
-        { label: 'Screenshots', to: '/gallery/screenshot' },
-        { label: 'Kunstwerke', to: '/gallery/artwork' },
-      ],
-      matchPrefixes: ['/gallery'],
-    },
-    {
-      key: 'knowledge',
-      label: 'Wissenswertes',
-      icon: 'info',
-      links: [
-        { label: 'Neueste Änderungen', to: '/changes' },
-        { label: 'Regeln', to: '/rules' },
-        { label: 'FAQ', to: '/faq' },
-        { label: 'Anfängerguide', to: '/beginner-guide' },
-        { label: 'Über uns', to: '/about' },
-      ],
-      matchPrefixes: ['/changes', '/rules', '/faq', '/beginner-guide', '/about'],
-    },
-  ];
+  readonly primaryAreas = PRIMARY_AREAS;
+  readonly wikiArea = WIKI_AREA;
+  readonly wikiLinks = WIKI_LINKS;
+  readonly moreGroups = MORE_GROUPS;
 
-  themeMode: ThemeMode = getStoredThemeMode();
-  menuState: Record<NavGroupKey, boolean> = {
-    database: false,
-    roleplay: false,
-    media: false,
-    knowledge: false,
-  };
-  private menuCloseTimers: Partial<Record<NavGroupKey, ReturnType<typeof setTimeout>>> = {};
+  wikiMenuOpen = false;
+  moreMenuOpen = false;
+  accountMenuOpen = false;
 
-  toggleMenu(groupKey: NavGroupKey) {
-    if (this.menuState[groupKey]) {
-      this.menuState[groupKey] = false;
-      this.clearMenuCloseTimer(groupKey);
-      return;
+  get character() {
+    return this.$store.getters.character;
+  }
+
+  get isLoggedIn(): boolean {
+    return !!this.$store.getters.role;
+  }
+
+  // Placeholder until RP presence (ER2-806) exists; renders nothing when empty.
+  get accountStatus(): string {
+    return '';
+  }
+
+  get accountAriaLabel(): string {
+    if (this.character) {
+      return `Kontomenü für ${this.character.name}`;
     }
-
-    this.openMenu(groupKey);
+    return this.isLoggedIn ? 'Kontomenü' : 'Anmelden';
   }
 
-  openMenu(groupKey: NavGroupKey) {
-    this.clearMenuCloseTimer(groupKey);
-    this.menuState[groupKey] = true;
+  isActive(area: ShellNavArea): boolean {
+    return isAreaActive(area, this.$route.path);
   }
 
-  scheduleMenuClose(groupKey: NavGroupKey) {
-    this.clearMenuCloseTimer(groupKey);
-    this.menuCloseTimers[groupKey] = setTimeout(() => {
-      this.menuState[groupKey] = false;
-      this.menuCloseTimers[groupKey] = undefined;
-    }, 120);
-  }
-
-  clearMenuCloseTimer(groupKey: NavGroupKey) {
-    const timer = this.menuCloseTimers[groupKey];
-    if (timer) {
-      clearTimeout(timer);
-      this.menuCloseTimers[groupKey] = undefined;
-    }
-  }
-
-  clearAllMenuCloseTimers() {
-    for (const group of this.navGroups) {
-      this.clearMenuCloseTimer(group.key);
-    }
-  }
-
-  isGroupRouteActive(groupKey: NavGroupKey) {
+  get isMoreActive(): boolean {
     const path = this.$route.path;
-    const group = this.navGroups.find(entry => entry.key === groupKey);
-
-    if (!group) {
+    if (path === '/' || PRIMARY_AREAS.some((area) => isAreaActive(area, path)) || isAreaActive(WIKI_AREA, path)) {
       return false;
     }
-
-    return group.matchPrefixes.some(prefix => this.matchesRoutePrefix(path, prefix));
+    return MORE_GROUPS.some((group) => group.links.some((link) => isLinkActive(link, path)));
   }
 
-  private matchesRoutePrefix(path: string, prefix: string) {
-    if (prefix.endsWith('/')) {
-      return path.startsWith(prefix);
+  onAccountMenuClick(event: MouseEvent) {
+    // UserMenu items have no v-close-popup; close once an item was chosen.
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.q-item')) {
+      this.accountMenuOpen = false;
     }
-
-    return path === prefix || path.startsWith(`${prefix}/`);
-  }
-
-  get isEffectiveDarkMode(): boolean {
-    return this.$q.dark.isActive;
   }
 
   get themeIcon(): string {
-    if (this.themeMode === 'system') {
-      return 'brightness_auto';
-    }
-
-    return this.isEffectiveDarkMode ? 'dark_mode' : 'light_mode';
+    return themeIcon(shellTheme.mode, this.$q.dark.isActive);
   }
 
   get themeTooltipLabel(): string {
-    const currentThemeLabel = this.themeModeLabel(this.themeMode);
-    const nextThemeLabel = this.themeModeLabel(getNextThemeMode(this.themeMode));
-    return `Darstellung: ${currentThemeLabel} (aktiv: ${this.isEffectiveDarkMode ? 'dunkel' : 'hell'}). Klick: ${nextThemeLabel}`;
+    return themeTooltip(shellTheme.mode, this.$q.dark.isActive);
   }
 
   get themeAriaLabel(): string {
-    const nextThemeLabel = this.themeModeLabel(getNextThemeMode(this.themeMode));
-    return `Darstellung wechseln. Als Nächstes: ${nextThemeLabel}`;
+    return themeAriaLabel(shellTheme.mode);
   }
 
   onThemeToggleClick() {
-    this.themeMode = toggleThemeMode(this.themeMode);
-  }
-
-  private themeModeLabel(mode: ThemeMode): string {
-    if (mode === 'light') {
-      return 'Hell';
-    }
-    if (mode === 'dark') {
-      return 'Dunkel';
-    }
-
-    return 'System';
-  }
-
-  unmounted() {
-    this.clearAllMenuCloseTimers();
+    toggleShellTheme();
   }
 }
 </script>
 
 <style lang="scss">
-// Header-only styles (nameplate, nav links, dropdown menus, theme toggle,
-// mobile menu) and the --nav-* palette for both themes. Unscoped on purpose:
-// the q-menu / q-btn-dropdown content is teleported out of this component.
-
-.layout__filler {
-  flex-basis: 0;
-  flex-grow: 1;
-  display: flex;
-  flex-wrap: nowrap;
-}
-
-.layout__header-row {
-  flex-basis: 0;
-  flex-grow: 1;
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  gap: 0;
-  margin: 0;
-  max-width: none;
-  position: relative;
-  z-index: 1;
-  min-height: var(--nav-height);
-}
-
-.layout__filler__end {
-  color:white;
-  flex-basis: 0;
-  flex-grow: 1;
-  display: flex;
-  flex-wrap: nowrap;
-}
-
-.layout__char-name {
-  font-family: Michroma, sans-serif;
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--nav-ink);
-  padding: 0 24px;
-  min-width: 280px;
-  min-height: var(--nav-height);
-  position: relative;
-  z-index: 3;
-  isolation: isolate;
-  text-transform: uppercase;
-  border-radius: 0;
-  background: linear-gradient(135deg, var(--nav-char-bg-start) 0%, var(--nav-char-bg-end) 100%);
-  box-shadow: 4px 0 12px rgba(43, 36, 24, 0.10); // Hydaelyn — warm soft drop
-  transition: background 0.3s ease,
-              box-shadow 0.3s ease,
-              color 0.3s ease;
-  animation: navReveal 0.55s ease both;
-  cursor: pointer;
-}
-
-body.body--dark .layout__char-name {
-  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.35); // Zodiark — original dark drop
-}
-
-.layout__char-name > div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.layout__char-name::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  transform: translateX(100%);
-  width: 32px;
-  height: 64px;
-  background: var(--nav-char-divider);
-  clip-path: polygon(0 0, 100% 0, 0 100%);
-
-  pointer-events: none;
-  animation: navRevealDivider 0.55s ease both;
-  will-change: background;
-}
-
-.layout__char-name:hover::after {
-  background: var(--nav-char-divider-hover);
-}
-
-.layout__char-name:hover {
-  // Inherit theme-aware ink — pearl gets dark warm, deep gets luminous cream.
-  // `--nav-ink` flips correctly across both themes (Aetherium-aligned).
-  color: var(--nav-ink);
-  background: linear-gradient(135deg, var(--nav-char-bg-hover-start) 0%, var(--nav-char-bg-hover-end) 100%);
-  box-shadow: 6px 0 18px rgba(43, 36, 24, 0.18);
-}
-
-body.body--dark .layout__char-name:hover {
-  box-shadow: 6px 0 24px rgba(0, 0, 0, 0.45);
-}
-
-// AetheryteBadge owns its own gold rule and shadow chrome; the legacy
-// `.q-avatar` rules here are obsolete now that ELPIS-202 is in place. The
-// nav-aware tokens still drive the inner ring on hover via the badge's own
-// :hover handler — no per-layout overrides are needed.
-
-.layout__char-name .q-icon {
-  color: var(--nav-accent);
-  font-size: 1.8rem;
-}
-
-.layout__char-name span {
-  font-size: 0.85rem;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 220px;
-}
-
-.q-header {
-  background-color: transparent;
-  border-radius: 0px;
-}
+// Top bar and its menus. Unscoped on purpose: q-menu content is teleported
+// out of this component. Colours are Aetherium roles only, so Hydaelyn and
+// Zodiark need no overrides beyond the shadow.
 
 body {
-  // Hydaelyn nav palette — calibrated to read on `.mat-aetherglass` pearl
-  // surface (ELPIS-101). The legacy gold-on-near-black values that lived
-  // here would have been invisible on pearl; rule/ink tokens replace them.
-  --nav-bg-start: transparent; // legacy fallback only — Aetherglass provides bg
-  --nav-bg-end: transparent;
-  --nav-accent: var(--rule-gold);
-  --nav-accent-strong: var(--rule-gold);
-  --nav-ink: var(--surface-ink);
-  --nav-border-bottom: transparent; // Aetherglass inner rule replaces the bottom border
-  --nav-overlay-glow-left: rgba(186, 155, 91, 0.10);
-  --nav-overlay-glow-right: rgba(127, 230, 226, 0.06);
-  --nav-overlay-shade: transparent; // pearl shouldn't darken downward
-  --nav-char-bg-start: rgba(186, 155, 91, 0.14);
-  --nav-char-bg-end: rgba(245, 239, 226, 0.55);
-  --nav-char-bg-hover-start: rgba(186, 155, 91, 0.22);
-  --nav-char-bg-hover-end: rgba(251, 246, 234, 0.85);
-  --nav-char-divider: rgba(186, 155, 91, 0.22);
-  --nav-char-divider-hover: rgba(186, 155, 91, 0.36);
-  --nav-char-avatar-border: var(--rule-gold);
-  --nav-char-avatar-border-hover: var(--rule-gold);
-  --nav-link-color: var(--surface-ink);
-  --nav-link-underline: var(--rule-gold);
-  --nav-link-hover-bg: rgba(186, 155, 91, 0.10);
-  --nav-link-active-bg: rgba(186, 155, 91, 0.16);
-  --nav-link-active-border: var(--rule-gold);
-  --nav-link-open-bg: rgba(186, 155, 91, 0.18);
-  --nav-menu-border: rgba(186, 155, 91, 0.28);
-  --nav-menu-border-top: var(--rule-gold);
-  --nav-menu-bg-start: rgba(251, 246, 234, 0.98);
-  --nav-menu-bg-end: rgba(245, 239, 226, 0.98);
-  --nav-menu-item-color: var(--surface-ink);
-  --nav-menu-item-indicator: var(--rule-gold);
-  --nav-menu-item-hover-bg: rgba(186, 155, 91, 0.12);
-  --nav-action-bg: rgba(186, 155, 91, 0.10);
-  --nav-action-border: rgba(186, 155, 91, 0.28);
-  --nav-action-hover-bg: rgba(186, 155, 91, 0.18);
-  --nav-action-hover-border: var(--rule-gold);
-  --nav-action-sheen: rgba(186, 155, 91, 0.14);
-  --nav-height: 64px;
+  --nav-height: 68px;
 }
 
-body.body--dark {
-  // Zodiark nav palette — retuned around Aetherium's arcane violet
-  // (`--rule-arcane`) instead of the legacy cool-blue chrome. Reads on the
-  // deep-purple Aetherglass surface, matches the Zodiark theme identity.
-  --nav-bg-start: transparent;
-  --nav-bg-end: transparent;
-  --nav-accent: var(--rule-arcane);
-  --nav-accent-strong: var(--rule-arcane);
-  --nav-ink: var(--ink-luminous);
-  --nav-border-bottom: transparent;
-  --nav-overlay-glow-left: rgba(167, 139, 196, 0.16);
-  --nav-overlay-glow-right: rgba(127, 230, 226, 0.10);
-  --nav-overlay-shade: transparent;
-  --nav-char-bg-start: rgba(167, 139, 196, 0.20);
-  --nav-char-bg-end: rgba(31, 17, 48, 0.85);
-  --nav-char-bg-hover-start: rgba(167, 139, 196, 0.30);
-  --nav-char-bg-hover-end: rgba(38, 22, 60, 0.92);
-  --nav-char-divider: rgba(31, 17, 48, 0.85);
-  --nav-char-divider-hover: rgba(38, 22, 60, 0.92);
-  --nav-char-avatar-border: var(--rule-arcane);
-  --nav-char-avatar-border-hover: var(--rule-arcane);
-  --nav-link-color: var(--ink-luminous);
-  --nav-link-underline: var(--rule-arcane);
-  --nav-link-hover-bg: rgba(167, 139, 196, 0.18);
-  --nav-link-active-bg: rgba(167, 139, 196, 0.26);
-  --nav-link-active-border: var(--rule-arcane);
-  --nav-link-open-bg: rgba(167, 139, 196, 0.28);
-  --nav-menu-border: rgba(167, 139, 196, 0.34);
-  --nav-menu-border-top: var(--rule-arcane);
-  --nav-menu-bg-start: rgba(31, 17, 48, 0.98);
-  --nav-menu-bg-end: rgba(20, 11, 32, 0.98);
-  --nav-menu-item-color: var(--ink-luminous);
-  --nav-menu-item-indicator: var(--rule-arcane);
-  --nav-menu-item-hover-bg: rgba(167, 139, 196, 0.22);
-  --nav-action-bg: rgba(167, 139, 196, 0.14);
-  --nav-action-border: rgba(167, 139, 196, 0.34);
-  --nav-action-hover-bg: rgba(167, 139, 196, 0.24);
-  --nav-action-hover-border: var(--rule-arcane);
-  --nav-action-sheen: rgba(167, 139, 196, 0.20);
-}
-
-// ELPIS-101 — header surface is now `.mat-aetherglass`, which provides:
-//   • background-color (pearl @ 88% / deep @ 78%)
-//   • backdrop-filter blur + saturate
-//   • inner gold/arcane rule (inset 0 0 0 2px)
-//   • top light-leak highlight (inset 0 1px 0 white@0.6)
-//   • soft external shadow
-// Only the header-specific geometry stays: full-bleed edges (no rounded
-// corners), font-family, ink colour, min-height, and the layered overlay
-// `::before` for radial glints.
-.layout__toolbar__header {
-  position: relative;
-  overflow: hidden;
-  font-family: Michroma, sans-serif;
-  color: var(--nav-ink);
-  min-height: var(--nav-height);
-}
-
-// Higher-specificity override (.layout__toolbar__header.mat-aetherglass = 0,2,0)
-// guarantees full-bleed edges regardless of CSS source ordering.
-.layout__toolbar__header.mat-aetherglass {
+.q-header.shell-bar {
+  color: var(--ink-primary);
+  background: var(--surface-glass);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border-bottom: 1px solid var(--rule-soft);
+  box-shadow: 0 4px 18px rgba(43, 36, 24, 0.08);
   border-radius: 0;
 }
 
-// Zodiark wedge gradient retuned away from the legacy cool-blue rgba toward
-// the arcane-violet accent so it harmonizes with the rest of the dark palette.
-body.body--dark .layout__char-name::after {
-  background: linear-gradient(135deg, rgba(167, 139, 196, 0.18) 0%, var(--nav-char-bg-end) 100%);
+body.body--dark .q-header.shell-bar {
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
 }
 
-body.body--dark .layout__char-name:hover::after {
-  background: linear-gradient(135deg, rgba(184, 159, 213, 0.22) 0%, var(--nav-char-bg-hover-end) 100%);
-}
-
-.layout__toolbar__header::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(circle at 20% 50%, var(--nav-overlay-glow-left) 0%, transparent 50%),
-    radial-gradient(circle at 80% 50%, var(--nav-overlay-glow-right) 0%, transparent 50%),
-    linear-gradient(180deg, transparent 0%, var(--nav-overlay-shade) 100%);
-  opacity: 0.6;
-  pointer-events: none;
-  animation: none;
-}
-
-.layout__nav-links {
-  text-align: center;
+.shell-bar__inner {
   display: flex;
-  flex: 1;
-  align-items: stretch;
-  justify-content: flex-start;
-  gap: 0;
-  position: relative;
-  z-index: 1;
-  min-height: var(--nav-height);
-  padding: 0 4px 0 0;
-  background: transparent;
-  animation: navReveal 0.65s ease both;
-  animation-delay: 0.1s;
+  align-items: center;
+  gap: 16px;
+  height: var(--nav-height);
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 24px;
+  font-family: var(--font-ui);
 }
 
-.layout__nav-links a,
-.layout__nav-dropdown-trigger {
+.shell-bar__logo {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 0 20px;
-  color: var(--nav-link-color);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-family: Michroma, sans-serif;
-  font-weight: 600;
-  font-size: 0.7rem;
+  flex: none;
+  border-radius: 6px;
+  border-bottom: none;
   text-decoration: none;
-  border-radius: 0;
-  clip-path: none;
-  background: transparent;
-  box-shadow: none;
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 0;
-  overflow: hidden;
-  border-bottom: 3px solid transparent;
-  cursor: pointer;
 }
 
-.layout__nav-links > :first-child {
-  padding-left: 48px;
-  margin-left: 0;
+.shell-bar__logo-img {
+  display: block;
+  width: 186px;
+  height: auto;
+  max-height: 29px;
 }
 
-.layout__nav-links a::after,
-.layout__nav-dropdown-trigger::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  width: 0%;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--nav-link-underline), transparent);
-  transform: translateX(-50%);
-  transition: width 0.3s ease;
-}
-
-.layout__nav-links a:hover,
-.layout__nav-dropdown-trigger:hover {
-  // Theme-aware ink — pearl wants dark warm, deep wants luminous cream.
-  color: var(--nav-ink);
-  background: var(--nav-link-hover-bg);
-}
-
-.layout__nav-links a:hover::after,
-.layout__nav-dropdown-trigger:hover::after {
-  width: 100%;
-}
-
-.layout__nav-links .router-link-active,
-.layout__nav-dropdown-trigger_active {
-  color: var(--nav-ink);
-  background: var(--nav-link-active-bg);
-  border-bottom-color: var(--nav-link-active-border);
-}
-
-.layout__nav-dropdown {
-  position: relative;
+.shell-bar__nav {
   display: flex;
   align-items: stretch;
-  height: 100%;
-}
-
-.layout__nav-dropdown-trigger {
-  border: 0;
-  outline: 0;
-}
-
-.layout__nav-link,
-.layout__nav-dropdown-trigger {
-  min-width: 176px;
-}
-
-.layout__nav-dropdown-trigger .q-icon {
-  margin-left: 6px;
-  transition: transform 0.2s ease;
-}
-
-.layout__nav-dropdown-trigger_open {
-  color: var(--nav-ink);
-  background: var(--nav-link-open-bg);
-}
-
-.layout__nav-dropdown-trigger_open .q-icon {
-  transform: rotate(180deg);
-}
-
-.layout__nav-menu {
-  min-width: 300px;
-  border: 1px solid var(--nav-menu-border);
-  border-top: 2px solid var(--nav-menu-border-top);
-  border-radius: 8px;
-  padding: 8px;
-  background: linear-gradient(135deg, var(--nav-menu-bg-start) 0%, var(--nav-menu-bg-end) 100%);
-  // Hydaelyn — softer warm drop. Zodiark override below restores the deep shadow.
-  box-shadow: 0 8px 32px rgba(43, 36, 24, 0.18);
-  backdrop-filter: blur(10px);
-  overflow: hidden;
-}
-
-body.body--dark .layout__nav-menu {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-}
-
-.layout__nav-menu .q-list {
-  padding: 0;
-}
-
-.layout__nav-menu .layout__nav-menu-item {
-  color: var(--nav-menu-item-color);
-  border-radius: 6px;
-  padding: 12px 16px;
-  margin: 2px 0;
-  min-height: 38px;
-  letter-spacing: 0.07em;
-  font-size: 0.74rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
-}
-
-.layout__nav-badge {
-  margin: 0 8px 0 6px;
-  font-size: 0.56rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.layout__nav-menu-label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.layout__nav-menu-badge {
-  font-size: 0.56rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.layout__nav-menu .layout__nav-menu-item::before {
-  content: '';
-  display: inline-block;
-  flex: 0 0 3px;
-  align-self: center;
-  width: 3px;
-  height: 0;
-  margin-right: 10px;
-  border-radius: 99px;
-  background: var(--nav-menu-item-indicator);
-  transition: height 0.2s ease;
-}
-
-.layout__nav-menu .layout__nav-menu-item:hover,
-.layout__nav-menu .q-router-link--active {
-  // Inherit theme-aware ink — pure white on pearl was invisible.
-  // Background/translate provide the hover feedback; colour stays at
-  // `--nav-menu-item-color` (`--surface-ink` light / `--ink-luminous` dark).
-  background: var(--nav-menu-item-hover-bg);
-  transform: translateX(4px);
-}
-
-.layout__nav-menu .layout__nav-menu-item:hover::before,
-.layout__nav-menu .q-router-link--active::before {
-  height: 20px;
-}
-
-.layout__mobile-menu {
-  min-width: 300px;
-  border: 1px solid var(--nav-menu-border);
-  border-top: 2px solid var(--nav-menu-border-top);
-  border-radius: 8px;
-  background: linear-gradient(180deg, var(--nav-menu-bg-start) 0%, var(--nav-menu-bg-end) 100%);
-  box-shadow: 0 8px 32px rgba(43, 36, 24, 0.18);
-  backdrop-filter: blur(10px);
-  overflow: hidden;
-  padding: 8px;
-}
-
-body.body--dark .layout__mobile-menu {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-}
-
-.layout__mobile-menu .q-list {
-  padding: 0;
-}
-
-.layout__mobile-menu .q-item {
-  color: var(--nav-menu-item-color);
-  transition: background-color 0.25s ease, color 0.25s ease, transform 0.2s ease;
-  border-radius: 6px;
-  padding: 12px 16px;
-  margin: 2px 0;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 0.72rem;
-  font-weight: 600;
-}
-
-.layout__mobile-menu .q-item:hover,
-.layout__mobile-menu .q-router-link--active {
-  color: var(--nav-menu-item-color);
-  background: var(--nav-menu-item-hover-bg);
-  transform: translateX(4px);
-}
-
-.layout__mobile-menu .q-separator {
-  background: var(--nav-menu-border);
-  margin: 6px 0;
-}
-
-.layout__mobile-menu .q-item__section--avatar .q-icon,
-.layout__mobile-menu .q-expansion-item__toggle-icon,
-.layout__mobile-menu .text-primary {
-  color: var(--nav-menu-item-indicator) !important;
-}
-
-.layout__toolbar-button-more {
-  margin-left: 0;
-  margin-right: 0;
-  padding: 0 20px;
-  height: 100%;
-  min-height: var(--nav-height);
-  border-radius: 0;
-  background: var(--nav-action-bg);
-  color: var(--nav-ink);
-  border-left: 1px solid var(--nav-action-border);
-  box-shadow: none;
-  transition: all 0.3s ease;
-  animation: navReveal 0.7s ease both;
-  animation-delay: 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.layout__theme-toggle {
-  margin-left: auto;
   align-self: stretch;
-  min-height: var(--nav-height);
-  width: 52px;
-  border-left: 1px solid var(--nav-action-border);
-  border-radius: 0;
-  color: var(--nav-ink);
-  background: var(--nav-action-bg);
-  box-shadow: none;
-  transition: all 0.25s ease;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shell-bar__nav-item {
   position: relative;
-  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 10px;
+  font: 600 14px/20px var(--font-ui);
+  color: var(--ink-muted);
+  white-space: nowrap;
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+  transition: color var(--motion-fast) var(--ease-elpis);
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 16px;
+    height: 2px;
+    border-radius: 2px;
+    background: transparent;
+    transition: background-color var(--motion-fast) var(--ease-elpis);
+  }
+
+  &:hover {
+    color: var(--ink-primary);
+
+    &::after {
+      background: var(--rule-soft);
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+    color: var(--ink-primary);
+    box-shadow: inset 0 0 0 2px var(--glow-aether);
+    border-radius: 6px;
+  }
+
+  .q-icon {
+    color: inherit;
+  }
 }
 
-.layout__theme-toggle:hover {
-  background: var(--nav-action-hover-bg);
-  border-left-color: var(--nav-action-hover-border);
-  color: var(--nav-ink);
+.shell-bar__nav-item--active,
+.shell-bar__nav-item--active:hover {
+  color: var(--ink-primary);
+
+  &::after {
+    background: var(--rule-strong);
+  }
 }
 
-.layout__theme-toggle .q-icon {
-  font-size: 1.25rem;
+.shell-bar__nav-trigger::after {
+  right: 26px;
 }
 
-.layout__toolbar-button-more::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, var(--nav-action-sheen) 0%, transparent 60%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.shell-bar__spacer {
+  flex: 1;
+  min-width: 0;
 }
 
-.layout__toolbar-button-more:hover {
-  background: var(--nav-action-hover-bg);
-  border-left-color: var(--nav-action-hover-border);
-  color: var(--nav-ink);
+.shell-bar__search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  width: 220px;
+  height: 36px;
+  padding: 0 6px 0 12px;
+  font: 400 14px/20px var(--font-ui);
+  color: var(--ink-muted);
+  text-align: left;
+  background: var(--rule-tint);
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color var(--motion-fast) var(--ease-elpis), background-color var(--motion-fast) var(--ease-elpis);
+
+  &:hover {
+    border-color: var(--rule-strong);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--glow-aether), 0 0 0 3px var(--vision-focus-edge);
+  }
 }
 
-.layout__toolbar-button-more:hover::before {
-  opacity: 1;
+.shell-bar__search-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.layout__toolbar-button-more .q-icon {
-  font-size: 1.4rem;
-  transition: transform 0.3s ease;
+.shell-bar__kbd {
+  flex: none;
+  padding: 1px 6px;
+  font: 500 11px/18px var(--font-ui);
+  color: var(--ink-muted);
+  background: var(--surface-raised);
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
 }
 
-.layout__toolbar-button-more:hover .q-icon {
-  transform: rotate(90deg);
+.shell-bar__icon-btn.q-btn {
+  flex: none;
+  color: var(--ink-muted);
+
+  &:hover {
+    color: var(--ink-primary);
+  }
 }
 
-.layout__toolbar-button-more .q-btn__content {
+.shell-bar__account {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  max-width: 240px;
+  height: 40px;
+  padding: 0 8px 0 4px;
+  font-family: var(--font-ui);
+  color: var(--ink-primary);
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color var(--motion-fast) var(--ease-elpis), background-color var(--motion-fast) var(--ease-elpis);
+
+  &:hover {
+    background: var(--rule-tint);
+    border-color: var(--rule-strong);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--glow-aether), 0 0 0 3px var(--vision-focus-edge);
+  }
+
+  > .q-icon {
+    color: var(--ink-muted);
+  }
+}
+
+.shell-bar__account--guest {
+  padding-left: 12px;
+}
+
+.shell-bar__avatar {
+  flex: none;
+  width: 30px;
+  height: 30px;
+}
+
+.shell-bar__account-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.shell-bar__account-name,
+.shell-bar__account-status {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.shell-bar__account-name {
+  font: 600 13px/18px var(--font-ui);
+}
+
+.shell-bar__account-status {
+  font: 400 11px/14px var(--font-ui);
+  color: var(--ink-muted);
+}
+
+// Menus (Wiki, Mehr, notifications, account)
+
+.shell-menu.q-menu {
+  min-width: 240px;
+  padding: 6px;
+  color: var(--ink-primary);
+  background: var(--surface-raised);
+  border: 1px solid var(--rule-soft);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(43, 36, 24, 0.18);
+}
+
+body.body--dark .shell-menu.q-menu {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+.shell-menu__list {
   padding: 0;
 }
 
-@keyframes navReveal {
-  0% {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
+.shell-menu__header.q-item__label--header {
+  padding: 8px 10px 4px;
+  font: 600 11px/16px var(--font-ui);
+  letter-spacing: var(--ls-eyebrow, 0.08em);
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.shell-menu__item.q-item {
+  min-height: 38px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font: 500 14px/20px var(--font-ui);
+  color: var(--ink-primary);
+
+  .q-item__section--avatar {
+    min-width: 30px;
+    color: var(--ink-muted);
   }
 }
 
-@keyframes navRevealDivider {
-  0% {
-    opacity: 0;
-    transform: translateX(100%) translateY(-8px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(100%) translateY(0);
-  }
+.shell-menu__item--active.q-item {
+  background: var(--rule-tint);
+  box-shadow: inset 2px 0 0 var(--rule-strong);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .layout__char-name,
-  .layout__nav-links,
-  .layout__theme-toggle,
-  .layout__toolbar-button-more,
-  .layout__toolbar__header::before,
-  .layout__nav-links a::after {
-    animation: none !important;
-    transition: none !important;
-  }
+.shell-menu__sep.q-separator {
+  margin: 6px 4px;
+  background: var(--rule-soft);
 }
 
-@media screen and (max-width: 1380px) {
-  .layout__header-row {
-    flex-direction: row;
-    align-items: stretch;
-  }
+.shell-menu__panel {
+  padding: 10px 12px;
+  min-width: 260px;
+}
 
-  .layout__char-name {
-    min-width: 220px;
+.shell-menu__empty {
+  margin: 0;
+  font: 400 13px/20px var(--font-ui);
+  color: var(--ink-muted);
+}
+
+// Account menu: re-hosts components/sidebar/UserMenu.vue. Its q-list is
+// `dark` (built for the old drawer), so re-ink it with Aetherium roles.
+.shell-account-menu.q-menu {
+  min-width: 260px;
+  max-height: calc(100vh - 96px);
+}
+
+.shell-account-menu .user-menu.q-list {
+  color: var(--ink-primary);
+  padding: 0;
+}
+
+.shell-account-menu .user-menu .q-item {
+  min-height: 38px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font: 500 14px/20px var(--font-ui);
+  color: var(--ink-primary);
+}
+
+.shell-account-menu .user-menu .q-item.q-router-link--active {
+  background: var(--rule-tint);
+}
+
+.shell-account-menu .user-menu .q-separator {
+  margin: 6px 4px;
+  background: var(--rule-soft);
+}
+
+.shell-account-menu .user-menu .q-item.user-menu__discord-login {
+  margin: 4px !important;
+  color: #ffffff;
+}
+
+// Breakpoints: full bar from 1280px; 1024–1279px compacts the search pill
+// and the account pill; below 1024px the nav moves to the mobile bars.
+
+@media screen and (max-width: 1279px) {
+  .shell-bar__inner {
+    gap: 10px;
     padding: 0 16px;
+  }
+
+  .shell-bar__logo-img {
+    width: 150px;
+  }
+
+  .shell-bar__nav-item {
+    padding: 0 7px;
+    font-size: 13px;
+
+    &::after {
+      left: 7px;
+      right: 7px;
+    }
+  }
+
+  .shell-bar__nav-trigger::after {
+    right: 23px;
+  }
+
+  .shell-bar__search {
+    width: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .shell-bar__search-label,
+  .shell-bar__kbd,
+  .shell-bar__account-text,
+  .shell-bar__account-caret {
+    display: none;
+  }
+
+  .shell-bar__account {
+    padding: 0 4px;
+  }
+
+  .shell-bar__account--guest {
+    padding: 0 9px;
+  }
+}
+
+@media screen and (max-width: 1023px) {
+  .shell-bar__nav {
+    display: none;
+  }
+
+  .shell-bar__search {
+    flex: 1 1 auto;
     width: auto;
-    align-self: stretch;
+    max-width: 260px;
+    padding: 0 6px 0 12px;
+    justify-content: flex-start;
   }
 
-  .layout__char-name span {
-    max-width: 160px;
-    font-size: 0.75rem;
-  }
-
-  .layout__nav-links {
-    flex-basis: auto;
-    width: auto;
-  }
-
-  .layout__char-name::after {
+  .shell-bar__search-label {
     display: block;
-    border-width: 64px 24px 0 0;
   }
 
-  .layout__toolbar-button-more {
-    padding: 0 16px;
+  // ER2-205: notifications and theme move into the mobile "Mehr" sheet.
+  .shell-bar__notifications,
+  .shell-bar__theme {
+    display: none;
+  }
+
+  .shell-bar__search {
+    margin-left: auto;
   }
 }
 
-@media screen and (max-width: 600px) {
-  .layout__char-name {
-    min-width: 180px;
-    padding: 0 12px;
-    gap: 8px;
-  }
-
-  .layout__char-name span {
-    max-width: 120px;
-    font-size: 0.7rem;
-  }
-
-  .layout__char-name .aetheryte-badge {
-    width: 36px;
-    height: 36px;
-  }
-
-  .layout__char-name .q-icon {
-    font-size: 1.5rem;
-  }
-
-  .layout__char-name::after {
-    border-width: 56px 18px 0 0;
-  }
-
-  .layout__toolbar-button-more {
-    padding: 0 14px;
-  }
-
-  .layout__theme-toggle {
-    width: 46px;
-  }
-
-  .layout__toolbar-button-more .q-icon {
-    font-size: 1.3rem;
-  }
-
-  .layout__toolbar__header {
+@media screen and (max-width: 599px) {
+  body {
     --nav-height: 56px;
   }
-}
 
-@media screen and (min-width: 1381px) {
-  .layout__char-name {
-    padding: 14px 24px;
-    padding: 12px 24px;
+  .shell-bar__inner {
+    padding: 0 12px;
   }
 
-  .layout__char-name span {
-    max-width: 320px;
-  }
-}
-
-@media screen and (max-width: 1024px) {
-  .layout__header-row {
-    flex-direction: row;
-  }
-
-  .layout__char-name {
-    min-height: 46px;
-    padding: 6px 12px;
-  }
-
-  .layout__char-name::after {
-    display: block;
-  }
-
-  .layout__theme-toggle {
-    width: 48px;
+  .shell-bar__logo-img {
+    width: 120px;
   }
 }
 </style>

@@ -1,51 +1,7 @@
-<template>
-  <q-drawer
-    overlay
-    :model-value="modelValue"
-    side="left"
-    :class="DRAWER_BG"
-    :width="DRAWER_WIDTH"
-    @update:model-value="$emit('update:modelValue', $event)"
-  >
-    <q-list dense dark>
-      <q-item>
-        <q-item-section>
-          <site-search-field />
-        </q-item-section>
-      </q-item>
-    </q-list>
-    <user-menu />
-  </q-drawer>
-</template>
-
-<script lang="ts">
-import { Vue, Options, prop } from 'vue-class-component';
-import SiteSearchField from 'src/components/search/SiteSearchField.vue';
-import UserMenu from 'src/components/sidebar/UserMenu.vue';
-
-// Left overlay drawer with the site search and the user menu. Open state is
-// owned by MainLayout and passed in via v-model.
-
-class Props {
-  modelValue = prop<boolean>({ default: false });
-}
-
-@Options({
-  name: 'ShellDrawer',
-  components: {
-    SiteSearchField,
-    UserMenu,
-  },
-  emits: ['update:modelValue'],
-})
-export default class ShellDrawer extends Vue.with(Props) {
-  readonly DRAWER_BG = 'layout__drawer';
-  readonly DRAWER_WIDTH = 250;
-}
-</script>
-
-<style lang="scss">
-// Drawer styles and the --drawer-* palette for both themes.
+// Global q-drawer styles and the --drawer-* palette for both themes.
+// Formerly in ShellDrawer.vue (the shell drawer was retired in ER2-201). Page
+// drawers (pages/Character.vue, EditCharacter.vue, EditVenue.vue) still rely
+// on these rules, so MainLayout keeps loading them.
 
 .q-drawer .q-item__label--header {
   font-family: Michroma, sans-serif;
@@ -210,4 +166,3 @@ body.body--dark {
   --drawer-field-input: rgba(226, 237, 248, 0.95);
   --drawer-field-append: rgba(214, 229, 245, 0.74);
 }
-</style>

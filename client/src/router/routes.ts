@@ -7,6 +7,18 @@ function hasRequiredRole(requiredRole: Role): boolean {
   return !!role && roleImplies(role, requiredRole);
 }
 
+// ER2-204 — reads a route param for `meta.breadcrumb` (see
+// components/vision/Breadcrumbs.vue): first value, underscores as spaces.
+function crumbParam(route: RouteLocationNormalized, key: string): string {
+  const value = route.params[key];
+  const raw = (Array.isArray(value) ? value[0] : value) || '';
+  try {
+    return decodeURIComponent(raw).replace(/_/g, ' ');
+  } catch (e) {
+    return raw.replace(/_/g, ' ');
+  }
+}
+
 const routes: RouteRecordRaw[] = [
   // Single shell parent: every page renders inside one persistent MainLayout,
   // so the header, drawer and footer stay mounted across navigation.
@@ -245,6 +257,9 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'story/:id',
         component: () => import('pages/Story.vue'),
+        meta: {
+          breadcrumb: [{ label: 'Geschichten', to: '/stories' }, 'Geschichte'],
+        },
       },
 
       {
@@ -275,6 +290,9 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'noticeboard/:id',
         component: () => import('pages/NoticeboardItem.vue'),
+        meta: {
+          breadcrumb: [{ label: 'Anschlagbrett', to: '/noticeboard' }, 'Aushang'],
+        },
       },
 
       {
@@ -298,6 +316,9 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'event/:id',
         component: () => import('pages/Event.vue'),
+        meta: {
+          breadcrumb: [{ label: 'Events', to: '/calendar' }, 'Event'],
+        },
       },
 
       {
@@ -339,11 +360,21 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'image/:id',
         component: () => import('pages/Image.vue'),
+        meta: {
+          breadcrumb: [{ label: 'Galerie', to: '/gallery/screenshot' }, 'Bild'],
+        },
       },
 
       {
         path: 'gallery/:category',
         component: () => import('pages/Gallery.vue'),
+        meta: {
+          breadcrumb: (route: RouteLocationNormalized) => {
+            const category = crumbParam(route, 'category');
+            const labels: Record<string, string> = { screenshot: 'Screenshots', artwork: 'Kunstwerke' };
+            return ['Galerie', labels[category] || category];
+          },
+        },
       },
 
       {
@@ -383,21 +414,33 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'venue/:server/:name/:section',
         component: () => import('pages/Venue.vue'),
+        meta: {
+          breadcrumb: (route: RouteLocationNormalized) => [{ label: 'Treffpunkte', to: '/venues' }, crumbParam(route, 'name')],
+        },
       },
 
       {
         path: 'venue/:server/:name',
         component: () => import('pages/Venue.vue'),
+        meta: {
+          breadcrumb: (route: RouteLocationNormalized) => [{ label: 'Treffpunkte', to: '/venues' }, crumbParam(route, 'name')],
+        },
       },
 
       {
         path: 'venue/:id([0-9]+)/:section',
         component: () => import('pages/Venue.vue'),
+        meta: {
+          breadcrumb: [{ label: 'Treffpunkte', to: '/venues' }, 'Treffpunkt'],
+        },
       },
 
       {
         path: 'venue/:id([0-9]+)',
         component: () => import('pages/Venue.vue'),
+        meta: {
+          breadcrumb: [{ label: 'Treffpunkte', to: '/venues' }, 'Treffpunkt'],
+        },
       },
 
       {
@@ -448,6 +491,9 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'community/:name',
         component: () => import('pages/Community.vue'),
+        meta: {
+          breadcrumb: (route: RouteLocationNormalized) => [{ label: 'Communities', to: '/communities' }, crumbParam(route, 'name')],
+        },
       },
 
       {
@@ -490,7 +536,11 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title(route: RouteLocationNormalized): string {
             return (route.params.fc as string).replace(/_/g, ' ');
-          }
+          },
+          breadcrumb: (route: RouteLocationNormalized) => [
+            { label: 'Freie Gesellschaften', to: '/free-companies' },
+            crumbParam(route, 'fc'),
+          ],
         },
       },
 
@@ -507,6 +557,9 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'wiki/:title',
         component: () => import('pages/Wiki.vue'),
+        meta: {
+          breadcrumb: (route: RouteLocationNormalized) => ['Wiki', crumbParam(route, 'title')],
+        },
       },
 
       {
@@ -559,7 +612,11 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title(route: RouteLocationNormalized): string {
             return (route.params.character as string).replace(/_/g, ' ');
-          }
+          },
+          breadcrumb: (route: RouteLocationNormalized) => [
+            { label: 'Charaktere', to: '/profiles' },
+            crumbParam(route, 'character'),
+          ],
         },
       },
     ],

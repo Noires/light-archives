@@ -1,36 +1,37 @@
 <template>
   <q-layout view="hHh Lpr fff">
-    <shell-header @toggle-drawer="toggleLeftDrawer" />
-
-    <shell-drawer v-model="leftDrawerOpen" />
+    <shell-header @open-search="openPalette" />
 
     <q-page-container>
-      <shell-hero />
+      <shell-hero v-if="isHome" />
 
       <div class="layout__page-shell">
         <div class="layout__page-container">
           <router-view />
         </div>
-        <calendar-sidebar-widget
-          v-if="showCalendarWidget"
-          class="layout__calendar-outer"
-        />
       </div>
     </q-page-container>
 
     <shell-footer />
+
+    <!-- ER2-205: bottom bar and "Mehr" sheet below 1024px -->
+    <shell-mobile-nav @open-search="openPalette" />
+
+    <!-- ER2-206: command palette, loaded on first open -->
+    <command-palette v-if="paletteLoaded" v-model="paletteOpen" />
+
+    <!-- ER2-208: single hover-card host for bindHoverCards() containers -->
+    <hover-card />
   </q-layout>
 </template>
 
 <script lang="ts">
+import { defineAsyncComponent } from 'vue';
 import { Vue, Options } from 'vue-class-component';
-// CalendarSidebarWidget is imported before the shell parts so its CSS keeps
-// loading ahead of the layout rules, as it did before the split.
-import CalendarSidebarWidget from '../components/eventbar/CalendarSidebarWidget.vue';
 import ShellHeader from './shell/ShellHeader.vue';
-import ShellDrawer from './shell/ShellDrawer.vue';
 import ShellHero from './shell/ShellHero.vue';
 import ShellFooter from './shell/ShellFooter.vue';
+import ShellMobileNav from './shell/ShellMobileNav.vue';
 import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
 import { TelemetryConsentStatus } from '@app/shared/enums/telemetry-consent-status.enum';
 import { notifyError, notifySuccess } from 'src/common/notify';
@@ -38,30 +39,65 @@ import { persistTelemetryConsent } from 'src/common/telemetry-consent-actions';
 import { isSentryConfigured } from 'src/common/sentry';
 
 // App shell. Mounted once by the single '/' parent route (see
-// router/routes.ts). Owns the drawer open state, the page-shell grid with the
-// calendar widget, and the telemetry consent prompt. The visible chrome lives
-// in ./shell/*: ShellHeader, ShellDrawer, ShellHero, ShellFooter.
+// router/routes.ts). Owns the command palette state, the single-column page shell
+// and the telemetry consent prompt. ER2-203 removed the calendar widget from
+// the shell; components/eventbar/CalendarSidebarWidget.vue stays for the home
+// hub (ER2-302). The visible chrome lives
+// in ./shell/*: ShellHeader (top bar, nav model in nav.ts), ShellHero,
+// ShellFooter and ShellMobileNav (bottom bar + "Mehr" sheet below 1024px).
 
 @Options({
   components: {
-    CalendarSidebarWidget,
     ShellHeader,
-    ShellDrawer,
     ShellHero,
     ShellFooter,
+    ShellMobileNav,
+    CommandPalette: defineAsyncComponent(() => import('components/vision/CommandPalette.vue')),
+    HoverCard: defineAsyncComponent(() => import('components/vision/HoverCard.vue')),
   },
 })
 export default class MainLayout extends Vue {
-  leftDrawerOpen = false;
-  rightDrawerOpen = false;
   telemetryConsentDialogShown = false;
+  paletteLoaded = false;
+  paletteOpen = false;
+  private keydownHandler: ((event: KeyboardEvent) => void) | null = null;
 
   mounted() {
+    this.keydownHandler = (event: KeyboardEvent) => this.onGlobalKeydown(event);
+    window.addEventListener('keydown', this.keydownHandler);
     void this.promptTelemetryConsentIfRequired();
   }
 
-  toggleLeftDrawer() {
-    this.leftDrawerOpen = !this.leftDrawerOpen;
+  beforeUnmount() {
+    if (this.keydownHandler) {
+      window.removeEventListener('keydown', this.keydownHandler);
+    }
+  }
+
+  // ER2-206 — Ctrl+K / Cmd+K toggles the palette everywhere. Editors that
+  // bind the shortcut themselves (and call preventDefault) keep it.
+  onGlobalKeydown(event: KeyboardEvent) {
+    if (event.defaultPrevented || event.altKey || event.shiftKey) {
+      return;
+    }
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      if (this.paletteOpen) {
+        this.paletteOpen = false;
+      } else {
+        this.openPalette();
+      }
+    }
+  }
+
+  openPalette() {
+    this.paletteLoaded = true;
+    this.paletteOpen = true;
+  }
+
+  // ER2-202 — the logo hero renders on the home page only.
+  get isHome(): boolean {
+    return this.$route.path === '/';
   }
 
   async switchCharacter() {
@@ -85,11 +121,6 @@ export default class MainLayout extends Vue {
     this.$api.setAccessToken(null);
     notifySuccess('Du hast dich ausgeloggt.');
     void this.$router.push('/');
-  }
-
-  get showCalendarWidget() {
-    const path = this.$route.path;
-    return !path.startsWith('/calendar');
   }
 
   async promptTelemetryConsentIfRequired() {
@@ -136,9 +167,12 @@ export default class MainLayout extends Vue {
 </script>
 
 <style lang="scss">
-// Layout-level styles only: q-layout outline, page-shell grid, calendar
-// widget column and q-page padding. Header, drawer, hero and footer styles
-// live with their components in ./shell/.
+// Layout-level styles only: q-layout outline, the single-column page shell
+// and q-page padding. Global q-drawer styles for page drawers come from
+// ./shell/drawer-styles.scss. Header, hero and footer styles live with
+// their components in ./shell/.
+@import './shell/drawer-styles.scss';
+
 $max-layout-width: auto;
 $color-primary: #ddb476;
 $color-semi-dark: #333;
@@ -159,6 +193,14 @@ body.body--dark {
   }
 }
 
+// Flex filler still used by CharacterProfile / FreeCompanyProfile headers.
+.layout__filler {
+  flex-basis: 0;
+  flex-grow: 1;
+  display: flex;
+  flex-wrap: nowrap;
+}
+
 .layout__create-content-list {
   padding-left: 12px;
   background: #016097;
@@ -174,29 +216,18 @@ body.body--dark {
 }
 
 .layout__page-shell {
-  --calendar-width: 320px;
+  // ER2-203 — one centred column on every route (no calendar column).
+  --page-shell-max: 1200px;
   width: 100%;
-  display: grid;
-  grid-template-columns: 1fr minmax(0, 1300px) var(--calendar-width) 1fr;
-  gap: 24px;
-  align-items: start;
+  max-width: calc(var(--page-shell-max) + 2 * var(--page-shell-gutter, 24px));
   margin: 0 auto;
+  padding: var(--page-shell-top, 24px) var(--page-shell-gutter, 24px) 0;
 }
 
-.layout__page-container {
-  grid-column: 2;
-}
-
-.layout__calendar-outer {
-  --calendar-sticky-top: 180px;
-  grid-column: 3;
-  position: sticky;
-  top: var(--calendar-sticky-top);
-  width: 100%;
-  max-height: calc(100vh - var(--calendar-sticky-top) - 16px);
-  overflow: hidden;
-  z-index: 5;
-  align-self: start;
+@media screen and (max-width: $breakpoint-xs) {
+  .layout__page-shell {
+    --page-shell-gutter: 8px;
+  }
 }
 
 .q-page {
@@ -225,25 +256,6 @@ body.body--dark {
 
   .q-drawer--left {
     left: calc((100% - #{$max-layout-width}) / 2);
-  }
-}
-
-@media screen and (max-width: 1200px) {
-  .layout__page-shell {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .layout__page-container {
-    grid-column: 1;
-  }
-
-  .layout__calendar-outer {
-    grid-column: 1;
-    position: static;
-    width: auto;
-    max-height: none;
-    overflow: visible;
-    margin: 0 24px 24px;
   }
 }
 </style>

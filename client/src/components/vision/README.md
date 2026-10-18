@@ -163,14 +163,28 @@ is the current page.
 | `items` | `BreadcrumbItem[] \| null` (`{ label, to? }`) | `null` (derive from route) |
 
 Without `items`, every record in `$route.matched` with `meta.breadcrumb`
-contributes one crumb. `breadcrumb` is a string or `(route) => string`.
-Named records link with their own params; unnamed records link by path when
-the path has no params.
+contributes crumbs. `breadcrumb` is a string, an array of segments, or a
+function of the route returning either (`BreadcrumbMeta` in `types.ts`).
+A string contributes one crumb that links to its record. In an array, each
+segment is a string or a `{ label, to? }` item; string segments render as
+plain text except the last one, which links to the record. Named records link
+with their own params; unnamed records link by path when the path has no
+params. Empty labels are skipped.
 
 ```ts
 // routes.ts
 { path: '/event/:id', name: 'event', meta: { breadcrumb: (route) => `Event ${route.params.id}` } }
+{
+  path: ':server/:character',
+  meta: { breadcrumb: (route) => [{ label: 'Charaktere', to: '/profiles' }, route.params.character] },
+}
 ```
+
+ER2-204 put `meta.breadcrumb` on the character, venue, event, story,
+noticeboard item, wiki, free company, community, gallery and image routes.
+Where the route only carries an id (event, story, noticeboard item, image,
+venue by id), the last segment is a generic noun ("Event", "Geschichte");
+pages that know the title should pass `items` instead.
 
 ```html
 <breadcrumbs />
@@ -246,3 +260,76 @@ Slot: `action` (e.g. an RSVP button; stays clickable above the card link).
   </template>
 </event-card>
 ```
+
+## CommandPalette
+
+Ctrl+K / Cmd+K palette (ER2-206, ER2-207). The shell mounts it once in
+`layouts/MainLayout.vue`, lazily via `defineAsyncComponent`, and opens it
+from the shortcut, the top-bar search pill and the mobile "Suche" button. Do
+not mount a second one in pages; to open it from elsewhere, emit up to the
+layout or reuse its `openPalette()`.
+
+| Prop | Type | Default |
+|---|---|---|
+| `modelValue` | `boolean` | `false` |
+
+Emits `update:modelValue`.
+
+- Empty input: "Zuletzt geöffnet" (up to 5 results from `localStorage`
+  key `elpis.palette.recent`) and "Aktionen".
+- Typing: debounced 250 ms. Uses `$api.search.suggest(q)` from 2 characters
+  if client-common provides it (`GET /search/suggest`, groups of
+  `{ id, title, subtitle?, link, avatar? }`); on error or without it, falls
+  back to `$api.search.search(q)` from 3 characters, mapped through
+  `common/pagelinks.ts`.
+- Groups: Charaktere, Treffpunkte, Events, Geschichten, Wiki, Anschlagbrett,
+  Gemeinschaften (communities and free companies), then Aktionen: "Alle
+  Ergebnisse für …" (`/search?q=`), "Event erstellen" (`/create-event`),
+  "Zu meinem Profil", "Charakter wechseln" (verified users only).
+- Keyboard: ↑↓ move the highlight, Enter opens it, Enter without a highlight
+  goes to `/search?q=`, Esc closes. The input is the only tab stop (options
+  use `aria-activedescendant`); focus returns to the trigger on close.
+
+```html
+<command-palette v-model="paletteOpen" />
+```
+
+## HoverCard
+
+Hover cards for character, venue and event links in prose (ER2-208). Two
+parts:
+
+- `HoverCard.vue`: the host. `layouts/MainLayout.vue` mounts exactly one
+  `<hover-card />`; it teleports a 320 px card (`role="dialog"`) to `<body>`.
+- `hover-card.ts`: the controller. `bindHoverCards(el)` delegates events on
+  anchors inside `el` and returns an unbind function. `HtmlViewer` and
+  `LinkField` call it in `mounted` and unbind in `beforeUnmount`.
+
+```ts
+import { bindHoverCards } from 'components/vision/hover-card';
+
+mounted() { this.unbind = bindHoverCards(this.$el as HTMLElement); }
+beforeUnmount() { this.unbind?.(); }
+```
+
+Matching hrefs (same host only): `/link/:name` (resolved with
+`$api.links.resolve`, same choice as `pages/Link.vue`), `/:Server/:Character`,
+`/venue/:id`, `/venue/:server/:name[/:section]`, `/event/:id`. Data comes from
+the character, venue and event detail getters and is cached per session
+(`resolveCard(target)`).
+
+Behaviour: mouse or pen hover shows the card after 300 ms, keyboard focus
+(`:focus-visible`) too; touch never shows it. Leaving the link or the card
+hides it after 150 ms; Esc, click, scroll, resize and navigation hide it at
+once. The link keeps focus and gets `aria-describedby="vision-hovercard"`
+while the card is open.
+
+Variants: character (banner strip, round avatar, title in `--font-lore`,
+name, "Volk · Welt", RP status badge once the DTO has one, free company,
+"Profil" link), venue (banner image, name, `StatusBadge type="open"` when
+the weekly template says it is open now, address), event (date block, title,
+weekday/date and time, first location).
+
+Other helpers exported from `hover-card.ts`: `parseHoverCardTarget(href)`,
+`showHoverCardFor(anchor, delay?)`, `scheduleHoverCardHide(delay?)`,
+`hideHoverCard()`.

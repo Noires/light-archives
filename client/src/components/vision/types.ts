@@ -36,8 +36,15 @@ export interface BreadcrumbItem {
 	to?: RouteLocationRaw;
 }
 
-/** Value of `route.meta.breadcrumb`. */
-export type BreadcrumbMeta = string | ((route: RouteLocationNormalizedLoaded) => string);
+/** One segment of an array-valued `route.meta.breadcrumb`. */
+export type BreadcrumbSegment = string | BreadcrumbItem;
+
+/**
+ * Value of `route.meta.breadcrumb`: a label, or an array of segments, either
+ * directly or returned from a function of the current route.
+ */
+export type BreadcrumbMetaValue = string | BreadcrumbSegment[];
+export type BreadcrumbMeta = BreadcrumbMetaValue | ((route: RouteLocationNormalizedLoaded) => BreadcrumbMetaValue);
 
 export interface EventCardEvent {
 	id: number | string;
