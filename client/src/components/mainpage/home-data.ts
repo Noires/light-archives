@@ -299,6 +299,20 @@ export async function loadVenueImages(api: API, venues: HomeVenue[]): Promise<Re
 }
 
 // ---------------------------------------------------------------------------
+// Hero "Heute-Leiste"
+// ---------------------------------------------------------------------------
+
+/** A null stat is unavailable and hidden. */
+export interface HomeTodayStats {
+	live: number | null;
+	tonight: number | null;
+	venuesOpen: number | null;
+	inRp: number | null;
+	/** inRp hit the request limit: show "50+" */
+	inRpCapped?: boolean;
+}
+
+// ---------------------------------------------------------------------------
 // RP presence
 // ---------------------------------------------------------------------------
 
