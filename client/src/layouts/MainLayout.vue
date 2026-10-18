@@ -11,9 +11,11 @@
       <shell-hero />
 
       <div class="layout__page-shell">
-        <main id="inhalt" class="layout__page-container" tabindex="-1">
+        <!-- Skip-link target. Not a <main>: every q-page already renders the
+             page's <main> landmark inside this container. -->
+        <div id="inhalt" class="layout__page-container" tabindex="-1">
           <router-view />
-        </main>
+        </div>
         <calendar-sidebar-widget
           v-if="showCalendarWidget"
           class="layout__calendar-outer"
