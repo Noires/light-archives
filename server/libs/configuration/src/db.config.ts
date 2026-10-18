@@ -1,5 +1,5 @@
 
-import { Character, Event, EventAnnouncement, EventLocation, EventRegistration, EventSeries, FreeCompany, FreeCompanyMemberPermission, Image, Location, LocationWeather, News, NewsCategory, NewsIssue, NoticeboardItem, RefreshToken, Server, Story, StoryTag, SupportTicket, SupportTicketEvent, SupportTicketMessage, User, Venue, VenueMembership, VenueOffering, VenueOfferingCategory, VenueOpeningException, VenueOpeningHours, Violation, WikiPage, Weather, ContentNote } from '@app/entity';
+import { Character, Event, EventAnnouncement, EventLocation, EventRegistration, EventSeries, FreeCompany, FreeCompanyMemberPermission, Image, Location, LocationWeather, News, NewsCategory, NewsIssue, NoticeboardItem, Reaction, RefreshToken, Server, Story, StoryTag, SupportTicket, SupportTicketEvent, SupportTicketMessage, User, Venue, VenueMembership, VenueOffering, VenueOfferingCategory, VenueOpeningException, VenueOpeningHours, Violation, WikiPage, Weather, ContentNote } from '@app/entity';
 import { CommunityMembership } from '@app/entity/community-membership.entity';
 import { CommunityTag } from '@app/entity/community-tag.entity';
 import { Community } from '@app/entity/community.entity';
@@ -37,6 +37,7 @@ export const dbConfiguration: TypeOrmModuleOptions = {
     NewsCategory,
     NewsIssue,
     NoticeboardItem,
+    Reaction,
     RefreshToken,
     Server,
     Story,

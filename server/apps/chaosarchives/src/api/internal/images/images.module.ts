@@ -5,6 +5,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '@app/auth/auth.module';
 import { ImagesController } from './images.controller';
+import { ReactionsModule } from '../reactions/reactions.module';
 import { ImagesService } from './images.service';
 import { StorageService } from './storage.service';
 
@@ -18,7 +19,8 @@ import { StorageService } from './storage.service';
         },
       }),
     }),
-    AuthModule, 
+    AuthModule,
+    ReactionsModule,
   ],
   controllers: [ImagesController],
   providers: [ImagesService, StorageService],

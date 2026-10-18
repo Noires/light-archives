@@ -10,10 +10,15 @@ import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import { Role } from '@app/shared/enums/role.enum';
 import { BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { StoriesService } from './stories.service';
+import { ReactionsService } from '../reactions/reactions.service';
+import { ReactionTargetType } from '@app/shared/enums/reaction.enum';
 
 @Controller('stories')
 export class StoriesController {
-	constructor(private storiesService: StoriesService) { }
+	constructor(
+		private storiesService: StoriesService,
+		private reactionsService: ReactionsService,
+	) { }
 
 	@Get('tags')
 	async getTags(): Promise<string[]> {
@@ -23,7 +28,11 @@ export class StoriesController {
 	@Get(':id')
 	@UseGuards(OptionalJwtAuthGuard)
 	async getStory(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: UserInfo): Promise<StoryDto> {
-		return this.storiesService.getStory(id, user);
+		const [story, reactions] = await Promise.all([
+			this.storiesService.getStory(id, user),
+			this.reactionsService.getSummary(ReactionTargetType.STORY, id, user),
+		]);
+		return new StoryDto({ ...story, ...reactions });
 	}
 
 	@Post()

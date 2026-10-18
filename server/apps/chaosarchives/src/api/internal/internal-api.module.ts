@@ -14,6 +14,7 @@ import { LocationsModule } from './locations/locations.module';
 import { MainPageModule } from './mainpage/main-page.module';
 import { NewsModule } from "./news/news.module";
 import { NoticeboardModule } from './noticeboard/noticeboard.module';
+import { ReactionsModule } from './reactions/reactions.module';
 import { SearchModule } from './search/search.module';
 import { ServersModule } from "./servers/servers.module";
 import { StatisticsModule } from "./statistics/statistics.module";
@@ -40,6 +41,7 @@ const controllerModules = [
 	ImagesModule,
 	NewsModule,
 	NoticeboardModule,
+	ReactionsModule,
 	CommunitiesModule,
 	FreeCompaniesModule,
 	VenuesModule,

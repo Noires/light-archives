@@ -13,6 +13,7 @@ import LinksAPI from './links-api';
 import LocationsAPI from './locations-api';
 import NewsAPI from './news-api';
 import NoticeboardAPI from './noticeboard-api';
+import ReactionsAPI from './reactions-api';
 import SearchAPI from './search-api';
 import ServersAPI from './servers-api';
 import StatisticsAPI from './statistics-api';
@@ -46,6 +47,7 @@ export default class API {
   readonly lodestone = new LodestoneAPI(this.transport);
   readonly news = new NewsAPI(this.transport);
   readonly noticeboard = new NoticeboardAPI(this.transport);
+  readonly reactions = new ReactionsAPI(this.transport);
   readonly search = new SearchAPI(this.transport);
   readonly servers = new ServersAPI(this.transport);
   readonly statistics = new StatisticsAPI(this.transport);

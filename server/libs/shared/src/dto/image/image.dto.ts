@@ -1,4 +1,6 @@
 import { ImageCategory } from "@app/shared/enums/image-category.enum";
+import { ReactionKind } from "@app/shared/enums/reaction.enum";
+import { ReactionCountsDto } from "../reactions/reaction.dto";
 
 export interface ImageDto {
   id: number;
@@ -20,4 +22,7 @@ export interface ImageDto {
   venueId: number|null;
   venueName: string|null;
   venueServer: string|null;
+  // ER2-807 (optional)
+  reactionCounts?: ReactionCountsDto;
+  myReactions?: ReactionKind[];
 }
