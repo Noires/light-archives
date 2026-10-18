@@ -1,3 +1,4 @@
+import { StorySeriesDto } from '@app/shared/dto/stories/story-series.dto';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { StoryFilterDto } from '@app/shared/dto/stories/story-filter.dto';
@@ -30,6 +31,11 @@ export default class StoriesAPI {
 
   async deleteStory(id: number): Promise<void> {
     return this.transport.authDelete<void>(`${id}`);
+  }
+
+  /** ER2-808: ordered parts of the story's series (same seriesTitle and author). */
+  async getStorySeries(id: number): Promise<StorySeriesDto> {
+    return this.transport.get<StorySeriesDto>(`${id}/series`);
   }
 
   async getTags(): Promise<string[]> {

@@ -44,4 +44,19 @@ export class Story extends BasicEntity {
   @ManyToMany(() => ContentNote)
   @JoinTable()
   contentNotes: ContentNote[];
+
+  // ER2-808: optional series ("Reihe"); parts share seriesTitle and owner
+  @Index()
+  @Column({
+    type: 'varchar',
+    length: 120,
+    nullable: true,
+  })
+  seriesTitle: string | null;
+
+  @Column({
+    type: 'integer',
+    nullable: true,
+  })
+  seriesIndex: number | null;
 }

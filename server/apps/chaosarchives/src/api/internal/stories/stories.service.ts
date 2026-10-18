@@ -3,6 +3,7 @@ import { Character, ContentNote, Story, StoryTag } from '@app/entity';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { StoryFilterDto } from '@app/shared/dto/stories/story-filter.dto';
+import { StorySeriesDto } from '@app/shared/dto/stories/story-series.dto';
 import { StorySummaryDto } from '@app/shared/dto/stories/story-summary.dto';
 import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import html from '@app/shared/html';
@@ -47,7 +48,18 @@ export class StoriesService {
       .select('tag')
       .getMany();
 
+    const seriesCount = story.seriesTitle
+      ? await this.storyRepo
+        .createQueryBuilder('story')
+        .where('story.ownerId = :ownerId', { ownerId: story.owner.id })
+        .andWhere('story.seriesTitle = :seriesTitle', { seriesTitle: story.seriesTitle })
+        .getCount()
+      : undefined;
+
     return new StoryDto({
+      seriesTitle: story.seriesTitle,
+      seriesIndex: story.seriesIndex,
+      seriesCount,
       id: story.id,
       mine: user ? story.owner.user.id === user.id : false,
       author: story.owner.name,
@@ -99,6 +111,8 @@ export class StoriesService {
         title: storyDto.title,
         content: html.sanitize(storyDto.content),
         type: storyDto.type,
+        seriesTitle: this.normalizeSeriesTitle(storyDto.seriesTitle),
+        seriesIndex: storyDto.seriesIndex ?? null,
       });
 
       story.tags = storyDto.tags.filter(tag => tag !== '').map(
@@ -145,6 +159,14 @@ export class StoriesService {
         content: html.sanitize(storyDto.content),
         type: storyDto.type
       });
+
+      if (storyDto.seriesTitle !== undefined) {
+        story.seriesTitle = this.normalizeSeriesTitle(storyDto.seriesTitle);
+      }
+
+      if (storyDto.seriesIndex !== undefined) {
+        story.seriesIndex = storyDto.seriesIndex ?? null;
+      }
 
       if (storyDto.tags.length > 0) {
         await em.getRepository(StoryTag).delete({
@@ -254,6 +276,61 @@ export class StoriesService {
         type: story.type,
         excerpt: this.buildExcerpt(story.content || ''),
       }))
+    };
+  }
+
+  private normalizeSeriesTitle(seriesTitle?: string | null): string | null {
+    const trimmed = (seriesTitle || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  async getStorySeries(id: number): Promise<StorySeriesDto> {
+    const story = await this.storyRepo
+      .createQueryBuilder('story')
+      .innerJoinAndSelect('story.owner', 'character')
+      .innerJoinAndSelect('character.server', 'server')
+      .where('story.id = :id', { id })
+      .select(['story.id', 'story.title', 'story.seriesTitle', 'story.seriesIndex', 'story.createdAt',
+        'character.id', 'character.name', 'server.name'])
+      .getOne();
+
+    if (!story) {
+      throw new NotFoundException('Story not found');
+    }
+
+    const parts = story.seriesTitle
+      ? await this.storyRepo
+        .createQueryBuilder('story')
+        .where('story.ownerId = :ownerId', { ownerId: story.owner.id })
+        .andWhere('story.seriesTitle = :seriesTitle', { seriesTitle: story.seriesTitle })
+        .select(['story.id', 'story.title', 'story.seriesIndex', 'story.createdAt'])
+        .getMany()
+      : [story];
+
+    // Parts with an index first (ascending), then by creation date
+    parts.sort((a, b) => {
+      if (a.seriesIndex !== b.seriesIndex) {
+        if (a.seriesIndex === null) {
+          return 1;
+        }
+        if (b.seriesIndex === null) {
+          return -1;
+        }
+        return a.seriesIndex - b.seriesIndex;
+      }
+      return a.createdAt.getTime() - b.createdAt.getTime();
+    });
+
+    return {
+      seriesTitle: story.seriesTitle,
+      author: story.owner.name,
+      authorServer: story.owner.server.name,
+      parts: parts.map((part) => ({
+        id: part.id,
+        title: part.title,
+        seriesIndex: part.seriesIndex,
+        createdAt: part.createdAt.getTime(),
+      })),
     };
   }
 

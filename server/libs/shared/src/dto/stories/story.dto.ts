@@ -1,6 +1,6 @@
 import { StoryType } from "@app/shared/enums/story-type.enum";
 import { Type } from "class-transformer";
-import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsEnum, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
 import { ContentNoteDto } from "../content-notes/content-note.dto";
 import { ReactionCountsDto } from "../reactions/reaction.dto";
 import { ReactionKind } from "../../enums/reaction.enum";
@@ -45,6 +45,23 @@ export class StoryDto {
 
 	@IsString({each: true})
   contentNotes: string[];
+
+  // ER2-808: optional series. Omit to keep, '' / null to remove.
+  @IsString()
+  @MaxLength(120)
+  @IsOptional()
+  seriesTitle?: string | null;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(9999)
+  @IsOptional()
+  seriesIndex?: number | null;
+
+  // Read only: number of visible parts in the series
+  @IsOptional()
+  seriesCount?: number;
 
   // ER2-807 (read only, optional)
   @IsOptional()

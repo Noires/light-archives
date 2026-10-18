@@ -5,6 +5,7 @@ import { UserInfo } from '@app/auth/model/user-info';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { StoryFilterDto } from '@app/shared/dto/stories/story-filter.dto';
+import { StorySeriesDto } from '@app/shared/dto/stories/story-series.dto';
 import { StorySummaryDto } from '@app/shared/dto/stories/story-summary.dto';
 import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import { Role } from '@app/shared/enums/role.enum';
@@ -23,6 +24,11 @@ export class StoriesController {
 	@Get('tags')
 	async getTags(): Promise<string[]> {
 		return this.storiesService.getTags();
+	}
+
+	@Get(':id/series')
+	async getStorySeries(@Param('id', ParseIntPipe) id: number): Promise<StorySeriesDto> {
+		return this.storiesService.getStorySeries(id);
 	}
 
 	@Get(':id')
