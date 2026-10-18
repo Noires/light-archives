@@ -1,7 +1,7 @@
 <template>
   <div class="character-profile">
-    <banner-view v-if="!plate" :banner="character.banner" />
-    <header v-if="!plate" class="character-profile__header">
+    <banner-view :banner="character.banner" />
+    <header class="character-profile__header">
       <div class="layout__filler">
         <aetheryte-badge size="lg" shape="square" :src="character.avatar" :alt="character.name" />
       </div>
@@ -67,11 +67,6 @@ class Props {
   });
 
   preview = prop<boolean>({
-    default: false,
-  });
-
-  /** ER2-402 — the page shows banner and names in CharacterPlate. */
-  plate = prop<boolean>({
     default: false,
   });
 }

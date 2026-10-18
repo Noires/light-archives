@@ -48,7 +48,12 @@
 						action-label="Ergänzen"
 						:action-to="editLink(activeSection.editPath)"
 					/>
-					<character-profile v-if="tab === 'profil'" :character="character" plate />
+					<character-overview
+						v-if="tab === 'profil'"
+						:character="character"
+						:content="content"
+						:base-path="basePath"
+					/>
 					<character-appearance v-else-if="tab === 'aussehen'" :character="character" />
 					<character-personality v-else-if="tab === 'persoenlichkeit'" :character="character" />
 					<character-contacts v-else-if="tab === 'kontakte'" :character="character" />
@@ -71,8 +76,8 @@ import { CharacterProfileDto } from '@app/shared/dto/characters/character-profil
 import { RpPresenceFieldsDto } from '@app/shared/dto/characters/rp-presence.dto';
 import { PageType } from '@app/shared/enums/page-type.enum';
 import errors from '@app/shared/errors';
+import CharacterOverview from 'components/character/CharacterOverview.vue';
 import CharacterPlate from 'components/character/CharacterPlate.vue';
-import CharacterProfile from 'components/character/CharacterProfile.vue';
 import {
 	CHARACTER_SECTIONS,
 	CharacterSection,
@@ -173,8 +178,8 @@ async function load(params: RouteParams): Promise<Content> {
 
 @Options({
 	components: {
+		CharacterOverview,
 		CharacterPlate,
-		CharacterProfile,
 		CharacterAppearance,
 		CharacterPersonality,
 		CharacterContacts,

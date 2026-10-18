@@ -59,6 +59,27 @@ export function findSection(key: CharacterTabKey): CharacterSection {
 
 type TextKey = keyof CharacterProfileDto;
 
+export type FactKey = 'age' | 'pronouns' | 'birthday' | 'birthplace' | 'residence' | 'profession' | 'family' | 'deity' | 'relationsshipstatus';
+
+export interface FactDef {
+	key: FactKey;
+	label: string;
+	icon: string;
+}
+
+/** ER2-403 — "Auf einen Blick" tiles. */
+export const FACTS: FactDef[] = [
+	{ key: 'age', label: 'Alter', icon: 'hourglass_empty' },
+	{ key: 'pronouns', label: 'Geschlecht', icon: 'wc' },
+	{ key: 'birthday', label: 'Namenstag', icon: 'cake' },
+	{ key: 'birthplace', label: 'Geburtsort', icon: 'flag' },
+	{ key: 'residence', label: 'Wohnort', icon: 'home' },
+	{ key: 'profession', label: 'Profession', icon: 'work_outline' },
+	{ key: 'family', label: 'Familie', icon: 'family_restroom' },
+	{ key: 'deity', label: 'Schutzgottheit', icon: 'brightness_5' },
+	{ key: 'relationsshipstatus', label: 'Beziehungsstatus', icon: 'favorite_border' },
+];
+
 export const APPEARANCE_FIELDS: TextKey[] = [
 	'haircolor', 'eyecolor', 'skintone', 'build', 'height', 'weight', 'apparentage', 'voice',
 	'specialfeatures', 'appearance', 'aether',
