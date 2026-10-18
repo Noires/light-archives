@@ -343,7 +343,8 @@ export default class PageIndex extends Vue {
       this.venuesLoading = false;
     }
 
-    // Summaries carry no image; fetch banners for the rows on screen only.
+    // Older APIs send no banner in the summaries; fetch banners for the rows
+    // on screen only. Rows whose list entry knew its banner are skipped.
     const images = await loadVenueImages(this.$api, this.sortedVenues.slice(0, 4));
     if (Object.keys(images).length > 0) {
       this.venues = this.venues.map((venue) => (images[venue.id] ? { ...venue, imageSrc: images[venue.id] } : venue));
