@@ -176,6 +176,13 @@
           </template>
         </div>
 
+        <group-member-content
+          v-else-if="tab === 'galerie' || tab === 'geschichten'"
+          :kind="tab"
+          :member-ids="memberIds"
+          :group-name="community.name"
+        />
+
         <report-violation-section :pageType="PageType.COMMUNITY" :pageId="community.id" hide-copy-link />
       </div>
     </template>
@@ -203,6 +210,7 @@ import { stripWikilinks } from 'components/character/profile-sections';
 import { activeRpStatus } from 'components/character/rp-status';
 import FocusItems from 'components/communities/FocusItems.vue';
 import GroupFacts from 'components/communities/GroupFacts.vue';
+import GroupMemberContent from 'components/communities/GroupMemberContent.vue';
 import GroupPlate from 'components/communities/GroupPlate.vue';
 import type { GroupFact, GroupPlateChip } from 'components/communities/group-plate';
 import AvatarStack from 'components/vision/AvatarStack.vue';
@@ -250,6 +258,7 @@ async function load(
     EmptyState,
     FocusItems,
     GroupFacts,
+    GroupMemberContent,
     GroupPlate,
     HtmlViewer,
     MemberCard,
@@ -321,7 +330,14 @@ export default class PageCommunity extends Vue {
     return [
       { key: 'uebersicht', label: 'Übersicht', icon: 'groups' },
       { key: 'mitglieder', label: 'Mitglieder', icon: 'group', count: this.members.length },
+      // ER2 round 2: only when the member list carries character ids (newer API)
+      { key: 'galerie', label: 'Galerie', icon: 'photo_library', hidden: this.memberIds.length === 0 },
+      { key: 'geschichten', label: 'Geschichten', icon: 'auto_stories', hidden: this.memberIds.length === 0 },
     ];
+  }
+
+  get memberIds(): number[] {
+    return this.members.map((member) => member.id).filter((id): id is number => typeof id === 'number');
   }
 
   get crumbs(): BreadcrumbItem[] {
