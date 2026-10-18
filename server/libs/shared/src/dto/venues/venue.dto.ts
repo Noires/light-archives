@@ -100,6 +100,11 @@ export class VenueDto {
   @IsOptional()
   eventClosed?: boolean;
 
+  // ER2 round 2: venue-level 18+ flag. Omit to keep on edit.
+  @IsBoolean()
+  @IsOptional()
+  adultOnly?: boolean | null;
+
   @Type(() => Number)
   @IsNumber()
   @IsOptional()

@@ -101,6 +101,11 @@
                     @update:model-value="onTagsChanged"
                     label="Schlagworte (mit Komma getrennt)"
                   />
+                  <q-toggle
+                    :model-value="venue.adultOnly === true"
+                    label="Treffpunkt ab 18 (nicht jugendfrei)"
+                    @update:model-value="venue.adultOnly = $event"
+                  />
 
                   <h6>Location</h6>
                   <q-option-group
