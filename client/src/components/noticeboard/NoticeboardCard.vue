@@ -2,7 +2,25 @@
   <article class="nb-card" :style="{ '--nb-type': typeColor }">
     <div class="nb-card__top">
       <span class="nb-card__type">[{{ typeLabel }}]</span>
-      <time class="nb-card__time" :datetime="isoDate">{{ $display.relativeTime(item.createdAt) }}</time>
+      <span class="nb-card__top-end">
+        <span v-if="item.pinned && !canPin" class="nb-card__pinned">
+          <q-icon name="push_pin" size="14px" aria-hidden="true" /> Angeheftet
+        </span>
+        <time class="nb-card__time" :datetime="isoDate">{{ $display.relativeTime(item.createdAt) }}</time>
+        <button
+          v-if="canPin"
+          type="button"
+          class="nb-card__pin"
+          :class="{ 'nb-card__pin--active': !!item.pinned }"
+          :aria-pressed="item.pinned ? 'true' : 'false'"
+          :aria-label="item.pinned ? `„${item.title}“ lösen` : `„${item.title}“ anheften`"
+          :title="item.pinned ? 'Lösen' : 'Anheften'"
+          :disabled="pinBusy"
+          @click="$emit('toggle-pin', item)"
+        >
+          <q-icon name="push_pin" size="18px" aria-hidden="true" />
+        </button>
+      </span>
     </div>
     <img v-if="item.imageUrl" :src="item.imageUrl" alt="" class="nb-card__image" loading="lazy" />
     <h3 class="nb-card__title">
@@ -21,7 +39,7 @@
     </ul>
     <footer class="nb-card__footer">
       <span class="nb-card__author">{{ item.author }}</span>
-      <span v-if="item.postedToDiscord" class="nb-card__discord">
+      <span v-if="postedToDiscord" class="nb-card__discord">
         <q-icon name="forum" size="14px" aria-hidden="true" /> auf Discord
       </span>
     </footer>
@@ -30,21 +48,30 @@
 
 <script lang="ts">
 import { Options, prop, Vue } from 'vue-class-component';
-import { NoticeboardCardItem, noticeboardTypeColor } from './noticeboard-types';
+import { isPostedToDiscord, NoticeboardCardItem, noticeboardTypeColor } from './noticeboard-types';
 
 // ER2-605 — masonry note card: 4 px top bar and "[Typ]" in the type colour,
 // time, optional image and excerpt, location, author, "auf Discord" when the
-// API says the notice was posted there. Image, excerpt and the Discord flag
-// are not in the list DTO yet and render only when present.
+// API says the notice was posted there. Image, excerpt, the Discord flag and
+// `pinned` are optional (ER2 round 2) and render only when present. With
+// `canPin` (moderators) the card shows a pin toggle and emits `toggle-pin`;
+// the page does the request.
 
 class Props {
   item = prop<NoticeboardCardItem>({ required: true });
+  canPin = prop<boolean>({ default: false });
+  pinBusy = prop<boolean>({ default: false });
 }
 
 @Options({
   name: 'NoticeboardCard',
+  emits: ['toggle-pin'],
 })
 export default class NoticeboardCard extends Vue.with(Props) {
+  get postedToDiscord(): boolean {
+    return isPostedToDiscord(this.item);
+  }
+
   get typeLabel(): string {
     return this.$display.noticeboardTypes[this.item.type] || 'Aushang';
   }
@@ -106,6 +133,69 @@ body.body--dark .nb-card:hover {
 
 .nb-card__time {
   color: var(--ink-muted);
+}
+
+.nb-card__top-end {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nb-card__pinned {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 600;
+  color: var(--ink-link);
+}
+
+// Sits above the stretched title link.
+.nb-card__pin {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: -6px -6px -6px 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--ease-elpis),
+    color var(--motion-fast) var(--ease-elpis);
+
+  .q-icon {
+    transform: rotate(45deg);
+  }
+
+  &:hover {
+    background: var(--rule-tint);
+    color: var(--ink-primary);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--glow-aether), 0 0 0 3px var(--vision-focus-edge);
+  }
+
+  &:disabled {
+    cursor: progress;
+    opacity: 0.6;
+  }
+}
+
+.nb-card__pin--active {
+  border-color: var(--rule-strong);
+  color: var(--ink-link);
+
+  .q-icon {
+    transform: none;
+  }
 }
 
 .nb-card__image {
@@ -194,7 +284,8 @@ body.body--dark .nb-card:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nb-card {
+  .nb-card,
+  .nb-card__pin {
     transition: none;
 
     &:hover {

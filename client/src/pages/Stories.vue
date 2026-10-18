@@ -257,8 +257,9 @@ export default class PageStories extends Vue {
     return this.stories.some((story) => Array.isArray(story.contentNotes));
   }
 
+  /** Serien tab and "Nur Serien" appear once any loaded story belongs to a series. */
   get hasSeriesData(): boolean {
-    return this.stories.some((story) => story.seriesTitle !== undefined);
+    return this.stories.some((story) => !!story.seriesTitle);
   }
 
   get hasLengthData(): boolean {
@@ -359,11 +360,18 @@ export default class PageStories extends Vue {
     this.featured = this.pickFeatured(overview.data);
   }
 
-  /** Newest long-ish story of the last week, else the newest story with an excerpt. */
+  /**
+   * Longest story of the last week, else of the six newest. Length is the word
+   * count when the API sends it (ER2 round 2), else the excerpt length.
+   */
   pickFeatured(stories: StoryCardData[]): StoryCardData | null {
-    const candidates = stories.filter((story) => story.published !== false && story.excerpt);
+    const published = stories.filter((story) => story.published !== false);
+    const byWords = published.some((story) => typeof story.wordCount === 'number');
+    const candidates = byWords
+      ? published.filter((story) => (story.wordCount || 0) > 0)
+      : published.filter((story) => !!story.excerpt);
     const weekAgo = Date.now() - WEEK_MS;
-    const length = (story: StoryCardData) => story.wordCount || (story.excerpt || '').length;
+    const length = (story: StoryCardData) => (byWords ? story.wordCount || 0 : (story.excerpt || '').length);
     const recent = candidates.filter((story) => story.createdAt >= weekAgo);
     const pool = recent.length ? recent : candidates.slice(0, 6);
 

@@ -80,8 +80,10 @@ import { Options, prop, Vue } from 'vue-class-component';
 
 // ER2-305 — activity feed from GET /changes: one sentence per change
 // ("Name hat die Geschichte „…“ veröffentlicht"), area filter chips,
-// relative time. Avatars and image thumbs are added when the home already
-// knows them (new profiles, new images); the change DTO carries neither.
+// relative time. ER2 round 2: the change DTO may carry `authorAvatar` and
+// `thumbnailUrl` (profile avatar, image thumb, venue banner). Older APIs send
+// neither; then avatars and image thumbs come from what the home already
+// knows (new profiles, new images) via the `avatars` / `thumbs` props.
 
 type ChipKey = 'all' | ChangeArea;
 
@@ -263,6 +265,15 @@ export default class HomeActivityFeed extends Vue.with(Props) {
 
 		const happened = DateTime.fromMillis(item.happenedAt);
 		const avatarKey = item.area === ChangeArea.PROFILE ? title : author;
+		const isProfile = item.area === ChangeArea.PROFILE;
+		// For profiles the thumbnail is the profile avatar: use it as the row avatar, not as a preview.
+		const avatar = item.authorAvatar
+			|| (isProfile ? item.thumbnailUrl : '')
+			|| (avatarKey && this.avatars[avatarKey])
+			|| null;
+		const thumb = (!isProfile && item.thumbnailUrl)
+			|| (item.area === ChangeArea.MEDIA ? this.thumbs[item.entityId] : '')
+			|| null;
 		return {
 			id: item.id,
 			lead,
@@ -272,8 +283,8 @@ export default class HomeActivityFeed extends Vue.with(Props) {
 			link: item.link,
 			icon: AREA_ICONS[item.area] || 'history',
 			areaLabel: AREA_LABELS[item.area] || '',
-			avatar: (avatarKey && this.avatars[avatarKey]) || null,
-			thumb: item.area === ChangeArea.MEDIA ? this.thumbs[item.entityId] || null : null,
+			avatar,
+			thumb,
 			relative: this.$display.relativeTime(item.happenedAt),
 			iso: happened.isValid ? happened.toISO() : '',
 		};

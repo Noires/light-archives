@@ -107,18 +107,23 @@
       <li v-for="profile in profiles" :key="`${profile.server}-${profile.name}`">
         <directory-card
           class="characters-dir__card"
+          :class="{ 'characters-dir__card--accent': !!accent(profile) }"
+          :style="accent(profile) ? { '--character-accent': accent(profile) } : undefined"
           :to="getLink(profile)"
+          :banner-src="profile.bannerUrl || ''"
           :avatar-src="profile.avatar"
           :avatar-alt="`Porträt von ${profile.name}`"
           :title="profile.name"
-          :subtitle="profession(profile)"
+          :subtitle="subtitle(profile)"
           :meta="meta(profile)"
         >
           <template v-if="rpStatus(profile)" #badges>
             <status-badge :type="rpBadge(profile)" :label="rpLabel(profile)" />
           </template>
+          <p v-if="activeLabel(profile)" class="characters-dir__active">{{ activeLabel(profile) }}</p>
           <template #tags>
             <status-badge type="server" :label="profile.server" icon="public" />
+            <span v-for="tag in playStyles(profile)" :key="tag" class="characters-dir__tag">{{ tag }}</span>
           </template>
         </directory-card>
       </li>
@@ -173,6 +178,8 @@ import { LocationQuery } from 'vue-router';
 const $api = useApi();
 
 const PER_PAGE = 24;
+const MAX_PLAY_STYLES = 3;
+const ACCENT_PATTERN = /^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\)|hsla?\([\d\s.,%deg]+\))$/i;
 
 interface Filters {
   searchQuery: string;
@@ -299,6 +306,33 @@ export default class PageCharacters extends Vue {
 
   profession(profile: CharacterSummaryDto): string {
     return profile.profession && !isEmptyFieldValue(profile.profession) ? stripWikilinks(profile.profession) : '';
+  }
+
+  /** ER2 round 2: the lore title when the API sends one, else the profession. */
+  subtitle(profile: CharacterSummaryDto): string {
+    const title = profile.title && !isEmptyFieldValue(profile.title) ? stripWikilinks(profile.title).trim() : '';
+    return title || this.profession(profile);
+  }
+
+  playStyles(profile: CharacterSummaryDto): string[] {
+    return (profile.playStyleTags || []).filter((tag) => !!tag && tag.trim()).slice(0, MAX_PLAY_STYLES);
+  }
+
+  activeLabel(profile: CharacterSummaryDto): string {
+    if (!profile.lastActiveAt) {
+      return '';
+    }
+    const relative = this.$display.relativeTime(profile.lastActiveAt);
+    if (!relative) {
+      return '';
+    }
+    return relative === 'Gerade' ? 'gerade aktiv' : `aktiv ${relative}`;
+  }
+
+  /** Only plain colour values reach the inline style. */
+  accent(profile: CharacterSummaryDto): string {
+    const color = (profile.accentColor || '').trim();
+    return ACCENT_PATTERN.test(color) ? color : '';
   }
 
   meta(profile: CharacterSummaryDto): string {
@@ -526,6 +560,41 @@ export default class PageCharacters extends Vue {
 
 .characters-dir__card {
   flex: 1 1 auto;
+}
+
+// ER2 round 2: the character's accent colour as a thin top edge.
+// A pseudo-element instead of border-top, so the card's own hover border
+// colour cannot override it; the card clips it to its rounded corners.
+.characters-dir__card--accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  height: 3px;
+  background-color: var(--character-accent);
+  pointer-events: none;
+}
+
+.characters-dir__active {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-muted);
+}
+
+.characters-dir__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ink-muted);
 }
 
 .characters-dir__more {

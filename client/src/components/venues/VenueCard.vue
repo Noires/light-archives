@@ -1,11 +1,12 @@
 <template>
   <article class="venue-card" :class="{ 'venue-card--closed': status.state === 'closed' }">
     <div class="venue-card__media" :class="`venue-card__media--${areaKey}`">
-      <img v-if="imageUrl" class="venue-card__img" :src="imageUrl" alt="" loading="lazy" />
+      <img v-if="imageSrc" class="venue-card__img" :src="imageSrc" alt="" loading="lazy" />
       <q-icon v-else class="venue-card__placeholder" :name="placeholderIcon" aria-hidden="true" />
       <span v-if="status.state !== 'unknown'" class="venue-card__status">
         <status-badge :type="badgeType" :label="status.label" />
       </span>
+      <span v-if="venue.adultOnly" class="venue-card__adult" title="Nur für Erwachsene">18+</span>
     </div>
     <div class="venue-card__body">
       <h2 class="venue-card__title">
@@ -20,8 +21,16 @@
         <q-icon name="schedule" aria-hidden="true" />
         <span>{{ hoursText || status.detail }}</span>
       </div>
-      <div v-if="showServer || areaLabel" class="venue-card__tags">
-        <span v-if="areaLabel" class="venue-card__tag">{{ areaLabel }}</span>
+      <p v-if="nextEventLabel" class="venue-card__next">
+        <q-icon name="event" aria-hidden="true" />
+        <span>
+          Nächstes Event:
+          <router-link class="venue-card__next-link" :to="nextEventLink">{{ nextEventTitle }}</router-link>
+          · {{ nextEventLabel }}
+        </span>
+      </p>
+      <div v-if="showServer || shownTags.length" class="venue-card__tags">
+        <span v-for="tag in shownTags" :key="tag" class="venue-card__tag">{{ tag }}</span>
         <span v-if="showServer" class="venue-card__tag">{{ venue.server }}</span>
       </div>
     </div>
@@ -34,13 +43,17 @@ import { DateTime } from 'luxon';
 import StatusBadge from 'components/vision/StatusBadge.vue';
 import type { StatusBadgeType } from 'components/vision/types';
 import { Options, prop, Vue } from 'vue-class-component';
+import { formatEventStart } from 'components/mainpage/home-data';
 import { HOUSING_AREA_LABELS } from './venue-location';
 import { VenueStatus, getVenueStatus, shortHours, statusBadgeType } from './venue-status';
 
 // ER2-507 — venue directory card: 200 px media with the open-state badge,
 // name, address, purpose, short opening hours and tags. Closed venues are
-// dimmed, not hidden. The summary DTO has no banner yet, so the media shows a
-// district-tinted placeholder unless `imageUrl` is passed.
+// dimmed, not hidden. ER2 round 2: banner, tags (max 3), 18+ badge and the
+// next event come from the summary when the API sends them; without a banner
+// the media shows the district-tinted placeholder (or `imageUrl` if passed).
+
+const MAX_TAGS = 3;
 
 class Props {
   venue = prop<VenueSummaryDto>({ required: true });
@@ -81,6 +94,35 @@ export default class VenueCard extends Vue.with(Props) {
 
   get addressLabel(): string {
     return this.venue.address || this.areaLabel;
+  }
+
+  get imageSrc(): string {
+    return this.imageUrl || this.venue.bannerUrl || '';
+  }
+
+  /** Own tags (they already include location type and district); else the district. */
+  get shownTags(): string[] {
+    const tags = (this.venue.tags || []).filter((tag) => !!tag && tag.trim());
+    if (tags.length > 0) {
+      return tags.slice(0, MAX_TAGS);
+    }
+    return this.areaLabel ? [this.areaLabel] : [];
+  }
+
+  get nextEventLabel(): string {
+    const event = this.venue.nextEvent;
+    if (!event || !event.title || !event.startDateTime) {
+      return '';
+    }
+    return formatEventStart(event.startDateTime, this.now || Date.now());
+  }
+
+  get nextEventTitle(): string {
+    return this.venue.nextEvent?.title || '';
+  }
+
+  get nextEventLink(): string {
+    return `/event/${this.venue.nextEvent?.id || ''}`;
   }
 
   get placeholderIcon(): string {
@@ -175,6 +217,24 @@ export default class VenueCard extends Vue.with(Props) {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
+// 18+ marker: danger fill with its paired ink (white on #B3363E in Hydaelyn,
+// #150B23 on #F08A93 in Zodiark), both above 4.5:1.
+.venue-card__adult {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background-color: var(--vision-danger);
+  color: var(--vision-on-danger);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
 .venue-card__body {
   display: flex;
   flex: 1;
@@ -220,7 +280,8 @@ export default class VenueCard extends Vue.with(Props) {
 }
 
 .venue-card__address,
-.venue-card__hours {
+.venue-card__hours,
+.venue-card__next {
   display: flex;
   align-items: flex-start;
   gap: 6px;
@@ -233,6 +294,24 @@ export default class VenueCard extends Vue.with(Props) {
   .q-icon {
     margin-top: 1px;
     font-size: 15px;
+  }
+}
+
+.venue-card__next-link {
+  position: relative;
+  z-index: 2;
+  color: var(--ink-link);
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-radius: 2px;
+    box-shadow: 0 0 0 2px var(--glow-aether), 0 0 0 3px var(--vision-focus-edge);
   }
 }
 

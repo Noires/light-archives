@@ -45,6 +45,17 @@
             <span>Heute geöffnet</span>
           </button>
           <button
+            v-if="hasAdultData"
+            type="button"
+            class="page-venues__chip"
+            :class="{ 'page-venues__chip--active': sfwOnly }"
+            :aria-pressed="sfwOnly ? 'true' : 'false'"
+            @click="toggleSfw"
+          >
+            <q-icon name="verified_user" aria-hidden="true" />
+            <span>Nur jugendfrei</span>
+          </button>
+          <button
             v-for="option in areaOptions"
             :key="option.value"
             type="button"
@@ -167,7 +178,8 @@ import { Options, Vue } from 'vue-class-component';
 
 // ER2-507 — venue directory: banner cards with open state, open venues
 // first, closed ones dimmed. Filters: search, "Heute geöffnet" (only when the
-// API sends opening data), district and server.
+// API sends opening data), "Nur jugendfrei" (only when it sends adultOnly),
+// district and server.
 
 const $api = useApi();
 
@@ -198,6 +210,7 @@ export default class PageVenues extends Vue {
   areaFilter = '';
   serverFilter = '';
   openTodayOnly = false;
+  sfwOnly = false;
   page = 1;
   now = Date.now();
   readonly perPage = 12;
@@ -265,6 +278,11 @@ export default class PageVenues extends Vue {
     return Array.from(this.states.values()).some((state) => state !== 'unknown');
   }
 
+  /** ER2 round 2: adultOnly is optional; the chip needs the flag on the list. */
+  get hasAdultData(): boolean {
+    return this.venues.some((venue) => typeof venue.adultOnly === 'boolean');
+  }
+
   get openCount(): number {
     return this.filteredVenues.filter((venue) => this.states.get(venue.id) === 'open').length;
   }
@@ -304,11 +322,15 @@ export default class PageVenues extends Vue {
       if (this.openTodayOnly && !isOpenToday(venue, this.nowDateTime)) {
         return false;
       }
+      if (this.sfwOnly && venue.adultOnly) {
+        return false;
+      }
       if (!query) {
         return true;
       }
       const areaLabel = venue.housingArea ? HOUSING_AREA_LABELS[venue.housingArea] : 'Offene Welt';
-      const haystack = `${venue.name} ${venue.purpose || ''} ${venue.server} ${venue.address || ''} ${areaLabel}`.toLowerCase();
+      const tags = (venue.tags || []).join(' ');
+      const haystack = `${venue.name} ${venue.purpose || ''} ${venue.server} ${venue.address || ''} ${areaLabel} ${tags}`.toLowerCase();
       return haystack.includes(query);
     });
     // Open first, then opening later today; the API order (newest first) stays within a group.
@@ -343,6 +365,11 @@ export default class PageVenues extends Vue {
     this.onFilterChange();
   }
 
+  toggleSfw() {
+    this.sfwOnly = !this.sfwOnly;
+    this.onFilterChange();
+  }
+
   toggleArea(value: string) {
     this.areaFilter = this.areaFilter === value ? '' : value;
     this.onFilterChange();
@@ -359,6 +386,7 @@ export default class PageVenues extends Vue {
       this.areaFilter = '';
       this.serverFilter = '';
       this.openTodayOnly = false;
+      this.sfwOnly = false;
       this.onFilterChange();
     }
   }

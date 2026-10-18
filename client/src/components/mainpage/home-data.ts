@@ -146,6 +146,8 @@ export interface HomeVenue {
 	server: string;
 	address: string;
 	imageSrc: string | null;
+	/** True when the list already said whether there is a banner (no detail fetch needed). */
+	imageKnown?: boolean;
 	info: VenueOpenInfo;
 }
 
@@ -256,11 +258,14 @@ export async function loadHomeVenues(api: API, now: number = Date.now()): Promis
 		server: summary.server,
 		address: summary.address,
 		imageSrc,
+		imageKnown: summary.bannerUrl !== undefined,
 		info: getVenueOpenInfo(source, now),
 	});
 
-	if (summaries.some(hasServerOpeningStatus)) {
-		return summaries.map((summary) => toHomeVenue(summary, summary, null));
+	// ER2 round 2: a list with opening fields or banners needs no detail
+	// requests. The template fallback below is only for older APIs.
+	if (summaries.some((summary) => hasServerOpeningStatus(summary) || summary.bannerUrl !== undefined)) {
+		return summaries.map((summary) => toHomeVenue(summary, summary, summary.bannerUrl || null));
 	}
 
 	const cache = readTemplateCache() || {};
@@ -282,10 +287,10 @@ export async function loadHomeVenues(api: API, now: number = Date.now()): Promis
 	});
 }
 
-/** Banner images for the few venues on screen (summaries carry none). */
+/** Banner images for the few venues on screen, for older APIs whose summaries carry none. */
 export async function loadVenueImages(api: API, venues: HomeVenue[]): Promise<Record<number, string>> {
 	const result: Record<number, string> = {};
-	await Promise.all(venues.filter((venue) => !venue.imageSrc).map(async (venue) => {
+	await Promise.all(venues.filter((venue) => !venue.imageSrc && !venue.imageKnown).map(async (venue) => {
 		try {
 			const detail = await api.venues.getVenue(venue.id);
 			if (detail.banner?.url) {
@@ -333,4 +338,26 @@ export async function loadRpCount(api: API): Promise<number | null> {
 	} catch (_) {
 		return null;
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Next-event lines on directory cards (ER2 round 2)
+// ---------------------------------------------------------------------------
+
+/** "heute, 20:00 Uhr", "morgen, 20:00 Uhr" or "Sa., 18.10., 20:00 Uhr" in server time. */
+export function formatEventStart(startDateTime: number, now: number = Date.now()): string {
+	const start = DateTime.fromMillis(startDateTime, { zone: SERVER_ZONE }).setLocale('de');
+	if (!start.isValid) {
+		return '';
+	}
+	const today = DateTime.fromMillis(now, { zone: SERVER_ZONE }).startOf('day');
+	const time = start.toFormat("HH:mm 'Uhr'");
+	const days = Math.round(start.startOf('day').diff(today, 'days').days);
+	if (days === 0) {
+		return `heute, ${time}`;
+	}
+	if (days === 1) {
+		return `morgen, ${time}`;
+	}
+	return `${start.toFormat('ccc, d.M.')}, ${time}`;
 }

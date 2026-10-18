@@ -60,13 +60,36 @@
 
     <p class="page-noticeboard__stats" aria-live="polite">{{ statsLabel }}</p>
 
+    <section v-if="page === 1 && pinnedItems.length" class="page-noticeboard__pinned" aria-labelledby="nb-pinned-title">
+      <h2 id="nb-pinned-title" class="page-noticeboard__pinned-title">
+        <q-icon name="push_pin" size="18px" aria-hidden="true" /> Angeheftet
+      </h2>
+      <div class="page-noticeboard__pinned-row">
+        <noticeboard-card
+          v-for="item in pinnedItems"
+          :key="item.id"
+          :item="item"
+          :can-pin="isModerator"
+          :pin-busy="pinBusy.includes(item.id)"
+          @toggle-pin="togglePin"
+        />
+      </div>
+    </section>
+
     <!-- ER2-902: keeps the outline h1 > h2 > h3 (card titles) without a visible label. -->
     <h2 class="vision-sr-only">Aushänge</h2>
     <div v-if="pagedItems.length" class="page-noticeboard__masonry">
-      <noticeboard-card v-for="item in pagedItems" :key="item.id" :item="item" />
+      <noticeboard-card
+        v-for="item in pagedItems"
+        :key="item.id"
+        :item="item"
+        :can-pin="isModerator"
+        :pin-busy="pinBusy.includes(item.id)"
+        @toggle-pin="togglePin"
+      />
     </div>
     <empty-state
-      v-else
+      v-else-if="!pinnedItems.length || page > 1"
       icon="push_pin"
       :title="noticeboardItems.length ? 'Keine passenden Aushänge' : 'Das Anschlagbrett ist leer'"
       :text="noticeboardItems.length ? 'Passe die Suche oder die Filter an.' : 'Häng den ersten Aushang auf.'"
@@ -91,6 +114,7 @@
 <script lang="ts">
 import NoticeboardCard from 'components/noticeboard/NoticeboardCard.vue';
 import { NOTICEBOARD_TYPE_ORDER, NoticeboardCardItem, noticeboardTypeColor } from 'components/noticeboard/noticeboard-types';
+import { Role, roleImplies } from '@app/shared/enums/role.enum';
 import EmptyState from 'components/vision/EmptyState.vue';
 import PageHead from 'components/vision/PageHead.vue';
 import { useApi } from 'src/boot/axios';
@@ -101,8 +125,9 @@ const $api = useApi();
 
 // ER2-605 — noticeboard directory: PageHead, "[Typ]" chips in type colour,
 // location chips, three-column masonry of note cards. The list endpoint
-// returns every notice, so filtering and paging stay client-side. There is
-// no pinned flag on notices yet, so the "Angeheftet" row is left out.
+// returns every notice, so filtering and paging stay client-side. ER2 round
+// 2: notices with `pinned` (optional field) fill the "Angeheftet" row above
+// the masonry; moderators pin and unpin from the cards.
 
 const PAGE_SIZE = 18;
 
@@ -134,6 +159,7 @@ export default class PageNoticeboard extends Vue {
   locationFilter = '';
   typeFilter = '';
   page = 1;
+  pinBusy: number[] = [];
 
   setContent(noticeboardItems: NoticeboardCardItem[]) {
     this.noticeboardItems = noticeboardItems;
@@ -200,13 +226,48 @@ export default class PageNoticeboard extends Vue {
     });
   }
 
+  get isModerator(): boolean {
+    const role = this.$store.getters.role;
+    return !!role && roleImplies(role, Role.MODERATOR);
+  }
+
+  get pinnedItems(): NoticeboardCardItem[] {
+    return this.filteredItems.filter((item) => item.pinned);
+  }
+
+  get unpinnedItems(): NoticeboardCardItem[] {
+    return this.filteredItems.filter((item) => !item.pinned);
+  }
+
   get pagedItems(): NoticeboardCardItem[] {
     const start = (this.page - 1) * PAGE_SIZE;
-    return this.filteredItems.slice(start, start + PAGE_SIZE);
+    return this.unpinnedItems.slice(start, start + PAGE_SIZE);
   }
 
   get maxPage(): number {
-    return Math.max(1, Math.ceil(this.filteredItems.length / PAGE_SIZE));
+    return Math.max(1, Math.ceil(this.unpinnedItems.length / PAGE_SIZE));
+  }
+
+  /** Optimistic: flip the flag at once, roll back if the request fails. */
+  async togglePin(item: NoticeboardCardItem) {
+    if (!this.isModerator || this.pinBusy.includes(item.id)) {
+      return;
+    }
+    const pinned = !item.pinned;
+    const setPinned = (value: boolean) => {
+      this.noticeboardItems = this.noticeboardItems.map((entry) => (entry.id === item.id ? { ...entry, pinned: value } : entry));
+    };
+    setPinned(pinned);
+    this.pinBusy = [ ...this.pinBusy, item.id ];
+    try {
+      await this.$api.noticeboard.setPinned(item.id, pinned);
+    } catch (e) {
+      console.log(e);
+      setPinned(!pinned);
+      notifyError(pinned ? 'Der Aushang konnte nicht angeheftet werden.' : 'Der Aushang konnte nicht gelöst werden.');
+    } finally {
+      this.pinBusy = this.pinBusy.filter((id) => id !== item.id);
+    }
   }
 
   get statsLabel(): string {
@@ -379,6 +440,34 @@ export default class PageNoticeboard extends Vue {
   }
 }
 
+.page-noticeboard__pinned {
+  margin-bottom: 24px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.page-noticeboard__pinned-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  font-family: var(--font-ui);
+  font-size: var(--type-scale-1);
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-link);
+}
+
+.page-noticeboard__pinned-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+
 .page-noticeboard__pagination {
   justify-content: center;
   margin-top: 16px;
@@ -388,11 +477,19 @@ export default class PageNoticeboard extends Vue {
   .page-noticeboard__masonry {
     column-count: 2;
   }
+
+  .page-noticeboard__pinned-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media screen and (max-width: 599px) {
   .page-noticeboard__masonry {
     column-count: 1;
+  }
+
+  .page-noticeboard__pinned-row {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

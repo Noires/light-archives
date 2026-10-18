@@ -68,7 +68,13 @@
                 <span class="home-stories__meta">
                   {{ story.author }} · {{ $display.relativeTime(story.createdAt) }}
                 </span>
-                <status-badge v-if="hasContentNotes(story)" class="home-stories__cw" type="cw" />
+                <status-badge
+                  v-if="storyNotes(story).length"
+                  class="home-stories__cw"
+                  type="cw"
+                  :label="notesLabel(story)"
+                  :title="`Inhaltswarnungen: ${storyNotes(story).join(', ')}`"
+                />
               </li>
             </ul>
             <p v-else class="home-module-empty">Noch keine neuen Geschichten.</p>
@@ -156,6 +162,7 @@ import {
 import type { HomeTodayStats, HomeVenue } from 'components/mainpage/home-data';
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 import { StorySummaryDto } from '@app/shared/dto/stories/story-summary.dto';
+import { contentNotesLabel, storyContentNotes } from 'components/stories/story-card-data';
 import HomeGalleryBand from 'components/mainpage/HomeGalleryBand.vue';
 import HomeModule from 'components/mainpage/HomeModule.vue';
 import StatusBadge from 'components/vision/StatusBadge.vue';
@@ -301,8 +308,20 @@ export default class PageIndex extends Vue {
 
   // --- ER2-305: activity feed ----------------------------------------------
 
+  /**
+   * ER2 round 2: changes carry authorAvatar / thumbnailUrl themselves. The
+   * cross-reference with new profiles and images below is only needed for
+   * older APIs that send neither.
+   */
+  get changesEnriched(): boolean {
+    return this.recentChanges.some((change) => change.authorAvatar !== undefined || change.thumbnailUrl !== undefined);
+  }
+
   get profileAvatars(): Record<string, string> {
     const result: Record<string, string> = {};
+    if (this.changesEnriched) {
+      return result;
+    }
     this.content.newProfiles.forEach((profile) => {
       if (profile.avatar) {
         result[profile.name] = profile.avatar;
@@ -313,6 +332,9 @@ export default class PageIndex extends Vue {
 
   get imageThumbs(): Record<number, string> {
     const result: Record<number, string> = {};
+    if (this.changesEnriched) {
+      return result;
+    }
     [...this.content.newScreenshots, ...this.content.newArtwork].forEach((image) => {
       result[image.id] = image.thumbUrl;
     });
@@ -343,7 +365,8 @@ export default class PageIndex extends Vue {
       this.venuesLoading = false;
     }
 
-    // Summaries carry no image; fetch banners for the rows on screen only.
+    // Older APIs send no banner in the summaries; fetch banners for the rows
+    // on screen only. Rows whose list entry knew its banner are skipped.
     const images = await loadVenueImages(this.$api, this.sortedVenues.slice(0, 4));
     if (Object.keys(images).length > 0) {
       this.venues = this.venues.map((venue) => (images[venue.id] ? { ...venue, imageSrc: images[venue.id] } : venue));
@@ -438,10 +461,13 @@ export default class PageIndex extends Vue {
     return this.content.newStories.slice(0, 3);
   }
 
-  /** CW badge once story summaries carry content notes (optional field). */
-  hasContentNotes(story: StorySummaryDto): boolean {
-    const notes = (story as StorySummaryDto & { contentNotes?: unknown[] }).contentNotes;
-    return Array.isArray(notes) && notes.length > 0;
+  /** Content notes of a new story (ER2 round 2; absent on older APIs). */
+  storyNotes(story: StorySummaryDto): string[] {
+    return storyContentNotes(story);
+  }
+
+  notesLabel(story: StorySummaryDto): string {
+    return contentNotesLabel(storyContentNotes(story));
   }
 
   get latestProfiles() {

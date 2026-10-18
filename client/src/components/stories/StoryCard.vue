@@ -13,7 +13,7 @@
         <q-icon name="collections_bookmark" size="14px" aria-hidden="true" />
         {{ seriesLabel }}
       </span>
-      <status-badge v-if="hasWarnings" type="cw" :label="warningLabel" />
+      <status-badge v-if="hasWarnings" type="cw" :label="warningLabel" :title="warningTitle" />
       <span v-if="story.published === false" class="story-card__draft">Entwurf</span>
     </div>
     <footer class="story-card__footer">
@@ -32,6 +32,7 @@
 import { Options, prop, Vue } from 'vue-class-component';
 import StatusBadge from '../vision/StatusBadge.vue';
 import { readingMinutes } from './reader-storage';
+import { contentNotesLabel, storyContentNotes } from './story-card-data';
 import type { StoryCardData } from './story-card-data';
 
 // ER2-604 — story directory card. Optional fields (reading time, series,
@@ -60,19 +61,26 @@ export default class StoryCard extends Vue.with(Props) {
     return this.story.wordCount ? readingMinutes(this.story.wordCount) : 0;
   }
 
+  get notes(): string[] {
+    return storyContentNotes(this.story);
+  }
+
   get hasWarnings(): boolean {
-    return !!this.story.contentNotes && this.story.contentNotes.length > 0;
+    return this.notes.length > 0;
   }
 
   get warningLabel(): string {
-    const count = this.story.contentNotes?.length || 0;
-    return count === 1 ? 'Inhaltswarnung' : `${count} Inhaltswarnungen`;
+    return contentNotesLabel(this.notes);
+  }
+
+  get warningTitle(): string {
+    return `Inhaltswarnungen: ${this.notes.join(', ')}`;
   }
 
   get seriesLabel(): string {
     const title = this.story.seriesTitle || '';
     const index = this.story.seriesIndex;
-    return index ? `${title} · Teil ${index}` : title;
+    return index ? `Teil ${index} · ${title}` : title;
   }
 
   get reactionTotal(): number {
