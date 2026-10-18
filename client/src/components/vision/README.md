@@ -163,14 +163,28 @@ is the current page.
 | `items` | `BreadcrumbItem[] \| null` (`{ label, to? }`) | `null` (derive from route) |
 
 Without `items`, every record in `$route.matched` with `meta.breadcrumb`
-contributes one crumb. `breadcrumb` is a string or `(route) => string`.
-Named records link with their own params; unnamed records link by path when
-the path has no params.
+contributes crumbs. `breadcrumb` is a string, an array of segments, or a
+function of the route returning either (`BreadcrumbMeta` in `types.ts`).
+A string contributes one crumb that links to its record. In an array, each
+segment is a string or a `{ label, to? }` item; string segments render as
+plain text except the last one, which links to the record. Named records link
+with their own params; unnamed records link by path when the path has no
+params. Empty labels are skipped.
 
 ```ts
 // routes.ts
 { path: '/event/:id', name: 'event', meta: { breadcrumb: (route) => `Event ${route.params.id}` } }
+{
+  path: ':server/:character',
+  meta: { breadcrumb: (route) => [{ label: 'Charaktere', to: '/profiles' }, route.params.character] },
+}
 ```
+
+ER2-204 put `meta.breadcrumb` on the character, venue, event, story,
+noticeboard item, wiki, free company, community, gallery and image routes.
+Where the route only carries an id (event, story, noticeboard item, image,
+venue by id), the last segment is a generic noun ("Event", "Geschichte");
+pages that know the title should pass `items` instead.
 
 ```html
 <breadcrumbs />

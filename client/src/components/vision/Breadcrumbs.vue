@@ -22,10 +22,13 @@
 <script lang="ts">
 import { Options, prop, Vue } from 'vue-class-component';
 import type { RouteLocationRaw, RouteRecordNormalized } from 'vue-router';
-import type { BreadcrumbItem, BreadcrumbMeta } from './types';
+import type { BreadcrumbItem, BreadcrumbMeta, BreadcrumbMetaValue, BreadcrumbSegment } from './types';
 
 // ER2-007 — breadcrumbs from `route.meta.breadcrumb` on each matched record.
-// `breadcrumb` is a string or `(route) => string`. Records without it are
+// `breadcrumb` is a string, an array of segments (strings or `{ label, to }`),
+// or a function of the route returning either. A string contributes one crumb
+// linking to its record; an array contributes one crumb per segment, and only
+// its last string segment links to the record. Records without it are
 // skipped. Pass `items` to override the route-derived trail entirely.
 
 class Props {
@@ -43,18 +46,30 @@ export default class Breadcrumbs extends Vue.with(Props) {
 		const result: BreadcrumbItem[] = [];
 		for (const record of this.$route.matched) {
 			const meta = record.meta.breadcrumb as BreadcrumbMeta | undefined;
-			let label = '';
-			if (typeof meta === 'function') {
-				label = meta(this.$route);
-			} else if (typeof meta === 'string') {
-				label = meta;
-			}
-			if (!label || (result.length && result[result.length - 1].label === label)) {
-				continue;
-			}
-			result.push({ label, to: this.linkFor(record) });
+			const value: BreadcrumbMetaValue | undefined = typeof meta === 'function' ? meta(this.$route) : meta;
+			const segments: BreadcrumbSegment[] = Array.isArray(value) ? value : value ? [value] : [];
+			segments.forEach((segment, index) => {
+				const item = this.toItem(segment, index === segments.length - 1 ? record : null);
+				if (item && !(result.length && result[result.length - 1].label === item.label)) {
+					result.push(item);
+				}
+			});
 		}
 		return result;
+	}
+
+	private toItem(segment: BreadcrumbSegment, record: RouteRecordNormalized | null): BreadcrumbItem | null {
+		if (typeof segment === 'string') {
+			const label = segment.trim();
+			if (!label) {
+				return null;
+			}
+			return record ? { label, to: this.linkFor(record) } : { label };
+		}
+		if (!segment || !segment.label) {
+			return null;
+		}
+		return segment;
 	}
 
 	private linkFor(record: RouteRecordNormalized): RouteLocationRaw | undefined {
