@@ -9,10 +9,12 @@ import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import html from '@app/shared/html';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { decode } from 'html-entities';
 import { Connection, In, IsNull, Not, Repository } from 'typeorm';
 import { getVerifiedCharacter } from '../../../common/api-checks';
 import { escapeForLike } from '../../../common/db';
+import { buildExcerpt, countWords } from '../../../common/plain-text';
+import { ReactionTargetType } from '@app/shared/enums/reaction.enum';
+import { ReactionsService } from '../reactions/reactions.service';
 import { excludeTestContentSql } from '../test-content.filter';
 
 @Injectable()
@@ -24,7 +26,8 @@ export class StoriesService {
     @InjectRepository(Character) private characterRepo: Repository<Character>,
     @InjectRepository(ContentNote) private contentNoteRepo: Repository<ContentNote>,
     @InjectRepository(Story) private storyRepo: Repository<Story>,
-    @InjectRepository(StoryTag) private storyTagRepo: Repository<StoryTag>
+    @InjectRepository(StoryTag) private storyTagRepo: Repository<StoryTag>,
+    private reactionsService: ReactionsService,
   ) {}
 
   async getStory(id: number, user?: UserInfo): Promise<StoryDto> {
@@ -251,8 +254,10 @@ export class StoriesService {
     const query = this.storyRepo
       .createQueryBuilder('story')
       .innerJoinAndSelect('story.owner', 'character')
+      .innerJoinAndSelect('character.server', 'server')
       .orderBy('story.createdAt', 'DESC')
-      .select(['story.id', 'character.name', 'story.title', 'story.content', 'story.createdAt', 'story.type', 'story.published'])
+      .select(['story.id', 'character.name', 'server.name', 'story.title', 'story.content', 'story.createdAt', 'story.type',
+        'story.published', 'story.seriesTitle', 'story.seriesIndex'])
       .offset(filter.offset)
       .limit(filter.limit);
 
@@ -294,6 +299,11 @@ export class StoriesService {
     if (!filter.characterId) query.andWhere(excludeTestContentSql('story'));
 
     const [ total, stories ] = await Promise.all([ query.getCount(),  query.getMany() ]);
+    const storyIds = stories.map((story) => story.id);
+    const [ contentNotes, reactions ] = await Promise.all([
+      this.getContentNoteNames(storyIds),
+      this.reactionsService.getSummaries(ReactionTargetType.STORY, storyIds),
+    ]);
 
     return {
       total,
@@ -301,12 +311,42 @@ export class StoriesService {
         id: story.id,
         title: story.title,
         author: story.owner.name,
+        authorServer: story.owner.server?.name,
         createdAt: story.createdAt!.getTime(),
         type: story.type,
-        excerpt: this.buildExcerpt(story.content || ''),
+        excerpt: buildExcerpt(story.content, this.excerptMaxLength),
         published: story.published,
+        contentNotes: contentNotes.get(story.id) || [],
+        seriesTitle: story.seriesTitle,
+        seriesIndex: story.seriesIndex,
+        wordCount: countWords(story.content),
+        reactionCounts: reactions.get(story.id)?.reactionCounts || {},
       }))
     };
+  }
+
+  // ER2 round 2: content notes of a page of stories in one query
+  private async getContentNoteNames(storyIds: number[]): Promise<Map<number, string[]>> {
+    const result = new Map<number, string[]>();
+
+    if (storyIds.length === 0) {
+      return result;
+    }
+
+    const rows: { storyId: number; name: string }[] = await this.storyRepo
+      .createQueryBuilder('story')
+      .innerJoin('story.contentNotes', 'note')
+      .select('story.id', 'storyId')
+      .addSelect('note.name', 'name')
+      .where('story.id IN (:...storyIds)', { storyIds })
+      .getRawMany();
+
+    for (const row of rows) {
+      const storyId = Number(row.storyId);
+      result.set(storyId, [...(result.get(storyId) || []), row.name]);
+    }
+
+    return result;
   }
 
   private normalizeSeriesTitle(seriesTitle?: string | null): string | null {
@@ -371,24 +411,6 @@ export class StoriesService {
         createdAt: part.createdAt.getTime(),
       })),
     };
-  }
-
-  private buildExcerpt(content: string): string {
-    const plainText = decode(content.replace(/<[^>]+>/g, ' '))
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    if (!plainText) {
-      return '';
-    }
-
-    if (plainText.length <= this.excerptMaxLength) {
-      return plainText;
-    }
-
-    const truncated = plainText.slice(0, this.excerptMaxLength);
-    const trimmed = truncated.replace(/\s+\S*$/, '').trim();
-    return `${trimmed || truncated.trim()}...`;
   }
 
   async getTags(): Promise<string[]> {
