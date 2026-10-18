@@ -1,6 +1,6 @@
 import { UserInfo } from '@app/auth/model/user-info';
 import { serverConfiguration } from '@app/configuration';
-import { Character, ContentNote, Event, EventAnnouncement, EventLocation, EventRegistration, Image, Server, Venue } from '@app/entity';
+import { Character, ContentNote, Event, EventAnnouncement, EventLocation, EventRegistration, EventSeries, Image, Server, Venue } from '@app/entity';
 import { BannerDto } from '@app/shared/dto/characters/banner.dto';
 import { BaseEventDto } from '@app/shared/dto/events/base-event.dto';
 import { EventAnnouncementDto } from '@app/shared/dto/events/event-announcement.dto';
@@ -19,6 +19,7 @@ import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 import { EventSource } from '@app/shared/enums/event-source.enum';
 import { EventRegistrationKind } from '@app/shared/enums/event-registration-kind.enum';
 import { EventType } from '@app/shared/enums/event-type.enum';
+import { computeNextOccurrences, formatEventSeriesLabel } from '@app/shared/event-series';
 import html from '@app/shared/html';
 import SharedConstants from '@app/shared/SharedConstants';
 import { isValidUrl } from '@app/shared/validation/validators';
@@ -33,6 +34,7 @@ import { getVerifiedCharacter } from '../../../common/api-checks';
 import { Contains } from '../../../common/db';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import utils from '../../../common/utils';
+import { toEventSeriesSpec } from '../event-series/event-series.service';
 import { ImagesService } from '../images/images.service';
 import { ChocoboChronicleService } from './chocobo-chronicle.service';
 import { CrescentMoonPublishingService } from './crescent-moon-publishing.service';
@@ -83,6 +85,7 @@ export class EventsService {
         'registrations',
         'registrations.character',
         'registrations.character.server',
+        'series',
       ],
     });
 
@@ -124,7 +127,7 @@ export class EventsService {
             },
           },
         },
-        relations: ['owner', 'owner.user', 'locations', 'locations.server', 'locations.venue', 'banner', 'banner.owner', 'discordBanner', 'discordBanner.owner', 'icon', 'icon.owner', 'contentNotes'],
+        relations: ['owner', 'owner.user', 'locations', 'locations.server', 'locations.venue', 'banner', 'banner.owner', 'discordBanner', 'discordBanner.owner', 'icon', 'icon.owner', 'contentNotes', 'series'],
       });
 
       if (!event) {
@@ -171,6 +174,28 @@ export class EventsService {
     event.extraInfo = html.sanitize(eventDto.extraInfo || '');
     if (eventDto.programme !== undefined) {
       event.programme = this.normalizeProgramme(eventDto.programme);
+    }
+    if (eventDto.seriesId !== undefined) {
+      if (!eventDto.seriesId) {
+        event.series = null;
+      } else {
+        const series = await em.getRepository(EventSeries).findOne({
+          where: {
+            id: eventDto.seriesId,
+            owner: {
+              user: {
+                id: event.owner.user.id,
+              },
+            },
+          },
+        });
+
+        if (!series) {
+          throw new BadRequestException('Event series not found');
+        }
+
+        event.series = series;
+      }
     }
     if (eventDto.contentNotes !== undefined) {
       event.contentNotes = eventDto.contentNotes
@@ -615,7 +640,7 @@ export class EventsService {
         createdAt: 'ASC',
       },
       take: this.MAX_RESULTS,
-      relations: ['locations', 'locations.server', 'locations.venue', 'icon', 'icon.owner', 'contentNotes'],
+      relations: ['locations', 'locations.server', 'locations.venue', 'icon', 'icon.owner', 'contentNotes', 'series'],
     });
 
     return this.toEventSummaryDtos(events);
@@ -773,6 +798,7 @@ export class EventsService {
       .leftJoinAndSelect('event.icon', 'icon')
       .leftJoinAndSelect('icon.owner', 'iconOwner')
       .leftJoinAndSelect('event.contentNotes', 'contentNotes')
+      .leftJoinAndSelect('event.series', 'series')
       .where('event.startDateTime >= :startOfMonth', { startOfMonth: startOfMonth.toJSDate() })
       .andWhere('event.startDateTime < :endOfMonth', { endOfMonth: endOfMonth.toJSDate() })
       .andWhere('event.hidden = :hidden', { hidden: false })
@@ -798,6 +824,7 @@ export class EventsService {
       .leftJoinAndSelect('event.icon', 'icon')
       .leftJoinAndSelect('icon.owner', 'iconOwner')
       .leftJoinAndSelect('event.contentNotes', 'contentNotes')
+      .leftJoinAndSelect('event.series', 'series')
       .where('venue.id = :venueId', { venueId })
       .andWhere('event.hidden = :hidden', { hidden: false });
 
@@ -966,6 +993,8 @@ export class EventsService {
       registrationDeadlineDays: event.registrationDeadlineDays,
       registrationDeadlineTime: event.registrationDeadlineTime || null,
       contentNotes: (event.contentNotes || []).map((note) => note.name),
+      seriesId: event.series?.id ?? null,
+      seriesLabel: event.series ? formatEventSeriesLabel(toEventSeriesSpec(event.series)) : null,
       locations: event.locations.map((location) => ({
         id: location.id,
         name: location.name,
@@ -1045,6 +1074,7 @@ export class EventsService {
       contentNotes: (event.contentNotes || []).map((note) => note.name),
       extraInfo: event.extraInfo || '',
       programme: (event.programme || []).map((item) => new EventProgrammeItemDto(item)),
+      seriesId: event.series?.id ?? null,
       banner: !banner
         ? null
         : new BannerDto({
@@ -1094,6 +1124,10 @@ export class EventsService {
         goingCount,
         interestedCount,
         myRegistrationKinds,
+        seriesLabel: event.series ? formatEventSeriesLabel(toEventSeriesSpec(event.series)) : undefined,
+        nextOccurrences: event.series && event.series.active
+          ? computeNextOccurrences(toEventSeriesSpec(event.series), Date.now(), 3, SharedConstants.FFXIV_SERVER_TIMEZONE)
+          : undefined,
         canManageParticipants,
         participants: canManageParticipants ? participants : [],
       });

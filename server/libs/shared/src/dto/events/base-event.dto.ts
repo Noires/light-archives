@@ -101,6 +101,12 @@ export abstract class BaseEventDto {
 	@IsArray()
 	locations: EventLocationDto[];
 
+  // ER2-804: series this event belongs to. Omit to keep, null to detach.
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  seriesId?: number | null;
+
   // ER2-803: optional programme. Omit to keep the stored value; send [] or null to clear.
   @Type(() => EventProgrammeItemDto)
   @ValidateNested({ each: true })

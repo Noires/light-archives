@@ -6,6 +6,7 @@ import { ChangesModule } from './changes/changes.module';
 import { CommunitiesModule } from './communities/communities.module';
 import { ContentNotesModule } from "./content-notes/content-notes.modules";
 import { EventsModule } from './events/events.module';
+import { EventSeriesModule } from './event-series/event-series.module';
 import { FreeCompaniesModule } from './free-companies/free-companies.module';
 import { ImagesModule } from './images/images.module';
 import { LinksModule } from './links/links.module';
@@ -28,6 +29,7 @@ import { LodestoneModule } from './lodestone/lodestone.module';
 const controllerModules = [
 	MainPageModule,
 	EventsModule,
+	EventSeriesModule,
 	UserModule,
 	CharactersModule,
   ChangesModule,

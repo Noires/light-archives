@@ -6,6 +6,7 @@ import ChangesAPI from './changes-api';
 import CommunitiesAPI from './communities-api';
 import ContentNotesAPI from './content-notes-api';
 import EventsAPI from './events-api';
+import EventSeriesAPI from './event-series-api';
 import FreeCompaniesAPI from './free-companies-api';
 import ImagesAPI from './images-api';
 import LinksAPI from './links-api';
@@ -37,6 +38,7 @@ export default class API {
   readonly contentNotes = new ContentNotesAPI(this.transport);
   readonly communities = new CommunitiesAPI(this.transport);
   readonly events = new EventsAPI(this.transport);
+  readonly eventSeries = new EventSeriesAPI(this.transport);
   readonly freeCompanies: FreeCompaniesAPI = new FreeCompaniesAPI(this.transport);
   readonly images = new ImagesAPI(this.transport);
   readonly links = new LinksAPI(this.transport);

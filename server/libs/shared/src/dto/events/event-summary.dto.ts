@@ -24,4 +24,7 @@ export interface EventSummaryDto {
   // ER2-801 (optional; absent on older API versions)
   goingCount?: number;
   interestedCount?: number;
+  // ER2-804 (optional)
+  seriesId?: number | null;
+  seriesLabel?: string | null;
 }
