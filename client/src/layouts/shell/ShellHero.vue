@@ -1,54 +1,25 @@
 <template>
   <q-toolbar-title class="layout__toolbar-title">
     <router-link to="/">
-      <picture v-if="isEffectiveDarkMode">
-        <source
-          srcset="
-            ~/assets/logo_dark_1x_.webp,
-            ~/assets/logo_dark_2x.webp 2x,
-            ~/assets/logo_dark_3x.webp 3x,
-            ~/assets/logo_dark_4x.webp 4x
-          "
-          type="image/webp"
-        />
-        <source
-          srcset="~/assets/logo_dark_2x.png 2x, ~/assets/logo_dark_3x.png 3x, ~/assets/logo_dark_4x.png 4x"
-        />
-        <img class="layout__logo" src="~/assets/logo_dark_1x_.png" />
-      </picture>
-      <picture v-else>
-        <source
-          srcset="
-            ~/assets/logo_1x.webp,
-            ~/assets/logo_2x.webp 2x,
-            ~/assets/logo_3x.webp 3x,
-            ~/assets/logo_4x.webp 4x
-          "
-          type="image/webp"
-        />
-        <source
-          srcset="~/assets/logo_2x.png 2x, ~/assets/logo_3x.png 3x, ~/assets/logo_4x.png 4x"
-        />
-        <img class="layout__logo" src="~/assets/logo_1x.png" />
-      </picture>
+      <shell-logo img-class="layout__logo" />
     </router-link>
   </q-toolbar-title>
 </template>
 
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
+import ShellLogo from './ShellLogo.vue';
 
 // Logo block above the page content (theme-aware picture sources). Rendered
 // on the home page only (ER2-202); the top bar carries the small logo.
 
 @Options({
   name: 'ShellHero',
+  components: {
+    ShellLogo,
+  },
 })
-export default class ShellHero extends Vue {
-  get isEffectiveDarkMode(): boolean {
-    return this.$q.dark.isActive;
-  }
-}
+export default class ShellHero extends Vue {}
 </script>
 
 <style lang="scss">

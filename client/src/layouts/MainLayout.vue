@@ -1,8 +1,6 @@
 <template>
   <q-layout view="hHh Lpr fff">
-    <shell-header @toggle-drawer="toggleLeftDrawer" />
-
-    <shell-drawer v-model="leftDrawerOpen" />
+    <shell-header @open-search="openPalette" />
 
     <q-page-container>
       <shell-hero v-if="isHome" />
@@ -25,7 +23,6 @@
 import { defineAsyncComponent } from 'vue';
 import { Vue, Options } from 'vue-class-component';
 import ShellHeader from './shell/ShellHeader.vue';
-import ShellDrawer from './shell/ShellDrawer.vue';
 import ShellHero from './shell/ShellHero.vue';
 import ShellFooter from './shell/ShellFooter.vue';
 import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
@@ -35,24 +32,22 @@ import { persistTelemetryConsent } from 'src/common/telemetry-consent-actions';
 import { isSentryConfigured } from 'src/common/sentry';
 
 // App shell. Mounted once by the single '/' parent route (see
-// router/routes.ts). Owns the drawer open state, the single-column page shell
+// router/routes.ts). Owns the command palette state, the single-column page shell
 // and the telemetry consent prompt. ER2-203 removed the calendar widget from
 // the shell; components/eventbar/CalendarSidebarWidget.vue stays for the home
 // hub (ER2-302). The visible chrome lives
-// in ./shell/*: ShellHeader, ShellDrawer, ShellHero, ShellFooter.
+// in ./shell/*: ShellHeader (top bar, nav model in nav.ts), ShellHero,
+// ShellFooter.
 
 @Options({
   components: {
     ShellHeader,
-    ShellDrawer,
     ShellHero,
     ShellFooter,
     CommandPalette: defineAsyncComponent(() => import('components/vision/CommandPalette.vue')),
   },
 })
 export default class MainLayout extends Vue {
-  leftDrawerOpen = false;
-  rightDrawerOpen = false;
   telemetryConsentDialogShown = false;
   paletteLoaded = false;
   paletteOpen = false;
@@ -94,10 +89,6 @@ export default class MainLayout extends Vue {
   // ER2-202 — the logo hero renders on the home page only.
   get isHome(): boolean {
     return this.$route.path === '/';
-  }
-
-  toggleLeftDrawer() {
-    this.leftDrawerOpen = !this.leftDrawerOpen;
   }
 
   async switchCharacter() {
@@ -168,8 +159,11 @@ export default class MainLayout extends Vue {
 
 <style lang="scss">
 // Layout-level styles only: q-layout outline, the single-column page shell
-// and q-page padding. Header, drawer, hero and footer styles
-// live with their components in ./shell/.
+// and q-page padding. Global q-drawer styles for page drawers come from
+// ./shell/drawer-styles.scss. Header, hero and footer styles live with
+// their components in ./shell/.
+@import './shell/drawer-styles.scss';
+
 $max-layout-width: auto;
 $color-primary: #ddb476;
 $color-semi-dark: #333;
@@ -188,6 +182,14 @@ body.body--dark {
   body {
     overflow-y: scroll;
   }
+}
+
+// Flex filler still used by CharacterProfile / FreeCompanyProfile headers.
+.layout__filler {
+  flex-basis: 0;
+  flex-grow: 1;
+  display: flex;
+  flex-wrap: nowrap;
 }
 
 .layout__create-content-list {
