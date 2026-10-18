@@ -58,6 +58,17 @@
 
     <div class="event-view__body">
       <div class="event-view__main">
+        <!-- ER2 round 2: description, programme, OOC and extra info behind the CW veil -->
+        <cw-veil
+          class="event-view__veil"
+          :warnings="contentNotes"
+          :disabled="preview"
+          title="Dieses Event enthält Inhaltswarnungen"
+          confirm-label="Trotzdem ansehen"
+          back-label="Zum Eventkalender"
+          :back-to="{ path: '/calendar' }"
+        >
+        <div class="event-view__veiled">
         <section class="event-view__section event-view__about mat-parchment" aria-labelledby="event-about">
           <h2 id="event-about" class="event-view__section-title">Worum geht's</h2>
           <html-viewer v-if="hasDetails" :content="event.details" />
@@ -81,6 +92,8 @@
           <h2 id="event-extra" class="event-view__section-title">Weitere Infos</h2>
           <html-viewer :content="event.extraInfo" />
         </section>
+        </div>
+        </cw-veil>
 
         <section v-if="contentNotes.length" class="event-view__warnings" aria-labelledby="event-cw">
           <div id="event-cw" class="event-view__warnings-title">
@@ -158,6 +171,7 @@ import { EventProgrammeItemDto } from '@app/shared/dto/events/event-programme-it
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
 import { getEventTypeIcon, getEventTypeLabel } from 'src/common/event-types';
+import CwVeil from 'components/vision/CwVeil.vue';
 import { DateTime } from 'luxon';
 import { Options, prop, Vue } from 'vue-class-component';
 import Breadcrumbs from 'components/vision/Breadcrumbs.vue';
@@ -193,6 +207,7 @@ class Props {
   name: 'EventView',
   components: {
     Breadcrumbs,
+    CwVeil,
     HtmlViewer,
     LinkField,
     EventLocationCard,
@@ -596,6 +611,16 @@ $hero-ink-soft: rgba(255, 255, 255, 0.86);
   display: grid;
   gap: 20px;
   min-width: 0;
+}
+
+.event-view__veil,
+.event-view__veiled {
+  min-width: 0;
+}
+
+.event-view__veiled {
+  display: grid;
+  gap: 20px;
 }
 
 .event-view__section {

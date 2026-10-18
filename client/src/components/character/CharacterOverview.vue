@@ -77,7 +77,18 @@
 
 			<section v-if="latestStory" class="character-overview__section" aria-labelledby="co-diary">
 				<h2 id="co-diary" class="character-overview__heading">Aus dem Tagebuch</h2>
-				<article class="character-overview__diary mat-parchment">
+				<article
+					class="character-overview__diary mat-parchment"
+					:class="{ 'character-overview__diary--image': !!latestStoryImage }"
+				>
+					<!-- ER2 round 2: story cover image (optional) -->
+					<img
+						v-if="latestStoryImage"
+						class="character-overview__diary-image"
+						:src="latestStoryImage"
+						alt=""
+						loading="lazy"
+					/>
 					<p class="character-overview__eyebrow">
 						{{ $display.storyTypes[latestStory.type] }} · {{ $display.relativeTime(latestStory.createdAt) }}
 					</p>
@@ -140,7 +151,14 @@
 				</header>
 				<ul v-if="contacts.length > 0" class="character-overview__contacts">
 					<li v-for="contact in contacts" :key="contact.target" class="character-overview__contact">
-						<span class="character-overview__monogram" aria-hidden="true">{{ contact.initial }}</span>
+						<img
+							v-if="contactAvatars[contact.target]"
+							class="character-overview__monogram character-overview__monogram--avatar"
+							:src="contactAvatars[contact.target]"
+							alt=""
+							loading="lazy"
+						/>
+						<span v-else class="character-overview__monogram" aria-hidden="true">{{ contact.initial }}</span>
 						<span class="character-overview__contact-text">
 							<router-link class="character-overview__contact-name" :to="contact.to">{{ contact.label }}</router-link>
 							<span class="character-overview__contact-relation">{{ contact.relation }}</span>
@@ -189,6 +207,27 @@
 				action-label="Ergänzen"
 				:action-to="editLink('gallery')"
 			/>
+
+			<!-- ER2 round 2: albums of the character (hidden without albums or API) -->
+			<section v-if="albums.length > 0" class="character-overview__card" aria-labelledby="co-albums">
+				<header class="character-overview__card-head">
+					<h2 id="co-albums" class="character-overview__card-title">Alben</h2>
+				</header>
+				<ul class="character-overview__albums">
+					<li v-for="album in albums" :key="album.id">
+						<router-link class="character-overview__album" :to="`/album/${album.id}`">
+							<span class="character-overview__album-cover" aria-hidden="true">
+								<img v-if="album.coverThumbUrl" :src="album.coverThumbUrl" alt="" loading="lazy" />
+								<q-icon v-else name="photo_album" size="20px" />
+							</span>
+							<span class="character-overview__album-text">
+								<span class="character-overview__album-title">{{ album.title }}</span>
+								<span class="character-overview__album-meta">{{ album.imageCount === 1 ? '1 Bild' : `${album.imageCount} Bilder` }}</span>
+							</span>
+						</router-link>
+					</li>
+				</ul>
+			</section>
 		</aside>
 	</div>
 </template>
@@ -197,6 +236,7 @@
 // ER2-403 — profile overview: fact tiles, background on parchment with a drop
 // cap, the latest diary entry, and previews of rumours, contacts and gallery.
 // Uses only the already loaded profile and content DTOs.
+import type { AlbumSummaryDto } from '@app/shared/dto/albums/album.dto';
 import { CharacterContentDto } from '@app/shared/dto/characters/character-content.dto';
 import { CharacterProfileDto } from '@app/shared/dto/characters/character-profile.dto';
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
@@ -264,12 +304,86 @@ class Props {
 		HtmlViewer,
 		LinkField,
 	},
+	watch: {
+		'character.id'() {
+			void (this as CharacterOverview).loadAlbums();
+		},
+		contactTargets() {
+			void (this as CharacterOverview).loadContactAvatars();
+		},
+	},
 })
 export default class CharacterOverview extends Vue.with(Props) {
 	private unbindHoverCards: (() => void) | null = null;
+	albums: AlbumSummaryDto[] = [];
+	/** ER2 round 2: contact target → avatar URL from POST /characters/lookup. */
+	contactAvatars: Record<string, string> = {};
+	private contactsToken = 0;
 
 	mounted() {
 		this.unbindHoverCards = bindHoverCards(this.$el as HTMLElement);
+		void this.loadAlbums();
+		void this.loadContactAvatars();
+	}
+
+	get contactTargets(): string {
+		return this.contacts.map((contact) => contact.target).join('\n');
+	}
+
+	/** One lookup call for the shown contacts; initials stay when it fails or finds nobody. */
+	async loadContactAvatars() {
+		const contacts = this.showContacts ? this.contacts : [];
+		const token = ++this.contactsToken;
+
+		if (contacts.length === 0) {
+			this.contactAvatars = {};
+			return;
+		}
+
+		try {
+			const results = await this.$api.characters.lookupCharacters(
+				contacts.map((contact) => {
+					const at = contact.target.lastIndexOf('@');
+					return at > 0
+						? { name: contact.target.substring(0, at).trim(), server: contact.target.substring(at + 1).trim() }
+						: { name: contact.target };
+				}),
+			);
+
+			if (token !== this.contactsToken) {
+				return;
+			}
+
+			const avatars: Record<string, string> = {};
+			contacts.forEach((contact) => {
+				const at = contact.target.lastIndexOf('@');
+				const query = at > 0 ? contact.target.substring(0, at).trim() : contact.target;
+				const hit = results.find((result) => result.query === query && !!result.avatar);
+				if (hit) {
+					avatars[contact.target] = hit.avatar;
+				}
+			});
+			this.contactAvatars = avatars;
+		} catch {
+			// Older API without the lookup endpoint: keep the initials.
+			if (token === this.contactsToken) {
+				this.contactAvatars = {};
+			}
+		}
+	}
+
+
+	/** ER2 round 2: GET /albums?characterId=; the production API may lack it. */
+	async loadAlbums() {
+		const characterId = this.character.id;
+		try {
+			const albums = await this.$api.albums.getAlbums(characterId);
+			if (characterId === this.character.id) {
+				this.albums = albums.filter((album) => album.ownerId === characterId).slice(0, 4);
+			}
+		} catch {
+			this.albums = [];
+		}
 	}
 
 	beforeUnmount() {
@@ -335,6 +449,11 @@ export default class CharacterOverview extends Vue.with(Props) {
 
 	get latestStory(): StorySummaryDto | null {
 		return this.stories.length > 0 ? this.stories[0] : null;
+	}
+
+	get latestStoryImage(): string {
+		const story = this.latestStory;
+		return story ? story.imageUrl || story.imageThumbUrl || '' : '';
 	}
 
 	get rumors(): RumorPreview[] {
@@ -506,6 +625,76 @@ export default class CharacterOverview extends Vue.with(Props) {
 	padding: 20px 16px;
 }
 
+// Albums (ER2 round 2) ----------------------------------------------------------
+.character-overview__albums {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.character-overview__album {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 4px;
+	border-radius: 8px;
+	color: var(--ink-primary);
+	text-decoration: none;
+
+	&:hover {
+		background-color: var(--rule-tint);
+	}
+
+	&:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 2px var(--glow-aether), 0 0 0 3px var(--vision-focus-edge);
+	}
+}
+
+.character-overview__album-cover {
+	display: inline-flex;
+	flex: 0 0 44px;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	overflow: hidden;
+	border-radius: 6px;
+	background-color: var(--rule-tint);
+	color: var(--ink-muted);
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+}
+
+.character-overview__album-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.character-overview__album-title {
+	overflow: hidden;
+	font-family: var(--font-ui);
+	font-weight: 600;
+	font-size: 14px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.character-overview__album-meta {
+	font-family: var(--font-ui);
+	font-size: 12px;
+	color: var(--ink-muted);
+}
+
+
 // Fact tiles -----------------------------------------------------------------
 .character-overview__facts {
 	display: grid;
@@ -647,6 +836,24 @@ export default class CharacterOverview extends Vue.with(Props) {
 	&:hover,
 	&:focus-within {
 		border-color: var(--rule-strong);
+	}
+}
+
+.character-overview__diary--image {
+	overflow: hidden;
+}
+
+.character-overview__diary-image {
+	display: block;
+	width: calc(100% + 48px);
+	max-width: none;
+	height: 200px;
+	margin: -20px -24px 16px;
+	object-fit: cover;
+	border-bottom: 1px solid var(--rule-soft);
+
+	@media (max-width: 599px) {
+		height: 150px;
 	}
 }
 
@@ -845,6 +1052,10 @@ export default class CharacterOverview extends Vue.with(Props) {
 	color: var(--ink-primary);
 	font-family: var(--font-display);
 	font-size: 16px;
+}
+
+.character-overview__monogram--avatar {
+	object-fit: cover;
 }
 
 .character-overview__contact-text {

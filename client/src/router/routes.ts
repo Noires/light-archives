@@ -381,6 +381,25 @@ const routes: RouteRecordRaw[] = [
         },
       },
 
+      // ER2 round 2: albums tab of the gallery (same page) and album detail
+      {
+        path: 'gallery/alben',
+        component: () => import('pages/Gallery.vue'),
+        meta: {
+          title: 'Alben',
+          galleryView: 'alben',
+          breadcrumb: [{ label: 'Galerie', to: '/gallery/screenshot' }, 'Alben'],
+        },
+      },
+
+      {
+        path: 'album/:id(\\d+)',
+        component: () => import('pages/Album.vue'),
+        meta: {
+          breadcrumb: [{ label: 'Galerie', to: '/gallery/screenshot' }, { label: 'Alben', to: '/gallery/alben' }, 'Album'],
+        },
+      },
+
       {
         path: 'gallery/:category',
         component: () => import('pages/Gallery.vue'),
@@ -614,6 +633,20 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/Wiki.vue'),
         meta: {
           breadcrumb: (route: RouteLocationNormalized) => ['Wiki', crumbParam(route, 'title')],
+        },
+      },
+
+      // ER2 round 2: wiki revision history and diff
+      {
+        path: 'wiki/:title/versionen',
+        component: () => import('pages/WikiVersions.vue'),
+        meta: {
+          title: 'Versionen',
+          breadcrumb: (route: RouteLocationNormalized) => [
+            { label: 'Wiki', to: '/wiki' },
+            { label: crumbParam(route, 'title'), to: `/wiki/${route.params.title as string}` },
+            'Versionen',
+          ],
         },
       },
 

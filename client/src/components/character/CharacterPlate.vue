@@ -39,7 +39,7 @@
 						<span>{{ part }}</span>
 					</template>
 				</p>
-				<ul v-if="rpStatus || fcLink" class="character-plate__chips" aria-label="Status">
+				<ul v-if="rpStatus || fcLink || playStyleTags.length" class="character-plate__chips" aria-label="Status und Spielstil">
 					<li v-if="rpStatus" class="character-plate__chip">
 						<span class="character-plate__chip-dot" :class="`character-plate__chip-dot--${rpStatus}`" aria-hidden="true"></span>
 						<span>{{ rpLabel }}</span>
@@ -49,6 +49,10 @@
 							<q-icon name="shield" size="16px" aria-hidden="true" />
 							<span>{{ fcName }}</span>
 						</router-link>
+					</li>
+					<!-- ER2 round 2: play-style tags -->
+					<li v-for="tag in playStyleTags" :key="`tag-${tag}`" class="character-plate__chip character-plate__chip--tag">
+						<span>{{ tag }}</span>
 					</li>
 				</ul>
 			</div>
@@ -103,7 +107,7 @@
 			</div>
 		</div>
 	</header>
-	<div class="character-plate__accent" aria-hidden="true"></div>
+	<div class="character-plate__accent" :style="accentStyle" aria-hidden="true"></div>
 	</div>
 </template>
 
@@ -198,6 +202,18 @@ export default class CharacterPlate extends Vue.with(Props) {
 
 	get canSetRp(): boolean {
 		return !!this.character.mine && !this.rpUnavailable && supportsRpStatus(this.character);
+	}
+
+	/** ER2 round 2: play-style tags (optional field). */
+	get playStyleTags(): string[] {
+		const tags = this.character.playStyleTags;
+		return Array.isArray(tags) ? tags.filter((tag) => !!tag && !!tag.trim()) : [];
+	}
+
+	/** ER2 round 2: profile accent colour (#RRGGBB) replaces the default gradient. */
+	get accentStyle(): Record<string, string> | undefined {
+		const color = this.character.accentColor;
+		return color && /^#[0-9a-fA-F]{6}$/.test(color) ? { '--profile-accent': color, background: color } : undefined;
 	}
 
 	get fcLink(): string | null {
@@ -468,6 +484,10 @@ body.body--dark .character-plate {
 		outline: none;
 		box-shadow: 0 0 0 2px var(--glow-aether);
 	}
+}
+
+.character-plate__chip--tag {
+	font-weight: 500;
 }
 
 .character-plate__chip-dot {

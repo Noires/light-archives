@@ -1,13 +1,66 @@
 <template>
   <q-page class="page-gallery">
     <page-head
-      :eyebrow="`Galerie · ${total} ${total === 1 ? 'Bild' : 'Bilder'}`"
+      :eyebrow="eyebrow"
       title="Momente aus Eorzea"
       :lead="description"
     >
       <section-tabs sync="route" :tabs="tabs" aria-label="Galeriebereiche" />
     </page-head>
 
+    <!-- ER2 round 2: albums view (/gallery/alben) -->
+    <template v-if="view === 'albums'">
+      <div v-if="characterId && albums" class="page-gallery__toolbar">
+        <q-btn
+          class="elpis-btn elpis-btn--primary"
+          unelevated
+          no-caps
+          icon="add"
+          label="Album anlegen"
+          @click="onCreateAlbumClick"
+        />
+        <div class="page-gallery__chips" role="group" aria-label="Alben filtern">
+          <button
+            type="button"
+            class="page-gallery__chip"
+            :class="{ 'page-gallery__chip--active': !mine }"
+            :aria-pressed="!mine ? 'true' : 'false'"
+            @click="setMine(false)"
+          >
+            Neueste
+          </button>
+          <button
+            type="button"
+            class="page-gallery__chip"
+            :class="{ 'page-gallery__chip--active': mine }"
+            :aria-pressed="mine ? 'true' : 'false'"
+            @click="setMine(true)"
+          >
+            Von {{ characterShortName || 'meinem Charakter' }}
+          </button>
+        </div>
+      </div>
+      <h2 class="vision-sr-only">Alben</h2>
+      <album-grid v-if="albums && albums.length" :albums="albums" :show-owner="!mine" />
+      <empty-state
+        v-else-if="albums"
+        icon="photo_album"
+        title="Noch keine Alben"
+        :text="characterId ? 'Fasse deine Bilder in einem Album zusammen.' : 'Hier erscheinen Alben aus der Community.'"
+        :action-label="characterId ? 'Album anlegen' : ''"
+        @action="onCreateAlbumClick"
+      />
+      <empty-state
+        v-else
+        icon="photo_album"
+        title="Alben sind noch nicht verfügbar"
+        text="Der Server unterstützt Alben noch nicht. Schau bald wieder vorbei."
+        action-label="Zu den Screenshots"
+        action-to="/gallery/screenshot"
+      />
+    </template>
+
+    <template v-else>
     <div class="page-gallery__toolbar">
       <q-input
         class="page-gallery__search"
@@ -101,14 +154,17 @@
         @update:model-value="setPage"
       />
     </div>
+    </template>
   </q-page>
 </template>
 
 <script lang="ts">
+import type { AlbumSummaryDto } from '@app/shared/dto/albums/album.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 import { ImageCategory } from '@app/shared/enums/image-category.enum';
 import SharedConstants from '@app/shared/SharedConstants';
+import AlbumGrid from 'components/images/AlbumGrid.vue';
 import EmptyState from 'components/vision/EmptyState.vue';
 import PageHead from 'components/vision/PageHead.vue';
 import SectionTabs from 'components/vision/SectionTabs.vue';
@@ -130,11 +186,28 @@ const $api = useApi();
 const $router = useRouter();
 
 interface PageData {
+  view: 'images' | 'albums';
   category: ImageCategory;
   page: number;
   searchQuery: string;
   mine: boolean;
   images: PagingResultDto<ImageSummaryDto>;
+  /** null = albums API missing (production may lack it) */
+  albums: AlbumSummaryDto[] | null;
+}
+
+// ER2 round 2: whether GET /albums answers; probed once per session.
+let albumsApiAvailable: boolean | null = null;
+
+async function probeAlbums(characterId?: number): Promise<AlbumSummaryDto[] | null> {
+  try {
+    const albums = await $api.albums.getAlbums(characterId);
+    albumsApiAvailable = true;
+    return albums;
+  } catch {
+    albumsApiAvailable = false;
+    return null;
+  }
 }
 
 async function load(to: RouteLocationNormalized): Promise<PageData> {
@@ -144,6 +217,18 @@ async function load(to: RouteLocationNormalized): Promise<PageData> {
   const characterId = useStore().getters.characterId;
   const mine = to.query.mine === '1' && !!characterId;
 
+  if (to.meta.galleryView === 'alben') {
+    return {
+      view: 'albums',
+      category: ImageCategory.SCREENSHOT,
+      searchQuery: '',
+      page: 1,
+      mine,
+      images: { total: 0, data: [] },
+      albums: await probeAlbums(mine && characterId ? characterId : undefined),
+    };
+  }
+
   if (!Object.values(ImageCategory).includes(category) || category == ImageCategory.UNLISTED || category == ImageCategory.OFFERING_ITEM) {
     void $router.replace('/');
     throw new Error();
@@ -151,6 +236,8 @@ async function load(to: RouteLocationNormalized): Promise<PageData> {
 
   try {
     return {
+      view: 'images',
+      albums: null,
       category,
       searchQuery,
       page,
@@ -172,6 +259,7 @@ async function load(to: RouteLocationNormalized): Promise<PageData> {
 @Options({
   name: 'PageGallery',
   components: {
+    AlbumGrid,
     EmptyState,
     PageHead,
     SectionTabs,
@@ -193,6 +281,9 @@ async function load(to: RouteLocationNormalized): Promise<PageData> {
   ],
 })
 export default class PageGallery extends Vue {
+  view: 'images' | 'albums' = 'images';
+  albums: AlbumSummaryDto[] | null = null;
+  albumsTab = albumsApiAvailable === true;
   category = ImageCategory.UNLISTED;
   images = [] as ImageSummaryDto[];
   total = 0;
@@ -200,7 +291,9 @@ export default class PageGallery extends Vue {
   searchQuery = '';
   mine = false;
 
-  setContent({ category, page, images, searchQuery, mine }: PageData) {
+  setContent({ view, albums, category, page, images, searchQuery, mine }: PageData) {
+    this.view = view;
+    this.albums = albums;
     this.category = category;
     this.page = page;
     this.searchQuery = searchQuery;
@@ -208,10 +301,34 @@ export default class PageGallery extends Vue {
     this.total = images.total;
     this.images = images.data;
     document.title = `${this.title} - Elpisgarten`;
+    this.syncAlbumsTab();
+  }
+
+  /** Shows the "Alben" tab once GET /albums is known to answer. */
+  syncAlbumsTab() {
+    if (albumsApiAvailable !== null) {
+      this.albumsTab = albumsApiAvailable;
+      return;
+    }
+
+    void probeAlbums().then(() => {
+      this.albumsTab = albumsApiAvailable === true;
+    });
   }
 
   get title() {
+    if (this.view === 'albums') {
+      return 'Alben · Galerie';
+    }
     return `${this.$display.imageCategories[this.category]} · Galerie`;
+  }
+
+  get eyebrow(): string {
+    if (this.view === 'albums') {
+      const count = this.albums ? this.albums.length : 0;
+      return `Galerie · ${count} ${count === 1 ? 'Album' : 'Alben'}`;
+    }
+    return `Galerie · ${this.total} ${this.total === 1 ? 'Bild' : 'Bilder'}`;
   }
 
   get characterId(): number | null {
@@ -227,10 +344,22 @@ export default class PageGallery extends Vue {
     return [
       { key: ImageCategory.SCREENSHOT, label: 'Screenshots', icon: 'photo_camera', count: countFor(ImageCategory.SCREENSHOT), to: '/gallery/screenshot' },
       { key: ImageCategory.ARTWORK, label: 'Kunstwerke', icon: 'palette', count: countFor(ImageCategory.ARTWORK), to: '/gallery/artwork' },
+      {
+        key: 'alben',
+        label: 'Alben',
+        icon: 'photo_album',
+        count: this.view === 'albums' && this.albums ? this.albums.length : undefined,
+        to: '/gallery/alben',
+        hidden: !this.albumsTab && this.view !== 'albums',
+      },
     ];
   }
 
   get description() {
+    if (this.view === 'albums') {
+      return 'Sammlungen von Bildern, zusammengestellt von Charakteren aus der Community.';
+    }
+
     switch (this.category) {
       case ImageCategory.ARTWORK:
         return 'Illustrationen, Konzeptkunst und Charakterdesigns aus der Community.';
@@ -284,7 +413,21 @@ export default class PageGallery extends Vue {
     });
   }
 
+  async onCreateAlbumClick() {
+    const characterId = this.characterId;
+
+    if (!characterId) {
+      return;
+    }
+
+    const AlbumEditDialog = (await import('components/images/AlbumEditDialog.vue')).default;
+    this.$q
+      .dialog({ component: AlbumEditDialog, componentProps: { album: null, characterId } })
+      .onOk((id: number) => void this.$router.push(`/album/${id}`));
+  }
+
   setPage(newPage: number) {
+
     if (newPage >= 1 && newPage <= this.maxPage) {
       this.page = newPage;
       this.refresh();

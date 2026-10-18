@@ -32,6 +32,15 @@
           label="Bearbeiten"
           :to="`/edit-wiki-page/${wikiPage.id}`"
         />
+        <q-btn
+          v-if="revisionsAvailable && !preview"
+          class="elpis-btn elpis-btn--ghost wiki-page-view__rail-action wiki-page-view__rail-versions"
+          flat
+          no-caps
+          icon="history"
+          label="Versionen"
+          :to="versionsLink"
+        />
       </div>
     </aside>
 
@@ -93,6 +102,7 @@
 import { WikiPageDto } from '@app/shared/dto/wiki/wiki-page.dto';
 import { EditPermission } from '@app/shared/enums/edit-permission.enum';
 import html from '@app/shared/html';
+import { wikify } from '@common/common/wikilinks';
 import type { WikiMentionItem, WikiMentions } from '@common/common/api/wiki-api';
 import { Options, prop, Vue } from 'vue-class-component';
 import TriskelionDivider from '../aetherium/TriskelionDivider.vue';
@@ -104,7 +114,8 @@ import HtmlViewer from '../common/HtmlViewer.vue';
 // the ELPIS-508 wikilink styling) and an aside with the infobox (a table or
 // portable infobox at the very start of the content) and "Erwähnt in"
 // (GET /wiki/:title/mentions, ER2-608; hidden when the API lacks it).
-// There is no page history yet, so "Versionen" is left out.
+// ER2 round 2: "Versionen" links to /wiki/:title/versionen once
+// GET /wiki/:title/revisions answers (the production API may lack it).
 
 interface TocHeading {
   id: string;
@@ -219,6 +230,7 @@ export default class WikiPageView extends Vue.with(Props) {
   headings: TocHeading[] = [];
   activeId = '';
   mentions: WikiMentions | null = null;
+  revisionsAvailable = false;
 
   private observer: IntersectionObserver | null = null;
   private mentionsToken = 0;
@@ -264,6 +276,10 @@ export default class WikiPageView extends Vue.with(Props) {
     return !!this.split.infobox || this.mentionGroups.length > 0;
   }
 
+  get versionsLink(): string {
+    return `/wiki/${encodeURIComponent(wikify(this.wikiPage.title || ''))}/versionen`;
+  }
+
   get date(): string {
     return this.$display.formatDate(this.wikiPage.createdAt);
   }
@@ -303,10 +319,22 @@ export default class WikiPageView extends Vue.with(Props) {
   async loadMentions() {
     const token = ++this.mentionsToken;
     this.mentions = null;
+    this.revisionsAvailable = false;
 
     if (this.preview || !this.wikiPage.title || !this.wikiPage.id) {
       return;
     }
+
+    this.$api.wiki.getRevisions(this.wikiPage.title).then(
+      () => {
+        if (token === this.mentionsToken) {
+          this.revisionsAvailable = true;
+        }
+      },
+      () => {
+        // Older API without revisions: no "Versionen" link.
+      },
+    );
 
     try {
       const mentions = await this.$api.wiki.getMentions(this.wikiPage.title);
@@ -503,6 +531,10 @@ export default class WikiPageView extends Vue.with(Props) {
 
 .wiki-page-view__rail-action {
   width: 100%;
+}
+
+.wiki-page-view__rail-versions {
+  margin-top: 6px;
 }
 
 .wiki-page-view__eyebrow {

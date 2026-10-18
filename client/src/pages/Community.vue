@@ -65,6 +65,8 @@
                 <html-viewer :content="community.description" />
               </div>
             </section>
+            <!-- ER2 round 2: "Was wir spielen" -->
+            <focus-items :items="community.focusItems" />
             <iframe
               v-if="community.carrdProfile"
               v-iframe-resize
@@ -75,7 +77,7 @@
               height="500px"
             ></iframe>
             <empty-state
-              v-if="!community.description && !community.carrdProfile"
+              v-if="!community.description && !community.carrdProfile && !(community.focusItems && community.focusItems.length)"
               :variant="community.canEdit ? 'owner' : 'visitor'"
               icon="groups"
               title="Noch keine Beschreibung"
@@ -158,7 +160,8 @@
                   :name="profile.name"
                   :meta="`${$display.races[profile.race]} · ${profile.server}`"
                   :subtitle="profession(profile)"
-                  :rank="rank(profile)"
+                  :rank="profile.communityRole ? '' : rank(profile)"
+                  :role="profile.communityRole || null"
                   :rp-status="rpStatus(profile)"
                 />
               </li>
@@ -173,6 +176,13 @@
             />
           </template>
         </div>
+
+        <group-member-content
+          v-else-if="tab === 'galerie' || tab === 'geschichten'"
+          :kind="tab"
+          :member-ids="memberIds"
+          :group-name="community.name"
+        />
 
         <report-violation-section :pageType="PageType.COMMUNITY" :pageId="community.id" hide-copy-link />
       </div>
@@ -199,7 +209,9 @@ import { isEmptyFieldValue } from 'components/character/empty-field';
 import { keepTabsInView } from 'components/character/keep-tabs-in-view';
 import { stripWikilinks } from 'components/character/profile-sections';
 import { activeRpStatus } from 'components/character/rp-status';
+import FocusItems from 'components/communities/FocusItems.vue';
 import GroupFacts from 'components/communities/GroupFacts.vue';
+import GroupMemberContent from 'components/communities/GroupMemberContent.vue';
 import GroupPlate from 'components/communities/GroupPlate.vue';
 import type { GroupFact, GroupPlateChip } from 'components/communities/group-plate';
 import AvatarStack from 'components/vision/AvatarStack.vue';
@@ -245,7 +257,9 @@ async function load(
     CommunityApplicantEditor,
     CommunityMemberEditor,
     EmptyState,
+    FocusItems,
     GroupFacts,
+    GroupMemberContent,
     GroupPlate,
     HtmlViewer,
     MemberCard,
@@ -317,7 +331,14 @@ export default class PageCommunity extends Vue {
     return [
       { key: 'uebersicht', label: 'Übersicht', icon: 'groups' },
       { key: 'mitglieder', label: 'Mitglieder', icon: 'group', count: this.members.length },
+      // ER2 round 2: only when the member list carries character ids (newer API)
+      { key: 'galerie', label: 'Galerie', icon: 'photo_library', hidden: this.memberIds.length === 0 },
+      { key: 'geschichten', label: 'Geschichten', icon: 'auto_stories', hidden: this.memberIds.length === 0 },
     ];
+  }
+
+  get memberIds(): number[] {
+    return this.members.map((member) => member.id).filter((id): id is number => typeof id === 'number');
   }
 
   get crumbs(): BreadcrumbItem[] {
@@ -400,7 +421,7 @@ export default class PageCommunity extends Vue {
   /** Only the founder is known without the management endpoint. */
   rank(profile: CharacterSummaryDto): string {
     const c = this.community;
-    return c.owner && profile.name === c.owner && (!c.ownerServer || profile.server === c.ownerServer) ? 'Gründung' : '';
+    return c.owner && profile.name === c.owner && (!c.ownerServer || profile.server === c.ownerServer) ? 'Gründer:in' : '';
   }
 
   rpStatus(profile: CharacterSummaryDto): RpStatus | null {

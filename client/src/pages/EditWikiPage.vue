@@ -26,6 +26,15 @@
           />
           <h6>Content *</h6>
           <html-editor v-model="wikiPage.content" />
+          <!-- ER2 round 2: note stored with the revision this save writes -->
+          <q-input
+            v-model="changeNote"
+            class="page-edit-wiki-page__change-note"
+            label="Änderungsnotiz"
+            hint="Optional. Erscheint im Versionsverlauf, z. B. „Abschnitt Geschichte ergänzt“."
+            maxlength="200"
+            counter
+          />
           <section class="page-edit-wiki-page__license text-caption">
             By submitting this material, you agree to license it under the <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative Commons Attribution-ShareAlike (CC-BY-SA 4.0) <q-icon class="external-link-icon" name="launch" /></a> license. This means that everyone is free to share your material and create derivative works, as long as they properly credit you and release their modifications under the same license.
           </section>
@@ -120,6 +129,7 @@ export default class PageEditWikiPage extends Vue {
   confirmRevert = false;
 
   selectedCharacterId: number | null = null;
+  changeNote = '';
 
   private async load(params: RouteParams) {
     const id = parseInt(params.id as string, 10);
@@ -151,6 +161,7 @@ export default class PageEditWikiPage extends Vue {
     this.selectedCharacterId = this.$store.getters.characterId || null;
 
     this.wikiPage = new WikiPageDto(this.wikiPageBackup);
+    this.changeNote = '';
   }
 
   revert() {
@@ -163,6 +174,8 @@ export default class PageEditWikiPage extends Vue {
 
   async onSubmit() {
     this.saving = true;
+    // Write only; an older API ignores the unknown field (whitelist validation).
+    this.wikiPage.changeNote = this.changeNote.trim() || undefined;
 
     try {
       if (!this.wikiPage.id) {
@@ -177,6 +190,8 @@ export default class PageEditWikiPage extends Vue {
         await this.$api.wiki.editWikiPage(this.wikiPage);
       }
 
+      this.wikiPage.changeNote = undefined;
+      this.changeNote = '';
       this.wikiPageBackup = new WikiPageDto(this.wikiPage);
       this.savePulseTrigger++;
 
@@ -220,6 +235,11 @@ export default class PageEditWikiPage extends Vue {
 
 .page-edit-wiki-page__preview h6 {
   font-family: $header-font;
+}
+
+.page-edit-wiki-page__change-note {
+  margin-top: 16px;
+  max-width: 640px;
 }
 
 .page-edit-wiki-page__license {
