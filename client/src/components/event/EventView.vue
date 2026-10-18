@@ -96,31 +96,13 @@
       </div>
 
       <aside class="event-view__aside" aria-label="Ort und Details">
-        <slot name="location">
-          <section
-            v-for="(location, index) in event.locations"
-            :key="location.id || index"
-            class="event-view__card"
-          >
-            <h2 class="event-view__card-title">{{ index === 0 ? 'Ort' : `Ort ${index + 1}` }}</h2>
-            <p class="event-view__card-name">{{ locationTitle(location, index) }}</p>
-            <p v-if="location.address && location.address !== location.name" class="event-view__row">
-              <q-icon name="place" aria-hidden="true" />
-              <span>{{ location.address }}</span>
-            </p>
-            <p v-if="location.server" class="event-view__row">
-              <q-icon name="public" aria-hidden="true" />
-              <span>{{ location.server }}</span>
-            </p>
-            <p v-if="location.link" class="event-view__row">
-              <q-icon name="link" aria-hidden="true" />
-              <a :href="location.link" target="_blank" rel="noopener">{{ linkLabel(location.link, location.linkText) }}</a>
-            </p>
-            <router-link v-if="location.venueId" class="event-view__card-link" :to="`/venue/${location.venueId}`">
-              Treffpunkt anzeigen
-            </router-link>
-          </section>
-        </slot>
+        <event-location-card
+          v-for="(location, index) in event.locations"
+          :key="location.id || index"
+          :location="location"
+          :venue="location.venueId ? venues[location.venueId] || null : null"
+          :index="index"
+        />
 
         <section class="event-view__card" aria-labelledby="event-facts">
           <h2 id="event-facts" class="event-view__card-title">Details</h2>
@@ -166,7 +148,7 @@
 <script lang="ts">
 import { BaseEventDto } from '@app/shared/dto/events/base-event.dto';
 import { EventLinkDto } from '@app/shared/dto/events/event-link.dto';
-import { EventLocationDto } from '@app/shared/dto/events/event-location.dto';
+import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
 import { getEventTypeIcon, getEventTypeLabel } from 'src/common/event-types';
 import { DateTime } from 'luxon';
@@ -174,12 +156,13 @@ import { Options, prop, Vue } from 'vue-class-component';
 import Breadcrumbs from 'components/vision/Breadcrumbs.vue';
 import HtmlViewer from '../common/HtmlViewer.vue';
 import LinkField from '../common/LinkField.vue';
+import EventLocationCard from './EventLocationCard.vue';
 import { isAdultEvent, isEventLive, locationLabel, serverDateTime } from './event-display';
 
 // ER2-504 — event detail: hero (banner or gradient, left-to-right scrim,
 // glass date block, chips, Cinzel title, subline), then a two-column body.
-// Slots: `actions` (sticky bar under the hero), `programme`, `location`
-// (replaces the plain location cards) and `attendees` (right rail).
+// Slots: `actions` (sticky bar under the hero), `programme` and
+// `attendees` (right rail).
 
 type EventWithExtras = BaseEventDto & { seriesLabel?: string };
 
@@ -191,6 +174,11 @@ class Props {
   preview = prop<boolean>({
     default: false,
   });
+
+  /** Venues linked from `locations[].venueId`, keyed by ID (ER2-505). */
+  venues = prop<Record<number, VenueDto>>({
+    default: () => ({}),
+  });
 }
 
 @Options({
@@ -199,6 +187,7 @@ class Props {
     Breadcrumbs,
     HtmlViewer,
     LinkField,
+    EventLocationCard,
   },
 })
 export default class EventView extends Vue.with(Props) {
@@ -349,10 +338,6 @@ export default class EventView extends Vue.with(Props) {
       return '';
     }
     return this.$display.formatDateTimeLocal(value);
-  }
-
-  locationTitle(location: EventLocationDto, index: number): string {
-    return location.name || location.address || location.server || `Ort ${index + 1}`;
   }
 
   linkLabel(link: string, linkText?: string): string {
@@ -640,41 +625,6 @@ $hero-ink-soft: rgba(255, 255, 255, 0.86);
   border-radius: 12px;
   background-color: var(--vision-card);
   color: var(--ink-primary);
-}
-
-.event-view__card-name {
-  margin: 0 0 8px;
-  font-family: var(--font-ui);
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.event-view__row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin: 0 0 6px;
-  font-family: var(--font-ui);
-  font-size: 14px;
-  color: var(--ink-muted);
-
-  .q-icon {
-    margin-top: 2px;
-  }
-
-  a {
-    color: var(--ink-link);
-    overflow-wrap: anywhere;
-  }
-}
-
-.event-view__card-link {
-  display: inline-block;
-  margin-top: 6px;
-  font-family: var(--font-ui);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ink-link) !important;
 }
 
 .event-view__facts {

@@ -5,7 +5,7 @@
       <q-btn flat class="elpis-btn elpis-btn--ghost" icon="delete" label="Event löschen" @click="onDeleteClick" />
     </section>
 
-    <event-view v-if="event.title" :event="event">
+    <event-view v-if="event.title" :event="event" :venues="venues">
       <template #actions>
         <div class="page-event__actionbar" role="region" aria-label="Teilnahme">
           <div class="page-event__actions">
@@ -92,6 +92,7 @@
 <script lang="ts">
 import { EventDto } from '@app/shared/dto/events/event.dto';
 import { EventParticipantDto } from '@app/shared/dto/events/event-participant.dto';
+import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { EventRegistrationKind } from '@app/shared/enums/event-registration-kind.enum';
 import { PageType } from '@app/shared/enums/page-type.enum';
 import errors from '@app/shared/errors';
@@ -189,10 +190,31 @@ export default class PageEvent extends Vue {
   eventId = -1;
   event = {} as EventDto;
   pendingKind: Kind | null = null;
+  venues: Record<number, VenueDto> = {};
 
   setContent(event: EventDto, eventId: number) {
+    const changed = eventId !== this.eventId;
     this.eventId = eventId;
     this.event = event;
+    if (changed) {
+      this.venues = {};
+    }
+    void this.loadVenues();
+  }
+
+  /** ER2-505: linked venues for the structured location card. */
+  private async loadVenues() {
+    const ids = Array.from(new Set((this.event.locations || [])
+      .map((location) => location.venueId)
+      .filter((id): id is number => !!id && !this.venues[id])));
+    for (const id of ids) {
+      try {
+        const venue = await this.$api.venues.getVenue(id);
+        this.venues = { ...this.venues, [id]: venue };
+      } catch (e) {
+        // Optional: the card falls back to the free-text address.
+      }
+    }
   }
 
   get selectedCharacterId(): number | null {
