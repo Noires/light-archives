@@ -12,8 +12,8 @@
 			@mouseout="onDrawerMouseOut"
 		>
 			<q-scroll-area class="fit" :horizontal-thumb-style="{ opacity: 0 }">
-				<q-list padding>
-					<q-item clickable v-ripple @click="onTab('profile')">
+				<q-list padding class="page-character-layout__menu">
+					<q-item clickable v-ripple :active="tab === 'profile'" :aria-current="tab === 'profile' ? 'page' : undefined" @click="onTab('profile')">
 						<q-item-section avatar>
 							<q-icon name="account_circle" />
 						</q-item-section>
@@ -23,7 +23,7 @@
 						</q-item-section>
 					</q-item>
 
-					<q-item v-show="character.showAppearance" clickable v-ripple @click="onTab('appearance')">
+					<q-item v-show="character.showAppearance" clickable v-ripple :active="tab === 'appearance'" :aria-current="tab === 'appearance' ? 'page' : undefined" @click="onTab('appearance')">
 						<q-item-section avatar>
 							<q-icon name="curtains" />
 						</q-item-section>
@@ -33,7 +33,7 @@
 						</q-item-section>
 					</q-item>
 
-					<q-item v-show="character.showPersonality" clickable v-ripple @click="onTab('personality')">
+					<q-item v-show="character.showPersonality" clickable v-ripple :active="tab === 'personality'" :aria-current="tab === 'personality' ? 'page' : undefined" @click="onTab('personality')">
 						<q-item-section avatar>
 							<q-icon name="psychology" />
 						</q-item-section>
@@ -43,7 +43,7 @@
 						</q-item-section>
 					</q-item>
 
-					<q-item v-show="character.showContacts" clickable v-ripple @click="onTab('contacts')">
+					<q-item v-show="character.showContacts" clickable v-ripple :active="tab === 'contacts'" :aria-current="tab === 'contacts' ? 'page' : undefined" @click="onTab('contacts')">
 						<q-item-section avatar>
 							<q-icon name="diversity_3" />
 						</q-item-section>
@@ -53,7 +53,7 @@
 						</q-item-section>
 					</q-item>
 
-					<q-item v-show="character.showRumors" clickable v-ripple @click="onTab('rumors')">
+					<q-item v-show="character.showRumors" clickable v-ripple :active="tab === 'rumors'" :aria-current="tab === 'rumors' ? 'page' : undefined" @click="onTab('rumors')">
 						<q-item-section avatar>
 							<q-icon name="sms" />
 						</q-item-section>
@@ -63,7 +63,7 @@
 						</q-item-section>
 					</q-item>
 
-					<q-item v-show="character.showDiary" clickable v-ripple @click="onTab('diary')">
+					<q-item v-show="character.showDiary" clickable v-ripple :active="tab === 'diary'" :aria-current="tab === 'diary' ? 'page' : undefined" @click="onTab('diary')">
 						<q-item-section avatar>
 							<q-icon name="auto_stories" />
 						</q-item-section>
@@ -73,7 +73,7 @@
 						</q-item-section>
 					</q-item>
 
-					<q-item v-show="character.showGallery" clickable v-ripple @click="onTab('gallery')">
+					<q-item v-show="character.showGallery" clickable v-ripple :active="tab === 'gallery'" :aria-current="tab === 'gallery' ? 'page' : undefined" @click="onTab('gallery')">
 						<q-item-section avatar>
 							<q-icon name="collections" />
 						</q-item-section>
@@ -83,7 +83,7 @@
 						</q-item-section>
 					</q-item>
 					
-					<q-item v-show="character.showInventory" clickable v-ripple @click="onTab('inventory')">
+					<q-item v-show="character.showInventory" clickable v-ripple :active="tab === 'inventory'" :aria-current="tab === 'inventory' ? 'page' : undefined" @click="onTab('inventory')">
 						<q-item-section avatar>
 							<q-icon name="diamond" />
 						</q-item-section>
@@ -93,7 +93,7 @@
 						</q-item-section>
 					</q-item>
 
-					<q-item v-show="hasPenAndPaperSheet" clickable v-ripple @click="onTab('pen-and-paper')">
+					<q-item v-show="hasPenAndPaperSheet" clickable v-ripple :active="tab === 'pen-and-paper'" :aria-current="tab === 'pen-and-paper' ? 'page' : undefined" @click="onTab('pen-and-paper')">
 						<q-item-section avatar>
 							<q-icon name="casino" />
 						</q-item-section>
@@ -428,6 +428,35 @@ body.body--dark .page-character-layout .q-drawer.q-drawer--left.mat-aetherglass 
 
 .page-character-layout .q-drawer.q-drawer--left.mat-aetherglass::before {
 	display: none;
+}
+
+// ER2-110 — interim active state for the section drawer (until ER2-401),
+// matching the venue drawer (ELPIS-406): 3 px gold rail plus a soft tint.
+// The transition collapses under the global reduced-motion guard.
+.page-character-layout__menu .q-item {
+	transition:
+		background-color var(--motion-base) var(--ease-elpis),
+		color var(--motion-base) var(--ease-elpis);
+}
+
+.page-character-layout__menu .q-item.q-item--active {
+	background-color: rgba(186, 155, 91, 0.14);
+	color: var(--surface-ink);
+	box-shadow: inset 3px 0 0 var(--rule-gold);
+}
+
+.page-character-layout__menu .q-item.q-item--active .q-item__section--avatar .q-icon {
+	color: var(--rule-gold);
+}
+
+body.body--dark .page-character-layout__menu .q-item.q-item--active {
+	background-color: rgba(193, 155, 255, 0.16);
+	color: var(--ink-luminous);
+	box-shadow: inset 3px 0 0 var(--rule-arcane);
+}
+
+body.body--dark .page-character-layout__menu .q-item.q-item--active .q-item__section--avatar .q-icon {
+	color: var(--glow-aether-d);
 }
 
 // Page chrome: vellum is full-bleed against the q-layout edges, so drop the
