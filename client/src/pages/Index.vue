@@ -82,6 +82,12 @@
           :tonight-count="tonightEvents.length"
           :available="eventsAvailable"
         />
+        <home-open-venues
+          :venues="sortedVenues"
+          :open-count="venuesOpenCount"
+          :loading="venuesLoading"
+          :available="venuesAvailable"
+        />
       </div>
     </section>
 
@@ -260,10 +266,15 @@ import {
   eveningWindows,
   isEventLive,
   loadHomeEvents,
+  loadHomeVenues,
+  loadVenueImages,
   overlaps,
   SERVER_ZONE,
+  sortVenuesByOpening,
   toTimelineEvent,
 } from 'components/mainpage/home-data';
+import type { HomeVenue } from 'components/mainpage/home-data';
+import HomeOpenVenues from 'components/mainpage/HomeOpenVenues.vue';
 import HomeUpNext from 'components/mainpage/HomeUpNext.vue';
 import SectionTabs from 'components/vision/SectionTabs.vue';
 import TimelineStrip from 'components/vision/TimelineStrip.vue';
@@ -331,6 +342,7 @@ async function load(): Promise<HomeData> {
     VenueList,
     CommunityList,
     ThumbGallery,
+    HomeOpenVenues,
     HomeUpNext,
     SectionTabs,
     TimelineStrip,
@@ -357,6 +369,9 @@ export default class PageIndex extends Vue {
   events: EventSummaryDto[] = [];
   eventsAvailable = true;
   timelineView: TimelineView = 'tonight';
+  venues: HomeVenue[] = [];
+  venuesLoading = true;
+  venuesAvailable = true;
   now = Date.now();
 
   private clock: number | null = null;
@@ -389,6 +404,7 @@ export default class PageIndex extends Vue {
     this.clock = window.setInterval(() => {
       this.now = Date.now();
     }, 60000);
+    void this.loadVenues();
 
     if (!this.revealEnabled) {
       return;
@@ -450,6 +466,38 @@ export default class PageIndex extends Vue {
     if (this.liveEvents.length > 0) {
       this.timelineView = 'now';
     }
+  }
+
+  // --- ER2-304: "Jetzt geöffnet" ------------------------------------------
+
+  async loadVenues() {
+    try {
+      this.venues = await loadHomeVenues(this.$api);
+    } catch (e) {
+      console.log(e);
+      this.venuesAvailable = false;
+    } finally {
+      this.venuesLoading = false;
+    }
+
+    // Summaries carry no image; fetch banners for the rows on screen only.
+    const images = await loadVenueImages(this.$api, this.sortedVenues.slice(0, 4));
+    if (Object.keys(images).length > 0) {
+      this.venues = this.venues.map((venue) => (images[venue.id] ? { ...venue, imageSrc: images[venue.id] } : venue));
+    }
+  }
+
+  get sortedVenues(): HomeVenue[] {
+    return sortVenuesByOpening(this.venues.filter((venue) => venue.info.state !== 'unknown'));
+  }
+
+  get venuesOpenCount(): number {
+    return this.venues.filter((venue) => venue.info.state === 'open').length;
+  }
+
+  /** False when no venue carries opening data at all (hide the stat instead of showing 0). */
+  get venueStatusKnown(): boolean {
+    return this.venuesAvailable && !this.venuesLoading && this.venues.some((venue) => venue.info.state !== 'unknown');
   }
 
   // --- ER2-302: "Heute in Eorzea" ------------------------------------------
