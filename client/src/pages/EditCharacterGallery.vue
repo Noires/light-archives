@@ -1,5 +1,5 @@
 <template>
-  <h2>Gallerie</h2>
+  <h2>Galerie</h2>
   <template v-if="content.images && content.images.length > 0">
     <thumb-gallery :images="content.images" />
   </template>

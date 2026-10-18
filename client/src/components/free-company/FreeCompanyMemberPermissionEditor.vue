@@ -118,7 +118,7 @@ export default class FreeCompanyMemberPermissionEditor extends Vue.with(Props) {
     try {
       await freeCompaniesApi.setMemberEditPermission(this.freeCompanyId, member.characterId, { canEdit });
       member.canEdit = canEdit;
-      notifySuccess(`Bearbeitungsrechte fuer ${member.name} aktualisiert.`);
+      notifySuccess(`Bearbeitungsrechte für ${member.name} aktualisiert.`);
     } catch (e) {
       notifyError(e);
     } finally {

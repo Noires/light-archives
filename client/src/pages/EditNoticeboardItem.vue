@@ -38,7 +38,7 @@
             clearable
             label="Treffpunkt (optional)"
             :loading="loadingVenues"
-            hint="Stellenangebote/Stellengesuche koennen direkt mit einem Treffpunkt verknuepft werden."
+            hint="Stellenangebote/Stellengesuche können direkt mit einem Treffpunkt verknüpft werden."
           />
           <h6>Content *</h6>
           <html-editor v-model="noticeboardItem.content" />

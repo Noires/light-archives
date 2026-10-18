@@ -116,7 +116,7 @@ export default class PageMyFreeCompany extends Vue {
           flat: true,
         },
         cancel: {
-          label: 'Cancel',
+          label: 'Abbrechen',
           color: 'secondary',
           flat: true,
         },

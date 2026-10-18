@@ -14,7 +14,7 @@
 				</q-item-section>
 				<q-item-section side class="my-content-list__buttons">
 					<q-btn color="secondary" flat icon="edit" title="Bearbeiten" :to="getEditLink(item)" @click.prevent="onEditClick(item)" />
-					<q-btn color="danger" flat icon="delete" title="Löschen" @click.prevent="onDeleteClick(item)" />
+					<q-btn class="elpis-btn elpis-btn--danger" unelevated icon="delete" title="Löschen" aria-label="Löschen" @click.prevent="onDeleteClick(item)" />
 				</q-item-section>
 			</q-item>
 		</q-list>
@@ -69,7 +69,7 @@ export default class MyContentList extends Vue.with(Props) {
 		const description = this.$display.pageTypes[this.type];
 
 		this.$q.dialog({
-        title: 'Confirm Delete',
+        title: 'Löschen bestätigen',
         message: `Möchtest du “${item.title}” wirklich löschen?`,
 				ok: {
 					label: 'Löschen',
