@@ -267,7 +267,7 @@ Conventions follow `UI_UX_REWORK_BACKLOG.md`: sizes **XS** (≤ 0.5 d) · **S** 
 | ER2-903 | **[done 2026-10-18 — code-level; no screen-reader/browser session yet]** Target sizes | S | – | interactive targets ≥ 24 × 24 px, primary actions ≥ 44 px (WCAG 2.5.8) |
 | ER2-904 | Baseline task test | S | Epic 1 | three Vision §7 tasks, 5 participants, recorded in `memory.md` |
 | ER2-905 | Re-test after Phase D | S | Epics 2–5 | same tasks; compare against §0 targets |
-| ER2-906 | Board conformance review | S | per epic | each implemented page compared with its Penpot board in Hydaelyn and Zodiark; deviations logged |
+| ER2-906 | **[done 2026-10-19]** Board conformance review | S | per epic | each implemented page compared with its Penpot board in Hydaelyn and Zodiark; deviations logged |
 
 ---
 
@@ -428,7 +428,7 @@ Each phase ships on its own and has a demo target.
 | ER2-1025 | **[done 2026-10-18]** Dead code | S | – | unused `CalendarSidebarWidget`, `SiteSearchField`, `EventList`/`EventItem`, `CommunityList`, `FreeCompanyNameList` and their global styles removed; store `events` state kept (still dispatched) |
 | ER2-1026 | **[done 2026-10-18]** Lifestream syntax | S | 509 | `/li` command matches Lifestream's parser: English district names, `W<ward> P<plot>` with subdivision plots 31–60, apartments as `W<ward> [sub] A<room>`; source cited in `venue-location.ts` |
 | ER2-1027 | **[done 2026-10-18]** Accessibility re-check | S | 901–903 | rerun focus, screen-reader and target-size checks on every Round 2 surface (bell, Gemerkt, tabs, map, constellation) |
-| ER2-1028 | **[open — needs Penpot MCP]** Board conformance (ER2-906) | S | 906 | each Round 1 and Round 2 page compared with its Penpot board in Hydaelyn and Zodiark; deviations logged |
+| ER2-1028 | **[done 2026-10-19]** Board conformance (ER2-906) | S | 906 | each Round 1 and Round 2 page compared with its Penpot board in Hydaelyn and Zodiark; deviations logged |
 
 ---
 

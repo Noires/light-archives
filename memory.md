@@ -71,7 +71,8 @@ All round-2 tickets ER2-1001..1027 done on `vision/er2` (ER2-1028 board conforma
 - Accessibility: `client/scripts/e2e/{a11y-audit,interactions}.mjs` (headless Edge + axe from CDN); 0 serious/critical axe violations on 23 routes x 2 themes x 2 widths; 9/9 interaction checks PASS. Report: `A11Y_AUDIT_ER2.md`.
 - User tests: kit in `UI_UX_USER_TEST_KIT.md` (German) — sessions still to be run by the team, plus a real NVDA/VoiceOver pass.
 - Security hotfix branch `hotfix/community-permission-await` (from `main`, unpushed) for the community permission bug.
-- Still open: ER2-906/1028 Penpot board conformance (MCP refuses connection; reconnect the plugin).
+- ER2-906/1028 Penpot board conformance done 2026-10-19: fixed copy-link leftover (boolean props lacked `type: Boolean`, so bare attributes were ignored — all 46 fixed), raw wikilinks in FC facts, overview width, fact hyphenation, footer link row. Intentional deviations noted on the Penpot index board.
+- Still open: user test sessions + real screen-reader pass (kit ready).
 
 ## Next ticket
 
