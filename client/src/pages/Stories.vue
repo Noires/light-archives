@@ -32,6 +32,9 @@
         outlined
         dense
         use-input
+        hide-selected
+        fill-input
+        input-debounce="150"
         emit-value
         map-options
         label="Schlagwort"

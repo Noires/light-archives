@@ -39,6 +39,8 @@
                 v-model="event.locations[0].venueId"
                 label="Verknüpfter Treffpunkt (optional)"
                 use-input
+                hide-selected
+                fill-input
                 input-debounce="250"
                 emit-value
                 map-options
