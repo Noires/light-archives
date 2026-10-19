@@ -42,10 +42,7 @@ export interface NotificationUnreadCountDto {
   count?: number;
 }
 
-/**
- * In-app notifications are on per type by default. Discord DMs are strictly opt-in
- * (`discordDm`, default false) and can be switched off at any time.
- */
+/** In-app notifications are on per type by default. */
 export interface NotificationPreferencesDto {
   seriesPart?: boolean;
   authorStory?: boolean;
@@ -53,11 +50,10 @@ export interface NotificationPreferencesDto {
   eventReminder?: boolean;
   eventRegistration?: boolean;
   imageTag?: boolean;
-  discordDm?: boolean;
   reminderMinutes?: number;
 }
 
-export type NotificationPreferenceFlag = Exclude<keyof NotificationPreferencesDto, 'discordDm' | 'reminderMinutes'>;
+export type NotificationPreferenceFlag = Exclude<keyof NotificationPreferencesDto, 'reminderMinutes'>;
 
 export const NOTIFICATION_PREFERENCE_FLAG: Readonly<{ [type in NotificationType]: NotificationPreferenceFlag }> = Object.freeze({
   'series-part': 'seriesPart',
@@ -81,8 +77,6 @@ export class NotificationPreferencesUpdateDto implements NotificationPreferences
   @IsOptional() @IsBoolean() eventRegistration?: boolean;
 
   @IsOptional() @IsBoolean() imageTag?: boolean;
-
-  @IsOptional() @IsBoolean() discordDm?: boolean;
 
   @IsOptional()
   @Type(() => Number)

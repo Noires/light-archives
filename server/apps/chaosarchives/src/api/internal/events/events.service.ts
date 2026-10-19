@@ -31,9 +31,13 @@ import { DateTime, Duration } from 'luxon';
 import { firstValueFrom } from 'rxjs';
 import { Connection, EntityManager, In, MoreThanOrEqual, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { Redis } from 'ioredis';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { getVerifiedCharacter } from '../../../common/api-checks';
 import { Contains } from '../../../common/db';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
+import { buildGroupEventIdsQuery, GroupEventsOptions, orderByIds } from '../../../common/group-events';
+import { GroupKind } from '../../../common/group-summary';
 import utils from '../../../common/utils';
 import { toEventSeriesSpec } from '../event-series/event-series.service';
 import { ImagesService } from '../images/images.service';
@@ -41,8 +45,6 @@ import { ChocoboChronicleService } from './chocobo-chronicle.service';
 import { CrescentMoonPublishingService } from './crescent-moon-publishing.service';
 import { ExternalEvent } from './model/external-event';
 import { buildIcsCalendar, htmlToIcsPlainText, IcsEvent } from './ics';
-import { Redis } from 'ioredis';
-import { InjectRedis } from '@liaoliaots/nestjs-redis';
 
 @Injectable()
 export class EventsService {
@@ -858,6 +860,34 @@ export class EventsService {
     const events = await query.distinct(true).getMany();
 
     return this.toEventSummaryDtos(events);
+  }
+
+  /**
+   * ER2: events of a free company or community: non-hidden events whose owner
+   * character is a member (see common/group-events.ts for the definition).
+   */
+  async getEventsForGroup(kind: GroupKind, groupId: number, options: GroupEventsOptions = {}): Promise<EventSummaryDto[]> {
+    const { sql, params } = buildGroupEventIdsQuery(kind, groupId, options);
+    const rows: { id: number | string }[] = await this.connection.query(sql, params);
+    const ids = rows.map((row) => Number(row.id));
+
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const events = await this.eventRepo
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.locations', 'location')
+      .leftJoinAndSelect('location.server', 'server')
+      .leftJoinAndSelect('location.venue', 'venue')
+      .leftJoinAndSelect('event.icon', 'icon')
+      .leftJoinAndSelect('icon.owner', 'iconOwner')
+      .leftJoinAndSelect('event.contentNotes', 'contentNotes')
+      .leftJoinAndSelect('event.series', 'series')
+      .where('event.id IN (:...ids)', { ids })
+      .getMany();
+
+    return this.toEventSummaryDtos(orderByIds(ids, events));
   }
 
   private normalizeEventType(eventType?: EventType | null): EventType {

@@ -31,21 +31,6 @@
         :disable="!prefs.eventReminder || saving === 'reminderMinutes'"
         @update:model-value="(value) => save('reminderMinutes', value)"
       />
-
-      <div class="notification-prefs__discord">
-        <!-- Discord delivery is not wired on the server yet: the toggle only
-             stores the opt-in, so the label says so. -->
-        <q-toggle
-          class="notification-prefs__toggle"
-          :model-value="!!prefs.discordDm"
-          label="Discord-Erinnerung (sobald verfügbar)"
-          :disable="saving === 'discordDm'"
-          @update:model-value="(value) => save('discordDm', value)"
-        />
-        <p class="notification-prefs__hint">
-          Freiwillig und jederzeit abschaltbar: Event-Erinnerungen zusätzlich als Direktnachricht vom Elpisgarten-Bot.
-        </p>
-      </div>
     </template>
   </section>
 </template>
@@ -57,12 +42,12 @@ import { Options, Vue } from 'vue-class-component';
 import { markUnavailable } from './social-state';
 
 // ER2 social — "Einstellungen" card on /benachrichtigungen: one toggle per
-// notification type, the reminder lead time and the Discord opt-in. Each
+// notification type and the reminder lead time. Each
 // change is saved at once (PUT with just that field) and rolled back on
 // failure. Hidden when the preferences endpoint is missing.
 
 type PrefKey = keyof NotificationPreferencesDto;
-type FlagKey = Exclude<PrefKey, 'discordDm' | 'reminderMinutes'>;
+type FlagKey = Exclude<PrefKey, 'reminderMinutes'>;
 
 const BASE_MINUTES = [ 15, 30, 60, 120 ];
 
@@ -157,8 +142,7 @@ export default class NotificationPreferencesCard extends Vue {
   color: var(--ink-primary);
 }
 
-.notification-prefs__lead,
-.notification-prefs__hint {
+.notification-prefs__lead {
   margin: 0;
   font: 400 13px/19px var(--font-ui);
   color: var(--ink-muted);
@@ -185,19 +169,6 @@ export default class NotificationPreferencesCard extends Vue {
 
   :deep(.q-toggle__label) {
     flex: 1;
-  }
-}
-
-.notification-prefs__select {
-  margin-bottom: 14px;
-}
-
-.notification-prefs__discord {
-  padding-top: 12px;
-  border-top: 1px solid var(--rule-soft);
-
-  .notification-prefs__hint {
-    padding-left: 10px;
   }
 }
 </style>

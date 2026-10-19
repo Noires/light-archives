@@ -151,6 +151,13 @@
 					:group-name="fc.name"
 				/>
 
+				<group-events
+					v-else-if="tab === 'events' && groupEvents"
+					:upcoming="groupEvents.upcoming"
+					:past="groupEvents.past"
+					:group-name="fc.name"
+				/>
+
 				<report-violation-section :pageType="PageType.FREE_COMPANY" :pageId="fc.id" hide-copy-link />
 			</div>
 		</template>
@@ -180,7 +187,10 @@ import { keepTabsInView } from 'components/character/keep-tabs-in-view';
 import { activeRpStatus } from 'components/character/rp-status';
 import FocusItems from 'components/communities/FocusItems.vue';
 import GroupFacts from 'components/communities/GroupFacts.vue';
+import GroupEvents from 'components/communities/GroupEvents.vue';
 import GroupMemberContent from 'components/communities/GroupMemberContent.vue';
+import { loadGroupEvents } from 'components/communities/member-content';
+import type { GroupEvents as GroupEventLists } from 'components/communities/member-content';
 import GroupPlate from 'components/communities/GroupPlate.vue';
 import type { GroupFact, GroupPlateChip } from 'components/communities/group-plate';
 import FreeCompanyMemberPermissionEditor from 'components/free-company/FreeCompanyMemberPermissionEditor.vue';
@@ -269,6 +279,7 @@ async function load(params: RouteParams): Promise<Content> {
 		FreeCompanyApplyAction,
 		FreeCompanyMemberPermissionEditor,
 		FocusItems,
+		GroupEvents,
 		GroupFacts,
 		GroupMemberContent,
 		GroupPlate,
@@ -323,9 +334,37 @@ export default class PageFreeCompany extends Vue {
 	members: PagingResultDto<CharacterSummaryDto> = { data: [], total: 0 };
 	memberPermissions: FreeCompanyMemberPermissionDto[] = [];
 	notFound = false;
+	/** ER2: null while loading or when the API lacks the endpoint */
+	groupEvents: GroupEventLists | null = null;
+	private eventsToken = 0;
 
 	setContent(content: Content) {
+		const previousId = this.fc.id;
 		Object.assign(this, content);
+
+		if (this.fc.id !== previousId || !this.groupEvents) {
+			void this.loadEvents();
+		}
+	}
+
+	async loadEvents() {
+		const token = ++this.eventsToken;
+		const id = this.fc.id;
+		this.groupEvents = null;
+
+		if (!id) {
+			return;
+		}
+
+		const events = await loadGroupEvents('freeCompany', id);
+
+		if (token === this.eventsToken) {
+			this.groupEvents = events;
+		}
+	}
+
+	get hasEvents(): boolean {
+		return !!this.groupEvents && (this.groupEvents.upcoming.length > 0 || this.groupEvents.past.length > 0);
 	}
 
 	/** ER2 round 2: refresh after applying, withdrawing or deciding. */
@@ -355,6 +394,8 @@ export default class PageFreeCompany extends Vue {
 			// ER2 round 2: only when the member list carries character ids (newer API)
 			{ key: 'galerie', label: 'Galerie', icon: 'photo_library', hidden: this.memberIds.length === 0 },
 			{ key: 'geschichten', label: 'Geschichten', icon: 'auto_stories', hidden: this.memberIds.length === 0 },
+			// ER2: hidden when the endpoint fails (older API) or there are no events
+			{ key: 'events', label: 'Events', icon: 'event', hidden: !this.hasEvents },
 		];
 	}
 

@@ -36,6 +36,7 @@ export class NotificationPreference {
   @Column({ nullable: false, default: true })
   imageTag: boolean;
 
+  // unused since 2026-10-19 (Discord DM reminders removed), kept to avoid a destructive schema change
   @Column({ nullable: false, default: false })
   discordDm: boolean;
 

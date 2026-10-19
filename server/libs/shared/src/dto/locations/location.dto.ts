@@ -1,6 +1,6 @@
-import { LocationWeatherDto } from './location_weather.dto';
 import { Type } from "class-transformer";
 import { IsNumber, ValidateNested, IsString} from "class-validator";
+import { LocationWeatherDto } from './location_weather.dto';
 
 export abstract class LocationDto {
   @IsNumber()

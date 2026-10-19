@@ -1,14 +1,12 @@
-import { serverConfiguration } from '@app/configuration';
 import { EventRegistration } from '@app/entity';
 import { REMINDER_MINUTES_MAX } from '@app/shared/dto/social/notification.dto';
 import { EventRegistrationKind } from '@app/shared/enums/event-registration-kind.enum';
 import SharedConstants from '@app/shared/SharedConstants';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime } from 'luxon';
 import { In, Repository } from 'typeorm';
-import { DISCORD_NOTIFIER, DiscordNotifier } from './discord-notifier';
 import { NotificationsService } from './notifications.service';
 import { ReminderCandidate, selectDueReminders } from './reminder-window';
 
@@ -21,7 +19,6 @@ export class EventReminderScheduler {
   constructor(
     @InjectRepository(EventRegistration) private readonly registrationRepo: Repository<EventRegistration>,
     private readonly notificationsService: NotificationsService,
-    @Inject(DISCORD_NOTIFIER) private readonly discordNotifier: DiscordNotifier,
   ) {}
 
   @Cron(CronExpression.EVERY_5_MINUTES)
@@ -49,7 +46,6 @@ export class EventReminderScheduler {
       eventTitle: string;
       startDateTime: Date | string;
       userId: number;
-      discordId: string | null;
     }[] = await this.registrationRepo
       .createQueryBuilder('registration')
       .innerJoin('registration.event', 'event')
@@ -60,7 +56,6 @@ export class EventReminderScheduler {
       .addSelect('event.title', 'eventTitle')
       .addSelect('event.startDateTime', 'startDateTime')
       .addSelect('user.id', 'userId')
-      .addSelect('user.discordId', 'discordId')
       .where('registration.kind = :kind', { kind: EventRegistrationKind.GOING })
       .andWhere('registration.remindedAt IS NULL')
       .andWhere('event.hidden = :hidden', { hidden: false })
@@ -78,7 +73,6 @@ export class EventReminderScheduler {
       eventTitle: row.eventTitle,
       startDateTime: new Date(row.startDateTime),
       userId: Number(row.userId),
-      discordId: row.discordId || null,
     }));
     const prefs = await this.notificationsService.getPreferencesForUsers([...new Set(candidates.map((c) => c.userId))]);
     const { reminders, registrationIds } = selectDueReminders(candidates, prefs, now);
@@ -89,7 +83,6 @@ export class EventReminderScheduler {
 
     // Mark first: a crash afterwards loses a reminder rather than sending it twice
     await this.registrationRepo.update({ id: In(registrationIds) }, { remindedAt: now });
-    const frontendRoot = (serverConfiguration.frontendRoot || '').replace(/\/+$/, '');
 
     for (const reminder of reminders) {
       if (!reminder.notify) {
@@ -102,17 +95,8 @@ export class EventReminderScheduler {
       const link = `/event/${reminder.eventId}`;
 
       try {
-        // eslint-disable-next-line no-await-in-loop -- sequential on purpose: keeps per-user reminders ordered and DM sends rate-friendly
+        // eslint-disable-next-line no-await-in-loop -- sequential on purpose: keeps per-user reminders ordered
         await this.notificationsService.notify(reminder.userId, { type: 'event-reminder', title, body, link });
-
-        if (reminder.discordDm && reminder.discordId) {
-          // eslint-disable-next-line no-await-in-loop -- sequential on purpose: keeps per-user reminders ordered and DM sends rate-friendly
-          await this.discordNotifier.sendDirectMessage(reminder.discordId, {
-            title,
-            body,
-            url: frontendRoot ? `${frontendRoot}${link}` : null,
-          });
-        }
       } catch (e) {
         this.logger.error(e instanceof Error ? e.message : e);
       }

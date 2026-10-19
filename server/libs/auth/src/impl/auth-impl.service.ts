@@ -7,11 +7,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as Sentry from '@sentry/nestjs';
 import { Profile as DiscordProfile } from 'passport-discord-auth';
 import { FindOptionsWhere, LessThan, Repository } from 'typeorm';
-import { UserCharacterInfo } from '../model/user-character-info';
-import { UserInfo } from '../model/user-info';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { Redis } from 'ioredis';
 import { createHash, randomBytes } from 'crypto';
+import { UserInfo } from '../model/user-info';
+import { UserCharacterInfo } from '../model/user-character-info';
 
 // Simple duration parser for strings like '30d', '1h', '15m'
 function parseDuration(duration: string): number {
@@ -40,6 +40,7 @@ interface RefreshValidationContext {
 @Injectable()
 export class AuthImplService {
   private readonly USER_INFO_CACHE_SEC = 86400;
+
   private readonly TELEMETRY_CONSENT_VERSION = 1;
 
   constructor(

@@ -97,6 +97,7 @@ export class StorageService {
 				return Buffer.from(bytes);
 			}
 
+			// eslint-disable-next-line @typescript-eslint/return-await -- unchanged behaviour: stream errors reject directly without the catch-block log
 			return new Promise((resolve, reject) => {
 				const chunks: Buffer[] = [];
 				(response.Body as Readable)

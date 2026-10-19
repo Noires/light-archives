@@ -12,7 +12,6 @@ function candidate(overrides: Partial<ReminderCandidate>): ReminderCandidate {
     eventTitle: 'Tanzabend',
     startDateTime: minutes(20),
     userId: 1,
-    discordId: null,
     ...overrides,
   };
 }
@@ -66,23 +65,9 @@ describe('selectDueReminders', () => {
   });
 
   it('marks but does not notify when reminders are switched off', () => {
-    const result = selectDueReminders([candidate({})], prefs([[1, { eventReminder: false, discordDm: true }]]), now);
+    const result = selectDueReminders([candidate({})], prefs([[1, { eventReminder: false }]]), now);
 
     expect(result.registrationIds).toEqual([1]);
-    expect(result.reminders[0]).toMatchObject({ notify: false, discordDm: false });
-  });
-
-  it('only requests a Discord DM when opted in and a Discord account is linked', () => {
-    const result = selectDueReminders(
-      [
-        candidate({ registrationId: 1, userId: 1, discordId: '123' }),
-        candidate({ registrationId: 2, userId: 2, discordId: '456' }),
-        candidate({ registrationId: 3, userId: 3, discordId: null }),
-      ],
-      prefs([[1, { discordDm: true }], [2, {}], [3, { discordDm: true }]]),
-      now,
-    );
-
-    expect(result.reminders.map((r) => [r.userId, r.discordDm])).toEqual([[1, true], [2, false], [3, false]]);
+    expect(result.reminders[0]).toMatchObject({ notify: false });
   });
 });

@@ -25,6 +25,7 @@ import crypto from 'crypto';
 import { DateTime } from 'luxon';
 import sharp from 'sharp';
 import { Connection, EntityManager, FindOneOptions, IsNull, Not, Repository } from 'typeorm';
+import { hashFile } from '@app/security';
 import { assertUserCharacterId, checkCarrdProfile, getVerifiedCharacter } from '../../../common/api-checks';
 import { Contains } from '../../../common/db';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
@@ -32,7 +33,6 @@ import { ImagesService } from '../images/images.service';
 import { StorageService } from '../images/storage.service';
 import { VenueOpeningHoursService } from './venue-opening-hours.service';
 import { deriveVenueTags, HOUSING_AREA_LABELS, selectNextEvents, VenueEventRow } from './venue-summary.helpers';
-import { hashFile } from '@app/security';
 
 
 @Injectable()
@@ -459,9 +459,12 @@ export class VenuesService {
 
     const isSelectedCharacterOwner = !!characterId && venue.owner.id === characterId;
     const membership = characterId ? await this.getMembership(this.venueMembershipRepo, venue.id, characterId) : null;
-    const membershipStatus = membership
-      ? membership.status
-      : (isSelectedCharacterOwner ? MembershipStatus.CONFIRMED : null);
+    let membershipStatus: MembershipStatus | null = null;
+    if (membership) {
+      membershipStatus = membership.status;
+    } else if (isSelectedCharacterOwner) {
+      membershipStatus = MembershipStatus.CONFIRMED;
+    }
     const canEdit = isSelectedCharacterOwner || (!!membership && membership.status === MembershipStatus.CONFIRMED && membership.canEdit);
     const canManageMembers = isSelectedCharacterOwner
       || (!!membership && membership.status === MembershipStatus.CONFIRMED && membership.canManageMembers);
@@ -749,18 +752,19 @@ export class VenuesService {
     const effectiveEndTime = hasExplicitEndTemplate
       ? normalizedEndTime
       : this.toTimeStringFromDate(legacyEndDateTime);
+    const legacyEndDurationDays = legacyStartDateTime && legacyEndDateTime
+      ? Math.max(
+          0,
+          Math.floor(
+            DateTime.fromJSDate(legacyEndDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE })
+              .diff(DateTime.fromJSDate(legacyStartDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE }), 'days')
+              .days,
+          ),
+        )
+      : null;
     const effectiveEndDurationDays = hasExplicitEndTemplate
       ? normalizedEndDurationDays
-      : (legacyStartDateTime && legacyEndDateTime
-        ? Math.max(
-            0,
-            Math.floor(
-              DateTime.fromJSDate(legacyEndDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE })
-                .diff(DateTime.fromJSDate(legacyStartDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE }), 'days')
-                .days,
-            ),
-          )
-        : null);
+      : legacyEndDurationDays;
 
     if (effectiveStartWeekday !== null && effectiveStartTime === null) {
       throw new BadRequestException('eventStartTime is required when eventStartWeekday is set');
@@ -1383,7 +1387,9 @@ export class VenuesService {
         await em.getRepository(Image).delete(imageIdsToDelete);
       }
 
-      // Create new structure
+      // Create new structure. Sequential on purpose: rows are inserted in display
+      // order on the single transaction connection and children need their parent's id.
+      /* eslint-disable no-await-in-loop */
       for (let i = 0; i < dto.categories.length; i++) {
         const catDto = dto.categories[i];
         const cat = em.getRepository(VenueOfferingCategory).create({
@@ -1420,6 +1426,7 @@ export class VenuesService {
           }
         }
       }
+      /* eslint-enable no-await-in-loop */
     });
 
     // Delete orphaned images from S3 after successful transaction

@@ -14,9 +14,7 @@ import {
   Controller,
   ExecutionContext,
   Get,
-  Headers,
   Injectable,
-  Ip,
   ParseIntPipe,
   Post,
   Query,
@@ -25,7 +23,7 @@ import {
   UseGuards
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { UserService } from './user.service';
 
 const DEV_ALLOWED_ORIGINS = new Set([
@@ -104,7 +102,7 @@ export class UserController {
   @Get('login/discord')
   @UseGuards(DiscordLoginGuard)
   async loginWithDiscord(): Promise<void> {
-    return;
+    // DiscordLoginGuard redirects to Discord; nothing to do here.
   }
 
   @Get('login/discord/callback')

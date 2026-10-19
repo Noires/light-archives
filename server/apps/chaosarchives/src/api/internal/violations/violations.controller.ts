@@ -4,10 +4,10 @@ import { UserInfo } from '@app/auth/model/user-info';
 import { ViolationReportDto } from '@app/shared/dto/violations/violation-report.dto';
 import { Role } from '@app/shared/enums/role.enum';
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
-import { ViolationsService } from './violations.service';
 import { ViolationSummaryDto } from '@app/shared/dto/violations/violation-summary.dto';
 import { ViolationSummaryFilterDto } from '@app/shared/dto/violations/violation-summary-filter.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
+import { ViolationsService } from './violations.service';
 
 @Controller('violations')
 export class ViolationsController {

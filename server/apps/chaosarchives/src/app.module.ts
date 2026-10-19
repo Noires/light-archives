@@ -6,6 +6,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
+import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { InternalApiModule } from './api/internal/internal-api.module';
 import { RppModule } from './api/rpp/rpp.module';
 import { AppController } from './app.controller';
@@ -14,7 +15,6 @@ import { GlobalExceptionsFilter } from './global-exceptions.filter';
 import { SentryUserContextInterceptor } from './sentry-user-context.interceptor';
 import { UpdatesModule } from './websocket/updates/updates.module';
 import { PresenceModule } from './websocket/presence/presence.module';
-import { RedisModule } from '@liaoliaots/nestjs-redis';
 
 @Module({
   imports: [

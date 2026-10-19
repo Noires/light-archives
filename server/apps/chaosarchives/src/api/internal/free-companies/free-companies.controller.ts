@@ -3,6 +3,8 @@ import { RoleRequired } from '@app/auth/decorators/role-required.decorator';
 import { OptionalJwtAuthGuard } from '@app/auth/guards/optional-jwt-auth.guard';
 import { UserInfo } from '@app/auth/model/user-info';
 import { CharacterIdWrapper } from '@app/shared/dto/common/character-id-wrapper.dto';
+import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
+import { GroupEventsFilterDto } from '@app/shared/dto/events/group-events-filter.dto';
 import { FreeCompanyApplicationDto, FreeCompanyApplyRequestDto } from '@app/shared/dto/fcs/free-company-application.dto';
 import { FreeCompanyMemberEditFlagDto } from '@app/shared/dto/fcs/free-company-member-edit-flag.dto';
 import { FreeCompanyMemberPermissionDto } from '@app/shared/dto/fcs/free-company-member-permission.dto';
@@ -13,6 +15,7 @@ import { Role } from '@app/shared/enums/role.enum';
 import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional } from 'class-validator';
+import { EventsService } from '../events/events.service';
 import { FreeCompaniesService } from './free-companies.service';
 
 class OptionalCharacterId {
@@ -26,6 +29,7 @@ class OptionalCharacterId {
 export class FreeCompaniesController {
 	constructor(
 		private freeCompaniesService: FreeCompaniesService,
+		private eventsService: EventsService,
 	) {}
 
 	@Get('my-free-company')
@@ -70,6 +74,14 @@ export class FreeCompaniesController {
     @CurrentUser() user?: UserInfo
   ): Promise<FreeCompanyDto> {
 		return this.freeCompaniesService.getFreeCompanyById(id, characterId.characterId, user);
+	}
+
+	@Get(':id/events')
+	async getEvents(
+		@Param('id', ParseIntPipe) id: number,
+		@Query() filter: GroupEventsFilterDto,
+	): Promise<EventSummaryDto[]> {
+		return this.eventsService.getEventsForGroup('freeCompany', id, filter);
 	}
 
 	@Get(':id/member-permissions')

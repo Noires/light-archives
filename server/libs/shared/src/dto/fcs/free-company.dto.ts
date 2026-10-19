@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { ArrayMaxSize, IsArray, IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { FOCUS_ITEMS_MAX, FocusItemDto } from '../../validation/profile-fields';
 import { FreeCompanyApplicationStatus } from '@app/shared/enums/free-company-application-status.enum';
+import { FOCUS_ITEMS_MAX, FocusItemDto } from '../../validation/profile-fields';
 import { BannerDto } from '../characters/banner.dto';
 
 export class FreeCompanyDto {

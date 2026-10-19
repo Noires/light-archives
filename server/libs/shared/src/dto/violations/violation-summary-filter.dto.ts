@@ -1,4 +1,4 @@
-import { IsOptional, IsBoolean, IsString } from "class-validator";
+import { IsOptional, IsString } from "class-validator";
 import { PagingDto } from "../common/paging.dto";
 
 export class ViolationSummaryFilterDto extends PagingDto {

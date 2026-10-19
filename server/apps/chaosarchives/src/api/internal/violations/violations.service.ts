@@ -4,11 +4,11 @@ import { ViolationReportDto } from '@app/shared/dto/violations/violation-report.
 import { PageType } from '@app/shared/enums/page-type.enum';
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Connection, EntityManager, Repository } from 'typeorm';
-import { escapeForLike, isQueryFailedError } from '../../../common/db';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ViolationSummaryDto } from '@app/shared/dto/violations/violation-summary.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { ViolationSummaryFilterDto } from '@app/shared/dto/violations/violation-summary-filter.dto';
+import { escapeForLike, isQueryFailedError } from '../../../common/db';
 
 @Injectable()
 export class ViolationsService {

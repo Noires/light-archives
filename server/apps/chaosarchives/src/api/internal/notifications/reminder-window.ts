@@ -6,18 +6,15 @@ export interface ReminderCandidate {
   eventTitle: string;
   startDateTime: Date;
   userId: number;
-  discordId: string | null;
 }
 
 export interface DueReminder {
   userId: number;
-  discordId: string | null;
   eventId: number;
   eventTitle: string;
   startDateTime: Date;
   /** whether the user wants the in-app notification (else the registration is only marked) */
   notify: boolean;
-  discordDm: boolean;
 }
 
 /**
@@ -52,12 +49,10 @@ export function selectDueReminders(
     if (!reminders.has(key)) {
       reminders.set(key, {
         userId: candidate.userId,
-        discordId: candidate.discordId,
         eventId: candidate.eventId,
         eventTitle: candidate.eventTitle,
         startDateTime: candidate.startDateTime,
         notify: pref.eventReminder,
-        discordDm: pref.eventReminder && pref.discordDm && !!candidate.discordId,
       });
     }
   }

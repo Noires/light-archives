@@ -2,7 +2,6 @@ import { Character, Event, EventRegistration, Notification, NotificationPreferen
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FollowsModule } from '../follows/follows.module';
-import { DISCORD_NOTIFIER, NoopDiscordNotifier } from './discord-notifier';
 import { EventReminderScheduler } from './event-reminder.scheduler';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsListener } from './notifications.listener';
@@ -18,8 +17,6 @@ import { NotificationsService } from './notifications.service';
     NotificationsService,
     NotificationsListener,
     EventReminderScheduler,
-    // TODO(ER2 social): swap for a steward-backed notifier once steward offers a DM webhook
-    { provide: DISCORD_NOTIFIER, useClass: NoopDiscordNotifier },
   ],
   exports: [NotificationsService],
 })

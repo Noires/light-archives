@@ -1,6 +1,6 @@
 import { Controller, Get, ParseIntPipe, Query } from '@nestjs/common';
-import { LodestoneService } from './lodestone.service';
 import { type PagedResult, type CharacterInfo, type CharacterSearchEntry } from '@app/shared/dto/lodestone';
+import { LodestoneService } from './lodestone.service';
 
 @Controller('lodestone')
 export class LodestoneController {
@@ -11,13 +11,13 @@ export class LodestoneController {
     @Query('name') name: string,
     @Query('datacenter') datacenter: string,
   ): Promise<PagedResult<CharacterSearchEntry>> {
-    return await this.service.searchCharacters(name, datacenter);
+    return this.service.searchCharacters(name, datacenter);
   }
 
   @Get('character')
   async getCharacter(
     @Query('lodestoneId', ParseIntPipe) lodestoneId: number,
   ): Promise<CharacterInfo | null> {
-    return await this.service.getCharacter(lodestoneId);
+    return this.service.getCharacter(lodestoneId);
   }
 }

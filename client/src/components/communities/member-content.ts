@@ -4,6 +4,7 @@
 // at a time, and caches each character's content for the session.
 
 import type { CharacterContentDto } from '@app/shared/dto/characters/character-content.dto';
+import type { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
 import type { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
 import type { StorySummaryDto } from '@app/shared/dto/stories/story-summary.dto';
 import { useApi } from 'src/boot/axios';
@@ -70,4 +71,30 @@ export async function loadGroupContent(characterIds: number[]): Promise<GroupCon
     memberCount: ids.length,
     truncated: new Set(characterIds).size > ids.length,
   };
+}
+
+// ER2 backend finish — "Events" tab: events owned by members of the group
+// (GET /free-companies/:id/events, GET /communities/:id/events).
+
+export const GROUP_EVENTS_LIMIT = 20;
+
+export interface GroupEvents {
+  upcoming: EventSummaryDto[];
+  past: EventSummaryDto[];
+}
+
+/** Both lists, or null when the endpoint fails (older API versions lack it). */
+export async function loadGroupEvents(kind: 'freeCompany' | 'community', id: number): Promise<GroupEvents | null> {
+  const api = useApi();
+  const group = kind === 'freeCompany' ? api.freeCompanies : api.communities;
+
+  try {
+    const [upcoming, past] = await Promise.all([
+      group.getEvents(id, { upcoming: true, limit: GROUP_EVENTS_LIMIT }),
+      group.getEvents(id, { upcoming: false, limit: GROUP_EVENTS_LIMIT }),
+    ]);
+    return { upcoming: upcoming || [], past: past || [] };
+  } catch {
+    return null;
+  }
 }

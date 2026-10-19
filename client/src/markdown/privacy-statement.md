@@ -71,12 +71,12 @@ Wenn du angemeldet bist, kannst du Charakteren, Treffpunkten, Autorinnen und Aut
 
 Aus diesen Angaben erzeugen wir <strong>Benachrichtigungen in der Website</strong> (z. B. neuer Teil einer verfolgten Reihe, neues Event eines verfolgten Treffpunkts, Anmeldungen zu deinen Events, Markierungen auf Bildern). Gespeichert werden Art, Text, Link und Lesestatus. Benachrichtigungen werden nach <strong>90 Tagen automatisch geloescht</strong>; du kannst sie vorher selbst loeschen.
 
-<strong>Event-Erinnerungen</strong> erhaeltst du fuer Events, zu denen du zugesagt hast, zu einem von dir gewaehlten Zeitpunkt vor Beginn. Jede Benachrichtigungsart laesst sich unter "Benachrichtigungen" einzeln abschalten. <strong>Erinnerungen per Discord-Direktnachricht</strong> sind optional und standardmaessig ausgeschaltet; sie werden nur nach deiner ausdruecklichen Einwilligung (Opt-in) verschickt und koennen jederzeit wieder abgeschaltet werden. Dafuer wird deine bereits bekannte Discord-Kennung verwendet.
+<strong>Event-Erinnerungen</strong> erhaeltst du fuer Events, zu denen du zugesagt hast, zu einem von dir gewaehlten Zeitpunkt vor Beginn. Jede Benachrichtigungsart laesst sich unter "Benachrichtigungen" einzeln abschalten.
 
 Fuer das <strong>Kalender-Abo</strong> erzeugen wir auf deinen Wunsch einen persoenlichen Link mit einem zufaelligen, privaten Schluessel (Token). Wer den Link kennt, kann die Liste deiner zugesagten und gemerkten Events abrufen; teile ihn daher nicht. Du kannst den Link jederzeit neu erzeugen (der alte wird sofort ungueltig) oder das Abo beenden; dann wird der Schluessel geloescht.
 
 <strong>Zweck:</strong> Von dir gewuenschte Community-Funktionen (Folgen, Merkliste, Benachrichtigungen, Erinnerungen, Kalender-Abo).  
-<strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. b DSGVO; fuer Discord-Erinnerungen Art. 6 Abs. 1 lit. a DSGVO (Einwilligung).
+<strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. b DSGVO.
 
 ### 3) Empfaenger oder Kategorien von Empfaengern
 

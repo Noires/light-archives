@@ -4,6 +4,8 @@ import { FreeCompanyMemberEditFlagDto } from '@app/shared/dto/fcs/free-company-m
 import { FreeCompanyMemberPermissionDto } from '@app/shared/dto/fcs/free-company-member-permission.dto';
 import { FreeCompanyDto } from '@app/shared/dto/fcs/free-company.dto';
 import { MyFreeCompanySummaryDto } from '@app/shared/dto/fcs/my-free-company-summary.dto';
+import type { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
+import type { GroupEventsFilterDto } from '@app/shared/dto/events/group-events-filter.dto';
 import APITransport from './api-transport';
 
 export default class FreeCompaniesAPI {
@@ -71,5 +73,20 @@ export default class FreeCompaniesAPI {
   /** The applicant deletes their pending or accepted application. */
   async withdrawApplication(id: number, characterId: number): Promise<void> {
     return this.transport.authPost<void>(`${id}/applications/withdraw`, { characterId });
+  }
+
+  /**
+   * ER2: events owned by members of the group. upcoming (default): from now, ascending;
+   * upcoming=false: last 90 days, descending. Not available on older API versions.
+   */
+  async getEvents(id: number, options: GroupEventsFilterDto = {}): Promise<EventSummaryDto[]> {
+    const params: Record<string, string> = {};
+    if (options.upcoming !== undefined) {
+      params.upcoming = String(options.upcoming);
+    }
+    if (options.limit !== undefined) {
+      params.limit = String(options.limit);
+    }
+    return this.transport.get<EventSummaryDto[]>(`${id}/events`, params);
   }
 }
