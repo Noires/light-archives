@@ -18,6 +18,7 @@ import {
   Get,
   Header,
   Param,
+  DefaultValuePipe,
   ParseBoolPipe,
   ParseIntPipe,
   Post,
@@ -48,7 +49,7 @@ export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
   @Get('/')
-  async getEvents(@Query('refresh', ParseBoolPipe) refresh = false): Promise<EventSummariesDto> {
+  async getEvents(@Query('refresh', new DefaultValuePipe(false), ParseBoolPipe) refresh: boolean): Promise<EventSummariesDto> {
     return this.eventsService.getEvents(refresh);
   }
 

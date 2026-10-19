@@ -5,7 +5,8 @@
 //   - members: FC = verified characters whose Lodestone FC is the group
 //     (character.freeCompanyId); community = confirmed memberships.
 //   - memberAvatars: avatars of up to 3 members, members who hide their
-//     avatar (showAvatar = false) are skipped; most recently active first.
+//     avatar (showAvatar = false) are skipped; most recently active first
+//     (the outer ORDER BY is required: a derived table has no guaranteed order).
 //   - nextEvent: the earliest not-hidden, not-deleted event starting now or
 //     later whose owner character is a member of the group (by the same member
 //     definition). Events have no FC/community link field, so ownership by a
@@ -42,7 +43,8 @@ function memberSql(kind: GroupKind): string {
         FROM \`character\` c
         WHERE c.freeCompanyId IN (?) AND c.verifiedAt IS NOT NULL AND c.deletedAt IS NULL
       ) t
-      WHERE t.rn <= ${MEMBER_AVATARS_MAX}`;
+      WHERE t.rn <= ${MEMBER_AVATARS_MAX}
+      ORDER BY t.groupId, t.rn`;
   }
 
   return `
@@ -55,7 +57,8 @@ function memberSql(kind: GroupKind): string {
       INNER JOIN \`character\` c ON c.id = m.characterId AND c.deletedAt IS NULL
       WHERE m.communityId IN (?) AND m.status = 'confirmed' AND m.deletedAt IS NULL
     ) t
-    WHERE t.rn <= ${MEMBER_AVATARS_MAX}`;
+    WHERE t.rn <= ${MEMBER_AVATARS_MAX}
+    ORDER BY t.groupId, t.rn`;
 }
 
 function eventSql(kind: GroupKind): string {
