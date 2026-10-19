@@ -27,7 +27,6 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: Readonly<Required<NotificationPre
   eventReminder: true,
   eventRegistration: true,
   imageTag: true,
-  discordDm: false,
   reminderMinutes: REMINDER_MINUTES_DEFAULT,
 });
 
@@ -51,7 +50,6 @@ export function toPreferencesDto(pref?: NotificationPreference | null): Required
     eventReminder: pref.eventReminder,
     eventRegistration: pref.eventRegistration,
     imageTag: pref.imageTag,
-    discordDm: pref.discordDm,
     reminderMinutes: pref.reminderMinutes,
   };
 }
