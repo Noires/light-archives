@@ -40,7 +40,7 @@
   <q-dialog v-model="sheetOpen" position="bottom" class="shell-sheet-dialog" aria-labelledby="shell-sheet-title">
     <div class="shell-sheet">
       <div class="shell-sheet__head">
-        <h2 id="shell-sheet-title" class="shell-sheet__title">Mehr</h2>
+        <h2 id="shell-sheet-title" class="shell-sheet__title">Menü</h2>
         <q-btn
           flat
           round
@@ -72,19 +72,6 @@
           </div>
         </section>
 
-        <section class="shell-sheet__section" aria-labelledby="shell-sheet-wiki">
-          <h3 id="shell-sheet-wiki" class="shell-sheet__label">Wiki &amp; Wissenswertes</h3>
-          <router-link
-            v-for="link in wikiLinks"
-            :key="link.to"
-            :to="link.to"
-            class="shell-sheet__row"
-            active-class="shell-sheet__row--active"
-          >
-            <q-icon :name="link.icon" size="20px" aria-hidden="true" />
-            <span>{{ link.label }}</span>
-          </router-link>
-        </section>
 
         <section
           v-for="group in moreGroups"
@@ -100,6 +87,19 @@
             class="shell-sheet__row"
             :active-class="link.to === '/' ? '' : 'shell-sheet__row--active'"
             exact-active-class="shell-sheet__row--active"
+          >
+            <q-icon :name="link.icon" size="20px" aria-hidden="true" />
+            <span>{{ link.label }}</span>
+          </router-link>
+        </section>
+        <section class="shell-sheet__section" aria-labelledby="shell-sheet-wiki">
+          <h3 id="shell-sheet-wiki" class="shell-sheet__label">Wiki &amp; Wissenswertes</h3>
+          <router-link
+            v-for="link in wikiLinks"
+            :key="link.to"
+            :to="link.to"
+            class="shell-sheet__row"
+            active-class="shell-sheet__row--active"
           >
             <q-icon :name="link.icon" size="20px" aria-hidden="true" />
             <span>{{ link.label }}</span>
@@ -138,6 +138,7 @@
 import { Options, Vue } from 'vue-class-component';
 import { MORE_GROUPS, PRIMARY_AREAS, ShellNavArea, WIKI_AREA, WIKI_LINKS, isAreaActive } from './nav';
 import { shellTheme, themeAriaLabel, themeIcon, toggleShellTheme } from './theme-state';
+import { shellMenu } from './menu-state';
 import { canUseSocial, socialState } from 'src/components/social/social-state';
 
 // ER2-205 — below 1024px: fixed bottom bar (Start, Events, Charaktere,
@@ -146,7 +147,6 @@ import { canUseSocial, socialState } from 'src/components/social/social-state';
 // and to bookmarks. ShellHeader polls the count; this reads the shared state. Account actions stay in
 // the top bar's account pill. Emits `open-search` for the command palette.
 
-const BAR_KEYS = ['events', 'characters'];
 
 @Options({
   name: 'ShellMobileNav',
@@ -161,7 +161,13 @@ export default class ShellMobileNav extends Vue {
   readonly wikiLinks = WIKI_LINKS;
   readonly moreGroups = MORE_GROUPS;
 
-  sheetOpen = false;
+  get sheetOpen(): boolean {
+    return shellMenu.open;
+  }
+
+  set sheetOpen(value: boolean) {
+    shellMenu.open = value;
+  }
 
   get socialEnabled(): boolean {
     return canUseSocial(this.$store.getters.realRole);
@@ -210,7 +216,9 @@ export default class ShellMobileNav extends Vue {
   }
 
   get sheetAreas(): ShellNavArea[] {
-    return [...PRIMARY_AREAS.filter((area) => !BAR_KEYS.includes(area.key)), WIKI_AREA];
+    // All areas, also those in the bottom bar: the sheet is also opened from the
+    // top-bar menu button, where it must work as the complete navigation.
+    return [...PRIMARY_AREAS, WIKI_AREA];
   }
 
   isActive(area: ShellNavArea): boolean {

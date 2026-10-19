@@ -117,6 +117,19 @@
         <q-tooltip>{{ themeTooltipLabel }}</q-tooltip>
       </q-btn>
 
+      <!-- Below 1024px the nav links leave the top bar; this opens the same
+           menu sheet as "Mehr" in the bottom bar. -->
+      <q-btn
+        flat
+        round
+        dense
+        class="shell-bar__icon-btn shell-bar__menu"
+        icon="menu"
+        aria-label="Menü öffnen"
+        aria-haspopup="dialog"
+        @click="openMenu"
+      />
+
       <button
         type="button"
         class="shell-bar__account"
@@ -185,6 +198,7 @@ import {
   isAreaActive,
   isLinkActive,
 } from './nav';
+import { openShellMenu } from './menu-state';
 import { shellTheme, themeAriaLabel, themeIcon, themeTooltip, toggleShellTheme } from './theme-state';
 
 // ER2-201 — compact top bar: logo, seven primary areas (Wiki links to the
@@ -228,6 +242,10 @@ const UNREAD_MIN_GAP_MS = 5000;
   },
 })
 export default class ShellHeader extends Vue {
+  openMenu(): void {
+    openShellMenu();
+  }
+
   readonly primaryAreas = PRIMARY_AREAS;
   readonly wikiArea = WIKI_AREA;
   // ER2-609 follow-up: Wiki is a plain link to /wiki now; the former
@@ -817,9 +835,17 @@ body.body--dark .shell-menu.q-menu {
   }
 }
 
+.shell-bar__menu {
+  display: none;
+}
+
 @media screen and (max-width: 1023px) {
   .shell-bar__nav {
     display: none;
+  }
+
+  .shell-bar__menu {
+    display: inline-flex;
   }
 
   .shell-bar__search {
@@ -830,8 +856,15 @@ body.body--dark .shell-menu.q-menu {
     justify-content: flex-start;
   }
 
+  // Undo the visually-hidden label from the 1279px step: the wide search
+  // field shows "Suchen…" again.
   .shell-bar__search-label {
+    position: static;
     display: block;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
   }
 
   // ER2-205: notifications and theme move into the mobile "Mehr" sheet.

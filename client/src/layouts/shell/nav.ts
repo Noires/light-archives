@@ -64,19 +64,20 @@ export const WIKI_LINKS: ShellNavLink[] = [
 // Everything from the former navGroups that is not one of the primary areas.
 export const MORE_GROUPS: ShellNavGroup[] = [
   {
+    key: 'communities',
+    label: 'Charaktere & Gemeinschaften',
+    links: [
+      { label: 'Charaktere', to: '/profiles', icon: 'person' },
+      { label: 'Freie Gesellschaften', to: '/free-companies', icon: 'shield' },
+      { label: 'Communities', to: '/communities', icon: 'groups' },
+    ],
+  },
+  {
     key: 'start',
     label: 'Allgemein',
     links: [
       { label: 'Startseite', to: '/', icon: 'home' },
       { label: 'Kontakt', to: '/contact', icon: 'mail_outline' },
-    ],
-  },
-  {
-    key: 'communities',
-    label: 'Gemeinschaften',
-    links: [
-      { label: 'Communities', to: '/communities', icon: 'groups' },
-      { label: 'Freie Gesellschaften', to: '/free-companies', icon: 'shield' },
     ],
   },
   {
