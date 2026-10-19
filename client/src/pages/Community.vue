@@ -184,6 +184,13 @@
           :group-name="community.name"
         />
 
+        <group-events
+          v-else-if="tab === 'events' && groupEvents"
+          :upcoming="groupEvents.upcoming"
+          :past="groupEvents.past"
+          :group-name="community.name"
+        />
+
         <report-violation-section :pageType="PageType.COMMUNITY" :pageId="community.id" hide-copy-link />
       </div>
     </template>
@@ -211,7 +218,10 @@ import { stripWikilinks } from 'components/character/profile-sections';
 import { activeRpStatus } from 'components/character/rp-status';
 import FocusItems from 'components/communities/FocusItems.vue';
 import GroupFacts from 'components/communities/GroupFacts.vue';
+import GroupEvents from 'components/communities/GroupEvents.vue';
 import GroupMemberContent from 'components/communities/GroupMemberContent.vue';
+import { loadGroupEvents } from 'components/communities/member-content';
+import type { GroupEvents as GroupEventLists } from 'components/communities/member-content';
 import GroupPlate from 'components/communities/GroupPlate.vue';
 import type { GroupFact, GroupPlateChip } from 'components/communities/group-plate';
 import AvatarStack from 'components/vision/AvatarStack.vue';
@@ -258,6 +268,7 @@ async function load(
     CommunityMemberEditor,
     EmptyState,
     FocusItems,
+    GroupEvents,
     GroupFacts,
     GroupMemberContent,
     GroupPlate,
@@ -313,14 +324,42 @@ export default class PageCommunity extends Vue {
   members: CharacterSummaryDto[] = [];
   applicants: CommunityMemberDto[] = [];
   confirmedMembers: CommunityMemberDto[] = [];
+  /** ER2: null while loading or when the API lacks the endpoint */
+  groupEvents: GroupEventLists | null = null;
+  private eventsToken = 0;
 
   setContent(community: CommunityDto, members: PagingResultDto<CharacterSummaryDto>) {
+    const previousId = this.community.id;
     this.community = community;
     this.members = members.data;
+
+    if (community.id !== previousId || !this.groupEvents) {
+      void this.loadEvents();
+    }
 
     if (community.canManageMembers) {
       void this.refreshEditableMembers();
     }
+  }
+
+  async loadEvents() {
+    const token = ++this.eventsToken;
+    const id = this.community.id;
+    this.groupEvents = null;
+
+    if (!id) {
+      return;
+    }
+
+    const events = await loadGroupEvents('community', id);
+
+    if (token === this.eventsToken) {
+      this.groupEvents = events;
+    }
+  }
+
+  get hasEvents(): boolean {
+    return !!this.groupEvents && (this.groupEvents.upcoming.length > 0 || this.groupEvents.past.length > 0);
   }
 
   get canJoin(): boolean {
@@ -334,6 +373,8 @@ export default class PageCommunity extends Vue {
       // ER2 round 2: only when the member list carries character ids (newer API)
       { key: 'galerie', label: 'Galerie', icon: 'photo_library', hidden: this.memberIds.length === 0 },
       { key: 'geschichten', label: 'Geschichten', icon: 'auto_stories', hidden: this.memberIds.length === 0 },
+      // ER2: hidden when the endpoint fails (older API) or there are no events
+      { key: 'events', label: 'Events', icon: 'event', hidden: !this.hasEvents },
     ];
   }
 

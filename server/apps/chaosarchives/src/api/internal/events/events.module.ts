@@ -15,7 +15,8 @@ import { EventsService } from './events.service';
     ImagesModule,
   ],
   controllers: [EventsController],
-  providers: [EventsService, CrescentMoonPublishingService, ChocoboChronicleService]
+  providers: [EventsService, CrescentMoonPublishingService, ChocoboChronicleService],
+  exports: [EventsService],
 })
 export class EventsModule {
 
