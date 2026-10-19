@@ -29,33 +29,12 @@
         <p v-else class="home-hub__unavailable">Die Events konnten gerade nicht geladen werden.</p>
       </div>
 
-      <div class="home-hub__links">
-        <q-btn
-          v-if="eventsAvailable && timelineEvents.length === 0"
-          class="elpis-btn elpis-btn--ghost"
-          flat
-          dense
-          no-caps
-          to="/create-event"
-          icon="add"
-          label="Event eintragen"
-        />
-        <q-btn
-          class="elpis-btn elpis-btn--ghost"
-          flat
-          dense
-          no-caps
-          to="/calendar"
-          icon-right="arrow_forward"
-          :label="calendarLinkLabel"
-        />
-      </div>
-
-      <div class="home-hub__columns" :class="{ 'home-hub__columns--single': !hasUpNext }">
+      <div class="home-hub__columns">
         <home-up-next
-          v-if="hasUpNext"
           :events="events"
           :now="now"
+          :tonight-count="tonightEvents.length"
+          :available="eventsAvailable"
         />
         <home-open-venues
           :venues="sortedVenues"
@@ -179,7 +158,6 @@ import {
   SERVER_ZONE,
   sortVenuesByOpening,
   toTimelineEvent,
-  upcomingEvents,
 } from 'components/mainpage/home-data';
 import type { HomeTodayStats, HomeVenue } from 'components/mainpage/home-data';
 import { ImageSummaryDto } from '@app/shared/dto/image/image-summary.dto';
@@ -441,18 +419,6 @@ export default class PageIndex extends Vue {
       { key: 'tonight', label: 'Heute Abend', icon: 'nights_stay', count: available ? this.tonightEvents.length : undefined },
       { key: 'week', label: 'Diese Woche', icon: 'date_range', count: available ? this.weekEvents.length : undefined },
     ];
-  }
-
-  get hasUpNext(): boolean {
-    return this.eventsAvailable && upcomingEvents(this.events, this.now).length > 0;
-  }
-
-  get calendarLinkLabel(): string {
-    const count = this.tonightEvents.length;
-    if (count === 1) {
-      return 'Das eine Event heute Abend';
-    }
-    return count > 1 ? `Alle ${count} heute Abend` : 'Zum Kalender';
   }
 
   get timelineEvents() {
@@ -815,18 +781,6 @@ export default class PageIndex extends Vue {
   gap: 24px;
   align-items: start;
   margin-top: 8px;
-}
-
-.home-hub__columns--single {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.home-hub__links {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px 16px;
-  margin-top: -4px;
 }
 
 @media (max-width: 1023px) {
