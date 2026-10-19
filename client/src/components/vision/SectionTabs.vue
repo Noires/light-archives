@@ -129,6 +129,7 @@ export default class SectionTabs extends Vue.with(Props) {
 	private resizeObserver: ResizeObserver | null = null;
 	private lastWidth = 0;
 	private fitting = false;
+	private fitPending = false;
 
 	mounted() {
 		const list = this.$refs.list as HTMLElement | undefined;
@@ -141,7 +142,17 @@ export default class SectionTabs extends Vue.with(Props) {
 			this.resizeObserver.observe(list);
 		}
 		void this.fit();
+		// Labels get wider once the web fonts arrive; the bar width does not
+		// change then, so the ResizeObserver alone would miss it.
+		if (typeof document !== 'undefined' && document.fonts) {
+			void document.fonts.ready.then(() => this.fit());
+			document.fonts.addEventListener('loadingdone', this.onFontsLoaded);
+		}
 	}
+
+	private onFontsLoaded = () => {
+		void this.fit();
+	};
 
 	updated() {
 		this.updateOverflow();
@@ -153,7 +164,12 @@ export default class SectionTabs extends Vue.with(Props) {
 	 */
 	async fit() {
 		const list = this.$refs.list as HTMLElement | undefined;
-		if (!list || this.fitting) {
+		if (!list) {
+			return;
+		}
+		if (this.fitting) {
+			// A change arrived mid-measurement: run once more afterwards.
+			this.fitPending = true;
 			return;
 		}
 		this.fitting = true;
@@ -170,11 +186,17 @@ export default class SectionTabs extends Vue.with(Props) {
 		} finally {
 			this.fitting = false;
 		}
+		if (this.fitPending) {
+			this.fitPending = false;
+			void this.fit();
+			return;
+		}
 		this.updateOverflow();
 		this.scrollIntoView(this.activeKey);
 	}
 
 	beforeUnmount() {
+		document.fonts?.removeEventListener('loadingdone', this.onFontsLoaded);
 		this.resizeObserver?.disconnect();
 		this.resizeObserver = null;
 	}
