@@ -62,6 +62,17 @@ All round-2 tickets ER2-1001..1027 done on `vision/er2` (ER2-1028 board conforma
 - **Additional schema on deploy (synchronize):** tables `follow`, `notification`, `notification_preference`, `bookmark`, `calendar_token`, `wiki_page_revision`, `album` (+ `album_images`), `free_company_application`, `image_character_tag`; columns `event_registration.remindedAt`, `venue.adultOnly`, `noticeboard_item.pinned/pinnedAt/discordPosted/imageId`, `character.accentColor/playStyleTags`, `free_company.focusItems`, `community.focusItems`, story banner relation. Needs MariaDB 10.2+ (window functions). Back up first.
 - **Verification:** client lint clean, `quasar build` OK, server build OK, Jest 206/206, 81/81 old URLs resolve, fresh dev compile clean.
 
+### Round 3 (2026-10-19) — open items
+
+- Discord DM reminders removed on request (reminders are in-app only; `notification_preference.discordDm` column kept unused to stay additive).
+- FC/community "Events" tab (events owned by members), `GET /free-companies/:id/events`, `GET /communities/:id/events`.
+- Server ESLint: 0 errors (was 148).
+- Real-DB verification: `server/test/er2-integration/` (docker-compose, run.mjs) — 203/203 checks PASS on MariaDB 10.11; schema 8347c89 → current is purely additive (14 tables, 32 columns/keys). Fixed avatar ordering in group summaries and a pre-existing 400 on `GET /events` without `refresh`.
+- Accessibility: `client/scripts/e2e/{a11y-audit,interactions}.mjs` (headless Edge + axe from CDN); 0 serious/critical axe violations on 23 routes x 2 themes x 2 widths; 9/9 interaction checks PASS. Report: `A11Y_AUDIT_ER2.md`.
+- User tests: kit in `UI_UX_USER_TEST_KIT.md` (German) — sessions still to be run by the team, plus a real NVDA/VoiceOver pass.
+- Security hotfix branch `hotfix/community-permission-await` (from `main`, unpushed) for the community permission bug.
+- Still open: ER2-906/1028 Penpot board conformance (MCP refuses connection; reconnect the plugin).
+
 ## Next ticket
 
 This session shipped **ELPIS-211 (Pen & Paper journal-page reveal) plus a small cleanup** removing two dead keyframes (`navShimmer`, `navGridShift`) flagged in the ELPIS-807 audit from `MainLayout.vue`. **Epic 2 closes 20 / 21 → 21 / 21.** 211 was marked `deps 007, 008` — 008 ✓ is satisfied, and the 007 dependency was satisfiable via the same IntersectionObserver + CSS-keyframes pattern that landed ELPIS-110 (home activity-grid diagonal-wave reveal) since the AC's "5 cards reveal in sequence (turning-page motion)" describes a one-shot-on-mount cascade with per-card stagger that doesn't need Motion One's runtime orchestration. Lint clean (`npx eslint src/components/character/CharacterPenAndPaper.vue src/layouts/MainLayout.vue` exit 0).
