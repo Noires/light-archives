@@ -249,7 +249,42 @@ await check('mobile-sheet', async (assert) => {
   assert(back, `focus returns to "Mehr" (now ${await page.evaluate(ACTIVE)})`);
 });
 
-// 8. Theme toggle -----------------------------------------------------------
+// 8. Noticeboard pin focus (simulated moderator) ----------------------------
+// A fake moderator session is committed to the store and the pin request is
+// stubbed in the page, so nothing is sent to the API.
+await check('noticeboard-pin', async (assert) => {
+  await goto('/noticeboard');
+  const ready = await page.evaluate(`(() => {
+    const app = document.querySelector('#q-app').__vue_app__;
+    const g = app.config.globalProperties;
+    g.$api.noticeboard.setPinned = () => new Promise((r) => setTimeout(r, 400));
+    g.$store.commit('setUser', {
+      id: -1, role: 'moderator', termsAcceptedAt: null,
+      telemetryConsentStatus: 'denied', telemetryConsentVersion: 1, telemetryConsentUpdatedAt: null,
+      characters: [{ id: -1, name: 'Test Moderator', server: 'Shiva', verified: true, avatar: '' }],
+    });
+    return true;
+  })()`);
+  assert(ready, 'moderator session simulated, API stubbed');
+  const has = await waitFor(`!!document.querySelector('.page-noticeboard__masonry [data-nb-pin]')`, 4000);
+  assert(has, 'pin buttons rendered for moderators');
+  await page.press('Shift');
+  const id = await page.evaluate(`(() => { const b = document.querySelector('.page-noticeboard__masonry [data-nb-pin]'); b.focus(); return b.dataset.nbPin; })()`);
+  await page.press('Enter');
+  await sleep(150);
+  const pinnedFocus = await page.evaluate(`(() => { const a = document.activeElement; return !!a && a.dataset.nbPin === '${id}' && !!a.closest('.page-noticeboard__pinned') && a.getAttribute('aria-pressed') === 'true'; })()`);
+  assert(pinnedFocus, `after pinning, focus is on the card's pin button in "Angeheftet" (${await page.evaluate(ACTIVE)})`);
+  await sleep(600);
+  const stillThere = await page.evaluate(`document.activeElement && document.activeElement.dataset.nbPin === '${id}'`);
+  assert(stillThere, 'focus kept after the request finished');
+  await page.press('Enter');
+  await sleep(150);
+  const back = await page.evaluate(`(() => { const a = document.activeElement; if (!a) return 'none'; if (a.dataset.nbPin === '${id}' && a.closest('.page-noticeboard__masonry')) return 'button'; return a.id === 'inhalt' ? 'inhalt' : 'other'; })()`);
+  assert(back === 'button' || back === 'inhalt', `after unpinning, focus is on the pin button in the list (or #inhalt if the card left the page): ${back}`);
+  await sleep(600);
+});
+
+// 9. Theme toggle -----------------------------------------------------------
 await check('theme-toggle', async (assert) => {
   await goto('/profiles');
   const seen = new Set();
