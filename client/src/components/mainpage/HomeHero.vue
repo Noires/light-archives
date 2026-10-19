@@ -22,14 +22,6 @@
 				class="elpis-btn elpis-btn--primary"
 				unelevated
 				no-caps
-				icon="nights_stay"
-				label="Was läuft heute?"
-				@click="jumpToHub"
-			/>
-			<q-btn
-				class="elpis-btn elpis-btn--secondary"
-				flat
-				no-caps
 				icon="add"
 				label="Event eintragen"
 				to="/create-event"
@@ -94,8 +86,6 @@ class Props {
 	loggedIn = prop<boolean>({ type: Boolean, default: false });
 	welcomeName = prop<string>({ default: 'Abenteurer' });
 	avatar = prop<string>({ default: '' });
-	/** Element id the primary CTA scrolls to. */
-	targetId = prop<string>({ default: 'heute' });
 }
 
 @Options({
@@ -135,16 +125,6 @@ export default class HomeHero extends Vue.with(Props) {
 			});
 		}
 		return items;
-	}
-
-	jumpToHub() {
-		const target = document.getElementById(this.targetId);
-		if (!target) {
-			return;
-		}
-		const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
-		target.focus({ preventScroll: true });
 	}
 }
 </script>
