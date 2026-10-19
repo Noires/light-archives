@@ -5,6 +5,8 @@
 			'vision-tabs--glass': glass,
 			'vision-tabs--more-left': moreLeft,
 			'vision-tabs--more-right': moreRight,
+			'vision-tabs--compact': density >= 1,
+			'vision-tabs--no-icons': density >= 2,
 		}"
 	>
 		<!-- Overflow hints for pointer users; keyboard users move with the arrow keys. -->
@@ -100,6 +102,13 @@ class Props {
 	name: 'SectionTabs',
 	emits: [ 'update:modelValue' ],
 	watch: {
+		// Tabs or counts that arrive later change the natural width: re-fit.
+		tabs: {
+			handler() {
+				void (this as SectionTabs).$nextTick(() => (this as SectionTabs).fit());
+			},
+			deep: true,
+		},
 		// Parent-driven changes in query mode are written back to the URL.
 		modelValue(key: string) {
 			(this as SectionTabs).onModelValueChange(key);
@@ -115,19 +124,54 @@ class Props {
 export default class SectionTabs extends Vue.with(Props) {
 	moreLeft = false;
 	moreRight = false;
+	/** 0 = normal, 1 = compact spacing, 2 = compact without icons. */
+	density = 0;
 	private resizeObserver: ResizeObserver | null = null;
+	private lastWidth = 0;
+	private fitting = false;
 
 	mounted() {
 		const list = this.$refs.list as HTMLElement | undefined;
 		if (list && typeof ResizeObserver !== 'undefined') {
-			this.resizeObserver = new ResizeObserver(() => this.updateOverflow());
+			this.resizeObserver = new ResizeObserver(() => {
+				if (list.clientWidth !== this.lastWidth) {
+					void this.fit();
+				}
+			});
 			this.resizeObserver.observe(list);
 		}
-		this.updateOverflow();
+		void this.fit();
 	}
 
 	updated() {
 		this.updateOverflow();
+	}
+
+	/**
+	 * Picks the roomiest density at which every tab fits; only when even the
+	 * densest one overflows does the bar scroll (with fades and chevrons).
+	 */
+	async fit() {
+		const list = this.$refs.list as HTMLElement | undefined;
+		if (!list || this.fitting) {
+			return;
+		}
+		this.fitting = true;
+		try {
+			this.lastWidth = list.clientWidth;
+			for (let level = 0; level <= 2; level++) {
+				this.density = level;
+				// eslint-disable-next-line no-await-in-loop -- each level must render before it can be measured
+				await this.$nextTick();
+				if (list.scrollWidth <= list.clientWidth + 1) {
+					break;
+				}
+			}
+		} finally {
+			this.fitting = false;
+		}
+		this.updateOverflow();
+		this.scrollIntoView(this.activeKey);
 	}
 
 	beforeUnmount() {
@@ -309,9 +353,6 @@ export default class SectionTabs extends Vue.with(Props) {
 .vision-tabs {
 	position: relative;
 	min-width: 0;
-	// Tabs compact themselves based on the bar's own width, not the viewport.
-	container-type: inline-size;
-	container-name: vision-tabs;
 }
 
 .vision-tabs--glass {
@@ -483,9 +524,8 @@ export default class SectionTabs extends Vue.with(Props) {
 	font-variant-numeric: tabular-nums;
 }
 
-// Compact steps so a full bar (e.g. 9 profile tabs) fits without overflow
-// on common desktop widths; icons go first, labels always stay.
-@container vision-tabs (max-width: 1180px) {
+// Density steps chosen by fit(): roomy first, then tighter, then no icons.
+.vision-tabs--compact {
 	.vision-tabs__list {
 		gap: 2px;
 	}
@@ -497,10 +537,8 @@ export default class SectionTabs extends Vue.with(Props) {
 	}
 }
 
-@container vision-tabs (max-width: 1060px) {
-	.vision-tabs__icon {
-		display: none;
-	}
+.vision-tabs--no-icons .vision-tabs__icon {
+	display: none;
 }
 
 .vision-tabs__tab--active .vision-tabs__count {
