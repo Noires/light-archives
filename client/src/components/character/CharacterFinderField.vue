@@ -198,7 +198,7 @@ export default class CharacterFinderField extends Vue.with(Props) {
 .character-finder-field__banner--claimed,
 .character-finder-field__banner--already {
 	background: rgba(199, 72, 79, 0.10);
-	color: var(--surface-ink);
+	color: var(--ink-primary);
 	border-color: var(--semantic-danger);
 }
 
@@ -209,7 +209,7 @@ export default class CharacterFinderField extends Vue.with(Props) {
 
 .character-finder-field__banner--renamed {
 	background: var(--surface-pearl);
-	color: var(--surface-ink);
+	color: var(--ink-primary);
 	border-color: var(--rule-arcane);
 	box-shadow: inset 4px 0 0 var(--rule-arcane);
 }

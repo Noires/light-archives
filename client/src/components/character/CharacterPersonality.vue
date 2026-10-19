@@ -112,7 +112,7 @@ export default class CharacterPersonality extends Vue.with(Props) {
   font-family: var(--font-display);
   font-size: var(--type-scale-2);
   letter-spacing: var(--ls-display);
-  color: var(--surface-ink);
+  color: var(--ink-primary);
 }
 
 .character-personality h6:first-child {

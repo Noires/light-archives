@@ -60,7 +60,8 @@
     </article>
 
     <aside class="nb-view__rail" aria-label="Weitere Informationen">
-      <section aria-labelledby="nb-view-discord">
+      <!-- Discord preview only for the author (and in the editor preview); readers do not need it. -->
+      <section v-if="preview || noticeboardItem.mine" aria-labelledby="nb-view-discord">
         <h2 id="nb-view-discord" class="nb-view__rail-label">So sieht es auf Discord aus</h2>
         <discord-embed-preview
           :color="embed.color"
@@ -188,6 +189,15 @@ export default class NoticeboardItemView extends Vue.with(Props) {
   align-items: start;
 }
 
+.nb-view:has(> .nb-view__rail:empty) {
+  grid-template-columns: minmax(0, 820px);
+  justify-content: center;
+}
+
+.nb-view__rail:empty {
+  display: none;
+}
+
 .nb-view__sheet.mat-parchment {
   padding: 36px 44px 32px;
   border-top: 4px solid var(--nb-type);
@@ -233,7 +243,7 @@ export default class NoticeboardItemView extends Vue.with(Props) {
   font-weight: 600;
   line-height: 1.15;
   letter-spacing: var(--ls-display);
-  color: var(--surface-ink);
+  color: var(--ink-primary);
   overflow-wrap: anywhere;
 }
 
@@ -298,7 +308,7 @@ export default class NoticeboardItemView extends Vue.with(Props) {
   font-family: var(--font-body);
   font-size: 1.125rem;
   line-height: 1.75;
-  color: var(--surface-ink);
+  color: var(--ink-primary);
 }
 
 .nb-view__body--drop-cap .nb-view__content > :deep(p:first-of-type::first-letter) {

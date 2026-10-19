@@ -608,7 +608,7 @@ export default class UploadDialog extends Vue.with(Props) {
   justify-content: center;
   border-radius: 8px;
   background: rgba(186, 155, 91, 0.10);
-  color: var(--surface-ink);
+  color: var(--ink-primary);
   outline: 2px dashed var(--rule-gold);
   outline-offset: -10px;
   box-shadow:

@@ -114,7 +114,7 @@ export default class CommunityProfile extends Vue.with(Props) {
   font-size: var(--type-scale-6);
   line-height: var(--lh-display);
   letter-spacing: var(--ls-display);
-  color: var(--surface-ink);
+  color: var(--ink-primary);
 }
 
 body.body--dark .community-profile__header-title {

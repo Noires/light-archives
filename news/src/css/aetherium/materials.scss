@@ -7,7 +7,7 @@
 //   .mat-aetherglass — frosted translucent panel for masthead / sidebars / dialogs
 //   .mat-obsidian    — deep purple-black with slow gradient drift; dark page bg
 //   .mat-crystal     — refractive prism accent; masthead medallion / dice
-//   .mat-parchment   — cream + ink-rule horizontals; ArticleView body
+//   .mat-parchment   — cream + grain (no ruled lines); ArticleView body
 //
 // Elevation variants for Aetherglass mirror the §3.2 layering rule:
 //   .elevation-1     card-level (blur 14)
@@ -203,14 +203,6 @@ body.body--dark .mat-crystal {
 .mat-parchment {
 	position: relative;
 	background-color: var(--surface-vellum);
-	background-image:
-		repeating-linear-gradient(
-			to bottom,
-			transparent 0,
-			transparent calc(1.6em - 1px),
-			rgba(110, 95, 70, 0.08) calc(1.6em - 1px),
-			rgba(110, 95, 70, 0.08) 1.6em
-		);
 	color: var(--surface-ink);
 	border: 1px solid var(--rule-gold-soft);
 	border-radius: 4px;
@@ -240,14 +232,6 @@ body.body--dark .mat-crystal {
 
 body.body--dark .mat-parchment {
 	background-color: var(--surface-lift);
-	background-image:
-		repeating-linear-gradient(
-			to bottom,
-			transparent 0,
-			transparent calc(1.6em - 1px),
-			rgba(184, 165, 255, 0.07) calc(1.6em - 1px),
-			rgba(184, 165, 255, 0.07) 1.6em
-		);
 	color: var(--ink-luminous);
 	border-color: var(--rule-arcane-soft);
 	box-shadow:

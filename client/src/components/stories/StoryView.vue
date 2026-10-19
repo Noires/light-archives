@@ -188,7 +188,6 @@ export default class StoryView extends Vue.with(Props) {
   --reader-rule: rgba(186, 155, 91, 0.28);
   --reader-rule-strong: #9C7A3C;
   --reader-cap: #BA9B5B;
-  --reader-lines: rgba(110, 95, 70, 0.08);
   --reader-shadow: 0 1px 2px rgba(43, 36, 24, 0.05), inset 0 0 28px rgba(186, 155, 91, 0.06);
 }
 
@@ -200,7 +199,6 @@ export default class StoryView extends Vue.with(Props) {
   --reader-rule: rgba(107, 79, 168, 0.32);
   --reader-rule-strong: #8F72D6;
   --reader-cap: #B8A5FF;
-  --reader-lines: rgba(184, 165, 255, 0.05);
   --reader-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 0 28px rgba(107, 79, 168, 0.12);
 }
 
@@ -336,13 +334,6 @@ export default class StoryView extends Vue.with(Props) {
 .story-view__body.mat-parchment {
   padding: 36px 44px;
   background-color: var(--reader-bg);
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent calc(1.75em - 1px),
-    var(--reader-lines) calc(1.75em - 1px),
-    var(--reader-lines) 1.75em
-  );
   color: var(--reader-ink);
   border-color: var(--reader-rule);
   box-shadow: var(--reader-shadow);

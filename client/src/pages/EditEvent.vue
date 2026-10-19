@@ -2047,7 +2047,7 @@ body.body--dark .page-edit-event {
   background-color: var(--surface-vellum);
   border: 1px solid var(--rule-gold-soft);
   border-radius: 6px;
-  color: var(--surface-ink);
+  color: var(--ink-primary);
   cursor: pointer;
   text-align: left;
   font-family: var(--font-ui);

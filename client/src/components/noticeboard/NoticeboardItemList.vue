@@ -86,7 +86,7 @@ export default class NoticeboardItemList extends Vue.with(Props) {
 .noticeboard-item-list__item {
   border: 1px solid var(--rule-gold-soft);
   background: var(--surface-vellum);
-  color: var(--surface-ink);
+  color: var(--ink-primary);
   box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
   transition:
     transform var(--motion-fast) var(--ease-elpis),
@@ -111,7 +111,7 @@ export default class NoticeboardItemList extends Vue.with(Props) {
 .noticeboard-item-list__title {
   font-family: var(--font-display);
   font-weight: 600;
-  color: var(--surface-ink);
+  color: var(--ink-primary);
   font-size: var(--type-scale-2);
   letter-spacing: var(--ls-display);
 }

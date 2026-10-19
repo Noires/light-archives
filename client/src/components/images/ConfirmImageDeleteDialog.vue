@@ -119,7 +119,7 @@ export default class ConfirmImageDeleteDialog extends Vue.with(Props) {
 	font-family: var(--font-display);
 	font-size: var(--type-scale-3);
 	letter-spacing: var(--ls-display);
-	color: var(--surface-ink);
+	color: var(--ink-primary);
 }
 
 .confirm-image-delete-dialog__preview {
@@ -134,7 +134,7 @@ export default class ConfirmImageDeleteDialog extends Vue.with(Props) {
 	font-family: var(--font-section);
 	font-size: var(--type-scale-2);
 	line-height: var(--lh-body);
-	color: var(--surface-ink);
+	color: var(--ink-primary);
 	margin-bottom: 12px;
 }
 

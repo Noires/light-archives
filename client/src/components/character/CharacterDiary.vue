@@ -133,7 +133,7 @@ body.body--dark .character-diary__card-type {
   font-family: var(--font-display);
   font-size: 1.05rem;
   line-height: 1.3;
-  color: var(--surface-ink);
+  color: var(--ink-primary);
 }
 
 body.body--dark .character-diary__card-title {
@@ -160,7 +160,7 @@ body.body--dark .character-diary__card-meta {
   margin: 0;
   font-family: var(--font-lore);
   font-style: italic;
-  color: var(--surface-ink);
+  color: var(--ink-primary);
   font-size: 0.92rem;
   line-height: 1.5;
   display: -webkit-box;

@@ -269,7 +269,7 @@ component.
 | `.mat-aetherglass` | Header, drawer, dialogs, popovers |
 | `.mat-obsidian`    | Zodiark page background only |
 | `.mat-crystal`     | Brand mark, theme toggle, primary CTA on hero, P&P dice |
-| `.mat-parchment`   | Story body, Wiki body, Character Diary cards |
+| `.mat-parchment`   | Story body, Wiki body, Character Diary cards (cream + grain, no ruled lines) |
 
 **Aetherglass elevation variants** mirror the §3.2 layering rule:
 

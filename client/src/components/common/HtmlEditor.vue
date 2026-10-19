@@ -427,7 +427,7 @@ body.body--dark {
 
 .html-editor .tox .tox-tbtn {
   border-radius: 4px;
-  color: var(--surface-ink);
+  color: var(--ink-primary);
   transition:
     background-color var(--motion-fast) var(--ease-elpis),
     color var(--motion-fast) var(--ease-elpis),
@@ -436,7 +436,7 @@ body.body--dark {
 
 .html-editor .tox .tox-tbtn:hover {
   background-color: rgba(186, 155, 91, 0.12);
-  color: var(--surface-ink);
+  color: var(--ink-primary);
 }
 
 // ELPIS-602 — Active toolbar button (bold/italic/etc. when applied to the
