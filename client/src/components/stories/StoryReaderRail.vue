@@ -61,25 +61,26 @@
       <h2 id="reader-rail-read" class="reader-rail__label">Lesen</h2>
 
       <div class="reader-rail__group" role="group" aria-label="Schriftgröße">
+        <!-- Names start with the visible glyphs (WCAG 2.5.3, voice control). -->
         <button
           type="button"
           class="reader-rail__size reader-rail__size--down"
           :disabled="sizeIndex <= 0"
-          aria-label="Schrift kleiner"
+          aria-label="A−, Schrift kleiner"
           @click="stepSize(-1)"
         >A−</button>
         <button
           type="button"
           class="reader-rail__size"
           :aria-pressed="fontSize === defaultSize ? 'true' : 'false'"
-          aria-label="Standardgröße"
+          aria-label="A, Standardgröße"
           @click="setSize(defaultSize)"
         >A</button>
         <button
           type="button"
           class="reader-rail__size reader-rail__size--up"
           :disabled="sizeIndex >= sizes.length - 1"
-          aria-label="Schrift größer"
+          aria-label="A+, Schrift größer"
           @click="stepSize(1)"
         >A+</button>
       </div>
