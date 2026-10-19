@@ -1,4 +1,4 @@
-import { IsArray, IsNumber, IsString, ValidateNested, IsOptional } from "class-validator";
+import { IsArray, IsNumber, IsString, IsOptional } from "class-validator";
 
 
 export abstract class BaseWeatherDto {

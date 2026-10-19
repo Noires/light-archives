@@ -1,5 +1,5 @@
 
-import { Character, Event, EventAnnouncement, EventLocation, EventRegistration, EventSeries, FreeCompany, FreeCompanyMemberPermission, Image, Location, LocationWeather, News, NewsCategory, NewsIssue, NoticeboardItem, Reaction, RefreshToken, Server, Story, StoryTag, SupportTicket, SupportTicketEvent, SupportTicketMessage, User, Venue, VenueMembership, VenueOffering, VenueOfferingCategory, VenueOpeningException, VenueOpeningHours, Violation, WikiPage, Weather, ContentNote } from '@app/entity';
+import { Album, Character, FreeCompanyApplication, ImageCharacterTag, WikiPageRevision, Event, EventAnnouncement, EventLocation, EventRegistration, EventSeries, FreeCompany, FreeCompanyMemberPermission, Image, Location, LocationWeather, News, NewsCategory, NewsIssue, NoticeboardItem, Reaction, RefreshToken, Server, Story, StoryTag, SupportTicket, SupportTicketEvent, SupportTicketMessage, User, Venue, VenueMembership, VenueOffering, VenueOfferingCategory, VenueOpeningException, VenueOpeningHours, Violation, WikiPage, Weather, ContentNote } from '@app/entity';
 import { CommunityMembership } from '@app/entity/community-membership.entity';
 import { CommunityTag } from '@app/entity/community-tag.entity';
 import { Community } from '@app/entity/community.entity';
@@ -10,8 +10,6 @@ import { Notification } from '@app/entity/notification.entity';
 import { NotificationPreference } from '@app/entity/notification-preference.entity';
 import { Bookmark } from '@app/entity/bookmark.entity';
 import { CalendarToken } from '@app/entity/calendar-token.entity';
-// ER2 round 2 (content features)
-import { Album, FreeCompanyApplication, ImageCharacterTag, WikiPageRevision } from '@app/entity';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import config from 'config';
 import { DbConfigInterface } from './interfaces/db-config.interface';

@@ -26,7 +26,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { Transform } from 'class-transformer';
 import { IsIn, IsOptional } from 'class-validator';
 import { EventsService } from './events.service';

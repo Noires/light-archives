@@ -14,7 +14,7 @@ export class ContentNotesService {
 	async getContentNotes(): Promise<ContentNoteDto[]> {
 		const contentNotes = await this.contentNoteRepo.find();
 
-    if (contentNotes.length == 0)
+    if (contentNotes.length === 0)
     {
       return [];
     }

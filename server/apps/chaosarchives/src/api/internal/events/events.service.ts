@@ -31,6 +31,8 @@ import { DateTime, Duration } from 'luxon';
 import { firstValueFrom } from 'rxjs';
 import { Connection, EntityManager, In, MoreThanOrEqual, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { Redis } from 'ioredis';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { getVerifiedCharacter } from '../../../common/api-checks';
 import { Contains } from '../../../common/db';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
@@ -43,8 +45,6 @@ import { ChocoboChronicleService } from './chocobo-chronicle.service';
 import { CrescentMoonPublishingService } from './crescent-moon-publishing.service';
 import { ExternalEvent } from './model/external-event';
 import { buildIcsCalendar, htmlToIcsPlainText, IcsEvent } from './ics';
-import { Redis } from 'ioredis';
-import { InjectRedis } from '@liaoliaots/nestjs-redis';
 
 @Injectable()
 export class EventsService {

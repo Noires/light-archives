@@ -1,4 +1,3 @@
-import { Console } from "console";
 
 export enum Tribe {
   MIDLANDER = 'midlander',
@@ -60,9 +59,7 @@ export const tribes: { [k: string]: string } = {
 
 export function getTribeByName(tribeName: string): Tribe|null {
   for (const tribe of Object.values(Tribe)) {
-    console.log(tribe);
     if (enTribes[tribe] === tribeName) {
-      console.log(tribe);
       return tribe;
     }
   }

@@ -1,4 +1,4 @@
-﻿import { UserInfo } from '@app/auth/model/user-info';
+import { UserInfo } from '@app/auth/model/user-info';
 import { SupportTicket, SupportTicketEvent, SupportTicketMessage, User } from '@app/entity';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
@@ -16,7 +16,6 @@ import SharedConstants from '@app/shared/SharedConstants';
 import { roleImplies, Role } from '@app/shared/enums/role.enum';
 import { SupportLevel } from '@app/shared/enums/support-level.enum';
 import { SupportMessageKind } from '@app/shared/enums/support-message-kind.enum';
-import { SupportTicketCategory } from '@app/shared/enums/support-ticket-category.enum';
 import { SupportTicketEventType } from '@app/shared/enums/support-ticket-event-type.enum';
 import { SupportTicketPriority } from '@app/shared/enums/support-ticket-priority.enum';
 import { SupportTicketStatus } from '@app/shared/enums/support-ticket-status.enum';
@@ -675,11 +674,16 @@ export class SupportService {
       ? this.getInternalSenderLabel(message)
       : this.getExternalSenderLabel(message);
 
+    let authorUserId: number | null | undefined;
+    if (includeInternal) {
+      authorUserId = message.author ? message.author.id : null;
+    }
+
     return new SupportTicketMessageDto({
       id: message.id,
       kind: message.kind,
       senderLabel,
-      authorUserId: includeInternal ? (message.author ? message.author.id : null) : undefined,
+      authorUserId,
       body: message.body,
       isInternal: message.isInternal,
       createdAt: message.createdAt.getTime(),

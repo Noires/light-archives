@@ -2,9 +2,9 @@ import { LocationDto } from "@app/shared/dto/locations/location.dto";
 import { LocationEditDto } from "@app/shared/dto/locations/location-edit.dto";
 import { LocationCreateResultDto } from "@app/shared/dto/locations/location-create-result.dto";
 import { Controller, Get, Post, Put, Delete, Body, Param, ParseIntPipe } from "@nestjs/common";
-import { LocationsService } from "./locations.service";
 import { Role } from '@app/shared/enums/role.enum';
 import { RoleRequired } from '@app/auth/decorators/role-required.decorator';
+import { LocationsService } from "./locations.service";
 
 @Controller('locations')
 export class LocationsController {

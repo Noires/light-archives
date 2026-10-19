@@ -24,7 +24,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { escapeForLike } from 'apps/chaosarchives/src/common/db';
 import utils from 'apps/chaosarchives/src/common/utils';
-import { Connection, EntityManager, In, IsNull, Not, Repository } from 'typeorm';
+import { Connection, EntityManager, In, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import sharp from 'sharp';
 import {
@@ -447,10 +447,12 @@ export class ImagesService {
     const toRemove = replace ? current.filter((id) => !wanted.includes(id)) : [];
 
     for (const albumId of toAdd) {
+      // eslint-disable-next-line no-await-in-loop -- sequential writes on the single transaction connection
       await em.createQueryBuilder().relation(Album, 'images').of(albumId).add(imageId);
     }
 
     for (const albumId of toRemove) {
+      // eslint-disable-next-line no-await-in-loop -- sequential writes on the single transaction connection
       await em.createQueryBuilder().relation(Album, 'images').of(albumId).remove(imageId);
     }
   }

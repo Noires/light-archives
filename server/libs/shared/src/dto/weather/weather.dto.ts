@@ -1,6 +1,6 @@
 import { IsInt, IsNumber, IsString, IsArray, ValidateNested, IsOptional } from "class-validator";
-import { LocationWeatherDto } from '../locations/location_weather.dto';
 import { Type } from "class-transformer";
+import { LocationWeatherDto } from '../locations/location_weather.dto';
 
 export class WeatherDto {
   @IsInt()

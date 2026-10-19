@@ -2,11 +2,11 @@ import { NewsDto } from '@app/shared/dto/news/news.dto';
 import SharedConstants from '@app/shared/SharedConstants';
 import { Injectable } from '@nestjs/common';
 import { DateTime, Duration } from 'luxon';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import { Redis } from 'ioredis';
 import utils from '../../../common/utils';
 import { DailyMoogleService } from './daily-moogle.service';
 import { LimsaInsiderService } from './limsa-insider.service';
-import { InjectRedis } from '@liaoliaots/nestjs-redis';
-import { Redis } from 'ioredis';
 
 export enum NewsCacheType {
 	LONG, SHORT

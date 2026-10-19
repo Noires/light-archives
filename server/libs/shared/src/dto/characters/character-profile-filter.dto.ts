@@ -1,8 +1,8 @@
 import { Race } from "@app/shared/enums/race.enum";
 import { Type } from "class-transformer";
 import { IsEnum, IsNumber, IsOptional, IsString, Matches } from "class-validator";
-import { PagingDto } from "../common/paging.dto";
 import { Tribe } from "@app/shared/enums/tribe.enum";
+import { PagingDto } from "../common/paging.dto";
 
 export class CharacterProfileFilterDto extends PagingDto {
 	@IsString()
