@@ -72,6 +72,7 @@ All round-2 tickets ER2-1001..1027 done on `vision/er2` (ER2-1028 board conforma
 - User tests: kit in `UI_UX_USER_TEST_KIT.md` (German) — sessions still to be run by the team, plus a real NVDA/VoiceOver pass.
 - Security hotfix branch `hotfix/community-permission-await` (from `main`, unpushed) for the community permission bug.
 - ER2-906/1028 Penpot board conformance done 2026-10-19: fixed copy-link leftover (boolean props lacked `type: Boolean`, so bare attributes were ignored — all 46 fixed), raw wikilinks in FC facts, overview width, fact hyphenation, footer link row. Intentional deviations noted on the Penpot index board.
+- Calendar sidebar widget reinstated 2026-10-19 on request (every page except /calendar, sticky right column ≥1200px, below content on narrow screens).
 - Still open: user test sessions + real screen-reader pass (kit ready).
 
 ## Next ticket

@@ -8,12 +8,15 @@
     <q-page-container>
       <shell-hero v-if="isHome" />
 
-      <div class="layout__page-shell">
+      <div class="layout__page-shell" :class="{ 'layout__page-shell--with-calendar': showCalendarWidget }">
         <!-- Skip-link target. Not a <main>: every q-page already renders the
              page's <main> landmark inside this container. -->
         <div id="inhalt" class="layout__page-container" tabindex="-1">
           <router-view />
         </div>
+        <!-- Calendar widget beside the content on every page except /calendar
+             (reinstated 2026-10-19 on request). -->
+        <calendar-sidebar-widget v-if="showCalendarWidget" class="layout__calendar-outer" />
       </div>
     </q-page-container>
 
@@ -33,6 +36,8 @@
 <script lang="ts">
 import { defineAsyncComponent } from 'vue';
 import { Vue, Options } from 'vue-class-component';
+// Imported before the shell parts so its CSS loads ahead of the layout rules.
+import CalendarSidebarWidget from '../components/eventbar/CalendarSidebarWidget.vue';
 import ShellHeader from './shell/ShellHeader.vue';
 import ShellHero from './shell/ShellHero.vue';
 import ShellFooter from './shell/ShellFooter.vue';
@@ -44,15 +49,15 @@ import { persistTelemetryConsent } from 'src/common/telemetry-consent-actions';
 import { isSentryConfigured } from 'src/common/sentry';
 
 // App shell. Mounted once by the single '/' parent route (see
-// router/routes.ts). Owns the command palette state, the single-column page shell
-// and the telemetry consent prompt. ER2-203 removed the calendar widget from
-// the shell; the home hub uses TimelineStrip instead (ER2-302). The visible
-// chrome lives
+// router/routes.ts). Owns the command palette state, the page shell (content
+// plus the calendar widget column, which is hidden on /calendar) and the
+// telemetry consent prompt. The visible chrome lives
 // in ./shell/*: ShellHeader (top bar, nav model in nav.ts), ShellHero,
 // ShellFooter and ShellMobileNav (bottom bar + "Mehr" sheet below 1024px).
 
 @Options({
   components: {
+    CalendarSidebarWidget,
     ShellHeader,
     ShellHero,
     ShellFooter,
@@ -115,6 +120,11 @@ export default class MainLayout extends Vue {
   // ER2-202 — the logo hero renders on the home page only.
   get isHome(): boolean {
     return this.$route.path === '/';
+  }
+
+  /** The events page has its own calendar, so the widget stays away there. */
+  get showCalendarWidget(): boolean {
+    return !this.$route.path.startsWith('/calendar');
   }
 
   async switchCharacter() {
@@ -277,6 +287,40 @@ body.body--dark {
 @media screen and (max-width: $breakpoint-xs) {
   .layout__page-shell {
     --page-shell-gutter: 8px;
+  }
+}
+
+// Content plus calendar widget column. Without the widget (/calendar) the
+// shell stays single-column, so there is no empty column there.
+.layout__page-shell--with-calendar {
+  --calendar-width: 320px;
+  --page-shell-max: calc(1200px + 24px + var(--calendar-width));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--calendar-width);
+  gap: 24px;
+  align-items: start;
+}
+
+.layout__calendar-outer {
+  --calendar-sticky-top: calc(var(--nav-height, 68px) + 24px);
+  position: sticky;
+  top: var(--calendar-sticky-top);
+  width: 100%;
+  max-height: calc(100vh - var(--calendar-sticky-top) - 16px);
+  overflow: hidden;
+  z-index: 5;
+}
+
+// Narrow screens: the widget moves below the content.
+@media screen and (max-width: 1200px) {
+  .layout__page-shell--with-calendar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .layout__calendar-outer {
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
 }
 
