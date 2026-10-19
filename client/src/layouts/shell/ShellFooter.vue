@@ -1,13 +1,20 @@
 <template>
   <q-footer elevated class="mat-vellum">
     <q-toolbar class="layout__toolbar__footer column">
+      <nav class="layout__footer-links" aria-label="Fußzeile">
+        <router-link to="/about">Über Elpisgarten</router-link>
+        <router-link to="/rules">Regeln</router-link>
+        <router-link to="/faq">FAQ</router-link>
+        <a href="https://discord.gg/wFT8DGkr3J" target="_blank" rel="noopener noreferrer">Discord</a>
+        <router-link to="/contact">Kontakt</router-link>
+        <router-link to="/impressum">Impressum</router-link>
+        <router-link to="/privacy-statement">Datenschutz</router-link>
+      </nav>
       <triskelion-divider class="layout__footer-ornament" />
       <div class="layout__footer text-body justify-center text-center">
         Final Fantasy XIV © 2010&ndash;2026 Square Enix Co., Ltd. Alle Rechte vorbehalten. Elpisgarten ist eine
         Fanseite und steht nicht mit Square Enix in Verbindung.<br />
         Alle Rechte der Texte und Bilder © 2021–2026 liegen bei ihren jeweiligen Eigentümern.
-        <router-link to="/privacy-statement">(Datenschutzerklärung) </router-link>
-        <router-link to="/impressum">(Impressum)</router-link>
       </div>
     </q-toolbar>
   </q-footer>
@@ -80,6 +87,34 @@ body.body--dark .q-footer.mat-vellum {
 
 .layout__footer {
   flex-grow: 1;
+}
+
+// Vision footer link row (board "Shell › Footer").
+.layout__footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 28px;
+  padding: 20px 16px 4px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.layout__footer-links a,
+.layout__footer-links a:visited {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  color: var(--app-footer-link);
+  text-decoration: none;
+}
+
+.layout__footer-links a:hover,
+.layout__footer-links a:focus-visible {
+  color: var(--app-footer-link-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 // Local colour on purpose: the footer is page chrome (Vellum / Obsidian),

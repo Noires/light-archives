@@ -542,6 +542,16 @@ export default class CharacterOverview extends Vue.with(Props) {
 	}
 }
 
+// When no preview card renders (visitor view of a sparse profile), the rail
+// is empty: let the main column use the full width instead of leaving a gap.
+.character-overview:has(> .character-overview__rail:empty) {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.character-overview__rail:empty {
+	display: none;
+}
+
 .character-overview__main,
 .character-overview__rail {
 	display: flex;
@@ -788,7 +798,9 @@ export default class CharacterOverview extends Vue.with(Props) {
 	font-size: 15px;
 	line-height: 1.45;
 	color: var(--ink-primary);
-	overflow-wrap: anywhere;
+	// German hyphenation instead of hard mid-word breaks ("Jägerin/Diplomatin/Händlerin").
+	overflow-wrap: break-word;
+	hyphens: auto;
 	white-space: pre-line;
 }
 

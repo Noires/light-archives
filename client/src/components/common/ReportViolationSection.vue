@@ -25,7 +25,7 @@ class Props {
 	});
 
 	/** Hide "Link kopieren" on pages whose header already has a "Teilen" action. */
-	hideCopyLink = prop<boolean>({
+	hideCopyLink = prop<boolean>({ type: Boolean,
 		default: false,
 	});
 }

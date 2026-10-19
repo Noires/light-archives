@@ -146,7 +146,7 @@ interface DialogRef {
 }
 
 class Props {
-  banner = prop<boolean>({
+  banner = prop<boolean>({ type: Boolean,
     default: false,
   });
 

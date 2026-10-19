@@ -67,7 +67,7 @@ class Props {
 	modelValue = prop<string>({ default: '' });
 	sync = prop<SectionTabsSync>({ default: 'none' });
 	queryKey = prop<string>({ default: 'tab' });
-	glass = prop<boolean>({ default: false });
+	glass = prop<boolean>({ type: Boolean, default: false });
 	ariaLabel = prop<string>({ default: 'Abschnitte' });
 }
 

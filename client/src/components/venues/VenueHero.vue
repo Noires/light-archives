@@ -66,7 +66,7 @@ import { VenueStatus, getVenueStatus } from './venue-status';
 
 class Props {
   venue = prop<VenueDto>({ required: true });
-  preview = prop<boolean>({ default: false });
+  preview = prop<boolean>({ type: Boolean, default: false });
 }
 
 @Options({

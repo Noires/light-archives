@@ -200,11 +200,11 @@ class Props {
     required: true,
   });
 
-  preview = prop<boolean>({
+  preview = prop<boolean>({ type: Boolean,
     default: false,
   });
 
-  canEdit = prop<boolean>({
+  canEdit = prop<boolean>({ type: Boolean,
     default: false,
   });
 }

@@ -193,7 +193,7 @@ class Props {
     required: true,
   });
 
-  preview = prop<boolean>({
+  preview = prop<boolean>({ type: Boolean,
     default: false,
   });
 

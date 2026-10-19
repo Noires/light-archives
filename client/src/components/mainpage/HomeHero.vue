@@ -91,7 +91,7 @@ interface StatItem {
 
 class Props {
 	stats = prop<HomeTodayStats>({ required: true });
-	loggedIn = prop<boolean>({ default: false });
+	loggedIn = prop<boolean>({ type: Boolean, default: false });
 	welcomeName = prop<string>({ default: 'Abenteurer' });
 	avatar = prop<string>({ default: '' });
 	/** Element id the primary CTA scrolls to. */

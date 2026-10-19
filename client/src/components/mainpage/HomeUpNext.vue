@@ -57,7 +57,7 @@ class Props {
 	events = prop<EventSummaryDto[]>({ default: () => [] });
 	now = prop<number>({ required: true });
 	tonightCount = prop<number>({ default: 0 });
-	available = prop<boolean>({ default: true });
+	available = prop<boolean>({ type: Boolean, default: true });
 	limit = prop<number>({ default: 3 });
 }
 

@@ -33,7 +33,7 @@ class Props {
     default: '',
   });
 
-  owner = prop<boolean>({
+  owner = prop<boolean>({ type: Boolean,
     default: false,
   });
 }

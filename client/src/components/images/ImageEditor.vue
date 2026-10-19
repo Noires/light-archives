@@ -27,7 +27,7 @@ class Props {
 	modelValue = prop<ImageDto>({
 		required: true
 	});
-	fullPage = prop<boolean>({
+	fullPage = prop<boolean>({ type: Boolean,
 		default: false
 	});
 }

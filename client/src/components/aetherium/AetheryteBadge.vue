@@ -45,7 +45,7 @@ class Props {
 	alt = prop<string>({ default: '' });
 	size = prop<BadgeSize>({ default: 'md' });
 	shape = prop<'square' | 'round'>({ default: 'square' });
-	glyphCorners = prop<boolean>({ default: true });
+	glyphCorners = prop<boolean>({ type: Boolean, default: true });
 	placeholderIcon = prop<string>({ default: 'person' });
 }
 

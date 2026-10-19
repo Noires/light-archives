@@ -144,7 +144,7 @@ class Props {
     default: '400px',
   });
 
-  allowImages = prop<boolean>({
+  allowImages = prop<boolean>({ type: Boolean,
     default: true
   });
 }

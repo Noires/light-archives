@@ -82,7 +82,7 @@
 							<h2 id="fc-seek" class="fc-detail__card-title">Wir suchen</h2>
 							<p class="fc-detail__card-text">
 								{{ fc.name }} nimmt neue Mitglieder auf.
-								<template v-if="fc.recruitingOfficers"> Sprich am besten {{ fc.recruitingOfficers }} an.</template>
+								<template v-if="fc.recruitingOfficers"> Sprich am besten <link-field :content="fc.recruitingOfficers" /> an.</template>
 							</p>
 							<free-company-apply-action
 								:fc="fc"
@@ -187,6 +187,7 @@ import { keepTabsInView } from 'components/character/keep-tabs-in-view';
 import { activeRpStatus } from 'components/character/rp-status';
 import FocusItems from 'components/communities/FocusItems.vue';
 import GroupFacts from 'components/communities/GroupFacts.vue';
+import LinkField from 'components/common/LinkField.vue';
 import GroupEvents from 'components/communities/GroupEvents.vue';
 import GroupMemberContent from 'components/communities/GroupMemberContent.vue';
 import { loadGroupEvents } from 'components/communities/member-content';
@@ -273,6 +274,7 @@ async function load(params: RouteParams): Promise<Content> {
 
 @Options({
 	components: {
+		LinkField,
 		AvatarStack,
 		EmptyState,
 		FreeCompanyApplications,

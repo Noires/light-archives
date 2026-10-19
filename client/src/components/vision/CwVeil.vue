@@ -97,7 +97,7 @@ class Props {
 	backLabel = prop<string>({ default: 'Zurück zur Übersicht' });
 	backTo = prop<RouteLocationRaw | null>({ default: null });
 	/** Skip the veil entirely (e.g. editor preview). */
-	disabled = prop<boolean>({ default: false });
+	disabled = prop<boolean>({ type: Boolean, default: false });
 }
 
 @Options({

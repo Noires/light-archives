@@ -131,7 +131,7 @@ class Props {
 	endHour = prop<number>({ default: 26 });
 	zone = prop<string>({ default: SharedConstants.FFXIV_SERVER_TIMEZONE });
 	/** Mute every bar that is not running right now ("Jetzt" view). */
-	dimNonLive = prop<boolean>({ default: false });
+	dimNonLive = prop<boolean>({ type: Boolean, default: false });
 	/** Assumed duration of events without an end. */
 	defaultDurationMinutes = prop<number>({ default: 120 });
 	emptyText = prop<string>({ default: 'Für heute Abend ist noch nichts eingetragen.' });

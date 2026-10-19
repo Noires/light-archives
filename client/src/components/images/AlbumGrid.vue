@@ -25,7 +25,7 @@ import { Options, prop, Vue } from 'vue-class-component';
 
 class Props {
   albums = prop<AlbumSummaryDto[]>({ required: true });
-  showOwner = prop<boolean>({ default: true });
+  showOwner = prop<boolean>({ type: Boolean, default: true });
   headingTag = prop<string>({ default: 'h3' });
 }
 

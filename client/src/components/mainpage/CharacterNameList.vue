@@ -30,7 +30,7 @@ class Props {
     required: true,
   });
 
-  links = prop<boolean>({
+  links = prop<boolean>({ type: Boolean,
     default: true,
   })
 

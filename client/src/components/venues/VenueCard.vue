@@ -64,7 +64,7 @@ const MAX_TAGS = 3;
 class Props {
   venue = prop<VenueSummaryDto>({ required: true });
   imageUrl = prop<string>({ default: '' });
-  showServer = prop<boolean>({ default: true });
+  showServer = prop<boolean>({ type: Boolean, default: true });
   /** Re-evaluation tick from the parent (epoch millis). */
   now = prop<number>({ default: 0 });
 }

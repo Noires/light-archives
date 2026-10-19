@@ -63,7 +63,7 @@ interface DialogRef {
 }
 
 class Props {
-  settingsMode = prop<boolean>({
+  settingsMode = prop<boolean>({ type: Boolean,
     default: false,
   });
 }

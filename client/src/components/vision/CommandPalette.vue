@@ -216,7 +216,7 @@ export function searchResultLink(type: PageType, result: SearchResultDto): strin
 }
 
 class Props {
-	modelValue = prop<boolean>({ default: false });
+	modelValue = prop<boolean>({ type: Boolean, default: false });
 }
 
 @Options({

@@ -70,8 +70,8 @@ class Props {
 	/** Already sorted (open, soon, next openings). */
 	venues = prop<HomeVenue[]>({ default: () => [] });
 	openCount = prop<number>({ default: 0 });
-	loading = prop<boolean>({ default: false });
-	available = prop<boolean>({ default: true });
+	loading = prop<boolean>({ type: Boolean, default: false });
+	available = prop<boolean>({ type: Boolean, default: true });
 	limit = prop<number>({ default: 4 });
 }
 

@@ -136,7 +136,7 @@ class Props {
     },
   });
 
-  banner = prop<boolean>({
+  banner = prop<boolean>({ type: Boolean,
     default: false,
   });
 
@@ -144,7 +144,7 @@ class Props {
     default: null,
   });
 
-  allowAspectRatioCrop = prop<boolean>({
+  allowAspectRatioCrop = prop<boolean>({ type: Boolean,
     default: false,
   });
 

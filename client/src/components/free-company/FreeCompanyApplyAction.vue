@@ -73,11 +73,11 @@ class Props {
   /** Website link used when the API has no application flow. */
   fallbackUrl = prop<string>({ default: '' });
   /** The current character is already a member. */
-  isMember = prop<boolean>({ default: false });
+  isMember = prop<boolean>({ type: Boolean, default: false });
   /** Sits on the hero scrim (fixed on-media colours). */
-  onMedia = prop<boolean>({ default: false });
+  onMedia = prop<boolean>({ type: Boolean, default: false });
   /** Hide the status chips (e.g. a second instance on the same page). */
-  applyOnly = prop<boolean>({ default: false });
+  applyOnly = prop<boolean>({ type: Boolean, default: false });
 }
 
 @Options({

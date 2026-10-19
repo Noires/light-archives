@@ -12,7 +12,7 @@
 						target="_blank"
 						rel="noopener noreferrer"
 					>{{ item.value }}</a>
-					<template v-else>{{ item.value }}</template>
+					<link-field v-else :content="item.value" />
 				</dd>
 			</div>
 		</dl>
@@ -27,6 +27,7 @@
 // ER2-410 — "Eckdaten" card for free company and community pages.
 import { Options, prop, Vue } from 'vue-class-component';
 import type { GroupFact } from './group-plate';
+import LinkField from 'src/components/common/LinkField.vue';
 
 class Props {
 	title = prop<string>({ default: 'Eckdaten' });
@@ -35,6 +36,7 @@ class Props {
 }
 
 @Options({
+	components: { LinkField },
 	name: 'GroupFacts',
 })
 export default class GroupFacts extends Vue.with(Props) {

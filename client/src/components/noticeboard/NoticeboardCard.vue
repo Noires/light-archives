@@ -60,8 +60,8 @@ import { isPostedToDiscord, NoticeboardCardItem, noticeboardTypeColor } from './
 
 class Props {
   item = prop<NoticeboardCardItem>({ required: true });
-  canPin = prop<boolean>({ default: false });
-  pinBusy = prop<boolean>({ default: false });
+  canPin = prop<boolean>({ type: Boolean, default: false });
+  pinBusy = prop<boolean>({ type: Boolean, default: false });
 }
 
 @Options({

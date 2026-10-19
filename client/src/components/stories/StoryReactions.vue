@@ -50,7 +50,7 @@ class Props {
   initialCounts = prop<ReactionCountsDto | null>({ default: null });
   initialMine = prop<ReactionKind[] | null>({ default: null });
   /** Own stories cannot be reacted to by their author. */
-  mine = prop<boolean>({ default: false });
+  mine = prop<boolean>({ type: Boolean, default: false });
 }
 
 @Options({
