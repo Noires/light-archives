@@ -55,7 +55,7 @@ Branch `vision/er2` (from `symphony/tr-7`) implements `UI_UX_VISION_REWORK_PLAN.
 
 All round-2 tickets ER2-1001..1027 done on `vision/er2` (ER2-1028 board conformance stays open until the Penpot MCP is reachable; ER2-904/905 user tests stay with the team).
 - **New data:** venue/story/noticeboard/character/FC/community list DTOs enriched; change feed avatars; noticeboard pin (moderators); story cover image.
-- **Social:** follows, notifications (bell, `/benachrichtigungen`, preferences, 90-day retention), event reminders every 5 min, bookmarks (`/gemerkt`), private calendar token feed `/api/calendar/:token.ics`. Discord DM reminders were removed on 2026-10-19 (in-app only; the unused `discordDm` column stays in the DB).
+- **Social:** follows, notifications (bell, `/benachrichtigungen`, preferences, 90-day retention), event reminders every 5 min, bookmarks (`/gemerkt`), private calendar token feed `/api/internal/calendar/:token.ics`. Discord DM reminders were removed on 2026-10-19 (in-app only; the unused `discordDm` column stays in the DB).
 - **Content:** wiki revisions (`/wiki/:title/versionen`), albums (`/album/:id`, `/gallery/alben`), FC applications, accent colour + play style, "Was wir spielen", consent-based image tags (`/my-content`), CW veil on events.
 - **Outlook:** venue map (`/venues/karte`, original SVG district art), relationship constellation on Kontakte, plate PNG export.
 - **Fixes:** community edit/member-management permission checks were missing `await` (any logged-in user could edit) — fixed; server ESLint config loads again (148 legacy errors remain, ER2 files clean); dead components removed; Lifestream `/li` syntax verified (English districts, `W5 P42`, apartments `W5 sub A12`).
