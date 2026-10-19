@@ -259,15 +259,33 @@ export default class PageNoticeboard extends Vue {
     };
     setPinned(pinned);
     this.pinBusy = [ ...this.pinBusy, item.id ];
+    this.refocusPin(item.id);
     try {
       await this.$api.noticeboard.setPinned(item.id, pinned);
     } catch (e) {
       console.log(e);
       setPinned(!pinned);
+      this.refocusPin(item.id);
       notifyError(pinned ? 'Der Aushang konnte nicht angeheftet werden.' : 'Der Aushang konnte nicht gelöst werden.');
     } finally {
       this.pinBusy = this.pinBusy.filter((id) => id !== item.id);
     }
+  }
+
+  /**
+   * The card re-renders in the other list (pinned row vs. masonry), so the
+   * focused button is gone. Move focus to the same card's pin button in its
+   * new place; if the card left the current page, fall back to the content.
+   */
+  refocusPin(id: number) {
+    void this.$nextTick(() => {
+      const button = this.$el instanceof HTMLElement
+        ? this.$el.querySelector<HTMLElement>(`[data-nb-pin="${id}"]`)
+        : null;
+      const target = button || document.getElementById('inhalt');
+      target?.focus({ preventScroll: !!button });
+      button?.scrollIntoView({ block: 'nearest' });
+    });
   }
 
   get statsLabel(): string {
