@@ -50,7 +50,28 @@
 			<section v-if="hasBackground" class="character-overview__section" aria-labelledby="co-background">
 				<h2 id="co-background" class="character-overview__heading">Hintergrund</h2>
 				<div class="character-overview__background mat-parchment">
-					<html-viewer class="character-overview__prose" :content="character.background" />
+					<!-- Long backgrounds are clamped to an excerpt with a fade; the button shows them in full. -->
+					<div
+						id="co-background-body"
+						ref="backgroundBody"
+						class="character-overview__background-body"
+						:class="{
+							'character-overview__background-body--clamped': backgroundOverflows && !backgroundExpanded,
+						}"
+					>
+						<html-viewer class="character-overview__prose" :content="character.background" />
+					</div>
+					<q-btn
+						v-if="backgroundOverflows"
+						flat
+						no-caps
+						class="elpis-btn elpis-btn--ghost character-overview__background-toggle"
+						:icon-right="backgroundExpanded ? 'expand_less' : 'expand_more'"
+						:label="backgroundExpanded ? 'Weniger anzeigen' : 'Ganzen Hintergrund lesen'"
+						:aria-expanded="backgroundExpanded ? 'true' : 'false'"
+						aria-controls="co-background-body"
+						@click="backgroundExpanded = !backgroundExpanded"
+					/>
 				</div>
 			</section>
 			<section v-else-if="isOwner" class="character-overview__section" aria-labelledby="co-background">
@@ -311,6 +332,11 @@ class Props {
 		contactTargets() {
 			void (this as CharacterOverview).loadContactAvatars();
 		},
+		'character.background'() {
+			const self = this as CharacterOverview;
+			self.backgroundExpanded = false;
+			void self.$nextTick(() => self.measureBackground());
+		},
 	},
 })
 export default class CharacterOverview extends Vue.with(Props) {
@@ -319,9 +345,22 @@ export default class CharacterOverview extends Vue.with(Props) {
 	/** ER2 round 2: contact target → avatar URL from POST /characters/lookup. */
 	contactAvatars: Record<string, string> = {};
 	private contactsToken = 0;
+	backgroundOverflows = false;
+	backgroundExpanded = false;
+	private backgroundObserver: ResizeObserver | null = null;
 
 	mounted() {
 		this.unbindHoverCards = bindHoverCards(this.$el as HTMLElement);
+		this.measureBackground();
+		// Images and web fonts inside the background change its height after mount.
+		const body = this.$refs.backgroundBody as HTMLElement | undefined;
+		if (body && typeof ResizeObserver !== 'undefined') {
+			this.backgroundObserver = new ResizeObserver(() => this.measureBackground());
+			const inner = body.firstElementChild;
+			if (inner) {
+				this.backgroundObserver.observe(inner);
+			}
+		}
 		void this.loadAlbums();
 		void this.loadContactAvatars();
 	}
@@ -386,7 +425,21 @@ export default class CharacterOverview extends Vue.with(Props) {
 		}
 	}
 
+	/** The excerpt clamp only applies when the background is taller than the clamp height. */
+	measureBackground() {
+		const body = this.$refs.backgroundBody as HTMLElement | undefined;
+		const inner = body?.firstElementChild as HTMLElement | null | undefined;
+		if (!body || !inner) {
+			this.backgroundOverflows = false;
+			return;
+		}
+		const clampPx = parseFloat(getComputedStyle(body).getPropertyValue('--co-background-clamp')) || 512;
+		this.backgroundOverflows = inner.scrollHeight > clampPx + 48;
+	}
+
 	beforeUnmount() {
+		this.backgroundObserver?.disconnect();
+		this.backgroundObserver = null;
 		this.unbindHoverCards?.();
 	}
 
@@ -809,9 +862,40 @@ export default class CharacterOverview extends Vue.with(Props) {
 	padding: 28px 32px;
 	border-radius: 12px;
 
+	--co-background-clamp: 512px;
+
 	@media (max-width: 599px) {
 		padding: 20px 18px;
 	}
+}
+
+.character-overview__background-body {
+	position: relative;
+}
+
+.character-overview__background-body--clamped {
+	max-height: var(--co-background-clamp);
+	overflow: hidden;
+
+	// Fade into the parchment so the cut reads as an excerpt, not a glitch.
+	&::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 96px;
+		pointer-events: none;
+		background: linear-gradient(to bottom, transparent, var(--surface-vellum));
+	}
+}
+
+body.body--dark .character-overview__background-body--clamped::after {
+	background: linear-gradient(to bottom, transparent, var(--surface-lift));
+}
+
+.character-overview__background-toggle {
+	margin-top: 12px;
 }
 
 .character-overview__prose {
