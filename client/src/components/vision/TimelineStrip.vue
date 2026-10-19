@@ -1,6 +1,9 @@
 <template>
 	<div class="vision-timeline" :class="{ 'vision-timeline--days': days > 1 }" role="region" :aria-label="ariaLabel">
-		<div class="vision-timeline__scroller">
+		<!-- Scrolls sideways on narrow screens. Without event links inside there
+		     is nothing to tab to, so the scroller itself takes focus (arrow keys
+		     scroll it). -->
+		<div class="vision-timeline__scroller" :tabindex="hasLinks ? undefined : 0">
 			<div class="vision-timeline__inner">
 				<div class="vision-timeline__axis" aria-hidden="true">
 					<span v-if="days > 1" class="vision-timeline__day-spacer" />
@@ -231,6 +234,10 @@ export default class TimelineStrip extends Vue.with(Props) {
 		return day.setLocale('de').toFormat('ccc d.');
 	}
 
+	get hasLinks(): boolean {
+		return this.rows.some((row) => row.bars.some((bar) => !!bar.to));
+	}
+
 	get rows(): Row[] {
 		const rows: Row[] = [];
 		const spanMs = this.spanHours * 3600000;
@@ -324,6 +331,14 @@ export default class TimelineStrip extends Vue.with(Props) {
 	overscroll-behavior-x: contain;
 	// Room for the "Jetzt" label above the first track.
 	padding-top: 4px;
+	border-radius: 8px;
+
+	&:focus-visible {
+		outline: none;
+		box-shadow:
+			0 0 0 2px var(--glow-aether),
+			0 0 0 3px var(--vision-focus-edge);
+	}
 }
 
 .vision-timeline__inner {
