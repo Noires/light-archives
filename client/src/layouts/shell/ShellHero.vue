@@ -1,6 +1,8 @@
 <template>
-  <q-toolbar-title class="layout__toolbar-title">
-    <router-link to="/">
+  <!-- Decorative: duplicates the top-bar logo link on the home page, so it is
+       hidden from assistive tech and the tab order (axe "region"). -->
+  <q-toolbar-title class="layout__toolbar-title" aria-hidden="true">
+    <router-link to="/" tabindex="-1">
       <shell-logo img-class="layout__logo" />
     </router-link>
   </q-toolbar-title>

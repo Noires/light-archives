@@ -103,6 +103,7 @@
         <q-pagination
           v-if="maxPage > 1"
           class="page-gallery__pagination"
+          aria-label="Seiten (oben)"
           :model-value="page"
           :max="maxPage"
           input
@@ -146,6 +147,7 @@
     <div v-if="maxPage > 1" class="page-gallery__bottom">
       <q-pagination
         class="page-gallery__pagination"
+        aria-label="Seiten (unten)"
         :model-value="page"
         :max="maxPage"
         :max-pages="7"

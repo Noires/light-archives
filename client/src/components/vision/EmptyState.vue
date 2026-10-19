@@ -3,7 +3,7 @@
 		<span class="vision-empty__disc" aria-hidden="true">
 			<q-icon :name="icon" />
 		</span>
-		<h3 class="vision-empty__title">{{ title }}</h3>
+		<component :is="`h${headingLevel}`" class="vision-empty__title">{{ title }}</component>
 		<p v-if="text" class="vision-empty__text">{{ text }}</p>
 		<q-btn
 			v-if="actionLabel"
@@ -33,6 +33,8 @@ class Props {
 	actionLabel = prop<string>({ default: '' });
 	actionTo = prop<RouteLocationRaw | null>({ default: null });
 	variant = prop<'visitor' | 'owner'>({ default: 'visitor' });
+	/** Heading level of the title (2–6); use 2 when the state sits directly under the page h1. */
+	headingLevel = prop<number>({ default: 3, validator: (value: number) => value >= 2 && value <= 6 });
 }
 
 @Options({
