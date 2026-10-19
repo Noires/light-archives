@@ -61,12 +61,15 @@ const RUN_AXE = `(async () => {
   const res = await window.axe.run(document, {
     runOnly: { type: 'tag', values: ${JSON.stringify(TAGS)} },
     iframes: false,
-    resultTypes: ['violations'],
+    resultTypes: ['violations', 'incomplete'],
   });
+  // "Needs review" contrast nodes (gradients, images, glass) are counted, not judged.
+  const contrastReview = res.incomplete.filter((i) => i.id === 'color-contrast').reduce((n, i) => n + i.nodes.length, 0);
   return {
     version: window.axe.version,
     url: location.pathname + location.search,
     bodyClass: document.body.className,
+    contrastReview,
     violations: res.violations.map((v) => ({
       id: v.id,
       impact: v.impact,
@@ -102,6 +105,7 @@ for (const theme of themes) {
           entry.axe = res.version;
           entry.themeApplied = theme === 'dark' ? res.bodyClass.includes('body--dark') : !res.bodyClass.includes('body--dark');
           entry.violations = res.violations;
+          entry.contrastReview = res.contrastReview;
         } catch (e) {
           entry.error = e.message;
           entry.violations = [];
@@ -141,6 +145,7 @@ function summarize(list) {
     '',
     `Run: ${startedAt}, base ${BASE}, tags ${TAGS.join(', ')}.`,
     `Pages: ${list.length} (${routes.length} routes x ${themes.length} themes x ${widths.length} widths). Errors: ${list.filter((e) => e.error).length}.`,
+    `Theme not applied: ${list.filter((e) => e.themeApplied === false).length}. Color-contrast nodes axe could not decide ("needs review"): ${list.reduce((n, e) => n + (e.contrastReview || 0), 0)}.`,
     '',
     '| Impact | Rules | Nodes |',
     '|---|---|---|',
