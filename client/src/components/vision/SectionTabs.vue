@@ -1,11 +1,36 @@
 <template>
-	<div class="vision-tabs" :class="{ 'vision-tabs--glass': glass }">
+	<div
+		class="vision-tabs"
+		:class="{
+			'vision-tabs--glass': glass,
+			'vision-tabs--more-left': moreLeft,
+			'vision-tabs--more-right': moreRight,
+		}"
+	>
+		<!-- Overflow hints for pointer users; keyboard users move with the arrow keys. -->
+		<button
+			v-if="moreLeft"
+			type="button"
+			class="vision-tabs__scroll vision-tabs__scroll--left"
+			tabindex="-1"
+			aria-hidden="true"
+			@click="scrollByPage(-1)"
+		><q-icon name="chevron_left" /></button>
+		<button
+			v-if="moreRight"
+			type="button"
+			class="vision-tabs__scroll vision-tabs__scroll--right"
+			tabindex="-1"
+			aria-hidden="true"
+			@click="scrollByPage(1)"
+		><q-icon name="chevron_right" /></button>
 		<div
 			ref="list"
 			class="vision-tabs__list"
 			role="tablist"
 			:aria-label="ariaLabel"
 			@keydown="onKeydown"
+			@scroll.passive="updateOverflow"
 		>
 			<template v-for="tab in visibleTabs" :key="tab.key">
 				<router-link
@@ -88,6 +113,54 @@ class Props {
 	},
 })
 export default class SectionTabs extends Vue.with(Props) {
+	moreLeft = false;
+	moreRight = false;
+	private resizeObserver: ResizeObserver | null = null;
+
+	mounted() {
+		const list = this.$refs.list as HTMLElement | undefined;
+		if (list && typeof ResizeObserver !== 'undefined') {
+			this.resizeObserver = new ResizeObserver(() => this.updateOverflow());
+			this.resizeObserver.observe(list);
+		}
+		this.updateOverflow();
+	}
+
+	updated() {
+		this.updateOverflow();
+	}
+
+	beforeUnmount() {
+		this.resizeObserver?.disconnect();
+		this.resizeObserver = null;
+	}
+
+	/** Which edges hide tabs; drives the edge fades and chevrons. */
+	updateOverflow() {
+		const list = this.$refs.list as HTMLElement | undefined;
+		if (!list) {
+			return;
+		}
+		const max = list.scrollWidth - list.clientWidth;
+		const left = max > 1 && list.scrollLeft > 1;
+		const right = max > 1 && list.scrollLeft < max - 1;
+		if (left !== this.moreLeft) {
+			this.moreLeft = left;
+		}
+		if (right !== this.moreRight) {
+			this.moreRight = right;
+		}
+	}
+
+	scrollByPage(direction: 1 | -1) {
+		const list = this.$refs.list as HTMLElement | undefined;
+		if (!list) {
+			return;
+		}
+		const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		list.scrollBy({ left: direction * list.clientWidth * 0.6, behavior: smooth ? 'smooth' : 'auto' });
+	}
+
 	get visibleTabs(): SectionTab[] {
 		return this.tabs.filter((tab) => !tab.hidden);
 	}
@@ -225,8 +298,9 @@ export default class SectionTabs extends Vue.with(Props) {
 		const left = target.offsetLeft - list.offsetLeft;
 		const right = left + target.offsetWidth;
 		if (left < list.scrollLeft || right > list.scrollLeft + list.clientWidth) {
-			list.scrollLeft = Math.max(0, left - 16);
+			list.scrollLeft = Math.max(0, left - 40);
 		}
+		this.updateOverflow();
 	}
 }
 </script>
@@ -235,6 +309,9 @@ export default class SectionTabs extends Vue.with(Props) {
 .vision-tabs {
 	position: relative;
 	min-width: 0;
+	// Tabs compact themselves based on the bar's own width, not the viewport.
+	container-type: inline-size;
+	container-name: vision-tabs;
 }
 
 .vision-tabs--glass {
@@ -257,9 +334,61 @@ export default class SectionTabs extends Vue.with(Props) {
 	gap: 4px;
 	overflow-x: auto;
 	overflow-y: hidden;
-	scrollbar-width: thin;
-	scrollbar-color: var(--rule-soft) transparent;
+	// No visible scrollbar: overflow is shown with edge fades and chevrons.
+	scrollbar-width: none;
 	-webkit-overflow-scrolling: touch;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+.vision-tabs--more-right .vision-tabs__list {
+	mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent);
+}
+
+.vision-tabs--more-left .vision-tabs__list {
+	mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent);
+}
+
+.vision-tabs--more-left.vision-tabs--more-right .vision-tabs__list {
+	mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent);
+}
+
+.vision-tabs__scroll {
+	position: absolute;
+	top: 50%;
+	z-index: 2;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	margin-top: -14px;
+	padding: 0;
+	border: 1px solid var(--rule-soft);
+	border-radius: 999px;
+	background-color: var(--vision-card);
+	color: var(--ink-primary);
+	font-size: 18px;
+	cursor: pointer;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+
+	&:hover {
+		background-color: var(--rule-tint);
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		display: inline-flex;
+	}
+}
+
+.vision-tabs__scroll--left {
+	left: 2px;
+}
+
+.vision-tabs__scroll--right {
+	right: 2px;
 }
 
 .vision-tabs--glass .vision-tabs__list {
@@ -352,6 +481,26 @@ export default class SectionTabs extends Vue.with(Props) {
 	font-size: 12px;
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;
+}
+
+// Compact steps so a full bar (e.g. 9 profile tabs) fits without overflow
+// on common desktop widths; icons go first, labels always stay.
+@container vision-tabs (max-width: 1180px) {
+	.vision-tabs__list {
+		gap: 2px;
+	}
+
+	.vision-tabs__tab {
+		gap: 6px;
+		padding: 10px 10px;
+		font-size: 13px;
+	}
+}
+
+@container vision-tabs (max-width: 1060px) {
+	.vision-tabs__icon {
+		display: none;
+	}
 }
 
 .vision-tabs__tab--active .vision-tabs__count {
