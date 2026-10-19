@@ -1,0 +1,42 @@
+# Throwaway values for the ER2 integration harness only (see ../README.md).
+# Selected with NODE_ENV=local-test and NODE_CONFIG_DIR="<server>/config;<this dir>".
+server:
+  port: 38111
+  frontendRoot: 'http://localhost:38080'
+  newsRoot: 'http://localhost:38081'
+  stewardWebhookPort: 38112
+  stewardWebhookUrl: 'http://127.0.0.1:38112'
+
+db:
+  host: '127.0.0.1'
+  port: 33306
+  database: 'la_er2'
+  username: 'root'
+  password: 'er2root'
+  synchronize: true
+
+redis:
+  host: '127.0.0.1'
+  port: 36379
+
+auth:
+  jwtSecret: 'er2-integration-throwaway-secret'
+  jwtExpiry: '1h'
+  scopedJwtExpiry: '1h'
+  discordClientId: '000000000000000000'
+  discordClientSecret: 'dummy'
+  discordCallbackUrl: 'http://localhost:38111/api/internal/user/login/discord/callback'
+  discordRppCallbackUrl: 'http://localhost:38111/api/rpp/login/discord/callback'
+
+s3:
+  endpoint: 'http://localhost:39000'
+  bucketName: 'er2-dummy'
+  publicRootUrl: 'http://localhost:39000/er2-dummy'
+  accessKeyId: 'dummy'
+  secretAccessKey: 'dummy'
+
+discord:
+  botToken: 'dummy'
+  serverId: '0'
+  announcementChannel: '0'
+  noticeboardChannel: '0'

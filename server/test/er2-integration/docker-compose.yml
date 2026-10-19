@@ -1,0 +1,24 @@
+# Throwaway stack for the ER2 integration harness (see README.md).
+#   docker compose -f test/er2-integration/docker-compose.yml up -d
+services:
+  mariadb:
+    image: mariadb:10.11
+    container_name: er2test-mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: er2root
+      MARIADB_DATABASE: la_er2
+      TZ: UTC
+    ports:
+      - '33306:3306'
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      interval: 2s
+      retries: 30
+
+  redis:
+    image: redis:7
+    container_name: er2test-redis
+    ports:
+      - '36379:6379'
