@@ -30,6 +30,7 @@
       v-if="!loggedIn"
       icon="notifications_none"
       title="Melde dich an"
+      :heading-level="2"
       text="Benachrichtigungen gibt es für angemeldete Spielerinnen und Spieler."
       action-label="Login mit Discord"
       @action="login"
@@ -38,6 +39,7 @@
       v-else-if="!socialEnabled"
       icon="verified_user"
       title="Verifiziere deinen Charakter"
+      :heading-level="2"
       text="Benachrichtigungen stehen nach der Verifizierung zur Verfügung."
       action-label="Zur Verifizierung"
       :action-to="'/verify'"
@@ -46,6 +48,7 @@
       v-else-if="unavailable"
       icon="notifications_paused"
       title="Noch nicht verfügbar"
+      :heading-level="2"
       text="Benachrichtigungen werden gerade eingerichtet. Schau bald wieder vorbei."
     />
 

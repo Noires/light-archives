@@ -65,11 +65,14 @@
               type="button"
               class="venue-map__ward-tile"
               :class="{ 'venue-map__ward-tile--empty': wardCounts[n - 1] === 0 }"
-              :aria-label="`Bezirk ${n}, ${countLabel(wardCounts[n - 1])}`"
               @click="ward = n"
             >
-              <span class="venue-map__ward-no">{{ n }}</span>
-              <span class="venue-map__ward-count">{{ wardCounts[n - 1] > 0 ? countLabel(wardCounts[n - 1]) : '–' }}</span>
+              <!-- Name from the visible text plus hidden words, so it reads
+                   "Bezirk 3, 1 Treffpunkt" and matches what is shown (WCAG 2.5.3). -->
+              <span class="venue-map__ward-no"><span class="vision-sr-only">Bezirk </span>{{ n }}</span>
+              <span class="vision-sr-only">, </span>
+              <span v-if="wardCounts[n - 1] > 0" class="venue-map__ward-count">{{ countLabel(wardCounts[n - 1]) }}</span>
+              <span v-else class="venue-map__ward-count"><span aria-hidden="true">–</span><span class="vision-sr-only">{{ countLabel(0) }}</span></span>
             </button>
           </li>
         </ol>

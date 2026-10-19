@@ -74,7 +74,6 @@
       <button
         type="button"
         class="shell-bar__search"
-        aria-label="Suchen (Strg K)"
         aria-haspopup="dialog"
         aria-keyshortcuts="Control+K Meta+K"
         @click="$emit('open-search')"
@@ -792,7 +791,17 @@ body.body--dark .shell-menu.q-menu {
     justify-content: center;
   }
 
-  .shell-bar__search-label,
+  // Icon-only search: the label stays as the accessible name (visually hidden),
+  // so the name always matches the visible text (WCAG 2.5.3).
+  .shell-bar__search-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
   .shell-bar__kbd,
   .shell-bar__account-text,
   .shell-bar__account-caret {

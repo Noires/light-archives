@@ -18,6 +18,7 @@
       v-if="!loggedIn"
       icon="bookmark_border"
       title="Melde dich an"
+      :heading-level="2"
       text="Deine Merkliste gibt es für angemeldete Spielerinnen und Spieler."
       action-label="Login mit Discord"
       @action="login"
@@ -26,6 +27,7 @@
       v-else-if="!socialEnabled"
       icon="verified_user"
       title="Verifiziere deinen Charakter"
+      :heading-level="2"
       text="Die Merkliste steht nach der Verifizierung zur Verfügung."
       action-label="Zur Verifizierung"
       :action-to="'/verify'"
@@ -34,6 +36,7 @@
       v-else-if="unavailable"
       icon="bookmark_border"
       title="Noch nicht verfügbar"
+      :heading-level="2"
       text="Die Merkliste wird gerade eingerichtet. Schau bald wieder vorbei."
     />
     <div v-else-if="loading" class="page-bookmarks__loading" role="status">
@@ -44,6 +47,7 @@
       v-else-if="!visibleItems.length"
       icon="bookmark_border"
       :title="emptyTitle"
+      :heading-level="2"
       text="Mit „Merken“ auf Treffpunkten, Charakteren, Events und Geschichten landen sie hier."
       :action-label="emptyAction.label"
       :action-to="emptyAction.to"

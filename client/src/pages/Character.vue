@@ -30,6 +30,7 @@
 					<empty-state
 						icon="visibility_off"
 						title="Dieser Bereich ist leer"
+						:heading-level="2"
 						:text="`${character.name} hat hier noch nichts veröffentlicht.`"
 						action-label="Zum Profil"
 						:action-to="basePath"
@@ -40,6 +41,7 @@
 						v-if="isOwner && activeDimmed"
 						class="page-character__owner-hint"
 						variant="owner"
+						:heading-level="2"
 						:icon="activeSection.icon"
 						:title="activeEnabled ? 'Dieser Bereich ist noch leer' : 'Für Besucher ausgeblendet'"
 						:text="activeEnabled

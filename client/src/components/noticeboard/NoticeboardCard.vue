@@ -15,8 +15,9 @@
           :aria-pressed="item.pinned ? 'true' : 'false'"
           :aria-label="item.pinned ? `„${item.title}“ lösen` : `„${item.title}“ anheften`"
           :title="item.pinned ? 'Lösen' : 'Anheften'"
-          :disabled="pinBusy"
-          @click="$emit('toggle-pin', item)"
+          :aria-disabled="pinBusy ? 'true' : undefined"
+          :data-nb-pin="item.id"
+          @click="pinBusy || $emit('toggle-pin', item)"
         >
           <q-icon name="push_pin" size="18px" aria-hidden="true" />
         </button>
@@ -183,7 +184,9 @@ body.body--dark .nb-card:hover {
     box-shadow: 0 0 0 2px var(--glow-aether), 0 0 0 3px var(--vision-focus-edge);
   }
 
-  &:disabled {
+  // aria-disabled instead of disabled: the button keeps keyboard focus
+  // while the request runs (the card moves between lists).
+  &[aria-disabled='true'] {
     cursor: progress;
     opacity: 0.6;
   }
