@@ -24,7 +24,6 @@
           @click="createCharacter"
         />
       </template>
-      <directory-area-tabs />
     </page-head>
 
     <rp-active-strip />
@@ -160,7 +159,6 @@ import { ServerDto } from '@app/shared/dto/servers/server-dto';
 import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
 import { Race } from '@app/shared/enums/race.enum';
 import { RpStatus } from '@app/shared/enums/rp-status.enum';
-import DirectoryAreaTabs from 'components/character/DirectoryAreaTabs.vue';
 import RpActiveStrip from 'components/character/RpActiveStrip.vue';
 import { isEmptyFieldValue } from 'components/character/empty-field';
 import { stripWikilinks } from 'components/character/profile-sections';
@@ -220,7 +218,6 @@ function toApiFilter(filters: Filters, offset: number): CharacterProfileFilterDt
 @Options({
   name: 'PageCharacters',
   components: {
-    DirectoryAreaTabs,
     DirectoryCard,
     EmptyState,
     PageHead,

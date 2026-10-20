@@ -1,6 +1,7 @@
 // Shell navigation model (ER2-201, ER2-205). The top bar, the mobile bottom
-// bar and the "Mehr" sheet all read from here, so every former header and
-// drawer link has exactly one definition. Account actions (profile, create,
+// bar and the menu sheet all read from here, so every former header and
+// drawer link has exactly one definition. Subpages hang off their area
+// (`menu`): a dropdown in the top bar, an expandable row in the sheet. Account actions (profile, create,
 // "Meine …", support, moderation, logout) stay in components/sidebar/UserMenu.vue.
 
 export interface ShellNavLink {
@@ -9,18 +10,21 @@ export interface ShellNavLink {
   icon: string;
 }
 
+export interface ShellNavGroup {
+  key: string;
+  /** Subhead inside the dropdown; omit for a single unlabelled group. */
+  label?: string;
+  links: ShellNavLink[];
+}
+
 export interface ShellNavArea extends ShellNavLink {
   key: string;
   /** Extra path prefixes that mark the area active (besides `to`). */
   prefixes: string[];
   /** Character profile URLs (`/:Server/:Name`) also count for this area. */
   matchCharacterUrls?: boolean;
-}
-
-export interface ShellNavGroup {
-  key: string;
-  label: string;
-  links: ShellNavLink[];
+  /** Subpages; the area label opens them instead of navigating. */
+  menu?: ShellNavGroup[];
 }
 
 // `/:server([A-Z][a-z]+)/:character` in router/routes.ts.
@@ -32,25 +36,62 @@ export const PRIMARY_AREAS: ShellNavArea[] = [
     label: 'Charaktere',
     to: '/profiles',
     icon: 'person',
-    prefixes: ['/profiles', '/free-companies', '/communities', '/fc/', '/community/'],
+    prefixes: ['/profiles'],
     matchCharacterUrls: true,
   },
-  { key: 'venues', label: 'Treffpunkte', to: '/venues', icon: 'place', prefixes: ['/venues', '/venue/'] },
+  {
+    key: 'groups',
+    label: 'Gruppen',
+    to: '/free-companies',
+    icon: 'groups',
+    prefixes: ['/free-companies', '/communities', '/fc/', '/community/'],
+    menu: [
+      {
+        key: 'groups',
+        links: [
+          { label: 'Freie Gesellschaften', to: '/free-companies', icon: 'shield' },
+          { label: 'Communities', to: '/communities', icon: 'groups' },
+        ],
+      },
+    ],
+  },
+  {
+    key: 'venues',
+    label: 'Treffpunkte',
+    to: '/venues',
+    icon: 'place',
+    prefixes: ['/venues', '/venue/'],
+    menu: [
+      {
+        key: 'venues',
+        links: [
+          { label: 'Alle Treffpunkte', to: '/venues', icon: 'place' },
+          { label: 'Treffpunkt-Karte', to: '/venues/karte', icon: 'map' },
+        ],
+      },
+    ],
+  },
   { key: 'events', label: 'Events', to: '/calendar', icon: 'event', prefixes: ['/calendar', '/event/'] },
   { key: 'stories', label: 'Geschichten', to: '/stories', icon: 'auto_stories', prefixes: ['/stories', '/story/'] },
   { key: 'noticeboard', label: 'Anschlagbrett', to: '/noticeboard', icon: 'push_pin', prefixes: ['/noticeboard'] },
-  { key: 'gallery', label: 'Galerie', to: '/gallery/screenshot', icon: 'photo_library', prefixes: ['/gallery/', '/image/'] },
+  {
+    key: 'gallery',
+    label: 'Galerie',
+    to: '/gallery/screenshot',
+    icon: 'photo_library',
+    prefixes: ['/gallery/', '/image/'],
+    menu: [
+      {
+        key: 'gallery',
+        links: [
+          { label: 'Screenshots', to: '/gallery/screenshot', icon: 'photo_library' },
+          { label: 'Kunstwerke', to: '/gallery/artwork', icon: 'palette' },
+          { label: 'Alben', to: '/gallery/alben', icon: 'collections' },
+        ],
+      },
+    ],
+  },
 ];
-
-// ER2-609: /wiki is the wiki index; the top bar links "Wiki" there and lists
-// the former "Wissenswertes" pages (WIKI_LINKS minus the index) under "Mehr".
-export const WIKI_AREA: ShellNavArea = {
-  key: 'wiki',
-  label: 'Wiki',
-  to: '/wiki',
-  icon: 'menu_book',
-  prefixes: ['/wiki', '/beginner-guide', '/rules', '/faq', '/about', '/changes'],
-};
 
 export const WIKI_LINKS: ShellNavLink[] = [
   { label: 'Wiki-Übersicht', to: '/wiki', icon: 'menu_book' },
@@ -61,34 +102,28 @@ export const WIKI_LINKS: ShellNavLink[] = [
   { label: 'Über uns', to: '/about', icon: 'info' },
 ];
 
-// Everything from the former navGroups that is not one of the primary areas.
-export const MORE_GROUPS: ShellNavGroup[] = [
-  {
-    key: 'communities',
-    label: 'Charaktere & Gemeinschaften',
-    links: [
-      { label: 'Charaktere', to: '/profiles', icon: 'person' },
-      { label: 'Freie Gesellschaften', to: '/free-companies', icon: 'shield' },
-      { label: 'Communities', to: '/communities', icon: 'groups' },
-    ],
-  },
-  {
-    key: 'start',
-    label: 'Allgemein',
-    links: [
-      { label: 'Startseite', to: '/', icon: 'home' },
-      { label: 'Kontakt', to: '/contact', icon: 'mail_outline' },
-    ],
-  },
-  {
-    key: 'media',
-    label: 'Galerie',
-    links: [
-      { label: 'Screenshots', to: '/gallery/screenshot', icon: 'photo_camera' },
-      { label: 'Kunstwerke', to: '/gallery/artwork', icon: 'palette' },
-    ],
-  },
-];
+const ABOUT_PATHS = ['/changes', '/about'];
+
+// ER2-609: /wiki is the wiki index (it lists WIKI_LINKS). The Wiki dropdown
+// splits the guides from the pages about the site itself.
+export const WIKI_AREA: ShellNavArea = {
+  key: 'wiki',
+  label: 'Wiki',
+  to: '/wiki',
+  icon: 'menu_book',
+  prefixes: ['/wiki', '/beginner-guide', '/rules', '/faq', '/about', '/changes', '/contact'],
+  menu: [
+    { key: 'knowledge', label: 'Wissen', links: WIKI_LINKS.filter((link) => !ABOUT_PATHS.includes(link.to)) },
+    {
+      key: 'about',
+      label: 'Über Elpisgarten',
+      links: [
+        ...WIKI_LINKS.filter((link) => ABOUT_PATHS.includes(link.to)),
+        { label: 'Kontakt', to: '/contact', icon: 'mail_outline' },
+      ],
+    },
+  ],
+};
 
 function matchesPrefix(path: string, prefix: string): boolean {
   if (prefix.endsWith('/')) {
@@ -102,8 +137,4 @@ export function isAreaActive(area: ShellNavArea, path: string): boolean {
     return true;
   }
   return !!area.matchCharacterUrls && CHARACTER_URL.test(path);
-}
-
-export function isLinkActive(link: ShellNavLink, path: string): boolean {
-  return link.to === '/' ? path === '/' : matchesPrefix(path, link.to);
 }

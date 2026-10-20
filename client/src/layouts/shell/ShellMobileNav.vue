@@ -56,54 +56,56 @@
       <div class="shell-sheet__body">
         <section class="shell-sheet__section" aria-labelledby="shell-sheet-areas">
           <h3 id="shell-sheet-areas" class="shell-sheet__label">Bereiche</h3>
-          <div class="shell-sheet__grid">
+          <template v-for="area in sheetAreas" :key="area.key">
+            <template v-if="area.menu">
+              <button
+                type="button"
+                class="shell-sheet__row shell-sheet__toggle"
+                :class="{ 'shell-sheet__toggle--current': isActive(area) }"
+                :aria-expanded="expandedKey === area.key ? 'true' : 'false'"
+                :aria-controls="`shell-sheet-sub-${area.key}`"
+                @click="toggleArea(area.key)"
+              >
+                <q-icon :name="area.icon" size="20px" aria-hidden="true" />
+                <span class="shell-sheet__row-label">{{ area.label }}</span>
+                <q-icon
+                  name="expand_more"
+                  size="20px"
+                  class="shell-sheet__chevron"
+                  :class="{ 'shell-sheet__chevron--open': expandedKey === area.key }"
+                  aria-hidden="true"
+                />
+              </button>
+              <div v-show="expandedKey === area.key" :id="`shell-sheet-sub-${area.key}`" class="shell-sheet__sub">
+                <template v-for="group in area.menu" :key="group.key">
+                  <div v-if="group.label" class="shell-sheet__sublabel">{{ group.label }}</div>
+                  <router-link
+                    v-for="link in group.links"
+                    :key="link.to"
+                    :to="link.to"
+                    class="shell-sheet__row"
+                    active-class=""
+                    exact-active-class="shell-sheet__row--active"
+                  >
+                    <q-icon :name="link.icon" size="20px" aria-hidden="true" />
+                    <span>{{ link.label }}</span>
+                  </router-link>
+                </template>
+              </div>
+            </template>
             <router-link
-              v-for="area in sheetAreas"
-              :key="area.key"
+              v-else
               :to="area.to"
-              class="shell-sheet__tile"
-              :class="{ 'shell-sheet__tile--active': isActive(area) }"
+              class="shell-sheet__row"
+              :class="{ 'shell-sheet__row--active': isActive(area) }"
               active-class=""
               exact-active-class=""
+              :aria-current="isActive(area) ? 'page' : undefined"
             >
-              <q-icon :name="area.icon" size="22px" aria-hidden="true" />
+              <q-icon :name="area.icon" size="20px" aria-hidden="true" />
               <span>{{ area.label }}</span>
             </router-link>
-          </div>
-        </section>
-
-
-        <section
-          v-for="group in moreGroups"
-          :key="group.key"
-          class="shell-sheet__section"
-          :aria-labelledby="`shell-sheet-${group.key}`"
-        >
-          <h3 :id="`shell-sheet-${group.key}`" class="shell-sheet__label">{{ group.label }}</h3>
-          <router-link
-            v-for="link in group.links"
-            :key="link.to"
-            :to="link.to"
-            class="shell-sheet__row"
-            :active-class="link.to === '/' ? '' : 'shell-sheet__row--active'"
-            exact-active-class="shell-sheet__row--active"
-          >
-            <q-icon :name="link.icon" size="20px" aria-hidden="true" />
-            <span>{{ link.label }}</span>
-          </router-link>
-        </section>
-        <section class="shell-sheet__section" aria-labelledby="shell-sheet-wiki">
-          <h3 id="shell-sheet-wiki" class="shell-sheet__label">Wiki &amp; Wissenswertes</h3>
-          <router-link
-            v-for="link in wikiLinks"
-            :key="link.to"
-            :to="link.to"
-            class="shell-sheet__row"
-            active-class="shell-sheet__row--active"
-          >
-            <q-icon :name="link.icon" size="20px" aria-hidden="true" />
-            <span>{{ link.label }}</span>
-          </router-link>
+          </template>
         </section>
 
         <section v-if="showSocial" class="shell-sheet__section" aria-labelledby="shell-sheet-notifications">
@@ -136,13 +138,14 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component';
-import { MORE_GROUPS, PRIMARY_AREAS, ShellNavArea, WIKI_AREA, WIKI_LINKS, isAreaActive } from './nav';
+import { PRIMARY_AREAS, ShellNavArea, WIKI_AREA, isAreaActive } from './nav';
 import { shellTheme, themeAriaLabel, themeIcon, toggleShellTheme } from './theme-state';
 import { shellMenu } from './menu-state';
 import { canUseSocial, socialState } from 'src/components/social/social-state';
 
 // ER2-205 — below 1024px: fixed bottom bar (Start, Events, Charaktere,
-// Suche, Mehr) and the "Mehr" bottom sheet with every other nav link, the
+// Suche, Mehr) and the "Mehr" bottom sheet: all areas (those with subpages
+// expand in place, the current one starts open), the
 // theme toggle and (ER2 social) links to notifications with the unread count
 // and to bookmarks. ShellHeader polls the count; this reads the shared state. Account actions stay in
 // the top bar's account pill. Emits `open-search` for the command palette.
@@ -155,11 +158,17 @@ import { canUseSocial, socialState } from 'src/components/social/social-state';
     '$route.fullPath'() {
       (this as ShellMobileNav).sheetOpen = false;
     },
+    sheetOpen(open: boolean) {
+      const self = this as ShellMobileNav;
+      if (open) {
+        self.expandedKey = self.sheetAreas.find((area) => area.menu && self.isActive(area))?.key ?? null;
+      }
+    },
   },
 })
 export default class ShellMobileNav extends Vue {
-  readonly wikiLinks = WIKI_LINKS;
-  readonly moreGroups = MORE_GROUPS;
+  /** Area whose subpages are shown in the sheet (one at a time). */
+  expandedKey: string | null = null;
 
   get sheetOpen(): boolean {
     return shellMenu.open;
@@ -223,6 +232,10 @@ export default class ShellMobileNav extends Vue {
 
   isActive(area: ShellNavArea): boolean {
     return isAreaActive(area, this.$route.path);
+  }
+
+  toggleArea(key: string) {
+    this.expandedKey = this.expandedKey === key ? null : key;
   }
 
   get themeIcon(): string {
@@ -409,41 +422,6 @@ body.body--dark .shell-sheet {
   color: var(--ink-muted);
 }
 
-.shell-sheet__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 8px;
-  padding: 0 4px 4px;
-}
-
-.shell-sheet__tile {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  min-height: 72px;
-  padding: 12px;
-  font: 600 14px/20px var(--font-ui);
-  color: var(--ink-primary);
-  text-decoration: none;
-  background: var(--rule-tint);
-  border: 1px solid var(--rule-soft);
-  border-radius: 10px;
-
-  .q-icon {
-    color: var(--ink-muted);
-  }
-
-  &:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--glow-aether), 0 0 0 3px var(--vision-focus-edge);
-  }
-}
-
-.shell-sheet__tile--active {
-  border-color: var(--rule-strong);
-}
-
 .shell-sheet__row {
   display: flex;
   align-items: center;
@@ -473,6 +451,40 @@ body.body--dark .shell-sheet {
 .shell-sheet__row--active {
   background: var(--rule-tint);
   box-shadow: inset 2px 0 0 var(--rule-strong);
+}
+
+.shell-sheet__toggle {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.shell-sheet__toggle--current {
+  font-weight: 600;
+}
+
+.shell-sheet__chevron {
+  transition: transform var(--motion-fast) var(--ease-elpis);
+}
+
+.shell-sheet__chevron--open {
+  transform: rotate(180deg);
+}
+
+.shell-sheet__sub {
+  margin: 0 0 4px 18px;
+  padding-left: 8px;
+  border-left: 1px solid var(--rule-soft);
+}
+
+.shell-sheet__sublabel {
+  padding: 8px 8px 2px;
+  font: 600 11px/16px var(--font-ui);
+  letter-spacing: var(--ls-eyebrow, 0.08em);
+  text-transform: uppercase;
+  color: var(--ink-muted);
 }
 
 .shell-sheet__row-label {

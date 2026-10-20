@@ -6,67 +6,58 @@
       </router-link>
 
       <nav class="shell-bar__nav" aria-label="Hauptnavigation">
-        <router-link
-          v-for="area in primaryAreas"
-          :key="area.key"
-          :to="area.to"
-          class="shell-bar__nav-item"
-          :class="{ 'shell-bar__nav-item--active': isActive(area) }"
-          active-class=""
-          exact-active-class=""
-          :aria-current="isActive(area) ? 'page' : undefined"
-        >
-          {{ area.label }}
-        </router-link>
-
-        <router-link
-          :to="wikiArea.to"
-          class="shell-bar__nav-item"
-          :class="{ 'shell-bar__nav-item--active': isActive(wikiArea) }"
-          active-class=""
-          exact-active-class=""
-          :aria-current="isActive(wikiArea) ? 'page' : undefined"
-        >
-          {{ wikiArea.label }}
-        </router-link>
-
-        <button
-          type="button"
-          class="shell-bar__nav-item shell-bar__nav-trigger"
-          :class="{ 'shell-bar__nav-item--active': isMoreActive }"
-          aria-haspopup="menu"
-          :aria-expanded="moreMenuOpen ? 'true' : 'false'"
-        >
-          Mehr
-          <q-icon name="expand_more" size="16px" aria-hidden="true" />
-          <q-menu
-            v-model="moreMenuOpen"
-            anchor="bottom left"
-            self="top left"
-            :offset="[0, 6]"
-            class="shell-menu"
+        <template v-for="area in navAreas" :key="area.key">
+          <button
+            v-if="area.menu"
+            type="button"
+            class="shell-bar__nav-item shell-bar__nav-trigger"
+            :class="{ 'shell-bar__nav-item--active': isActive(area) }"
+            aria-haspopup="menu"
+            :aria-expanded="openMenuKey === area.key ? 'true' : 'false'"
           >
-            <q-list dense class="shell-menu__list">
-              <template v-for="(group, index) in moreGroups" :key="group.key">
-                <q-separator v-if="index > 0" class="shell-menu__sep" />
-                <q-item-label header class="shell-menu__header">{{ group.label }}</q-item-label>
-                <q-item
-                  v-for="link in group.links"
-                  :key="link.to"
-                  clickable
-                  v-close-popup
-                  :to="link.to"
-                  :exact="link.to === '/'"
-                  class="shell-menu__item"
-                  active-class="shell-menu__item--active"
-                >
-                  <q-item-section avatar><q-icon :name="link.icon" size="18px" /></q-item-section>
-                  <q-item-section>{{ link.label }}</q-item-section>
-                </q-item>
-              </template>
-            </q-list>
-          </q-menu>
-        </button>
+            {{ area.label }}
+            <q-icon name="expand_more" size="14px" aria-hidden="true" />
+            <q-menu
+              :model-value="openMenuKey === area.key"
+              anchor="bottom left"
+              self="top left"
+              :offset="[0, 6]"
+              class="shell-menu"
+              @update:model-value="setMenuOpen(area.key, $event)"
+            >
+              <q-list dense class="shell-menu__list">
+                <template v-for="(group, index) in area.menu" :key="group.key">
+                  <q-separator v-if="index > 0" class="shell-menu__sep" />
+                  <q-item-label v-if="group.label" header class="shell-menu__header">{{ group.label }}</q-item-label>
+                  <q-item
+                    v-for="link in group.links"
+                    :key="link.to"
+                    clickable
+                    v-close-popup
+                    :to="link.to"
+                    exact
+                    class="shell-menu__item"
+                    active-class="shell-menu__item--active"
+                  >
+                    <q-item-section avatar><q-icon :name="link.icon" size="18px" /></q-item-section>
+                    <q-item-section>{{ link.label }}</q-item-section>
+                  </q-item>
+                </template>
+              </q-list>
+            </q-menu>
+          </button>
+          <router-link
+            v-else
+            :to="area.to"
+            class="shell-bar__nav-item"
+            :class="{ 'shell-bar__nav-item--active': isActive(area) }"
+            active-class=""
+            exact-active-class=""
+            :aria-current="isActive(area) ? 'page' : undefined"
+          >
+            {{ area.label }}
+          </router-link>
+        </template>
       </nav>
 
       <div class="shell-bar__spacer" />
@@ -118,7 +109,7 @@
       </q-btn>
 
       <!-- Below 1024px the nav links leave the top bar; this opens the same
-           menu sheet as "Mehr" in the bottom bar. -->
+           menu sheet as "Menü" in the bottom bar. -->
       <q-btn
         flat
         round
@@ -188,22 +179,13 @@ import UserMenu from 'src/components/sidebar/UserMenu.vue';
 import NotificationMenu from 'src/components/social/NotificationMenu.vue';
 import { canUseSocial, ensureBookmarkKeys, markUnavailable, resetSocialState, socialState } from 'src/components/social/social-state';
 import ShellLogo from './ShellLogo.vue';
-import {
-  MORE_GROUPS,
-  PRIMARY_AREAS,
-  ShellNavArea,
-  ShellNavGroup,
-  WIKI_AREA,
-  WIKI_LINKS,
-  isAreaActive,
-  isLinkActive,
-} from './nav';
+import { PRIMARY_AREAS, ShellNavArea, WIKI_AREA, isAreaActive } from './nav';
 import { openShellMenu } from './menu-state';
 import { shellTheme, themeAriaLabel, themeIcon, themeTooltip, toggleShellTheme } from './theme-state';
 
 // ER2-201 — compact top bar: logo, seven primary areas (Wiki links to the
-// /wiki index), "Mehr", search pill,
-// notifications slot, theme toggle and the account pill (UserMenu in a
+// /wiki index; Gruppen, Treffpunkte, Galerie and Wiki open a dropdown of
+// their subpages), search pill, notifications slot, theme toggle and the account pill (UserMenu in a
 // q-menu). Emits `open-search` for the command palette. The nav model lives
 // in ./nav.ts. Unscoped styles: the q-menu content is teleported.
 //
@@ -227,7 +209,7 @@ const UNREAD_MIN_GAP_MS = 5000;
     '$route.fullPath'() {
       const self = this as ShellHeader;
       self.accountMenuOpen = false;
-      self.moreMenuOpen = false;
+      self.openMenuKey = null;
       self.notificationsMenuOpen = false;
       self.refreshUnread();
     },
@@ -246,16 +228,10 @@ export default class ShellHeader extends Vue {
     openShellMenu();
   }
 
-  readonly primaryAreas = PRIMARY_AREAS;
-  readonly wikiArea = WIKI_AREA;
-  // ER2-609 follow-up: Wiki is a plain link to /wiki now; the former
-  // "Wissenswertes" pages move into the Mehr menu.
-  readonly moreGroups: ShellNavGroup[] = [
-    ...MORE_GROUPS,
-    { key: 'knowledge', label: 'Wissenswertes', links: WIKI_LINKS.filter((link) => link.to !== '/wiki') },
-  ];
+  readonly navAreas: ShellNavArea[] = [...PRIMARY_AREAS, WIKI_AREA];
 
-  moreMenuOpen = false;
+  /** Key of the area whose dropdown is open (one at a time). */
+  openMenuKey: string | null = null;
   accountMenuOpen = false;
   notificationsMenuOpen = false;
 
@@ -375,12 +351,12 @@ export default class ShellHeader extends Vue {
     return isAreaActive(area, this.$route.path);
   }
 
-  get isMoreActive(): boolean {
-    const path = this.$route.path;
-    if (path === '/' || PRIMARY_AREAS.some((area) => isAreaActive(area, path)) || isAreaActive(WIKI_AREA, path)) {
-      return false;
+  setMenuOpen(key: string, open: boolean) {
+    if (open) {
+      this.openMenuKey = key;
+    } else if (this.openMenuKey === key) {
+      this.openMenuKey = null;
     }
-    return MORE_GROUPS.some((group) => group.links.some((link) => isLinkActive(link, path)));
   }
 
   onAccountMenuClick(event: MouseEvent) {
@@ -464,10 +440,10 @@ body.body--dark .q-header.shell-bar {
 
 .shell-bar__nav {
   display: flex;
+  flex-shrink: 0;
   align-items: stretch;
   align-self: stretch;
   gap: 2px;
-  min-width: 0;
 }
 
 .shell-bar__nav-item {
@@ -527,8 +503,15 @@ body.body--dark .q-header.shell-bar {
   }
 }
 
-.shell-bar__nav-trigger::after {
-  right: 26px;
+// Dropdown areas: tighter right edge so four chevrons fit; the underline
+// stops before the chevron.
+.shell-bar__nav-trigger {
+  gap: 0;
+  padding-right: 6px;
+
+  &::after {
+    right: 20px;
+  }
 }
 
 .shell-bar__spacer {
@@ -540,8 +523,9 @@ body.body--dark .q-header.shell-bar {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  flex: none;
-  width: 220px;
+  // Gives way (down to 120px) before a long account name squeezes the nav.
+  flex: 0 1 180px;
+  min-width: 120px;
   height: 36px;
   padding: 0 6px 0 12px;
   font: 400 14px/20px var(--font-ui);
@@ -621,7 +605,7 @@ body.body--dark .q-header.shell-bar {
   align-items: center;
   gap: 8px;
   flex: none;
-  max-width: 240px;
+  max-width: 200px;
   height: 40px;
   padding: 0 8px 0 4px;
   font-family: var(--font-ui);
@@ -680,7 +664,7 @@ body.body--dark .q-header.shell-bar {
   color: var(--ink-muted);
 }
 
-// Menus (Wiki, Mehr, notifications, account)
+// Menus (area dropdowns, notifications, account)
 
 .shell-menu.q-menu {
   min-width: 240px;
@@ -779,7 +763,8 @@ body.body--dark .shell-menu.q-menu {
 // Breakpoints: full bar from 1280px; 1024–1279px compacts the search pill
 // and the account pill; below 1024px the nav moves to the mobile bars.
 
-@media screen and (max-width: 1279px) {
+// Compact bar up to 1439px: eight areas (four with chevrons) need the room.
+@media screen and (max-width: 1439px) {
   .shell-bar__inner {
     gap: 10px;
     padding: 0 16px;
@@ -799,12 +784,18 @@ body.body--dark .shell-menu.q-menu {
     }
   }
 
-  .shell-bar__nav-trigger::after {
-    right: 23px;
+  .shell-bar__nav-trigger {
+    padding-right: 4px;
+
+    &::after {
+      right: 18px;
+    }
   }
 
   .shell-bar__search {
+    flex: none;
     width: 40px;
+    min-width: 0;
     padding: 0;
     justify-content: center;
   }
@@ -856,7 +847,7 @@ body.body--dark .shell-menu.q-menu {
     justify-content: flex-start;
   }
 
-  // Undo the visually-hidden label from the 1279px step: the wide search
+  // Undo the visually-hidden label from the 1439px step: the wide search
   // field shows "Suchen…" again.
   .shell-bar__search-label {
     position: static;
@@ -867,7 +858,7 @@ body.body--dark .shell-menu.q-menu {
     clip: auto;
   }
 
-  // ER2-205: notifications and theme move into the mobile "Mehr" sheet.
+  // ER2-205: notifications and theme move into the mobile "Menü" sheet.
   .shell-bar__notifications,
   .shell-bar__theme {
     display: none;
