@@ -75,6 +75,13 @@ All round-2 tickets ER2-1001..1027 done on `vision/er2` (ER2-1028 board conforma
 - Calendar sidebar widget reinstated 2026-10-19 on request (every page except /calendar, sticky right column ≥1200px, below content on narrow screens).
 - Still open: user test sessions + real screen-reader pass (kit ready).
 
+### 2026-10-20 — dark mode back to the original blue
+
+- Zodiark reverted from violet to the blue night palette of `main` on request (client + news `color.scss`/`materials.scss`/`app.scss` and ~40 component dark overrides; token names like `--rule-arcane` kept). Kept on purpose: light-theme "seek" noticeboard chip, venue district tints, no-image hero fallback gradients, prism `#E8C9FF`. Contrast table in AETHERIUM.md recomputed (all AA).
+- Penpot: every board color is now token-bound — light boards → set `theme.light`, dark boards → `theme.dark` (direct values; edit colors there). Gradients/shadows/layered fills stay raw. Revert point: file version "before theme.* binding (2026-10-20)".
+- Nav: no catch-all "Mehr". Top bar = Charaktere · Gruppen ▾ · Treffpunkte ▾ · Events · Geschichten · Anschlagbrett · Galerie ▾ · Wiki ▾ (click/Enter opens, Esc closes). Subpages live as `menu` on each area in `layouts/shell/nav.ts`; "Gruppen" (FCs, Communities) is its own area because users did not expect groups under "Charaktere" — `DirectoryAreaTabs` now only links FCs · Communities and is gone from the Charaktere page. Wiki dropdown has subheads Wissen / Über Elpisgarten (incl. Kontakt). Compact bar (icon search, 13px labels) now applies up to 1439px; full bar search pill 180px and shrinks to 120px, account pill max 200px. Mobile sheet: area rows, areas with subpages expand in place (current one pre-expanded); bottom-bar tab still "Mehr".
+- Known code↔Penpot drift (pre-existing, carried over): `--surface-glass` α .82 vs .78, `--rule-strong` #8DB5DF vs #4F7BA6, `--rule-tint` rgba(158,196,243,.10) vs rgba(141,181,223,.18).
+
 ## Next ticket
 
 This session shipped **ELPIS-211 (Pen & Paper journal-page reveal) plus a small cleanup** removing two dead keyframes (`navShimmer`, `navGridShift`) flagged in the ELPIS-807 audit from `MainLayout.vue`. **Epic 2 closes 20 / 21 → 21 / 21.** 211 was marked `deps 007, 008` — 008 ✓ is satisfied, and the 007 dependency was satisfiable via the same IntersectionObserver + CSS-keyframes pattern that landed ELPIS-110 (home activity-grid diagonal-wave reveal) since the AC's "5 cards reveal in sequence (turning-page motion)" describes a one-shot-on-mount cascade with per-card stagger that doesn't need Motion One's runtime orchestration. Lint clean (`npx eslint src/components/character/CharacterPenAndPaper.vue src/layouts/MainLayout.vue` exit 0).

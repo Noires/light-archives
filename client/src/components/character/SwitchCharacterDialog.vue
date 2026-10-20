@@ -216,12 +216,12 @@ export default class SwitchCharacterDialog extends Vue {
 
 body.body--dark .switch-character-dialog__character-list.character-name-list .q-item:hover,
 body.body--dark .switch-character-dialog__character-list.character-name-list .q-item.q-manual-focusable--focused {
-  background: rgba(167, 139, 196, 0.12);
+  background: rgba(141, 181, 223, 0.12);
   box-shadow: inset 0 0 0 1px var(--rule-arcane);
 }
 
 body.body--dark .switch-character-dialog__character-list.character-name-list .q-item.character-name-list__item_active {
-  background: rgba(167, 139, 196, 0.18);
+  background: rgba(141, 181, 223, 0.18);
   box-shadow: inset 0 0 0 1px var(--rule-arcane);
 }
 

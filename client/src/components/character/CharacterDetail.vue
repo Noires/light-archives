@@ -75,8 +75,8 @@ body.body--dark .character-detail {
 }
 
 body.body--dark .character-detail:hover {
-  /* --rule-arcane (#6B4FA8) channel triple at 0.4 alpha. */
-  border-bottom-color: rgba(107, 79, 168, 0.4);
+  /* --rule-arcane (#4F7BA6) channel triple at 0.4 alpha. */
+  border-bottom-color: rgba(141, 181, 223, 0.4);
 }
 
 .character-detail:only-child {

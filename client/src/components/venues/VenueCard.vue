@@ -227,7 +227,7 @@ export default class VenueCard extends Vue.with(Props) {
 }
 
 // 18+ marker: danger fill with its paired ink (white on #B3363E in Hydaelyn,
-// #150B23 on #F08A93 in Zodiark), both above 4.5:1.
+// #0F1824 on #F08A93 in Zodiark), both above 4.5:1.
 .venue-card__adult {
   position: absolute;
   bottom: 12px;

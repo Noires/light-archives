@@ -214,23 +214,23 @@ body.body--dark .noticeboard-item-list__location,
 body.body--dark .noticeboard-item-list__author,
 body.body--dark .noticeboard-item-list__venue,
 body.body--dark .noticeboard-item-list__time {
-  color: rgba(236, 227, 247, 0.74);
+  color: rgba(217, 225, 234, 0.74);
 }
 
 body.body--dark .noticeboard-item-list__type-chip {
-  background: rgba(193, 155, 255, 0.14);
+  background: rgba(158, 196, 243, 0.14);
   border-color: var(--rule-arcane-soft);
   color: var(--glow-aether-d);
 }
 
 body.body--dark .noticeboard-item-list__type-chip--offer {
-  background: rgba(193, 155, 255, 0.18);
+  background: rgba(158, 196, 243, 0.18);
   border-color: var(--rule-arcane);
   color: var(--glow-aether-d);
 }
 
 body.body--dark .noticeboard-item-list__type-chip--seek {
-  background: rgba(193, 155, 255, 0.22);
+  background: rgba(158, 196, 243, 0.22);
   border-color: var(--glow-zodiark);
   color: var(--glow-zodiark);
 }

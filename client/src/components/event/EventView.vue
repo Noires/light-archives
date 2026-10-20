@@ -421,8 +421,8 @@ $hero-ink-soft: rgba(255, 255, 255, 0.86);
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(11, 6, 18, 0.9) 0%, rgba(11, 6, 18, 0.7) 45%, rgba(11, 6, 18, 0.25) 100%),
-    linear-gradient(0deg, rgba(11, 6, 18, 0.55) 0%, rgba(11, 6, 18, 0) 60%);
+    linear-gradient(90deg, rgba(13, 17, 24, 0.9) 0%, rgba(13, 17, 24, 0.7) 45%, rgba(13, 17, 24, 0.25) 100%),
+    linear-gradient(0deg, rgba(13, 17, 24, 0.55) 0%, rgba(13, 17, 24, 0) 60%);
 }
 
 .event-view__hero-inner {
@@ -441,7 +441,7 @@ $hero-ink-soft: rgba(255, 255, 255, 0.86);
   justify-self: start;
   padding: 4px 12px;
   border-radius: 999px;
-  background-color: rgba(11, 6, 18, 0.55);
+  background-color: rgba(13, 17, 24, 0.55);
   backdrop-filter: blur(6px);
 
   :deep(*) {
@@ -482,7 +482,7 @@ $hero-ink-soft: rgba(255, 255, 255, 0.86);
   text-align: center;
 
   @supports not (backdrop-filter: blur(1px)) {
-    background-color: rgba(11, 6, 18, 0.6);
+    background-color: rgba(13, 17, 24, 0.6);
   }
 }
 
@@ -522,7 +522,7 @@ $hero-ink-soft: rgba(255, 255, 255, 0.86);
   padding: 0 10px;
   border: 1px solid rgba(255, 255, 255, 0.36);
   border-radius: 999px;
-  background-color: rgba(11, 6, 18, 0.45);
+  background-color: rgba(13, 17, 24, 0.45);
   font-family: var(--font-ui);
   font-size: 12px;
   font-weight: 600;

@@ -123,7 +123,7 @@ body.body--dark .venue-list__name {
 
 body.body--dark .venue-list__meta,
 body.body--dark .venue-list__server {
-  color: rgba(236, 227, 247, 0.74);
+  color: rgba(217, 225, 234, 0.74);
 }
 
 @media (prefers-reduced-motion: reduce) {

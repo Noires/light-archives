@@ -211,24 +211,24 @@ body.body--dark {
 
   .page-my-articles__chip:hover {
     border-color: var(--rule-arcane);
-    background-color: rgba(193, 155, 255, 0.16);
+    background-color: rgba(158, 196, 243, 0.16);
   }
 
   .page-my-articles__chip:focus-visible {
-    box-shadow: 0 0 0 3px rgba(184, 165, 255, 0.4);
+    box-shadow: 0 0 0 3px rgba(183, 211, 243, 0.4);
   }
 
   .page-my-articles__chip--active {
-    background-color: rgba(193, 155, 255, 0.22);
+    background-color: rgba(158, 196, 243, 0.22);
     border-color: var(--rule-arcane);
     color: var(--glow-aether-d);
     box-shadow:
       inset 0 0 0 1px var(--rule-arcane-soft),
-      0 2px 8px rgba(184, 165, 255, 0.18);
+      0 2px 8px rgba(183, 211, 243, 0.18);
   }
 
   .page-my-articles__chip-count {
-    background-color: rgba(193, 155, 255, 0.22);
+    background-color: rgba(158, 196, 243, 0.22);
     color: var(--ink-luminous);
   }
 
@@ -238,7 +238,7 @@ body.body--dark {
   }
 
   .page-my-articles__empty {
-    color: rgba(236, 227, 247, 0.74);
+    color: rgba(217, 225, 234, 0.74);
   }
 }
 </style>

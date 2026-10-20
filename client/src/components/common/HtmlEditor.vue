@@ -367,10 +367,10 @@ body.body--dark {
   --html-editor-border: var(--rule-arcane-soft);
   --html-editor-border-active: var(--rule-arcane);
   --html-editor-surface: var(--surface-lift);
-  --html-editor-toolbar-bg: rgba(107, 79, 168, 0.14);
-  --html-editor-muted: rgba(236, 227, 247, 0.74);
-  --html-editor-active-tint: rgba(184, 165, 255, 0.18);
-  --html-editor-active-ring: rgba(184, 165, 255, 0.34);
+  --html-editor-toolbar-bg: rgba(141, 181, 223, 0.14);
+  --html-editor-muted: rgba(217, 225, 234, 0.74);
+  --html-editor-active-tint: rgba(183, 211, 243, 0.18);
+  --html-editor-active-ring: rgba(183, 211, 243, 0.34);
 }
 
 .html-editor {
@@ -491,7 +491,7 @@ body.body--dark .html-editor .tox .tox-tbtn {
 }
 
 body.body--dark .html-editor .tox .tox-tbtn:hover {
-  background-color: rgba(184, 165, 255, 0.16);
+  background-color: rgba(183, 211, 243, 0.16);
   color: var(--ink-luminous);
 }
 

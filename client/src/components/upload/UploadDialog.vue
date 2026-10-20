@@ -634,17 +634,17 @@ export default class UploadDialog extends Vue.with(Props) {
 }
 
 body.body--dark .upload-dialog__drag-overlay {
-  background: rgba(107, 79, 168, 0.20);
+  background: rgba(141, 181, 223, 0.20);
   color: var(--ink-luminous);
   outline-color: var(--rule-arcane);
   box-shadow:
-    inset 0 0 0 1px rgba(184, 165, 255, 0.22),
-    0 0 24px rgba(184, 165, 255, 0.40);
+    inset 0 0 0 1px rgba(183, 211, 243, 0.22),
+    0 0 24px rgba(183, 211, 243, 0.40);
 }
 
 body.body--dark .upload-dialog__drag-icon {
   color: var(--rule-arcane);
-  filter: drop-shadow(0 2px 4px rgba(184, 165, 255, 0.42));
+  filter: drop-shadow(0 2px 4px rgba(183, 211, 243, 0.42));
 }
 
 body.body--dark .upload-dialog__actions {

@@ -34,7 +34,7 @@ import { downloadPlate, PlateChip, PlateData } from './plate-export';
 const RP_DOTS: Record<RpStatus, string> = {
   [RpStatus.IC]: '#6EDCA8',
   [RpStatus.LFRP]: '#F3D9A4',
-  [RpStatus.OOC]: '#B5A6CB',
+  [RpStatus.OOC]: '#A2ADBA',
 };
 
 class Props {
@@ -114,7 +114,7 @@ export default class PlateExportButton extends Vue.with(Props) {
   }
 
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    background-color: rgba(11, 6, 18, 0.6);
+    background-color: rgba(13, 17, 24, 0.6);
   }
 }
 </style>

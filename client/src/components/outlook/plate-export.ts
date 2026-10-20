@@ -156,14 +156,14 @@ function drawPlate(ctx: CanvasRenderingContext2D, data: PlateData, images: Plate
 
 	// Dark scrim: bottom-heavy plus a left wash behind the text.
 	const scrim = ctx.createLinearGradient(0, 0, 0, H);
-	scrim.addColorStop(0, 'rgba(11, 6, 18, 0.10)');
-	scrim.addColorStop(0.45, 'rgba(11, 6, 18, 0.45)');
-	scrim.addColorStop(1, 'rgba(11, 6, 18, 0.90)');
+	scrim.addColorStop(0, 'rgba(13, 17, 24, 0.10)');
+	scrim.addColorStop(0.45, 'rgba(13, 17, 24, 0.45)');
+	scrim.addColorStop(1, 'rgba(13, 17, 24, 0.90)');
 	ctx.fillStyle = scrim;
 	ctx.fillRect(0, 0, W, H);
 	const wash = ctx.createLinearGradient(0, 0, W, 0);
-	wash.addColorStop(0, 'rgba(11, 6, 18, 0.45)');
-	wash.addColorStop(0.7, 'rgba(11, 6, 18, 0)');
+	wash.addColorStop(0, 'rgba(13, 17, 24, 0.45)');
+	wash.addColorStop(0.7, 'rgba(13, 17, 24, 0)');
 	ctx.fillStyle = wash;
 	ctx.fillRect(0, 0, W, H);
 

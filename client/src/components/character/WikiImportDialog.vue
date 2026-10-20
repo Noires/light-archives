@@ -458,17 +458,17 @@ export default class WikiImportDialog extends Vue.with(Props) {
 }
 
 body.body--dark .wiki-import-dialog__section {
-  background: rgba(167, 139, 196, 0.08);
+  background: rgba(141, 181, 223, 0.08);
   border-color: var(--rule-arcane-soft);
 }
 
 body.body--dark .wiki-import-dialog__section--highlight {
-  background: rgba(167, 139, 196, 0.16);
+  background: rgba(141, 181, 223, 0.16);
   border-color: var(--rule-arcane);
   box-shadow: inset 4px 0 0 var(--rule-arcane);
 }
 
 body.body--dark .wiki-import-dialog__field-preview {
-  color: rgba(236, 227, 247, 0.7);
+  color: rgba(217, 225, 234, 0.7);
 }
 </style>

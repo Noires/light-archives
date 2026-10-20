@@ -802,8 +802,8 @@ body.body--dark .character-sheet__oracle-reading--w100 {
 
 body.body--dark .character-sheet__oracle::after {
   background:
-    radial-gradient(circle at 50% 38%, rgba(213, 196, 255, 0.32) 0%, rgba(184, 165, 255, 0.16) 38%, transparent 72%),
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><polygon points='32,4 58,18 58,46 32,60 6,46 6,18' fill='none' stroke='%23B8A5FF' stroke-width='1.4' opacity='0.6'/><polygon points='32,16 48,24 48,40 32,48 16,40 16,24' fill='none' stroke='%23B8A5FF' stroke-width='1' opacity='0.5'/><line x1='32' y1='4' x2='32' y2='60' stroke='%23B8A5FF' stroke-width='0.8' opacity='0.4'/><line x1='6' y1='18' x2='58' y2='46' stroke='%23B8A5FF' stroke-width='0.8' opacity='0.35'/><line x1='58' y1='18' x2='6' y2='46' stroke='%23B8A5FF' stroke-width='0.8' opacity='0.35'/></svg>");
+    radial-gradient(circle at 50% 38%, rgba(195, 219, 255, 0.32) 0%, rgba(183, 211, 243, 0.16) 38%, transparent 72%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><polygon points='32,4 58,18 58,46 32,60 6,46 6,18' fill='none' stroke='%23B7D3F3' stroke-width='1.4' opacity='0.6'/><polygon points='32,16 48,24 48,40 32,48 16,40 16,24' fill='none' stroke='%23B7D3F3' stroke-width='1' opacity='0.5'/><line x1='32' y1='4' x2='32' y2='60' stroke='%23B7D3F3' stroke-width='0.8' opacity='0.4'/><line x1='6' y1='18' x2='58' y2='46' stroke='%23B7D3F3' stroke-width='0.8' opacity='0.35'/><line x1='58' y1='18' x2='6' y2='46' stroke='%23B7D3F3' stroke-width='0.8' opacity='0.35'/></svg>");
   background-repeat: no-repeat, no-repeat;
   background-position: center 26%, center 26%;
   background-size: 100% 100%, 110px 110px;

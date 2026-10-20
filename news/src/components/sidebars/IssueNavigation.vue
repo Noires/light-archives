@@ -191,26 +191,26 @@ export default class IssueNavigation extends Vue {
 // Zodiark variants — both desktop column and mobile dropdown.
 body.body--dark {
 	.issue-navigation__label {
-		color: rgba(236, 227, 247, 0.74);
+		color: rgba(217, 225, 234, 0.74);
 		border-bottom-color: var(--rule-arcane-soft);
 	}
 
 	.issue-navigation__item.q-item {
 		color: var(--ink-luminous);
-		background-color: rgba(193, 155, 255, 0.06);
+		background-color: rgba(158, 196, 243, 0.06);
 		box-shadow: inset 0 0 0 1px var(--rule-arcane-soft);
 	}
 
 	.issue-navigation__item.q-item:hover,
 	.issue-navigation__item.q-item:focus-visible {
-		background-color: rgba(193, 155, 255, 0.16);
+		background-color: rgba(158, 196, 243, 0.16);
 		box-shadow: inset 0 0 0 1px var(--rule-arcane);
 		color: var(--glow-aether-d);
 	}
 
 	.issue-navigation__item.q-router-link--active,
 	.issue-navigation__item.q-router-link-exact-active {
-		background-color: rgba(193, 155, 255, 0.22);
+		background-color: rgba(158, 196, 243, 0.22);
 		color: var(--glow-aether-d);
 		box-shadow:
 			inset 3px 0 0 var(--rule-arcane),
@@ -221,12 +221,12 @@ body.body--dark {
 		color: var(--ink-luminous);
 		box-shadow:
 			inset 0 0 0 1px var(--rule-arcane-soft),
-			inset 0 1px 0 rgba(184, 165, 255, 0.18),
+			inset 0 1px 0 rgba(183, 211, 243, 0.18),
 			0 6px 16px rgba(0, 0, 0, 0.55);
 	}
 
 	.issue-navigation__mobile-label {
-		color: rgba(236, 227, 247, 0.74);
+		color: rgba(217, 225, 234, 0.74);
 		border-bottom-color: var(--rule-arcane-soft);
 	}
 
@@ -235,7 +235,7 @@ body.body--dark {
 	}
 
 	.issue-navigation__mobile-list .q-item:hover {
-		background-color: rgba(193, 155, 255, 0.16);
+		background-color: rgba(158, 196, 243, 0.16);
 	}
 }
 </style>

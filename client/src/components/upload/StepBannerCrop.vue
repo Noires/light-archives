@@ -152,6 +152,6 @@ export default class StepBannerCrop extends Vue.with(Props) {
 }
 
 body.body--dark .step-banner-crop__label {
-  color: rgba(236, 227, 247, 0.74);
+  color: rgba(217, 225, 234, 0.74);
 }
 </style>

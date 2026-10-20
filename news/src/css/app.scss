@@ -142,7 +142,7 @@ body.body--dark .page-edit-article__button-bar .q-btn-toggle {
 	background-color: var(--surface-deep);
 	border-color: var(--rule-arcane-soft);
 	box-shadow:
-		inset 0 1px 0 rgba(184, 165, 255, 0.18),
+		inset 0 1px 0 rgba(183, 211, 243, 0.18),
 		0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
@@ -211,21 +211,21 @@ body.body--dark .page-edit-article__button-bar .q-btn-toggle .q-btn.bg-secondary
 body.body--dark .elpis-scroll-progress::-webkit-progress-value {
 	background: linear-gradient(
 		90deg,
-		rgba(184, 165, 255, 0.45) 0%,
+		rgba(183, 211, 243, 0.45) 0%,
 		var(--rule-arcane) 55%,
-		rgba(213, 196, 255, 0.92) 100%
+		rgba(195, 219, 255, 0.92) 100%
 	);
-	box-shadow: 0 0 8px rgba(184, 165, 255, 0.55);
+	box-shadow: 0 0 8px rgba(183, 211, 243, 0.55);
 }
 
 body.body--dark .elpis-scroll-progress::-moz-progress-bar {
 	background: linear-gradient(
 		90deg,
-		rgba(184, 165, 255, 0.45) 0%,
+		rgba(183, 211, 243, 0.45) 0%,
 		var(--rule-arcane) 55%,
-		rgba(213, 196, 255, 0.92) 100%
+		rgba(195, 219, 255, 0.92) 100%
 	);
-	box-shadow: 0 0 8px rgba(184, 165, 255, 0.55);
+	box-shadow: 0 0 8px rgba(183, 211, 243, 0.55);
 }
 
 @media (prefers-reduced-motion: reduce) {

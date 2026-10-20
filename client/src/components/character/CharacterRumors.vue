@@ -166,7 +166,7 @@ body.body--dark .character-rumors__section--rare {
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.4),
     inset 0 0 0 1px var(--rule-arcane-soft),
-    inset 0 0 28px rgba(107, 79, 168, 0.18);
+    inset 0 0 28px rgba(141, 181, 223, 0.18);
 }
 
 @media screen and (max-width: 768px) {

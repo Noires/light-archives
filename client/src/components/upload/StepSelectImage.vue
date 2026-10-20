@@ -452,7 +452,7 @@ export default class StepSelectImage extends Vue.with(Props) {
 }
 
 body.body--dark .step-select-image__dropzone-overlay {
-  background: rgba(107, 79, 168, 0.28);
+  background: rgba(141, 181, 223, 0.28);
   color: var(--ink-luminous);
 }
 
@@ -461,6 +461,6 @@ body.body--dark .step-select-image__dropzone-label {
 }
 
 body.body--dark .step-select-image__hint {
-  color: rgba(236, 227, 247, 0.74);
+  color: rgba(217, 225, 234, 0.74);
 }
 </style>

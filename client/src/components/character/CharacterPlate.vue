@@ -294,10 +294,10 @@ body.body--dark .character-plate {
 	z-index: -1;
 	background: linear-gradient(
 		180deg,
-		rgba(11, 6, 18, 0.1) 0%,
-		rgba(11, 6, 18, 0) 25%,
-		rgba(11, 6, 18, 0.55) 55%,
-		rgba(11, 6, 18, 0.88) 100%
+		rgba(13, 17, 24, 0.1) 0%,
+		rgba(13, 17, 24, 0) 25%,
+		rgba(13, 17, 24, 0.55) 55%,
+		rgba(13, 17, 24, 0.88) 100%
 	);
 }
 
@@ -390,7 +390,7 @@ body.body--dark .character-plate {
 
 .character-plate__avatar-dot--ooc,
 .character-plate__chip-dot--ooc {
-	background-color: #B5A6CB;
+	background-color: #A2ADBA;
 }
 
 .character-plate__names {
@@ -468,7 +468,7 @@ body.body--dark .character-plate {
 	text-decoration: none;
 
 	@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-		background-color: rgba(11, 6, 18, 0.6);
+		background-color: rgba(13, 17, 24, 0.6);
 	}
 }
 
@@ -522,7 +522,7 @@ body.body--dark .character-plate {
 	}
 
 	@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-		background-color: rgba(11, 6, 18, 0.6);
+		background-color: rgba(13, 17, 24, 0.6);
 	}
 }
 

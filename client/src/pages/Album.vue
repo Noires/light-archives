@@ -249,7 +249,7 @@ export default class PageAlbum extends Vue {
   left: 0;
   padding: 28px 12px 10px;
   overflow: hidden;
-  background: linear-gradient(to top, rgba(11, 6, 18, 0.88), rgba(11, 6, 18, 0));
+  background: linear-gradient(to top, rgba(13, 17, 24, 0.88), rgba(13, 17, 24, 0));
   color: #FFFFFF;
   font-family: var(--font-ui);
   font-size: 14px;

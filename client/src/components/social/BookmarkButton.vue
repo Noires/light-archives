@@ -147,7 +147,7 @@ export default class BookmarkButton extends Vue.with(Props) {
   }
 
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    background-color: rgba(11, 6, 18, 0.6);
+    background-color: rgba(13, 17, 24, 0.6);
   }
 }
 </style>

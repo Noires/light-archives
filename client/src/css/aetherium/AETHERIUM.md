@@ -54,6 +54,12 @@ tokens load first. Don't reorder unless you also move the dependency.
 
 ### Colour (`color.scss`)
 
+Zodiark uses the original blue night palette from `main` (blue-black
+surfaces, `#D9E1EA` ink, sky-blue `#9EC4F3` links and CTA, steel-blue
+`rgba(141,181,223,…)` rules). The violet Aetherium palette was reverted on
+2026-10-20; the `--rule-arcane` / `--glow-zodiark` names stayed so components
+didn't need renaming. Penpot binds these values as `theme.dark.*`.
+
 Hydaelyn lives on `:root`; Zodiark lives on `body.body--dark`. Same token names
 exist on both themes where the role is identical (e.g. `--rule-gold-soft` and
 `--rule-arcane-soft` are theme-specific because the *colour* of "rule" differs,
@@ -81,14 +87,14 @@ Each resolves per theme, so a component that uses them needs no
 
 | Token | Hydaelyn | Zodiark | Role |
 |---|---|---|---|
-| `--surface-raised` | `#FBF6EA` | `#1F1130` | card / panel surface (= vellum / lift) |
-| `--surface-glass`  | `rgba(251,246,234,.86)` | `rgba(21,11,35,.82)` | sticky bars, tab rails |
-| `--ink-primary`    | `#2B2418` | `#ECE3F7` | body + heading ink |
-| `--ink-muted`      | `#6E5F46` | `#B5A6CB` | meta, leads, inactive tabs (Zodiark value is new) |
-| `--ink-link`       | `#8A5A14` | `#C19BFF` | links, ghost buttons, eyebrows |
-| `--rule-strong`    | `#9C7A3C` | `#8F72D6` | active-tab underline, secondary border, avatar ring |
-| `--rule-soft`      | `rgba(186,155,91,.28)` | `rgba(107,79,168,.32)` | hairlines, card borders |
-| `--rule-tint`      | `rgba(186,155,91,.14)` | `rgba(193,155,255,.10)` | hover fill, neutral chip fill |
+| `--surface-raised` | `#FBF6EA` | `#111822` | card / panel surface (= vellum / lift) |
+| `--surface-glass`  | `rgba(251,246,234,.86)` | `rgba(14,19,27,.82)` | sticky bars, tab rails |
+| `--ink-primary`    | `#2B2418` | `#D9E1EA` | body + heading ink |
+| `--ink-muted`      | `#6E5F46` | `#A2ADBA` | meta, leads, inactive tabs (Zodiark value is new) |
+| `--ink-link`       | `#8A5A14` | `#9EC4F3` | links, ghost buttons, eyebrows |
+| `--rule-strong`    | `#9C7A3C` | `#8DB5DF` | active-tab underline, secondary border, avatar ring |
+| `--rule-soft`      | `rgba(186,155,91,.28)` | `rgba(141,181,223,.32)` | hairlines, card borders |
+| `--rule-tint`      | `rgba(186,155,91,.14)` | `rgba(158,196,243,.10)` | hover fill, neutral chip fill |
 
 ### Vision tokens (`color.scss`, ER2-003)
 
@@ -96,11 +102,11 @@ Mirror of the Penpot `vision.*` set (UI_UX_VISION_REWORK_PLAN.md §3.1).
 
 | Token | Hydaelyn | Zodiark | Use |
 |---|---|---|---|
-| `--vision-primary`       | `#DDB476` | `#C19BFF` | primary button, active chip, active tab count |
-| `--vision-on-primary`    | `#2B2418` | `#150B23` | text on primary |
-| `--vision-primary-hover` | `#E8C68E` | `#D2B6FF` | primary hover |
+| `--vision-primary`       | `#DDB476` | `#9EC4F3` | primary button, active chip, active tab count |
+| `--vision-on-primary`    | `#2B2418` | `#0F1824` | text on primary |
+| `--vision-primary-hover` | `#E8C68E` | `#C3DBFF` | primary hover |
 | `--vision-danger`        | `#B3363E` | `#F08A93` | destructive actions |
-| `--vision-on-danger`     | `#FFFFFF` | `#150B23` | text on danger |
+| `--vision-on-danger`     | `#FFFFFF` | `#0F1824` | text on danger |
 | `--vision-live`          | `#2E7D4F` | `#6EDCA8` | live dot, live bar |
 | `--vision-live-bg`       | `rgba(46,125,79,.12)` | `rgba(110,220,168,.14)` | Live / Geöffnet / Im RP pill |
 | `--vision-live-text`     | `#256A42` | `#6EDCA8` | label on `--vision-live-bg` (added: `#2E7D4F` reaches only 4.02:1 there) |
@@ -108,8 +114,8 @@ Mirror of the Penpot `vision.*` set (UI_UX_VISION_REWORK_PLAN.md §3.1).
 | `--vision-cw-text`       | `#6B4C21` | `#F3D9A4` | content-warning label |
 | `--vision-cw-border`     | `rgba(186,140,60,.55)` | `rgba(243,217,164,.45)` | content-warning outline |
 | `--vision-now`           | `#C7484F` | `#FF8FA0` | timeline "Jetzt" marker, unread dot |
-| `--vision-on-now`        | `#FFFFFF` | `#150B23` | text on `--vision-now` (timeline "Jetzt" label; 4.7:1 / 8.8:1) |
-| `--vision-card`          | `#FBF6EA` | `#1F1130` | card surface (= `--surface-raised`) |
+| `--vision-on-now`        | `#FFFFFF` | `#0F1824` | text on `--vision-now` (timeline "Jetzt" label; 4.7:1 / 8.2:1) |
+| `--vision-card`          | `#FBF6EA` | `#111822` | card surface (= `--surface-raised`) |
 | `--vision-focus-edge`    | `#2B2418` | `transparent` | 1 px outer edge of the focus ring (see below) |
 
 **Contrast (WCAG 2.1, alpha tokens composited over `--vision-card`).**
@@ -117,22 +123,22 @@ Text pairs need 4.5:1, non-text indicators 3:1.
 
 | Pair | Hydaelyn | Zodiark | Result |
 |---|---|---|---|
-| on-primary / primary          | 7.94 | 8.51 | AA (AAA) |
-| on-primary / primary-hover    | 9.43 | 10.76 | AA (AAA) |
-| on-danger / danger            | 5.98 | 7.94 | AA |
-| live-text / live-bg           | 5.19 | 8.01 | AA |
-| live / card (dot, bar)        | 4.68 | 10.55 | AA non-text |
-| cw-text / cw-bg               | 6.65 | 10.35 | AA |
-| cw-text / cw-bg on page       | 6.31 | 12.24 | AA |
-| now / card (marker)           | 4.36 | 8.20 | AA non-text |
-| danger / card (button edge)   | 5.54 | 7.42 | AA non-text |
-| ink-primary / card            | 14.23 | 14.31 | AAA |
-| ink-muted / card              | 5.75 | 7.86 | AA |
-| ink-muted / rule-tint         | 5.14 | 6.63 | AA |
-| ink-link / card               | 5.48 | 7.96 | AA |
-| ink-link / rule-tint          | 4.90 | 6.71 | AA |
-| rule-strong / card            | 3.70 | 4.70 | AA non-text |
-| glow-aether / card            | 1.36 | 8.35 | see note |
+| on-primary / primary          | 7.94 | 9.90 | AA (AAA) |
+| on-primary / primary-hover    | 9.43 | 12.66 | AA (AAA) |
+| on-danger / danger            | 5.98 | 7.45 | AA |
+| live-text / live-bg           | 5.19 | 7.89 | AA |
+| live / card (dot, bar)        | 4.68 | 10.59 | AA non-text |
+| cw-text / cw-bg               | 6.65 | 10.34 | AA |
+| cw-text / cw-bg on page       | 6.31 | 11.17 | AA |
+| now / card (marker)           | 4.36 | 8.23 | AA non-text |
+| danger / card (button edge)   | 5.54 | 7.44 | AA non-text |
+| ink-primary / card            | 14.23 | 13.51 | AAA |
+| ink-muted / card              | 5.75 | 7.83 | AA |
+| ink-muted / rule-tint         | 5.14 | 6.45 | AA |
+| ink-link / card               | 5.48 | 9.89 | AA |
+| ink-link / rule-tint          | 4.90 | 8.14 | AA |
+| rule-strong / card            | 3.70 | 8.33 | AA non-text |
+| glow-aether / card            | 1.36 | 12.16 | see note |
 
 Notes:
 - `--vision-primary` against the card is 1.79:1 in Hydaelyn. The button is
@@ -375,7 +381,7 @@ h2 { font-size: 31.5px; }
 	background-color: #FBF6EA;
 }
 body.body--dark .profile-card {
-	background-color: #1F1130;
+	background-color: #111822;
 }
 ```
 

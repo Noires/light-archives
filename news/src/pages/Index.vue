@@ -160,7 +160,7 @@ body.body--dark {
 
   .page-index__divider::after {
     background-color: var(--surface-deep);
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-16 -16 32 32' fill='none' stroke='%23B8A5FF' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'><g><path d='M0 -3 Q -3 -10 -8 -10 Q -12 -8 -10 -4'/></g><g transform='rotate(120)'><path d='M0 -3 Q -3 -10 -8 -10 Q -12 -8 -10 -4'/></g><g transform='rotate(240)'><path d='M0 -3 Q -3 -10 -8 -10 Q -12 -8 -10 -4'/></g><circle cx='0' cy='0' r='0.9' fill='%23B8A5FF' stroke='none' opacity='0.7'/></svg>");
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-16 -16 32 32' fill='none' stroke='%23B7D3F3' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'><g><path d='M0 -3 Q -3 -10 -8 -10 Q -12 -8 -10 -4'/></g><g transform='rotate(120)'><path d='M0 -3 Q -3 -10 -8 -10 Q -12 -8 -10 -4'/></g><g transform='rotate(240)'><path d='M0 -3 Q -3 -10 -8 -10 Q -12 -8 -10 -4'/></g><circle cx='0' cy='0' r='0.9' fill='%23B7D3F3' stroke='none' opacity='0.7'/></svg>");
     background-size: 22px 22px;
     background-repeat: no-repeat;
     background-position: center;

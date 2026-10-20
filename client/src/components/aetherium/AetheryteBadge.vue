@@ -181,7 +181,7 @@ body.body--dark .aetheryte-badge__placeholder {
 }
 
 body.body--dark .aetheryte-badge__placeholder {
-	color: rgba(236, 227, 247, 0.6);
+	color: rgba(217, 225, 234, 0.6);
 }
 
 body.body--dark .aetheryte-badge--square {

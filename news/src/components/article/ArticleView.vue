@@ -189,7 +189,7 @@ body.body--dark {
 
 	.article__subtitle,
 	.article__author {
-		color: rgba(236, 227, 247, 0.74);
+		color: rgba(217, 225, 234, 0.74);
 	}
 
 	.article__author a {
@@ -202,7 +202,7 @@ body.body--dark {
 
 	.article__body--drop-cap .article__content > p:first-of-type::first-letter {
 		color: var(--ink-luminous);
-		text-shadow: 0 0 18px rgba(184, 165, 255, 0.32);
+		text-shadow: 0 0 18px rgba(183, 211, 243, 0.32);
 	}
 }
 

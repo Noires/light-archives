@@ -183,7 +183,7 @@ export default class HomeGalleryBand extends Vue.with(Props) {
 	flex-direction: column;
 	gap: 2px;
 	padding: 28px 12px 10px;
-	background: linear-gradient(to top, rgba(11, 6, 18, 0.86) 0%, rgba(11, 6, 18, 0.6) 55%, rgba(11, 6, 18, 0) 100%);
+	background: linear-gradient(to top, rgba(13, 17, 24, 0.86) 0%, rgba(13, 17, 24, 0.6) 55%, rgba(13, 17, 24, 0) 100%);
 	color: #FFFFFF;
 	font-family: var(--font-ui);
 	opacity: 0;

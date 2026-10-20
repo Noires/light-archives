@@ -479,14 +479,14 @@ export default class Lightbox extends Vue.with(Props) {
 // (same hex as --surface-obsidian, --surface-deep, --ink-luminous,
 // --vision-primary in aetherium/color.scss) instead of the theme-flipping roles.
 .vision-lightbox {
-	--lb-bg: #0B0612;
-	--lb-panel: rgba(21, 11, 35, 0.92);
-	--lb-ink: #ECE3F7;
-	--lb-muted: #B5A6CB;
-	--lb-rule: rgba(236, 227, 247, 0.18);
-	--lb-tint: rgba(236, 227, 247, 0.10);
-	--lb-accent: #C19BFF;
-	--lb-on-accent: #150B23;
+	--lb-bg: #0D1118;
+	--lb-panel: rgba(14, 19, 27, 0.92);
+	--lb-ink: #D9E1EA;
+	--lb-muted: #A2ADBA;
+	--lb-rule: rgba(217, 225, 234, 0.18);
+	--lb-tint: rgba(217, 225, 234, 0.10);
+	--lb-accent: #9EC4F3;
+	--lb-on-accent: #0F1824;
 
 	position: relative;
 	display: grid;

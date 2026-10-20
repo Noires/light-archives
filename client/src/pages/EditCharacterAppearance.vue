@@ -704,20 +704,20 @@ export default class PageEditProfile extends Vue {
 body.body--dark .page-edit-character__color-picker-btn {
   border-color: var(--rule-arcane);
   box-shadow:
-    inset 0 1px 0 rgba(184, 165, 255, 0.32),
+    inset 0 1px 0 rgba(183, 211, 243, 0.32),
     0 0 0 2px var(--surface-deep),
     0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 body.body--dark .page-edit-character__color-picker-btn:hover {
   box-shadow:
-    inset 0 1px 0 rgba(184, 165, 255, 0.44),
+    inset 0 1px 0 rgba(183, 211, 243, 0.44),
     0 0 0 2px var(--surface-deep),
-    0 2px 8px rgba(184, 165, 255, 0.28);
+    0 2px 8px rgba(183, 211, 243, 0.28);
 }
 
 body.body--dark .page-edit-character__color-clear-btn {
-  color: rgba(236, 227, 247, 0.7);
+  color: rgba(217, 225, 234, 0.7);
 }
 
 body.body--dark .page-edit-character__appearance-media {

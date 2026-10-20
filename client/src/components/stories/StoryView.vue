@@ -192,14 +192,14 @@ export default class StoryView extends Vue.with(Props) {
 }
 
 .story-view--nacht {
-  --reader-bg: #1F1130;
-  --reader-ink: #ECE3F7;
-  --reader-muted: #B5A6CB;
-  --reader-accent: #C19BFF;
-  --reader-rule: rgba(107, 79, 168, 0.32);
-  --reader-rule-strong: #8F72D6;
-  --reader-cap: #B8A5FF;
-  --reader-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 0 28px rgba(107, 79, 168, 0.12);
+  --reader-bg: #111822;
+  --reader-ink: #D9E1EA;
+  --reader-muted: #A2ADBA;
+  --reader-accent: #9EC4F3;
+  --reader-rule: rgba(141, 181, 223, 0.32);
+  --reader-rule-strong: #8DB5DF;
+  --reader-cap: #B7D3F3;
+  --reader-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 0 28px rgba(141, 181, 223, 0.12);
 }
 
 .story-view {
@@ -412,7 +412,7 @@ export default class StoryView extends Vue.with(Props) {
 }
 
 .story-view--nacht .story-view__body--drop-cap .story-view__content > :deep(p:first-of-type::first-letter) {
-  text-shadow: 0 0 18px rgba(184, 165, 255, 0.32);
+  text-shadow: 0 0 18px rgba(183, 211, 243, 0.32);
 }
 
 .story-view__end {

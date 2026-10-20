@@ -204,7 +204,7 @@ export default class FreeCompanyApplyAction extends Vue.with(Props) {
 // On the hero scrim: fixed on-media colours in both themes (see GroupPlate).
 .fc-apply-action--media .fc-apply-action__chip {
   border-color: rgba(255, 255, 255, 0.32);
-  background-color: rgba(11, 6, 18, 0.55);
+  background-color: rgba(13, 17, 24, 0.55);
   color: #FFFFFF;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);

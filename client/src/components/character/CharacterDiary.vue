@@ -153,7 +153,7 @@ body.body--dark .character-diary__card-title {
 body.body--dark .character-diary__card-meta {
   // No --ink-muted on Zodiark (per AETHERIUM.md table — use ink-luminous at
   // lower opacity instead).
-  color: rgba(236, 227, 247, 0.72);
+  color: rgba(217, 225, 234, 0.72);
 }
 
 .character-diary__card-excerpt {
@@ -200,7 +200,7 @@ body.body--dark .character-diary__card-action {
 body.body--dark .character-diary__card:hover {
   box-shadow:
     0 12px 28px rgba(0, 0, 0, 0.5),
-    inset 0 0 28px rgba(107, 79, 168, 0.16);
+    inset 0 0 28px rgba(141, 181, 223, 0.16);
   border-color: var(--rule-arcane);
 }
 
@@ -220,6 +220,6 @@ body.body--dark .character-diary__card-link:focus-visible {
 }
 
 body.body--dark .character-diary__empty {
-  color: rgba(236, 227, 247, 0.72);
+  color: rgba(217, 225, 234, 0.72);
 }
 </style>

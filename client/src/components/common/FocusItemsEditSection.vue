@@ -164,6 +164,6 @@ export default class FocusItemsEditSection extends Vue.with(Props) {
 }
 
 :global(body.body--dark) .focus-items-edit__item {
-  border-left-color: var(--rule-arcane, #b8a5ff);
+  border-left-color: var(--rule-arcane, #b7d3f3);
 }
 </style>

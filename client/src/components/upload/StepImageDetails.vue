@@ -328,6 +328,6 @@ export default class StepImageDetails extends Vue.with(Props) {
 body.body--dark .step-image-details__category-label,
 body.body--dark .step-image-details__description-label,
 body.body--dark .step-image-details__hint {
-  color: rgba(236, 227, 247, 0.74);
+  color: rgba(217, 225, 234, 0.74);
 }
 </style>

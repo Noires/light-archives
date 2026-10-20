@@ -597,7 +597,7 @@ export default class PageGallery extends Vue {
   flex-direction: column;
   gap: 2px;
   padding: 32px 14px 12px;
-  background: linear-gradient(to top, rgba(11, 6, 18, 0.88) 0%, rgba(11, 6, 18, 0.6) 55%, rgba(11, 6, 18, 0) 100%);
+  background: linear-gradient(to top, rgba(13, 17, 24, 0.88) 0%, rgba(13, 17, 24, 0.6) 55%, rgba(13, 17, 24, 0) 100%);
   color: #FFFFFF;
   font-family: var(--font-ui);
   opacity: 0;

@@ -952,7 +952,7 @@ body.body--dark .page-edit-character__button-bar .q-btn-toggle {
 	background-color: var(--surface-deep);
 	border-color: var(--rule-arcane-soft);
 	box-shadow:
-		inset 0 1px 0 rgba(184, 165, 255, 0.18),
+		inset 0 1px 0 rgba(183, 211, 243, 0.18),
 		0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
@@ -1156,10 +1156,10 @@ body.body--dark .elpis-pagination .q-field--borderless:hover .q-field__control {
 
 body.body--dark .elpis-pagination .q-field--borderless.q-field--focused .q-field__control {
 	border-color: var(--rule-arcane);
-	background: rgba(107, 79, 168, 0.18);
+	background: rgba(141, 181, 223, 0.18);
 	box-shadow:
-		0 0 0 3px rgba(184, 165, 255, 0.24),
-		inset 0 1px 0 rgba(184, 165, 255, 0.18);
+		0 0 0 3px rgba(183, 211, 243, 0.24),
+		inset 0 1px 0 rgba(183, 211, 243, 0.18);
 }
 
 body.body--dark .elpis-pagination .q-field__native,
@@ -1172,7 +1172,7 @@ body.body--dark .elpis-pagination .q-pagination__content > .q-btn {
 }
 
 body.body--dark .elpis-pagination .q-pagination__content > .q-btn:hover {
-	background-color: rgba(184, 165, 255, 0.18);
+	background-color: rgba(183, 211, 243, 0.18);
 	color: var(--ink-luminous);
 }
 
@@ -1269,10 +1269,10 @@ body.body--dark .elpis-form .q-field--filled:hover .q-field__control {
 
 body.body--dark .elpis-form .q-field--filled.q-field--focused .q-field__control {
 	border-color: var(--rule-arcane);
-	background: rgba(107, 79, 168, 0.18);
+	background: rgba(141, 181, 223, 0.18);
 	box-shadow:
-		0 0 0 3px rgba(184, 165, 255, 0.22),
-		inset 0 1px 0 rgba(184, 165, 255, 0.18);
+		0 0 0 3px rgba(183, 211, 243, 0.22),
+		inset 0 1px 0 rgba(183, 211, 243, 0.18);
 }
 
 body.body--dark .elpis-form .q-field__label,
@@ -1366,8 +1366,8 @@ body.body--dark .elpis-form .q-field__input {
 body.body--dark .elpis-cropper .cropper-view-box {
 	outline-color: var(--rule-arcane);
 	box-shadow:
-		0 0 0 1px rgba(193, 155, 255, 0.32),
-		inset 0 0 0 1px rgba(184, 165, 255, 0.18);
+		0 0 0 1px rgba(158, 196, 243, 0.32),
+		inset 0 0 0 1px rgba(183, 211, 243, 0.18);
 }
 
 body.body--dark .elpis-cropper .cropper-line {
@@ -1384,14 +1384,14 @@ body.body--dark .elpis-cropper .cropper-modal {
 }
 
 body.body--dark .elpis-cropper .cropper-point {
-	background: linear-gradient(135deg, #d8c8ff 0%, var(--rule-arcane) 55%, #3d2a6e 100%);
+	background: linear-gradient(135deg, #c8def7 0%, var(--rule-arcane) 55%, #2a4f73 100%);
 	box-shadow:
-		0 0 0 1px rgba(184, 165, 255, 0.42),
-		0 0 8px rgba(184, 165, 255, 0.55);
+		0 0 0 1px rgba(183, 211, 243, 0.42),
+		0 0 8px rgba(183, 211, 243, 0.55);
 }
 
 body.body--dark .elpis-cropper .cropper-point:hover {
-	filter: drop-shadow(0 0 6px rgba(184, 165, 255, 0.6));
+	filter: drop-shadow(0 0 6px rgba(183, 211, 243, 0.6));
 }
 
 // ELPIS-605 — StepSelectImage drag-drop overlay. The wizard image-picker
@@ -1423,16 +1423,16 @@ body.body--dark .elpis-cropper .cropper-point:hover {
 
 body.body--dark .elpis-drop-zone {
 	border-color: var(--rule-arcane-soft);
-	background: rgba(107, 79, 168, 0.06);
+	background: rgba(141, 181, 223, 0.06);
 }
 
 body.body--dark .elpis-drop-zone--dragging {
 	border-color: var(--rule-arcane);
-	background: rgba(107, 79, 168, 0.18);
+	background: rgba(141, 181, 223, 0.18);
 	box-shadow:
-		0 0 0 3px rgba(184, 165, 255, 0.24),
-		inset 0 0 0 1px rgba(184, 165, 255, 0.22),
-		0 0 24px rgba(184, 165, 255, 0.4);
+		0 0 0 3px rgba(183, 211, 243, 0.24),
+		inset 0 0 0 1px rgba(183, 211, 243, 0.22),
+		0 0 24px rgba(183, 211, 243, 0.4);
 }
 
 // ELPIS-310 / -311 / -604 — Shared `.elpis-stepper` chrome. Originally
@@ -1528,14 +1528,14 @@ body.body--dark .elpis-drop-zone--dragging {
 }
 
 body.body--dark .elpis-stepper .q-stepper__tab--active::after {
-	box-shadow: 0 0 14px rgba(184, 165, 255, 0.45);
+	box-shadow: 0 0 14px rgba(183, 211, 243, 0.45);
 }
 
 body.body--dark .elpis-stepper .q-stepper__tab--done .q-stepper__dot {
 	box-shadow:
 		inset 0 1px 0 rgba(255, 255, 255, 0.55),
-		inset 0 -1px 0 rgba(193, 155, 255, 0.45),
-		0 2px 8px rgba(184, 165, 255, 0.3);
+		inset 0 -1px 0 rgba(158, 196, 243, 0.45),
+		0 2px 8px rgba(183, 211, 243, 0.3);
 }
 
 // ELPIS-503 — Scroll progress rule. Thin gold gradient pinned to the top of
@@ -1594,21 +1594,21 @@ body.body--dark .elpis-stepper .q-stepper__tab--done .q-stepper__dot {
 body.body--dark .elpis-scroll-progress::-webkit-progress-value {
 	background: linear-gradient(
 		90deg,
-		rgba(184, 165, 255, 0.45) 0%,
+		rgba(183, 211, 243, 0.45) 0%,
 		var(--rule-arcane) 55%,
-		rgba(213, 196, 255, 0.92) 100%
+		rgba(195, 219, 255, 0.92) 100%
 	);
-	box-shadow: 0 0 8px rgba(184, 165, 255, 0.55);
+	box-shadow: 0 0 8px rgba(183, 211, 243, 0.55);
 }
 
 body.body--dark .elpis-scroll-progress::-moz-progress-bar {
 	background: linear-gradient(
 		90deg,
-		rgba(184, 165, 255, 0.45) 0%,
+		rgba(183, 211, 243, 0.45) 0%,
 		var(--rule-arcane) 55%,
-		rgba(213, 196, 255, 0.92) 100%
+		rgba(195, 219, 255, 0.92) 100%
 	);
-	box-shadow: 0 0 8px rgba(184, 165, 255, 0.55);
+	box-shadow: 0 0 8px rgba(183, 211, 243, 0.55);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1686,11 +1686,11 @@ body.body--dark .elpis-scroll-progress::-moz-progress-bar {
 body.body--dark .elpis-save-mote {
 	background: radial-gradient(
 		circle,
-		rgba(213, 196, 255, 0.95) 0%,
-		rgba(184, 165, 255, 0.7) 55%,
-		rgba(184, 165, 255, 0) 100%
+		rgba(195, 219, 255, 0.95) 0%,
+		rgba(183, 211, 243, 0.7) 55%,
+		rgba(183, 211, 243, 0) 100%
 	);
-	box-shadow: 0 0 8px rgba(213, 196, 255, 0.65);
+	box-shadow: 0 0 8px rgba(195, 219, 255, 0.65);
 }
 
 @media (prefers-reduced-motion: reduce) {

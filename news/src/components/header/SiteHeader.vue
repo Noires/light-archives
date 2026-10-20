@@ -253,7 +253,7 @@ export default class SiteHeader extends Vue {
 body.body--dark {
 	.header__title {
 		color: var(--ink-luminous);
-		text-shadow: rgba(184, 165, 255, 0.32) 4px 4px;
+		text-shadow: rgba(183, 211, 243, 0.32) 4px 4px;
 	}
 
 	.header__title a:hover {
@@ -274,9 +274,9 @@ body.body--dark {
 	.header__medallion {
 		box-shadow:
 			inset 0 1px 0 rgba(255, 255, 255, 0.55),
-			inset 0 -1px 0 rgba(193, 155, 255, 0.4),
-			0 0 18px rgba(184, 165, 255, 0.28),
-			0 4px 12px rgba(184, 165, 255, 0.3);
+			inset 0 -1px 0 rgba(158, 196, 243, 0.4),
+			0 0 18px rgba(183, 211, 243, 0.28),
+			0 4px 12px rgba(183, 211, 243, 0.3);
 	}
 }
 </style>

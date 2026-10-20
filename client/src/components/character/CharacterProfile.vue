@@ -178,7 +178,7 @@ export default class CharacterProfile extends Vue.with(Props) {
 }
 
 body.body--dark .character-profile__header-subtitle {
-  color: rgba(236, 227, 247, 0.74); // --ink-luminous channel @ 74%
+  color: rgba(217, 225, 234, 0.74); // --ink-luminous channel @ 74%
 }
 
 .character-profile__details td {

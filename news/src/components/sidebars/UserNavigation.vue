@@ -279,13 +279,13 @@ body.body--dark {
 
 	.user-navigation__item.q-item:hover,
 	.user-navigation__item.q-item:focus-visible {
-		background-color: rgba(193, 155, 255, 0.16);
+		background-color: rgba(158, 196, 243, 0.16);
 		color: var(--glow-aether-d);
 	}
 
 	.user-navigation__item.q-router-link--active,
 	.user-navigation__item.q-router-link-exact-active {
-		background-color: rgba(193, 155, 255, 0.22);
+		background-color: rgba(158, 196, 243, 0.22);
 		color: var(--glow-aether-d);
 		box-shadow: inset 0 0 0 1px var(--rule-arcane-soft);
 	}
@@ -300,7 +300,7 @@ body.body--dark {
 		color: var(--ink-luminous);
 		box-shadow:
 			inset 0 0 0 1px var(--rule-arcane-soft),
-			inset 0 1px 0 rgba(184, 165, 255, 0.18),
+			inset 0 1px 0 rgba(183, 211, 243, 0.18),
 			0 6px 16px rgba(0, 0, 0, 0.55);
 	}
 
@@ -309,7 +309,7 @@ body.body--dark {
 	}
 
 	.user-navigation__mobile-list .q-item:hover {
-		background-color: rgba(193, 155, 255, 0.16);
+		background-color: rgba(158, 196, 243, 0.16);
 	}
 }
 </style>

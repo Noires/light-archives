@@ -583,7 +583,7 @@ export default class WikiPageView extends Vue.with(Props) {
 
 body.body--dark .wiki-page-view__title::first-letter {
   color: var(--glow-aether-d);
-  text-shadow: 0 0 14px rgba(184, 165, 255, 0.32);
+  text-shadow: 0 0 14px rgba(183, 211, 243, 0.32);
 }
 
 .wiki-page-view__lede {
@@ -655,7 +655,7 @@ body.body--dark .wiki-page-view__content :deep(a[href^="/link/"]) {
 
 body.body--dark .wiki-page-view__content :deep(a[href^="/link/"]:hover) {
   text-decoration-color: var(--rule-arcane);
-  box-shadow: 0 0 0 4px rgba(184, 165, 255, 0.22);
+  box-shadow: 0 0 0 4px rgba(183, 211, 243, 0.22);
 }
 
 // ELPIS-509 — metadata footer with relative time and edit-permission pill.
