@@ -295,24 +295,24 @@ export default class WikilinkHint extends Vue.with(Props) {
 }
 
 // Body-dark variant — flips ink + rules onto the arcane palette.
-:global(body.body--dark) .wikilink-hint__title { color: var(--ink-luminous, #c3dbff); }
-:global(body.body--dark) .wikilink-hint__copy { color: var(--ink-luminous, #c3dbff); }
-:global(body.body--dark) .wikilink-hint__source { color: var(--ink-luminous, #c3dbff); }
-:global(body.body--dark) .wikilink-hint__demo {
+body.body--dark .wikilink-hint__title { color: var(--ink-luminous, #c3dbff); }
+body.body--dark .wikilink-hint__copy { color: var(--ink-luminous, #c3dbff); }
+body.body--dark .wikilink-hint__source { color: var(--ink-luminous, #c3dbff); }
+body.body--dark .wikilink-hint__demo {
   background: rgba(183, 211, 243, 0.10);
   border-color: var(--rule-arcane-soft, rgba(183, 211, 243, 0.32));
   border-left-color: var(--rule-arcane, #b7d3f3);
 }
-:global(body.body--dark) .wikilink-hint__caret,
-:global(body.body--dark) .wikilink-hint__arrow,
-:global(body.body--dark) .wikilink-hint__rendered {
+body.body--dark .wikilink-hint__caret,
+body.body--dark .wikilink-hint__arrow,
+body.body--dark .wikilink-hint__rendered {
   color: var(--rule-arcane, #b7d3f3);
 }
-:global(body.body--dark) .wikilink-hint__copy--muted,
-:global(body.body--dark) .wikilink-hint__note {
+body.body--dark .wikilink-hint__copy--muted,
+body.body--dark .wikilink-hint__note {
   color: rgba(195, 219, 255, 0.74);
 }
-:global(body.body--dark) .wikilink-hint__trigger.q-btn {
+body.body--dark .wikilink-hint__trigger.q-btn {
   color: var(--rule-arcane, #b7d3f3);
 }
 </style>
