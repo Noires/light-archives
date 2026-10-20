@@ -1,10 +1,15 @@
 <template>
   <div class="character-gallery">
     <section>
-      <h6>Galerie</h6>
+      <h6 aria-level="2">Galerie</h6>
         <template v-if="content.images && content.images.length > 0">
           <thumb-gallery :images="content.images" />
         </template>
+    </section>
+    <!-- ER2 round 2: the character's albums (hidden without albums or API) -->
+    <section v-if="albums.length > 0" class="character-gallery__albums" aria-labelledby="character-gallery-albums">
+      <h6 id="character-gallery-albums" aria-level="2">Alben</h6>
+      <album-grid :albums="albums" :show-owner="false" />
     </section>
   </div>
 </template>
@@ -19,14 +24,20 @@ import CharacterDetail from './CharacterDetail.vue';
 import CharacterDetailsBox from './CharacterDetailsBox.vue';
 import { CharacterContentDto } from '@app/shared/dto/characters/character-content.dto';
 import ThumbGallery from '../images/ThumbGallery.vue';
+import AlbumGrid from '../images/AlbumGrid.vue';
+import type { AlbumSummaryDto } from '@app/shared/dto/albums/album.dto';
 
 class Props {
   content = prop<CharacterContentDto>({
     required: true,
   });
 
-  preview = prop<boolean>({
+  preview = prop<boolean>({ type: Boolean,
     default: false,
+  });
+
+  characterId = prop<number>({
+    required: false,
   });
 }
 
@@ -37,12 +48,39 @@ class Props {
     BannerView,
     HtmlViewer,
     ReportViolationSection,
-    ThumbGallery
+    ThumbGallery,
+    AlbumGrid,
+  },
+  watch: {
+    characterId() {
+      void (this as CharacterGallery).loadAlbums();
+    },
   },
 })
 export default class CharacterGallery extends Vue.with(Props) {
   PageType = PageType;
+  albums: AlbumSummaryDto[] = [];
 
+  mounted() {
+    void this.loadAlbums();
+  }
+
+  /** ER2 round 2: GET /albums?characterId=; the production API may lack it. */
+  async loadAlbums() {
+    const characterId = this.characterId;
+    if (!characterId) {
+      this.albums = [];
+      return;
+    }
+    try {
+      const albums = await this.$api.albums.getAlbums(characterId);
+      if (characterId === this.characterId) {
+        this.albums = albums.filter((album) => album.ownerId === characterId);
+      }
+    } catch {
+      this.albums = [];
+    }
+  }
 
 }
 </script>

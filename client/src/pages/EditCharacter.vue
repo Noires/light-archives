@@ -89,6 +89,16 @@
             </q-item-section>
           </q-item>
 
+          <q-item clickable v-ripple :to="`/edit-character/${$route.params.id}/pen-and-paper`">
+            <q-item-section avatar>
+              <q-icon name="casino" />
+            </q-item-section>
+
+            <q-item-section>
+              Pen &amp; Paper
+            </q-item-section>
+          </q-item>
+
         </q-list>
       </q-scroll-area>
     </q-drawer>
@@ -148,7 +158,7 @@ export default class PageEditCharacter extends Vue {
   }
 
   displayDrawer(): boolean {
-    return !!this.character.showAppearance || !!this.character.showPersonality || !!this.character.showContacts || !!this.character.showRumors || !!this.character.showDiary || !!this.character.showGallery;
+    return true;
   }
 
   onUpdateCharacter(character: CharacterProfileDto) {

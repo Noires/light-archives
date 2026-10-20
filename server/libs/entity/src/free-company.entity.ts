@@ -1,3 +1,4 @@
+import { FocusItem } from '@app/shared/validation/profile-fields';
 import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
 import { BasicEntity } from './basic.entity';
 import { Character } from './character.entity';
@@ -93,6 +94,13 @@ export class FreeCompany extends BasicEntity {
   })
   recruitingOfficers: string;
 
+  // ER2-810: currently recruiting? null = not specified
+  @Column({
+    type: 'boolean',
+    nullable: true,
+  })
+  recruiting: boolean | null;
+
   @Column({
     nullable: false,
     width: 100,
@@ -104,6 +112,13 @@ export class FreeCompany extends BasicEntity {
     lazy: true,
   })
   banner: Promise<Image | null>;
+
+  // ER2 round 2: "Was wir spielen" cards, max 6 x {icon, title, text}
+  @Column({
+    type: 'simple-json',
+    nullable: true,
+  })
+  focusItems: FocusItem[] | null;
 
   getCrest(): string[] {
     return this.crest.split(',');

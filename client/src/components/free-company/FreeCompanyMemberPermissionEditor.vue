@@ -20,7 +20,7 @@
         <q-td :props="props">
           <router-link :to="getLink(props.row)">
             <q-avatar round>
-              <img :src="props.row.avatar" />
+              <img :src="props.row.avatar" alt="" />
             </q-avatar>
           </router-link>
         </q-td>
@@ -118,7 +118,7 @@ export default class FreeCompanyMemberPermissionEditor extends Vue.with(Props) {
     try {
       await freeCompaniesApi.setMemberEditPermission(this.freeCompanyId, member.characterId, { canEdit });
       member.canEdit = canEdit;
-      notifySuccess(`Bearbeitungsrechte fuer ${member.name} aktualisiert.`);
+      notifySuccess(`Bearbeitungsrechte für ${member.name} aktualisiert.`);
     } catch (e) {
       notifyError(e);
     } finally {

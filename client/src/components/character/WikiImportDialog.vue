@@ -1,6 +1,10 @@
 <template>
   <q-dialog ref="dialog" no-backdrop-dismiss @hide="onDialogHide">
-    <q-card class="wiki-import-dialog">
+    <q-card class="wiki-import-dialog mat-aetherglass elevation-3">
+      <glyph-corner size="sm" position="tl" class="wiki-import-dialog__corner" />
+      <glyph-corner size="sm" position="tr" class="wiki-import-dialog__corner" />
+      <glyph-corner size="sm" position="br" class="wiki-import-dialog__corner" />
+      <glyph-corner size="sm" position="bl" class="wiki-import-dialog__corner" />
       <q-card-section>
         <h5>Import von FF14 Light Wiki</h5>
 
@@ -172,6 +176,7 @@
 <script lang="ts">
 import { Options, prop, Vue } from 'vue-class-component';
 import { notifyError } from 'src/common/notify';
+import GlyphCorner from '../aetherium/GlyphCorner.vue';
 import {
   validateWikiUrl,
   fetchWikiPage,
@@ -217,6 +222,7 @@ class Props {
 
 @Options({
   name: 'WikiImportDialog',
+  components: { GlyphCorner },
   emits: ['ok', 'hide'],
 })
 export default class WikiImportDialog extends Vue.with(Props) {
@@ -388,31 +394,52 @@ export default class WikiImportDialog extends Vue.with(Props) {
 
 <style lang="scss">
 .wiki-import-dialog {
+  position: relative;
   min-width: 400px;
   max-width: 600px;
+  border-radius: 8px;
+  padding: 8px;
 
   h5 {
     margin-top: 0;
     margin-bottom: 16px;
+    font-family: var(--font-display);
+    font-size: var(--type-scale-4);
+    letter-spacing: var(--ls-display);
   }
 
   h6 {
     margin-top: 8px;
     margin-bottom: 8px;
+    font-family: var(--font-display);
+    font-size: var(--type-scale-2);
+    letter-spacing: var(--ls-display);
     font-weight: 600;
   }
 }
 
+.wiki-import-dialog__corner {
+  position: absolute;
+  z-index: 2;
+}
+
+.wiki-import-dialog__corner.glyph-corner--tl { top: 6px;    left: 6px;    }
+.wiki-import-dialog__corner.glyph-corner--tr { top: 6px;    right: 6px;   }
+.wiki-import-dialog__corner.glyph-corner--br { bottom: 6px; right: 6px;   }
+.wiki-import-dialog__corner.glyph-corner--bl { bottom: 6px; left: 6px;    }
+
 .wiki-import-dialog__section {
   margin-bottom: 16px;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.03);
+  padding: 10px 12px;
+  background: rgba(186, 155, 91, 0.06);
+  border: 1px solid var(--rule-gold-soft);
   border-radius: 4px;
 }
 
 .wiki-import-dialog__section--highlight {
-  background: rgba(25, 118, 210, 0.08);
-  border: 1px solid rgba(25, 118, 210, 0.3);
+  background: rgba(186, 155, 91, 0.12);
+  border-color: var(--rule-gold);
+  box-shadow: inset 4px 0 0 var(--rule-gold);
 }
 
 .wiki-import-dialog__fields {
@@ -424,9 +451,24 @@ export default class WikiImportDialog extends Vue.with(Props) {
 
 .wiki-import-dialog__field-preview {
   font-size: 0.85em;
-  color: #666;
+  color: var(--ink-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+body.body--dark .wiki-import-dialog__section {
+  background: rgba(141, 181, 223, 0.08);
+  border-color: var(--rule-arcane-soft);
+}
+
+body.body--dark .wiki-import-dialog__section--highlight {
+  background: rgba(141, 181, 223, 0.16);
+  border-color: var(--rule-arcane);
+  box-shadow: inset 4px 0 0 var(--rule-arcane);
+}
+
+body.body--dark .wiki-import-dialog__field-preview {
+  color: rgba(217, 225, 234, 0.7);
 }
 </style>

@@ -4,7 +4,7 @@
 			<h5>Bild auswählen</h5>
       <p v-if="isEventIconMode" class="text-caption">
         Bestehende Bilder nutzen ihren bereits gespeicherten Thumbnail-Ausschnitt.
-        Falls der Fokus fuer das Event-Icon nicht passt, lade das Bild neu hoch und waehle den Ausschnitt im 50x50-Preview-Schritt.
+        Falls der Fokus für das Event-Icon nicht passt, lade das Bild neu hoch und wähle den Ausschnitt im Schritt „50x50 Vorschau“.
       </p>
 			<section class="gallery-dialog__image-list">
 				<thumb-gallery :images="images" :links="false" @select="onImageSelect" />
@@ -29,7 +29,7 @@ interface DialogRef {
 }
 
 class Props {
-	banner = prop<boolean>({
+	banner = prop<boolean>({ type: Boolean,
 		default: false
 	});
 

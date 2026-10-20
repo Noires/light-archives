@@ -5,7 +5,9 @@ import { LocationWeather } from './location_weather.entity';
 @Entity()
 export class Weather extends BasicEntity {
     tier: 0;
+
     probability: 0;
+
     @PrimaryGeneratedColumn()
     id: number;
 

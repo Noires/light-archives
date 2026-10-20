@@ -1,5 +1,6 @@
 <template>
   <section class="page-article">
+    <scroll-progress-rule />
     <template v-if="article.id">
       <mounted-teleport to="#header-date">{{ $display.formatDateEorzean(article.publishedAt) }}</mounted-teleport>
       <article-view :article="article" />
@@ -14,6 +15,7 @@ import { useRouter } from 'src/router';
 import { notifyError } from 'src/common/notify';
 import ArticleView from 'src/components/article/ArticleView.vue';
 import MountedTeleport from 'src/components/common/MountedTeleport.vue';
+import ScrollProgressRule from 'src/components/common/ScrollProgressRule.vue';
 import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
 
@@ -42,6 +44,7 @@ async function load(params: RouteParams): Promise<NewsArticleDto> {
   components: {
     ArticleView,
     MountedTeleport,
+    ScrollProgressRule,
   },
   async beforeRouteEnter(to, _, next) {
     const content = await load(to.params);

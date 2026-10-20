@@ -1,8 +1,11 @@
 import { FreeCompanySummaryDto } from '@app/shared/dto/fcs/free-company-summary.dto';
+import type { FreeCompanyApplicationDto } from '@app/shared/dto/fcs/free-company-application.dto';
 import { FreeCompanyMemberEditFlagDto } from '@app/shared/dto/fcs/free-company-member-edit-flag.dto';
 import { FreeCompanyMemberPermissionDto } from '@app/shared/dto/fcs/free-company-member-permission.dto';
 import { FreeCompanyDto } from '@app/shared/dto/fcs/free-company.dto';
 import { MyFreeCompanySummaryDto } from '@app/shared/dto/fcs/my-free-company-summary.dto';
+import type { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
+import type { GroupEventsFilterDto } from '@app/shared/dto/events/group-events-filter.dto';
 import APITransport from './api-transport';
 
 export default class FreeCompaniesAPI {
@@ -46,5 +49,44 @@ export default class FreeCompaniesAPI {
 
   async setMemberEditPermission(id: number, characterId: number, flag: FreeCompanyMemberEditFlagDto): Promise<void> {
     return this.transport.authPut<void>(`${id}/members/${characterId}/edit-permission`, flag);
+  }
+
+  // ER2 round 2: applications ("Bewerben"). Pass characterId to getFreeCompany* to get canApply/myApplicationStatus.
+
+  async apply(id: number, characterId: number, message?: string): Promise<void> {
+    return this.transport.authPost<void>(`${id}/applications`, { characterId, message });
+  }
+
+  /** FC managers (leader or members with edit permission) only; newest first. */
+  async getApplications(id: number): Promise<FreeCompanyApplicationDto[]> {
+    return this.transport.authGet<FreeCompanyApplicationDto[]>(`${id}/applications`);
+  }
+
+  async acceptApplication(id: number, applicationId: number): Promise<void> {
+    return this.transport.authPost<void>(`${id}/applications/${applicationId}/accept`, {});
+  }
+
+  async rejectApplication(id: number, applicationId: number): Promise<void> {
+    return this.transport.authPost<void>(`${id}/applications/${applicationId}/reject`, {});
+  }
+
+  /** The applicant deletes their pending or accepted application. */
+  async withdrawApplication(id: number, characterId: number): Promise<void> {
+    return this.transport.authPost<void>(`${id}/applications/withdraw`, { characterId });
+  }
+
+  /**
+   * ER2: events owned by members of the group. upcoming (default): from now, ascending;
+   * upcoming=false: last 90 days, descending. Not available on older API versions.
+   */
+  async getEvents(id: number, options: GroupEventsFilterDto = {}): Promise<EventSummaryDto[]> {
+    const params: Record<string, string> = {};
+    if (options.upcoming !== undefined) {
+      params.upcoming = String(options.upcoming);
+    }
+    if (options.limit !== undefined) {
+      params.limit = String(options.limit);
+    }
+    return this.transport.get<EventSummaryDto[]>(`${id}/events`, params);
   }
 }

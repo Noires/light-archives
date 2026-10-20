@@ -38,7 +38,7 @@
 import { Options, prop, Vue } from 'vue-class-component';
 
 class Props {
-  modelValue = prop<boolean>({
+  modelValue = prop<boolean>({ type: Boolean,
     default: false,
   });
 

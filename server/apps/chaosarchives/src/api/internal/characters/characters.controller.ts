@@ -10,11 +10,14 @@ import { CharacterProfileDto } from '@app/shared/dto/characters/character-profil
 import { CharacterRefreshResultDto } from '@app/shared/dto/characters/character-refresh-result.dto';
 import { CharacterRegistrationStatusResultDto } from '@app/shared/dto/characters/character-registration-status-result.dto';
 import { CharacterSummaryDto } from '@app/shared/dto/characters/character-summary.dto';
+import { CharacterLookupRequestDto, CharacterLookupResultDto } from '@app/shared/dto/characters/character-lookup.dto';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { ImageDto } from '@app/shared/dto/image/image.dto';
 import { MyContentDto } from '@app/shared/dto/characters/my-content.dto';
 import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
+import { RpPresenceDto } from '@app/shared/dto/characters/rp-presence.dto';
+import { RpStatusRequestDto } from '@app/shared/dto/characters/rp-status-request.dto';
 import { Role } from '@app/shared/enums/role.enum';
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ImagesService } from '../images/images.service';
@@ -30,6 +33,34 @@ export class CharactersController {
     private imagesService: ImagesService,
     private myContentService: MyContentService,
   ) {}
+
+  // ER2-806: characters with an active (non-expired) RP status. Declared before ':id'.
+  @Get('rp-active')
+  async getRpActiveCharacters(@Query('limit') limit?: string): Promise<RpPresenceDto[]> {
+    return this.charactersService.getRpActiveCharacters(limit ? parseInt(limit, 10) : 12);
+  }
+
+  // ER2 round 2: names from [[wikilinks]] to profile cards (max. 50, case-insensitive)
+  @Post('lookup')
+  async lookupCharacters(@Body() request: CharacterLookupRequestDto): Promise<CharacterLookupResultDto[]> {
+    return this.charactersService.lookupCharacters(request);
+  }
+
+  @Put(':id/rp-status')
+  @RoleRequired(Role.USER)
+  async setRpStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() request: RpStatusRequestDto,
+    @CurrentUser() user: UserInfo,
+  ): Promise<RpPresenceDto> {
+    return this.charactersService.setRpStatus(id, request, user);
+  }
+
+  @Delete(':id/rp-status')
+  @RoleRequired(Role.USER)
+  async clearRpStatus(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: UserInfo): Promise<RpPresenceDto> {
+    return this.charactersService.clearRpStatus(id, user);
+  }
 
   @Get('registration-status')
   @UseGuards(OptionalJwtAuthGuard)

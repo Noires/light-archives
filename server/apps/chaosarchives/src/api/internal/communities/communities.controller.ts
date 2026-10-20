@@ -9,10 +9,13 @@ import { CommunitySummaryDto } from '@app/shared/dto/communities/community-summa
 import { CommunityDto } from '@app/shared/dto/communities/community.dto';
 import { MemberFlagsDto } from '@app/shared/dto/communities/member-flags.dto';
 import { MyCommunitySummaryDto } from '@app/shared/dto/communities/my-community-summary.dto';
+import { EventSummaryDto } from '@app/shared/dto/events/event-summary.dto';
+import { GroupEventsFilterDto } from '@app/shared/dto/events/group-events-filter.dto';
 import { Role } from '@app/shared/enums/role.enum';
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional } from 'class-validator';
+import { EventsService } from '../events/events.service';
 import { CommunitiesService } from './communities.service';
 
 class OptionalCharacterId {
@@ -24,7 +27,10 @@ class OptionalCharacterId {
 
 @Controller('communities')
 export class CommunitiesController {
-  constructor(private communitiesService: CommunitiesService) {}
+  constructor(
+    private communitiesService: CommunitiesService,
+    private eventsService: EventsService,
+  ) {}
 
   @Get('my-communities')
   @RoleRequired(Role.USER)
@@ -33,6 +39,14 @@ export class CommunitiesController {
     @CurrentUser() user: UserInfo,
   ): Promise<MyCommunitySummaryDto[]> {
     return this.communitiesService.getMyCommunities(characterId, user);
+  }
+
+  @Get(':id/events')
+  async getEvents(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() filter: GroupEventsFilterDto,
+  ): Promise<EventSummaryDto[]> {
+    return this.eventsService.getEventsForGroup('community', id, filter);
   }
 
   @Get(':id/members')
@@ -97,7 +111,6 @@ export class CommunitiesController {
     @Query() characterId: OptionalCharacterId,
     @CurrentUser() user?: UserInfo,
   ): Promise<CommunityDto> {
-    console.log('characterId', characterId);
     return this.communitiesService.getCommunityByName(name, characterId.characterId, user);
   }
 

@@ -1,9 +1,9 @@
 <template>
   <aside class="calendar-widget">
-    <q-card class="calendar-widget__card">
-      <header class="calendar-widget__header">
+    <q-card class="calendar-widget__card mat-aetherglass">
+      <header class="calendar-widget__header" :class="{ 'calendar-widget__header--collapsed': collapsed }">
         <div class="calendar-widget__heading">
-          <q-icon name="event" />
+          <q-icon name="event" :class="{ 'calendar-widget__pulse-icon': collapsed }" />
           <div>
             <div class="calendar-widget__title">Eventkalender</div>
             <div v-if="collapsed" class="calendar-widget__count">
@@ -43,7 +43,7 @@
         </div>
       </header>
 
-      <q-slide-transition>
+      <q-slide-transition :duration="280">
         <div v-show="!collapsed" class="calendar-widget__body">
           <q-date
             :model-value="selectedDate"
@@ -609,10 +609,10 @@ export default class CalendarSidebarWidget extends Vue {
   overflow: hidden;
 }
 
+// ELPIS-307: card adopts Aetherglass. We restate the structural rules
+// (height / display / border-radius) but drop the legacy hardcoded
+// background / border / shadow — Aetherglass owns those.
 .calendar-widget__card {
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
   height: auto;
   max-height: inherit;
   display: flex;
@@ -622,16 +622,61 @@ export default class CalendarSidebarWidget extends Vue {
   background-clip: padding-box;
 }
 
+// Specificity-defensive override: Aetherglass defaults to 8 px; this widget
+// keeps its 30 px pill silhouette so it reads as a discrete aside, not a
+// flat card. The mat-aetherglass class inset-rule still fires.
+.calendar-widget__card.mat-aetherglass {
+  border-radius: 30px;
+}
+
+// Header: keep layout, replace legacy gold gradient with a Crystal-prism seam
+// painted as the bottom border via ::after. The seam doubles as the visual
+// separator between the header and the (collapsible) body.
 .calendar-widget__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px 18px;
-  background: linear-gradient(135deg, rgba(221, 180, 118, 0.15) 0%, rgba(221, 180, 118, 0.08) 100%);
-  border-bottom: 2px solid transparent;
-  border-image: linear-gradient(90deg, rgba(221, 180, 118, 0.4) 0%, rgba(221, 180, 118, 0.15) 50%, rgba(221, 180, 118, 0.4) 100%);
-  border-image-slice: 1;
+  position: relative;
   border-radius: 30px 30px 0 0;
+}
+
+.calendar-widget__header::after {
+  content: '';
+  position: absolute;
+  inset: auto 12px 0 12px;
+  height: 1px;
+  background: var(--crystal-prism);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+// When collapsed there's no body below, so soften the seam so it doesn't
+// read as a stray rule beneath the bottom edge of the card.
+.calendar-widget__header--collapsed::after {
+  opacity: 0.45;
+}
+
+// Idle pulse on the calendar icon when the widget is collapsed — gentle
+// scale + opacity loop riding on --motion-ambient, so the reduced-motion
+// guard zeroes the duration → static icon. Tuned to roughly 4 s
+// (--motion-ambient × 0.6667 ≈ 4000 ms).
+.calendar-widget__pulse-icon {
+  animation: calendar-widget-pulse calc(var(--motion-ambient) * 0.6667) ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes calendar-widget-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.78;
+  }
 }
 
 .calendar-widget__heading {
@@ -1118,15 +1163,11 @@ export default class CalendarSidebarWidget extends Vue {
   min-width: 0;
 }
 
-body.body--dark .calendar-widget__card {
-  border-color: rgba(141, 181, 223, 0.28);
-  background: rgba(15, 22, 32, 0.95);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.34), 0 4px 12px rgba(0, 0, 0, 0.26);
-}
-
-body.body--dark .calendar-widget__header {
-  background: linear-gradient(135deg, rgba(141, 181, 223, 0.16) 0%, rgba(141, 181, 223, 0.06) 100%);
-  border-image: linear-gradient(90deg, rgba(141, 181, 223, 0.45) 0%, rgba(141, 181, 223, 0.15) 50%, rgba(141, 181, 223, 0.45) 100%);
+// Card chrome is now owned by Aetherglass's body--dark variant — no manual
+// background / border / shadow restated here. The Crystal divider seam in the
+// header stays unchanged across themes (the prism gradient reads on both).
+body.body--dark .calendar-widget__header::after {
+  opacity: 0.55;
 }
 
 body.body--dark .calendar-widget__title,

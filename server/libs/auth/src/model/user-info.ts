@@ -12,7 +12,9 @@ export class UserInfo {
   readonly termsAcceptedAt: string | null;
 
   readonly telemetryConsentStatus: TelemetryConsentStatus;
+
   readonly telemetryConsentVersion: number;
+
   readonly telemetryConsentUpdatedAt: string | null;
 
   constructor(properties: Readonly<UserInfo>) {

@@ -1,17 +1,20 @@
 import { MainPageContentDto } from '@app/shared/dto/main-page/main-page-content.dto';
 import { NewsDto } from '@app/shared/dto/news/news.dto';
+import AlbumsAPI from './albums-api';
 import APITransport from './api-transport';
 import CharactersAPI from './characters-api';
 import ChangesAPI from './changes-api';
 import CommunitiesAPI from './communities-api';
 import ContentNotesAPI from './content-notes-api';
 import EventsAPI from './events-api';
+import EventSeriesAPI from './event-series-api';
 import FreeCompaniesAPI from './free-companies-api';
 import ImagesAPI from './images-api';
 import LinksAPI from './links-api';
 import LocationsAPI from './locations-api';
 import NewsAPI from './news-api';
 import NoticeboardAPI from './noticeboard-api';
+import ReactionsAPI from './reactions-api';
 import SearchAPI from './search-api';
 import ServersAPI from './servers-api';
 import StatisticsAPI from './statistics-api';
@@ -23,6 +26,11 @@ import ViolationsAPI from './violations-api';
 import WeatherAPI from './weather-api';
 import WikiAPI from './wiki-api';
 import LodestoneAPI from './lodestone-api';
+// ER2 social
+import FollowsAPI from './follows-api';
+import NotificationsAPI from './notifications-api';
+import BookmarksAPI from './bookmarks-api';
+import CalendarTokenAPI from './calendar-token-api';
 
 export default class API {
   private readonly transport = new APITransport();
@@ -32,11 +40,13 @@ export default class API {
   // Sub-APIs
 
   readonly user = new UserAPI(this.transport);
+  readonly albums = new AlbumsAPI(this.transport);
   readonly characters = new CharactersAPI(this.transport);
   readonly changes = new ChangesAPI(this.transport);
   readonly contentNotes = new ContentNotesAPI(this.transport);
   readonly communities = new CommunitiesAPI(this.transport);
   readonly events = new EventsAPI(this.transport);
+  readonly eventSeries = new EventSeriesAPI(this.transport);
   readonly freeCompanies: FreeCompaniesAPI = new FreeCompaniesAPI(this.transport);
   readonly images = new ImagesAPI(this.transport);
   readonly links = new LinksAPI(this.transport);
@@ -44,6 +54,7 @@ export default class API {
   readonly lodestone = new LodestoneAPI(this.transport);
   readonly news = new NewsAPI(this.transport);
   readonly noticeboard = new NoticeboardAPI(this.transport);
+  readonly reactions = new ReactionsAPI(this.transport);
   readonly search = new SearchAPI(this.transport);
   readonly servers = new ServersAPI(this.transport);
   readonly statistics = new StatisticsAPI(this.transport);
@@ -53,6 +64,11 @@ export default class API {
   readonly violations = new ViolationsAPI(this.transport);
   readonly weather = new WeatherAPI(this.transport);
   readonly wiki = new WikiAPI(this.transport);
+  // ER2 social
+  readonly follows = new FollowsAPI(this.transport);
+  readonly notifications = new NotificationsAPI(this.transport);
+  readonly bookmarks = new BookmarksAPI(this.transport);
+  readonly calendarToken = new CalendarTokenAPI(this.transport);
 
   // Token management
 

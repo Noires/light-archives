@@ -7,6 +7,7 @@ import { ContentNote } from './content-note.entity';
 import { EventLocation } from './event-location.entity';
 import { EventAnnouncement } from './event-announcement.entity';
 import { EventRegistration } from './event-registration.entity';
+import { EventSeries } from './event-series.entity';
 import { Image } from './image.entity';
 import { SearchFields } from './search-fields';
 
@@ -16,6 +17,8 @@ export class Event extends BasicEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
+  // ER2-809: plain index for prefix autocomplete
+  @Index()
   @Column({
     nullable: false,
   })
@@ -74,6 +77,13 @@ export class Event extends BasicEntity {
     default: '',
   })
   contact: string;
+
+  // ER2-803: optional programme, e.g. [{ time: '20:00', title: 'Einlass' }]
+  @Column({
+    type: 'simple-json',
+    nullable: true,
+  })
+  programme: { time: string; title: string; note?: string }[] | null;
 
   @Column({
     nullable: true,
@@ -174,4 +184,11 @@ export class Event extends BasicEntity {
   @ManyToMany(() => ContentNote)
   @JoinTable()
   contentNotes: ContentNote[];
+
+  // ER2-804: optional recurring series this event belongs to
+  @ManyToOne(() => EventSeries, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  series: EventSeries | null;
 }

@@ -1,0 +1,2 @@
+export const GROUP_EVENTS_DEFAULT_LIMIT = 20;
+export const GROUP_EVENTS_MAX_LIMIT = 50;

@@ -1,17 +1,24 @@
 import { UserInfo } from '@app/auth/model/user-info';
-import { Character, ContentNote, Story, StoryTag } from '@app/entity';
+import { Character, ContentNote, Image, Story, StoryTag } from '@app/entity';
+import { BannerDto } from '@app/shared/dto/characters/banner.dto';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { StoryFilterDto } from '@app/shared/dto/stories/story-filter.dto';
+import { StorySeriesDto } from '@app/shared/dto/stories/story-series.dto';
 import { StorySummaryDto } from '@app/shared/dto/stories/story-summary.dto';
 import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import html from '@app/shared/html';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter'; // ER2 social
 import { InjectRepository } from '@nestjs/typeorm';
-import { decode } from 'html-entities';
-import { Connection, In, IsNull, Not, Repository } from 'typeorm';
+import { Connection, EntityManager, In, IsNull, Not, Repository } from 'typeorm';
+import { ReactionTargetType } from '@app/shared/enums/reaction.enum';
 import { getVerifiedCharacter } from '../../../common/api-checks';
 import { escapeForLike } from '../../../common/db';
+import { buildExcerpt, countWords } from '../../../common/plain-text';
+import { ImagesService } from '../images/images.service';
+import { ReactionsService } from '../reactions/reactions.service';
+import { excludeTestContentSql } from '../test-content.filter';
 
 @Injectable()
 export class StoriesService {
@@ -22,7 +29,10 @@ export class StoriesService {
     @InjectRepository(Character) private characterRepo: Repository<Character>,
     @InjectRepository(ContentNote) private contentNoteRepo: Repository<ContentNote>,
     @InjectRepository(Story) private storyRepo: Repository<Story>,
-    @InjectRepository(StoryTag) private storyTagRepo: Repository<StoryTag>
+    @InjectRepository(StoryTag) private storyTagRepo: Repository<StoryTag>,
+    private reactionsService: ReactionsService,
+    private imagesService: ImagesService,
+    private eventEmitter: EventEmitter2, // ER2 social
   ) {}
 
   async getStory(id: number, user?: UserInfo): Promise<StoryDto> {
@@ -32,11 +42,17 @@ export class StoriesService {
       .innerJoinAndSelect('character.user', 'user')
       .innerJoinAndSelect('character.server', 'server')
       .leftJoinAndSelect('story.contentNotes','notes')
+      .leftJoinAndSelect('story.banner', 'banner')
+      .leftJoinAndSelect('banner.owner', 'bannerOwner')
       .where('story.id = :id', { id })
-      .select(['story', 'character.id', 'character.name', 'user.id', 'server.name', 'notes.name'])
+      .select(['story', 'character.id', 'character.name', 'user.id', 'server.name', 'notes.name',
+        'banner.id', 'banner.hash', 'banner.filename', 'banner.width', 'banner.height', 'bannerOwner.id'])
       .getOne();
 
-    if (!story) {
+    const mine = !!story && !!user && story.owner.user.id === user.id;
+
+    // ER2-810: drafts are only visible to their owner
+    if (!story || (story.published === false && !mine)) {
       throw new NotFoundException('Story not found');
     }
 
@@ -47,9 +63,28 @@ export class StoriesService {
       .select('tag')
       .getMany();
 
+    let seriesCount: number | undefined;
+
+    if (story.seriesTitle) {
+      const seriesQuery = this.storyRepo
+        .createQueryBuilder('story')
+        .where('story.ownerId = :ownerId', { ownerId: story.owner.id })
+        .andWhere('story.seriesTitle = :seriesTitle', { seriesTitle: story.seriesTitle });
+
+      if (!mine) {
+        seriesQuery.andWhere('story.published = :published', { published: true });
+      }
+
+      seriesCount = await seriesQuery.getCount();
+    }
+
     return new StoryDto({
+      seriesTitle: story.seriesTitle,
+      seriesIndex: story.seriesIndex,
+      seriesCount,
+      published: story.published,
       id: story.id,
-      mine: user ? story.owner.user.id === user.id : false,
+      mine,
       author: story.owner.name,
       authorServer: story.owner.server.name,
       title: story.title,
@@ -57,8 +92,44 @@ export class StoriesService {
       createdAt: story.createdAt!.getTime(),
       type: story.type,
       tags: story.tags.map((tag) => tag.name),
-      contentNotes: story.contentNotes.map((note) => note.name)
+      contentNotes: story.contentNotes.map((note) => note.name),
+      banner: this.toBannerDto(story.banner),
+      imageUrl: story.banner && story.banner.owner ? this.imagesService.getUrl(story.banner) : null,
     });
+  }
+
+  // ER2 round 2: story cover image
+  private toBannerDto(image: Image | null | undefined): BannerDto | null {
+    if (!image || !image.owner) {
+      return null;
+    }
+
+    return new BannerDto({
+      id: image.id,
+      url: this.imagesService.getUrl(image),
+      width: image.width,
+      height: image.height,
+    });
+  }
+
+  /** The cover must be one of the story owner's images; null clears it. */
+  private async resolveBanner(em: EntityManager, ownerId: number, banner: BannerDto | null): Promise<Image | null> {
+    if (!banner || !banner.id) {
+      return null;
+    }
+
+    const image = await em.getRepository(Image).findOne({
+      where: {
+        id: banner.id,
+        owner: { id: ownerId },
+      },
+    });
+
+    if (!image) {
+      throw new BadRequestException('Image not found');
+    }
+
+    return image;
   }
 
   async createStory(storyDto: StoryDto & { id: undefined }, user: UserInfo): Promise<IdWrapper> {
@@ -99,6 +170,10 @@ export class StoriesService {
         title: storyDto.title,
         content: html.sanitize(storyDto.content),
         type: storyDto.type,
+        seriesTitle: this.normalizeSeriesTitle(storyDto.seriesTitle),
+        seriesIndex: storyDto.seriesIndex ?? null,
+        published: storyDto.published ?? true,
+        banner: storyDto.banner ? await this.resolveBanner(em, character.id, storyDto.banner) : null,
       });
 
       story.tags = storyDto.tags.filter(tag => tag !== '').map(
@@ -119,12 +194,15 @@ export class StoriesService {
       return storyRepo.save(story);
     });
 
+    if (storyEntity.published) void this.eventEmitter.emitAsync('story.published', { storyId: storyEntity.id, actorUserId: user.id }); // ER2 social: notify followers
+
     return {
       id: storyEntity.id,
     };
   }
 
   async editStory(storyDto: StoryDto & { id: number }, user: UserInfo): Promise<void> {
+    let becamePublished = false; // ER2 social
     await this.connection.transaction(async (em) => {
       const storyRepo = em.getRepository(Story);
       const story = await storyRepo
@@ -133,7 +211,7 @@ export class StoriesService {
         .innerJoinAndSelect('character.user', 'user')
         .where('story.id = :id', { id: storyDto.id })
         .andWhere('user.id = :userId', { userId: user.id })
-        .select(['story'])
+        .select(['story', 'character.id'])
         .getOne();
 
       if (!story) {
@@ -145,6 +223,23 @@ export class StoriesService {
         content: html.sanitize(storyDto.content),
         type: storyDto.type
       });
+
+      if (storyDto.seriesTitle !== undefined) {
+        story.seriesTitle = this.normalizeSeriesTitle(storyDto.seriesTitle);
+      }
+
+      if (storyDto.seriesIndex !== undefined) {
+        story.seriesIndex = storyDto.seriesIndex ?? null;
+      }
+
+      if (storyDto.banner !== undefined) {
+        story.banner = await this.resolveBanner(em, story.owner.id, storyDto.banner);
+      }
+
+      if (storyDto.published !== undefined) {
+        becamePublished = storyDto.published && !story.published; // ER2 social
+        story.published = storyDto.published;
+      }
 
       if (storyDto.tags.length > 0) {
         await em.getRepository(StoryTag).delete({
@@ -186,6 +281,7 @@ export class StoriesService {
 
       await storyRepo.save(story);
     });
+    if (becamePublished) void this.eventEmitter.emitAsync('story.published', { storyId: storyDto.id, actorUserId: user.id }); // ER2 social: draft -> published, notify followers
   }
 
   async deleteStory(id: number, user: UserInfo): Promise<void> {
@@ -208,14 +304,28 @@ export class StoriesService {
     });
   }
 
-  async getStoryList(filter: StoryFilterDto): Promise<PagingResultDto<StorySummaryDto>> {
+  async getStoryList(filter: StoryFilterDto, user?: UserInfo): Promise<PagingResultDto<StorySummaryDto>> {
     const query = this.storyRepo
       .createQueryBuilder('story')
       .innerJoinAndSelect('story.owner', 'character')
+      .innerJoinAndSelect('character.server', 'server')
+      .leftJoinAndSelect('story.banner', 'banner')
+      .leftJoinAndSelect('banner.owner', 'bannerOwner')
       .orderBy('story.createdAt', 'DESC')
-      .select(['story.id', 'character.name', 'story.title', 'story.content', 'story.createdAt', 'story.type'])
+      .select(['story.id', 'character.name', 'server.name', 'story.title', 'story.content', 'story.createdAt', 'story.type',
+        'story.published', 'story.seriesTitle', 'story.seriesIndex',
+        'banner.id', 'banner.hash', 'banner.filename', 'bannerOwner.id'])
       .offset(filter.offset)
       .limit(filter.limit);
+
+    // ER2-810: drafts only for their owner
+    if (user) {
+      query
+        .innerJoin('character.user', 'ownerUser')
+        .andWhere('(story.published = :published OR ownerUser.id = :userId)', { published: true, userId: user.id });
+    } else {
+      query.andWhere('story.published = :published', { published: true });
+    }
 
       if (filter.searchQuery) {
         query.andWhere('(story.title LIKE :searchQuery OR character.name LIKE :searchQuery)', {
@@ -242,7 +352,15 @@ export class StoriesService {
       });
     }
 
+    // ER2-111 — hide test stories from the directory and main page (not from a character's own list).
+    if (!filter.characterId) query.andWhere(excludeTestContentSql('story'));
+
     const [ total, stories ] = await Promise.all([ query.getCount(),  query.getMany() ]);
+    const storyIds = stories.map((story) => story.id);
+    const [ contentNotes, reactions ] = await Promise.all([
+      this.getContentNoteNames(storyIds),
+      this.reactionsService.getSummaries(ReactionTargetType.STORY, storyIds),
+    ]);
 
     return {
       total,
@@ -250,29 +368,108 @@ export class StoriesService {
         id: story.id,
         title: story.title,
         author: story.owner.name,
+        authorServer: story.owner.server?.name,
         createdAt: story.createdAt!.getTime(),
         type: story.type,
-        excerpt: this.buildExcerpt(story.content || ''),
+        excerpt: buildExcerpt(story.content, this.excerptMaxLength),
+        published: story.published,
+        contentNotes: contentNotes.get(story.id) || [],
+        seriesTitle: story.seriesTitle,
+        seriesIndex: story.seriesIndex,
+        wordCount: countWords(story.content),
+        reactionCounts: reactions.get(story.id)?.reactionCounts || {},
+        imageUrl: story.banner && story.banner.owner ? this.imagesService.getUrl(story.banner) : null,
+        imageThumbUrl: story.banner && story.banner.owner ? this.imagesService.getThumbUrl(story.banner) : null,
       }))
     };
   }
 
-  private buildExcerpt(content: string): string {
-    const plainText = decode(content.replace(/<[^>]+>/g, ' '))
-      .replace(/\s+/g, ' ')
-      .trim();
+  // ER2 round 2: content notes of a page of stories in one query
+  private async getContentNoteNames(storyIds: number[]): Promise<Map<number, string[]>> {
+    const result = new Map<number, string[]>();
 
-    if (!plainText) {
-      return '';
+    if (storyIds.length === 0) {
+      return result;
     }
 
-    if (plainText.length <= this.excerptMaxLength) {
-      return plainText;
+    const rows: { storyId: number; name: string }[] = await this.storyRepo
+      .createQueryBuilder('story')
+      .innerJoin('story.contentNotes', 'note')
+      .select('story.id', 'storyId')
+      .addSelect('note.name', 'name')
+      .where('story.id IN (:...storyIds)', { storyIds })
+      .getRawMany();
+
+    for (const row of rows) {
+      const storyId = Number(row.storyId);
+      result.set(storyId, [...(result.get(storyId) || []), row.name]);
     }
 
-    const truncated = plainText.slice(0, this.excerptMaxLength);
-    const trimmed = truncated.replace(/\s+\S*$/, '').trim();
-    return `${trimmed || truncated.trim()}...`;
+    return result;
+  }
+
+  private normalizeSeriesTitle(seriesTitle?: string | null): string | null {
+    const trimmed = (seriesTitle || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  async getStorySeries(id: number, user?: UserInfo): Promise<StorySeriesDto> {
+    const story = await this.storyRepo
+      .createQueryBuilder('story')
+      .innerJoinAndSelect('story.owner', 'character')
+      .innerJoinAndSelect('character.server', 'server')
+      .innerJoinAndSelect('character.user', 'user')
+      .where('story.id = :id', { id })
+      .select(['story.id', 'story.title', 'story.seriesTitle', 'story.seriesIndex', 'story.createdAt',
+        'story.published', 'character.id', 'character.name', 'server.name', 'user.id'])
+      .getOne();
+    const mine = !!story && !!user && story.owner.user.id === user.id;
+
+    if (!story || (story.published === false && !mine)) {
+      throw new NotFoundException('Story not found');
+    }
+
+    let parts: Story[] = [story];
+
+    if (story.seriesTitle) {
+      const partsQuery = this.storyRepo
+        .createQueryBuilder('story')
+        .where('story.ownerId = :ownerId', { ownerId: story.owner.id })
+        .andWhere('story.seriesTitle = :seriesTitle', { seriesTitle: story.seriesTitle })
+        .select(['story.id', 'story.title', 'story.seriesIndex', 'story.createdAt']);
+
+      if (!mine) {
+        partsQuery.andWhere('story.published = :published', { published: true });
+      }
+
+      parts = await partsQuery.getMany();
+    }
+
+    // Parts with an index first (ascending), then by creation date
+    parts.sort((a, b) => {
+      if (a.seriesIndex !== b.seriesIndex) {
+        if (a.seriesIndex === null) {
+          return 1;
+        }
+        if (b.seriesIndex === null) {
+          return -1;
+        }
+        return a.seriesIndex - b.seriesIndex;
+      }
+      return a.createdAt.getTime() - b.createdAt.getTime();
+    });
+
+    return {
+      seriesTitle: story.seriesTitle,
+      author: story.owner.name,
+      authorServer: story.owner.server.name,
+      parts: parts.map((part) => ({
+        id: part.id,
+        title: part.title,
+        seriesIndex: part.seriesIndex,
+        createdAt: part.createdAt.getTime(),
+      })),
+    };
   }
 
   async getTags(): Promise<string[]> {

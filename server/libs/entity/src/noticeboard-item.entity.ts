@@ -3,6 +3,7 @@ import { NoticeboardType } from '@app/shared/enums/noticeboard-type.enum';
 import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { BasicEntity } from './basic.entity';
 import { Character } from './character.entity';
+import { Image } from './image.entity';
 import { SearchFields } from './search-fields';
 import { Venue } from './venue.entity';
 
@@ -48,4 +49,29 @@ export class NoticeboardItem extends BasicEntity {
     nullable: true,
   })
   venue: Venue | null;
+
+  // ER2 round 2: moderator pin, Discord flag and optional image
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  pinned: boolean;
+
+  @Column({
+    type: 'datetime',
+    nullable: true,
+  })
+  pinnedAt: Date | null;
+
+  @Column({
+    nullable: false,
+    default: false,
+  })
+  discordPosted: boolean;
+
+  @ManyToOne(() => Image, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  image: Image | null;
 }

@@ -1,371 +1,510 @@
 <template>
   <q-page class="page-venues">
-    <header class="page-venues__hero">
-      <div class="page-venues__hero-text">
-        <span class="page-venues__eyebrow">Community</span>
-        <h2>Treffpunkte</h2>
-        <p class="page-venues__lead">
-          Orte für Begegnungen, Rollenspiel und gemeinsame Momente.
-        </p>
-      </div>
-      <div class="page-venues__hero-meta">
-        <div class="page-venues__count">
-          <span class="page-venues__count-number">{{ venues.length }}</span>
-          <span class="page-venues__count-label">Einträge</span>
-        </div>
-      </div>
-    </header>
+    <page-head
+      :eyebrow="`Treffpunkte · ${venues.length} ${venues.length === 1 ? 'Ort' : 'Orte'}`"
+      title="Wohin heute Abend?"
+      lead="Tavernen, Bühnen, Badehäuser und mehr. Was gerade geöffnet hat, steht oben."
+    >
+      <template #actions>
+        <q-btn
+          v-if="canCreate"
+          unelevated
+          class="elpis-btn elpis-btn--primary"
+          icon="add"
+          label="Treffpunkt eintragen"
+          to="/create-venue"
+        />
+      </template>
 
-    <section class="page-venues__content">
-      <div class="page-venues__toolbar">
+      <div class="page-venues__toolbar" role="search">
         <q-input
-          class="page-venues__search"
           v-model="searchQuery"
-          label="Suche"
-          debounce="200"
-          filled
+          class="page-venues__search"
+          outlined
           dense
           clearable
+          debounce="200"
+          placeholder="Name, Ort oder Zweck"
+          aria-label="Treffpunkte durchsuchen"
           @update:model-value="onFilterChange"
-        />
-        <q-select
-          class="page-venues__area-select"
-          v-model="areaFilter"
-          label="Gebiet"
-          emit-value
-          map-options
-          :options="areaOptions"
-          filled
-          dense
-          @update:model-value="onFilterChange"
-        />
-        <q-select
-          class="page-venues__server-select"
-          v-model="serverFilter"
-          label="Server"
-          emit-value
-          map-options
-          :options="serverOptions"
-          filled
-          dense
-          @update:model-value="onFilterChange"
-        />
-        <div class="page-venues__stats">
-          {{ filteredCount }} von {{ venues.length }}
+        >
+          <template #prepend>
+            <q-icon name="search" aria-hidden="true" />
+          </template>
+        </q-input>
+        <div class="page-venues__chips" role="group" aria-label="Filter">
+          <button
+            v-if="hasStatusData"
+            type="button"
+            class="page-venues__chip"
+            :class="{ 'page-venues__chip--active': openTodayOnly }"
+            :aria-pressed="openTodayOnly ? 'true' : 'false'"
+            @click="toggleOpenToday"
+          >
+            <span class="page-venues__open-dot" aria-hidden="true"></span>
+            <span>Heute geöffnet</span>
+          </button>
+          <button
+            v-if="hasAdultData"
+            type="button"
+            class="page-venues__chip"
+            :class="{ 'page-venues__chip--active': sfwOnly }"
+            :aria-pressed="sfwOnly ? 'true' : 'false'"
+            @click="toggleSfw"
+          >
+            <q-icon name="verified_user" aria-hidden="true" />
+            <span>Nur jugendfrei</span>
+          </button>
+          <button
+            v-for="option in areaOptions"
+            :key="option.value"
+            type="button"
+            class="page-venues__chip"
+            :class="{ 'page-venues__chip--active': areaFilter === option.value }"
+            :aria-pressed="areaFilter === option.value ? 'true' : 'false'"
+            @click="toggleArea(option.value)"
+          >
+            {{ option.label }}
+          </button>
+          <button
+            v-if="serverOptions.length > 2"
+            type="button"
+            class="page-venues__chip"
+            :class="{ 'page-venues__chip--active': !!serverFilter }"
+            aria-haspopup="menu"
+          >
+            <q-icon name="dns" aria-hidden="true" />
+            <span>{{ serverFilter ? `Server: ${serverFilter}` : 'Server' }}</span>
+            <q-icon name="arrow_drop_down" aria-hidden="true" />
+            <q-menu anchor="bottom left" self="top left" class="page-venues__menu">
+              <q-list dense>
+                <q-item
+                  v-for="option in serverOptions"
+                  :key="option.value || 'all'"
+                  v-close-popup
+                  clickable
+                  :active="serverFilter === option.value"
+                  @click="setServer(option.value)"
+                >
+                  <q-item-section>{{ option.label }}</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </button>
         </div>
-        <q-pagination
-          class="page-venues__pagination"
-          :model-value="page"
-          :max="maxPage"
-          input
-          @update:model-value="setPage"
-        />
       </div>
-      <div v-if="pagedVenues.length > 0" class="page-venues__list">
-        <venue-list :venues="pagedVenues" />
-      </div>
-      <div v-else class="page-venues__empty">
-        {{ emptyMessage }}
-      </div>
-    </section>
+    </page-head>
+
+    <p class="page-venues__stats" aria-live="polite">
+      {{ filteredCount }} von {{ venues.length }} Treffpunkten
+      <template v-if="openCount > 0"> · {{ openCount }} gerade geöffnet</template>
+    </p>
+
+    <!-- ER2 outlook: map -->
+    <div class="page-venues__view" role="group" aria-label="Ansicht">
+      <button
+        type="button"
+        class="page-venues__chip"
+        :class="{ 'page-venues__chip--active': viewMode === 'raster' }"
+        :aria-pressed="viewMode === 'raster' ? 'true' : 'false'"
+        @click="setView('raster')"
+      >
+        <q-icon name="grid_view" aria-hidden="true" />
+        <span>Raster</span>
+      </button>
+      <button
+        type="button"
+        class="page-venues__chip"
+        :class="{ 'page-venues__chip--active': viewMode === 'karte' }"
+        :aria-pressed="viewMode === 'karte' ? 'true' : 'false'"
+        @click="setView('karte')"
+      >
+        <q-icon name="map" aria-hidden="true" />
+        <span>Kartenansicht</span>
+      </button>
+    </div>
+    <venue-map
+      v-if="viewMode === 'karte' && filteredCount > 0"
+      :venues="filteredVenues"
+      :now="now"
+    />
+    <div v-else-if="viewMode !== 'karte' && pagedVenues.length > 0" class="page-venues__grid">
+      <venue-card
+        v-for="venue in pagedVenues"
+        :key="venue.id"
+        :venue="venue"
+        :now="now"
+        :show-server="!serverFilter"
+      />
+    </div>
+    <empty-state
+      v-else
+      icon="storefront"
+      :title="venues.length === 0 ? 'Noch keine Treffpunkte' : 'Nichts gefunden'"
+      :text="venues.length === 0 ? 'Es gibt noch keine Treffpunkte auf Elpisgarten.' : 'Keine Ergebnisse für die aktuellen Filter.'"
+      :action-label="venues.length === 0 ? (canCreate ? 'Treffpunkt eintragen' : '') : 'Filter zurücksetzen'"
+      :action-to="venues.length === 0 && canCreate ? '/create-venue' : null"
+      @action="onEmptyAction"
+    />
+
+    <q-pagination
+      v-if="viewMode !== 'karte' && maxPage > 1"
+      class="page-venues__pagination elpis-pagination"
+      :model-value="page"
+      :max="maxPage"
+      :max-pages="7"
+      direction-links
+      boundary-links
+      @update:model-value="setPage"
+    />
+    <!-- /ER2 outlook: map -->
   </q-page>
 </template>
 
 <script lang="ts">
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { HousingArea } from '@app/shared/enums/housing-area.enum';
+import { Role } from '@app/shared/enums/role.enum';
+import { DateTime } from 'luxon';
 import { useApi } from 'src/boot/axios';
 import { notifyError } from 'src/common/notify';
-import VenueList from 'src/components/venues/VenueList.vue';
+import PageHead from 'components/vision/PageHead.vue';
+import EmptyState from 'components/vision/EmptyState.vue';
+import VenueCard from 'components/venues/VenueCard.vue';
+import VenueMap from 'components/outlook/VenueMap.vue'; // ER2 outlook: map
+import { HOUSING_AREA_LABELS } from 'components/venues/venue-location';
+import { VenueOpenState, getVenueStatus, isOpenToday } from 'components/venues/venue-status';
 import { Options, Vue } from 'vue-class-component';
+
+// ER2-507 — venue directory: banner cards with open state, open venues
+// first, closed ones dimmed. Filters: search, "Heute geöffnet" (only when the
+// API sends opening data), "Nur jugendfrei" (only when it sends adultOnly),
+// district and server.
 
 const $api = useApi();
 
+const OPEN_WORLD = '__open_world__';
+const STATE_ORDER: Record<VenueOpenState, number> = { open: 0, soon: 1, unknown: 2, closed: 3 };
+
 @Options({
-	name: 'PageVenues',
-	components: {
-		VenueList
-	},
+  name: 'PageVenues',
+  components: {
+    PageHead,
+    EmptyState,
+    VenueCard,
+    VenueMap, // ER2 outlook: map
+  },
   async beforeRouteEnter(_, __, next) {
     try {
       const venues = await $api.venues.getVenues();
       next(vm => (vm as PageVenues).setContent(venues));
     } catch (e) {
-      console.log(e);
       notifyError(e);
+      next();
     }
   }
 })
 export default class PageVenues extends Vue {
-	venues: VenueSummaryDto[] = [];
+  venues: VenueSummaryDto[] = [];
   searchQuery = '';
-  areaFilter: '' | '__none__' | HousingArea = '';
+  areaFilter = '';
   serverFilter = '';
+  openTodayOnly = false;
+  sfwOnly = false;
   page = 1;
+  now = Date.now();
   readonly perPage = 12;
+  // ER2 outlook: map — 'karte' from /venues/karte or ?view=karte
+  viewMode: 'raster' | 'karte' = 'raster';
 
-	setContent(venues: VenueSummaryDto[]) {
-		this.venues = venues;
+  private timer: number | null = null;
+
+  // ER2 outlook: map
+  created() {
+    if (this.$route.meta.venueView === 'karte' || this.$route.query.view === 'karte') {
+      this.viewMode = 'karte';
+    }
+  }
+
+  // ER2 outlook: map
+  setView(mode: 'raster' | 'karte') {
+    this.viewMode = mode;
+    if (this.$route.meta.venueView !== 'karte') {
+      const query = { ...this.$route.query };
+      if (mode === 'karte') {
+        query.view = 'karte';
+      } else {
+        delete query.view;
+      }
+      void this.$router.replace({ query });
+    }
+  }
+
+  mounted() {
+    this.timer = window.setInterval(() => {
+      this.now = Date.now();
+    }, 60000);
+  }
+
+  beforeUnmount() {
+    if (this.timer !== null) {
+      window.clearInterval(this.timer);
+    }
+  }
+
+  setContent(venues: VenueSummaryDto[]) {
+    this.venues = venues;
     this.page = 1;
-	}
+  }
 
-  get serverOptions() {
+  get canCreate(): boolean {
+    const role = this.$store.getters.role;
+    return !!role && role !== Role.UNVERIFIED;
+  }
+
+  get nowDateTime(): DateTime {
+    return DateTime.fromMillis(this.now);
+  }
+
+  get states(): Map<number, VenueOpenState> {
+    const map = new Map<number, VenueOpenState>();
+    for (const venue of this.venues) {
+      map.set(venue.id, getVenueStatus(venue, this.nowDateTime).state);
+    }
+    return map;
+  }
+
+  get hasStatusData(): boolean {
+    return Array.from(this.states.values()).some((state) => state !== 'unknown');
+  }
+
+  /** ER2 round 2: adultOnly is optional; the chip needs the flag on the list. */
+  get hasAdultData(): boolean {
+    return this.venues.some((venue) => typeof venue.adultOnly === 'boolean');
+  }
+
+  get openCount(): number {
+    return this.filteredVenues.filter((venue) => this.states.get(venue.id) === 'open').length;
+  }
+
+  get serverOptions(): { label: string; value: string }[] {
     const servers = Array.from(new Set(this.venues.map((venue) => venue.server))).sort();
     return [
       { label: 'Alle Server', value: '' },
-      ...servers.map((server) => ({ label: server, value: server }))
+      ...servers.map((server) => ({ label: server, value: server })),
     ];
   }
 
-  get areaOptions(): { label: string; value: '' | '__none__' | HousingArea }[] {
-    const areas = Array.from(
-      new Set(
-        this.venues
-          .map((venue) => venue.housingArea)
-          .filter((area): area is HousingArea => area !== null),
-      ),
-    );
-
+  get areaOptions(): { label: string; value: string }[] {
+    const areas = Array.from(new Set(this.venues.map((venue) => venue.housingArea)));
     const options = areas
-      .map((area) => ({
-        value: area,
-        label: this.$display.housingAreas[area],
-      }))
+      .filter((area): area is HousingArea => !!area)
+      .map((area) => ({ value: area as string, label: HOUSING_AREA_LABELS[area] || area }))
       .sort((a, b) => a.label.localeCompare(b.label));
-    return [
-      { label: 'Alle Gebiete', value: '' },
-      { label: 'Offene Welt', value: '__none__' },
-      ...options
-    ];
+    if (areas.some((area) => !area)) {
+      options.unshift({ value: OPEN_WORLD, label: 'Offene Welt' });
+    }
+    return options;
   }
 
-  get filteredVenues() {
-    const query = this.searchQuery.trim().toLowerCase();
-    return this.venues.filter((venue) => {
+  get filteredVenues(): VenueSummaryDto[] {
+    const query = (this.searchQuery || '').trim().toLowerCase();
+    const filtered = this.venues.filter((venue) => {
       if (this.serverFilter && venue.server !== this.serverFilter) {
         return false;
       }
-      if (this.areaFilter) {
-        if (this.areaFilter == '__none__' && venue.housingArea) {
-          return false;
-        }
-        if (this.areaFilter != '__none__' && venue.housingArea != this.areaFilter) {
-          return false;
-        }
+      if (this.areaFilter === OPEN_WORLD && venue.housingArea) {
+        return false;
+      }
+      if (this.areaFilter && this.areaFilter !== OPEN_WORLD && venue.housingArea !== this.areaFilter) {
+        return false;
+      }
+      if (this.openTodayOnly && !isOpenToday(venue, this.nowDateTime)) {
+        return false;
+      }
+      if (this.sfwOnly && venue.adultOnly) {
+        return false;
       }
       if (!query) {
         return true;
       }
-      const areaLabel = venue.housingArea ? this.$display.housingAreas[venue.housingArea] : 'Offene Welt';
-      const haystack = `${venue.name} ${venue.purpose || ''} ${venue.server} ${venue.address || ''} ${areaLabel}`.toLowerCase();
+      const areaLabel = venue.housingArea ? HOUSING_AREA_LABELS[venue.housingArea] : 'Offene Welt';
+      const tags = (venue.tags || []).join(' ');
+      const haystack = `${venue.name} ${venue.purpose || ''} ${venue.server} ${venue.address || ''} ${areaLabel} ${tags}`.toLowerCase();
       return haystack.includes(query);
     });
+    // Open first, then opening later today; the API order (newest first) stays within a group.
+    return filtered
+      .map((venue, index) => ({ venue, index }))
+      .sort((a, b) => {
+        const diff = STATE_ORDER[this.states.get(a.venue.id) || 'unknown'] - STATE_ORDER[this.states.get(b.venue.id) || 'unknown'];
+        return diff !== 0 ? diff : a.index - b.index;
+      })
+      .map((entry) => entry.venue);
   }
 
-  get filteredCount() {
+  get filteredCount(): number {
     return this.filteredVenues.length;
   }
 
-  get pagedVenues() {
+  get pagedVenues(): VenueSummaryDto[] {
     const start = (this.page - 1) * this.perPage;
     return this.filteredVenues.slice(start, start + this.perPage);
   }
 
-  get maxPage() {
+  get maxPage(): number {
     return Math.max(1, Math.ceil(this.filteredCount / this.perPage));
-  }
-
-  get emptyMessage() {
-    if (this.venues.length == 0) {
-      return 'Es gibt noch keine Treffpunkte auf Elpisgarten.';
-    }
-    return 'Keine Ergebnisse für die aktuellen Filter.';
   }
 
   onFilterChange() {
     this.page = 1;
   }
 
+  toggleOpenToday() {
+    this.openTodayOnly = !this.openTodayOnly;
+    this.onFilterChange();
+  }
+
+  toggleSfw() {
+    this.sfwOnly = !this.sfwOnly;
+    this.onFilterChange();
+  }
+
+  toggleArea(value: string) {
+    this.areaFilter = this.areaFilter === value ? '' : value;
+    this.onFilterChange();
+  }
+
+  setServer(value: string) {
+    this.serverFilter = value;
+    this.onFilterChange();
+  }
+
+  onEmptyAction() {
+    if (this.venues.length > 0) {
+      this.searchQuery = '';
+      this.areaFilter = '';
+      this.serverFilter = '';
+      this.openTodayOnly = false;
+      this.sfwOnly = false;
+      this.onFilterChange();
+    }
+  }
+
   setPage(newPage: number) {
-    const clamped = Math.min(Math.max(newPage, 1), this.maxPage);
-    this.page = clamped;
+    this.page = Math.min(Math.max(newPage, 1), this.maxPage);
   }
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .page-venues {
-  position: relative;
-  padding: 28px 18px 42px;
-  background: linear-gradient(180deg, #f8f4ee 0%, #ffffff 45%, #f2ede4 100%);
-  border-radius: 30px;
-  overflow: hidden;
-}
-
-.page-venues::before {
-  content: '';
-  position: absolute;
-  inset: -120px 0 auto;
-  height: 260px;
-  background: radial-gradient(circle at 20% 30%, rgba(221, 180, 118, 0.18), transparent 55%),
-    radial-gradient(circle at 80% 0%, rgba(15, 76, 104, 0.12), transparent 50%);
-  pointer-events: none;
-}
-
-.page-venues h2 {
-  margin: 0;
-  font-family: $header-font;
-  letter-spacing: 0.02em;
-  font-size: 2.5rem;
-}
-
-.page-venues__hero {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 24px;
-  padding: 24px 28px;
-  margin-bottom: 24px;
-  border: 1px solid rgba(221, 180, 118, 0.3);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 20px 48px rgba(0, 0, 0, 0.06);
-  border-radius: 2px;
-}
-
-.page-venues__eyebrow {
-  font-size: 0.75rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(139, 103, 58, 0.9);
-  font-weight: 600;
-}
-
-.page-venues__hero-text {
-  display: grid;
-  gap: 8px;
-}
-
-.page-venues__lead {
-  margin: 0;
-  color: rgba(35, 35, 35, 0.7);
-  max-width: 520px;
-}
-
-.page-venues__hero-meta {
-  display: grid;
-  gap: 6px;
-  justify-items: end;
-}
-
-.page-venues__count {
-  display: grid;
-  justify-items: end;
-  line-height: 1;
-}
-
-.page-venues__count-number {
-  font-family: $header-font;
-  font-size: 2rem;
-  color: #20323d;
-}
-
-.page-venues__count-label {
-  font-size: 0.85rem;
-  color: rgba(35, 35, 35, 0.6);
-}
-
-.page-venues__content {
-  position: relative;
-  z-index: 1;
+  color: var(--ink-primary);
 }
 
 .page-venues__toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(160px, 0.7fr) minmax(160px, 0.6fr) auto auto;
-  gap: 14px;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  padding: 16px 20px;
-  margin-bottom: 24px;
-  border: 1px solid rgba(221, 180, 118, 0.3);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.06);
-  border-radius: 2px;
+  gap: 12px;
 }
 
-.page-venues__search .q-field__control,
-.page-venues__area-select .q-field__control,
-.page-venues__server-select .q-field__control {
-  background: #f6f1e8;
-  border-radius: 0;
+.page-venues__search {
+  flex: 1 1 260px;
+  max-width: 360px;
+}
+
+.page-venues__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.page-venues__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  background-color: transparent;
+  color: var(--ink-primary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  .q-icon {
+    font-size: 16px;
+  }
+
+  &:hover {
+    background-color: var(--rule-tint);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--glow-aether), 0 0 0 3px var(--vision-focus-edge);
+  }
+}
+
+.page-venues__chip--active,
+.page-venues__chip--active:hover {
+  border-color: var(--vision-primary);
+  background-color: var(--vision-primary);
+  color: var(--vision-on-primary);
+
+  .page-venues__open-dot {
+    background-color: var(--vision-on-primary);
+  }
+}
+
+.page-venues__open-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--vision-live);
+}
+
+// ER2 outlook: map
+.page-venues__view {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
 }
 
 .page-venues__stats {
-  text-align: right;
-  white-space: nowrap;
-  font-family: $header-font;
-  font-size: 1.05rem;
-  color: #20323d;
+  margin: 0 0 14px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.page-venues__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+
+  @media (max-width: 1023px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 599px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .page-venues__pagination {
-  justify-self: end;
+  justify-content: center;
+  margin-top: 28px;
 }
+</style>
 
-.page-venues__list {
-  border: 1px solid rgba(221, 180, 118, 0.3);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.06);
-  border-radius: 2px;
-}
-
-.page-venues__list .q-list {
-  border: none;
-}
-
-.page-venues__empty {
-  padding: 48px 24px;
-  color: rgba(35, 35, 35, 0.6);
-  border: 1px solid rgba(221, 180, 118, 0.3);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 16px 32px rgba(0, 0, 0, 0.06);
-  border-radius: 2px;
-  text-align: center;
-  font-style: italic;
-}
-
-@media screen and (max-width: 1100px) {
-  .page-venues__hero {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .page-venues__hero-meta {
-    width: 100%;
-    justify-items: start;
-  }
-
-  .page-venues__toolbar {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .page-venues__stats {
-    text-align: left;
-  }
-
-  .page-venues__pagination {
-    justify-self: start;
-  }
-}
-
-@media screen and (max-width: $breakpoint-sm) {
-  .page-venues {
-    padding: 20px 14px 36px;
-  }
-
-  .page-venues__hero {
-    padding: 16px;
-  }
+<style lang="scss">
+.page-venues__menu .q-item--active {
+  color: var(--ink-link);
+  font-weight: 600;
 }
 </style>

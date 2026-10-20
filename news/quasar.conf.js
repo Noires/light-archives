@@ -58,6 +58,15 @@ module.exports = configure(function (ctx) {
     build: {
       vueRouterMode: 'history', // available values: 'hash', 'history'
 
+      // Surface masthead identity to the SPA via process.env so deployments
+      // can override without touching code (audit §27.1 / ELPIS-701).
+      // Defaults live in src/common/site-config.ts.
+      env: {
+        NEWS_MASTHEAD_TITLE: process.env.NEWS_MASTHEAD_TITLE || '',
+        NEWS_MASTHEAD_REGION: process.env.NEWS_MASTHEAD_REGION || '',
+        NEWS_MASTHEAD_PRICE: process.env.NEWS_MASTHEAD_PRICE || '',
+      },
+
       // transpile: false,
 
       // Add dependencies for transpiling with Babel (Array of string/regex)

@@ -1,19 +1,31 @@
 <template>
   <div class="character-rumors">
-    <section>
-      <h6>Gerüchte</h6>
+    <section class="character-rumors__intro">
+      <h6 aria-level="2">Gerüchte</h6>
       <p>Die hier aufgelisteten Gerüchte können im RP verwendet werden. Die Kategorien geben an, wie hoch die
           Wahrscheinlichkeit ist, dass ein Gerücht in der Öffentlichkeit geteilt wird und man es gehört haben kann. Gerüchte
           der Kategorie "Häufig" kann potentiell jeder gehört haben. Gerüchte der der Kategorie "Selten" sind Gerüchte, die
           man nur unter speziellen Voraussetzungen kennen kann. Diese sollten nur in gemeinsamer Absprache genutzt werden.
         </p>
-      <h6>Offene Informationen</h6>
-      <html-viewer :content="character.openinformation" />
-      <h6>Häufige Gerüchte</h6>
-        <html-viewer :content="character.commonrumors" />
-        <h6>Seltene Gerüchte</h6>
-        <html-viewer :content="character.rarerumors" />
     </section>
+    <section v-if="owner || !isEmpty(character.openinformation)" class="character-rumors__section character-rumors__section--open mat-parchment">
+      <h6 class="character-rumors__heading" aria-level="3">Offene Informationen</h6>
+      <p v-if="isEmpty(character.openinformation)" class="character-rumors__empty">{{ emptyLabel }}</p>
+      <html-viewer v-else :content="character.openinformation" />
+    </section>
+    <section v-if="owner || !isEmpty(character.commonrumors)" class="character-rumors__section character-rumors__section--common mat-parchment">
+      <h6 class="character-rumors__heading" aria-level="3">Häufige Gerüchte</h6>
+      <p v-if="isEmpty(character.commonrumors)" class="character-rumors__empty">{{ emptyLabel }}</p>
+      <html-viewer v-else :content="character.commonrumors" />
+    </section>
+    <section v-if="owner || !isEmpty(character.rarerumors)" class="character-rumors__section character-rumors__section--rare mat-parchment">
+      <h6 class="character-rumors__heading" aria-level="3">Seltene Gerüchte</h6>
+      <p v-if="isEmpty(character.rarerumors)" class="character-rumors__empty">{{ emptyLabel }}</p>
+      <html-viewer v-else :content="character.rarerumors" />
+    </section>
+    <p v-if="!owner && isEmpty(character.openinformation) && isEmpty(character.commonrumors) && isEmpty(character.rarerumors)" class="character-rumors__empty">
+      Noch keine Gerüchte eingetragen.
+    </p>
   </div>
 </template>
 
@@ -26,13 +38,14 @@ import HtmlViewer from '../common/HtmlViewer.vue';
 import ReportViolationSection from '../common/ReportViolationSection.vue';
 import CharacterDetail from './CharacterDetail.vue';
 import CharacterDetailsBox from './CharacterDetailsBox.vue';
+import { EMPTY_FIELD_LABEL, isEmptyFieldValue } from './empty-field';
 
 class Props {
   character = prop<CharacterProfileDto>({
     required: true,
   });
 
-  preview = prop<boolean>({
+  preview = prop<boolean>({ type: Boolean,
     default: false,
   });
 }
@@ -48,8 +61,15 @@ class Props {
 })
 export default class CharacterRumors extends Vue.with(Props) {
   PageType = PageType;
+  readonly emptyLabel = EMPTY_FIELD_LABEL;
 
+  get owner(): boolean {
+    return this.preview || !!this.character.mine;
+  }
 
+  isEmpty(value?: string): boolean {
+    return isEmptyFieldValue(value);
+  }
 }
 </script>
 
@@ -98,5 +118,65 @@ export default class CharacterRumors extends Vue.with(Props) {
 
 .character-profile__carrd-iframe {
   border: none;
+}
+
+// ELPIS-210 — three Parchment variants for the rumor visibility tiers.
+// Rule weight signals "intimacy of knowledge": Offen reads like public
+// posting (lightest), Häufig like common gossip (medium), Selten like
+// closely-held private knowledge (heaviest, with a doubled inset rule).
+.character-rumors__section {
+  padding: 22px 26px;
+  margin: 18px 0;
+}
+
+.character-rumors__section .character-rumors__heading {
+  margin-top: 0;
+  margin-bottom: 14px;
+}
+
+// Offen — public-facing notes. Lightest treatment, default mat-parchment
+// border (--rule-gold-soft @ 0.28) is enough.
+.character-rumors__section--open {
+  // No additional rule-weight overrides — inherits mat-parchment defaults.
+}
+
+// Häufig — common rumors. Bumped border to a solid --rule-gold so the
+// frame reads more deliberately than the public notes above.
+.character-rumors__section--common {
+  border-color: var(--rule-gold);
+}
+
+body.body--dark .character-rumors__section--common {
+  border-color: var(--rule-arcane);
+}
+
+// Selten — rare/private knowledge. Heaviest treatment: a 2 px outer rule
+// plus an inset hairline reading as a "framed scroll" stamp.
+.character-rumors__section--rare {
+  border-width: 2px;
+  border-color: var(--rule-gold);
+  box-shadow:
+    0 1px 2px rgba(43, 36, 24, 0.05),
+    inset 0 0 0 1px var(--rule-gold-soft),
+    inset 0 0 28px rgba(186, 155, 91, 0.10);
+}
+
+body.body--dark .character-rumors__section--rare {
+  border-color: var(--rule-arcane);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px var(--rule-arcane-soft),
+    inset 0 0 28px rgba(141, 181, 223, 0.18);
+}
+
+@media screen and (max-width: 768px) {
+  .character-rumors__section {
+    padding: 16px 18px;
+  }
+}
+
+.character-rumors__empty {
+  color: var(--ink-muted);
+  font-style: italic;
 }
 </style>

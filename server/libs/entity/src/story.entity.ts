@@ -3,6 +3,7 @@ import { Column, Entity, Index, JoinTable, ManyToMany, ManyToOne, OneToMany, Pri
 import { BasicEntity } from './basic.entity';
 import { Character } from './character.entity';
 import { ContentNote } from './content-note.entity';
+import { Image } from './image.entity';
 import { SearchFields } from './search-fields';
 import { StoryTag } from './story-tag.entity';
 
@@ -17,6 +18,8 @@ export class Story extends BasicEntity {
   })
   owner: Character;
 
+  // ER2-809: plain index for prefix autocomplete
+  @Index()
   @Column({
     nullable: false,
   })
@@ -44,4 +47,33 @@ export class Story extends BasicEntity {
   @ManyToMany(() => ContentNote)
   @JoinTable()
   contentNotes: ContentNote[];
+
+  // ER2-808: optional series ("Reihe"); parts share seriesTitle and owner
+  @Index()
+  @Column({
+    type: 'varchar',
+    length: 120,
+    nullable: true,
+  })
+  seriesTitle: string | null;
+
+  @Column({
+    type: 'integer',
+    nullable: true,
+  })
+  seriesIndex: number | null;
+
+  // ER2 round 2: optional cover image (diary preview, story header); one of the owner's images
+  @ManyToOne(() => Image, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  banner: Image | null;
+
+  // ER2-810: unpublished (draft) items are hidden from public lists, feeds and search
+  @Column({
+    nullable: false,
+    default: true,
+  })
+  published: boolean;
 }

@@ -128,14 +128,17 @@
       "<rootDir>/libs/"
     ],
     "moduleNameMapper": {
-      "@app/configuration/(.*)": "<rootDir>/libs/configuration/src/$1",
-      "@app/configuration": "<rootDir>/libs/configuration/src",
-      "@app/entity/(.*)": "<rootDir>/libs/entity/src/$1",
-      "@app/entity": "<rootDir>/libs/entity/src",
-      "@app/shared/(.*)": "<rootDir>/libs/shared/src/$1",
-      "@app/shared": "<rootDir>/libs/shared/src",
-      "@app/security/(.*)": "<rootDir>/libs/security/src/$1",
-      "@app/security": "<rootDir>/libs/security/src"
+      "^@app/auth/(.*)$": "<rootDir>/libs/auth/src/$1",
+      "^@app/auth$": "<rootDir>/libs/auth/src",
+      "^@app/configuration/(.*)$": "<rootDir>/libs/configuration/src/$1",
+      "^@app/configuration$": "<rootDir>/libs/configuration/src",
+      "^@app/entity/(.*)$": "<rootDir>/libs/entity/src/$1",
+      "^@app/entity$": "<rootDir>/libs/entity/src",
+      "^@app/shared/(.*)$": "<rootDir>/libs/shared/src/$1",
+      "^@app/shared$": "<rootDir>/libs/shared/src",
+      "^@app/security/(.*)$": "<rootDir>/libs/security/src/$1",
+      "^@app/security$": "<rootDir>/libs/security/src",
+      "^apps/(.*)$": "<rootDir>/apps/$1"
     }
   }
 }

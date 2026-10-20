@@ -1,20 +1,32 @@
 <template>
   <div class="character-contacts">
-    <section >
-      <h6>Kontakte</h6>
-            <q-input autogrow readonly v-model="character.partners" label="Partner" />
-            <q-input autogrow readonly v-model="character.parents" label="Eltern" />
-            <q-input autogrow readonly v-model="character.children" label="Kinder" />
-            <q-input autogrow readonly v-model="character.relatives" label="Verwandte" />
-            <q-input autogrow readonly v-model="character.friends" label="Freunde" />
-            <q-input autogrow readonly v-model="character.acquaintances" label="Bekannte / Kollegen" />
-            <q-input autogrow readonly v-model="character.enemies" label="Rivalen / Feinde" />
-            <q-input autogrow readonly v-model="character.past" label="Vergangenheit" />
-            <h6>Verbindungen</h6>
-            <q-input autogrow readonly v-model="character.freecompanies" label="Freie Gesellschaft" />
-            <q-input autogrow readonly v-model="character.meetingplaces" label="Treffpunkte" />
-            <q-input autogrow readonly v-model="character.communities" label="Communities" />
-            <q-input autogrow readonly v-model="character.mentioned" label="Erwähnt in (Anschlagebrett, Geschichten, ...)" />
+    <!-- ER2 outlook: constellation (renders itself only with at least 2 parsed contacts) -->
+    <relationship-constellation :character="character" />
+    <!-- /ER2 outlook: constellation -->
+    <section>
+      <template v-if="showSection(contactFields)">
+        <h6 aria-level="2">Kontakte</h6>
+        <character-text-field
+          v-for="field in contactFields"
+          :key="field.label"
+          :label="field.label"
+          :value="field.value"
+          :owner="owner"
+        />
+      </template>
+      <template v-if="showSection(connectionFields)">
+        <h6 aria-level="2">Verbindungen</h6>
+        <character-text-field
+          v-for="field in connectionFields"
+          :key="field.label"
+          :label="field.label"
+          :value="field.value"
+          :owner="owner"
+        />
+      </template>
+      <p v-if="!showSection(contactFields) && !showSection(connectionFields)" class="character-contacts__empty">
+        Noch keine Kontakte eingetragen.
+      </p>
     </section>
   </div>
 </template>
@@ -28,13 +40,18 @@ import HtmlViewer from '../common/HtmlViewer.vue';
 import ReportViolationSection from '../common/ReportViolationSection.vue';
 import CharacterDetail from './CharacterDetail.vue';
 import CharacterDetailsBox from './CharacterDetailsBox.vue';
+import CharacterTextField from './CharacterTextField.vue';
+import { isEmptyFieldValue } from './empty-field';
+import RelationshipConstellation from '../outlook/RelationshipConstellation.vue'; // ER2 outlook: constellation
+
+type ContactField = { label: string; value?: string };
 
 class Props {
   character = prop<CharacterProfileDto>({
     required: true,
   });
 
-  preview = prop<boolean>({
+  preview = prop<boolean>({ type: Boolean,
     default: false,
   });
 }
@@ -43,62 +60,73 @@ class Props {
   components: {
     CharacterDetail,
     CharacterDetailsBox,
+    CharacterTextField,
     BannerView,
     HtmlViewer,
     ReportViolationSection,
+    RelationshipConstellation, // ER2 outlook: constellation
   },
 })
 export default class CharacterContacts extends Vue.with(Props) {
   PageType = PageType;
 
+  get owner(): boolean {
+    return this.preview || !!this.character.mine;
+  }
 
+  get contactFields(): ContactField[] {
+    const c = this.character;
+    return [
+      { label: 'Partner', value: c.partners },
+      { label: 'Eltern', value: c.parents },
+      { label: 'Kinder', value: c.children },
+      { label: 'Verwandte', value: c.relatives },
+      { label: 'Freunde', value: c.friends },
+      { label: 'Bekannte / Kollegen', value: c.acquaintances },
+      { label: 'Rivalen / Feinde', value: c.enemies },
+      { label: 'Vergangenheit', value: c.past },
+    ];
+  }
+
+  get connectionFields(): ContactField[] {
+    const c = this.character;
+    return [
+      { label: 'Freie Gesellschaft', value: c.freecompanies },
+      { label: 'Treffpunkte', value: c.meetingplaces },
+      { label: 'Communities', value: c.communities },
+      { label: 'Erwähnt in', value: c.mentioned },
+    ];
+  }
+
+  showSection(fields: ContactField[]): boolean {
+    return this.owner || fields.some((field) => !isEmptyFieldValue(field.value));
+  }
 }
 </script>
 
 <style lang="scss">
-@import url($extraGoogleFonts);
-
-.character-profile__header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16px;
+// ELPIS-207 — Contacts re-skin (mirrors CharacterPersonality). Section h6 →
+// Cinzel via --font-display; readonly inputs lift onto a Vellum surface so
+// each named relationship reads as engraved into the page rather than dim.
+.character-contacts h6 {
+  margin: 18px 0 10px;
+  font-family: var(--font-display);
+  font-size: var(--type-scale-2);
+  letter-spacing: var(--ls-display);
+  color: var(--ink-primary);
 }
 
-.character-profile__header-title {
-  margin: 0;
-  line-height: auto;
+.character-contacts h6:first-child {
+  margin-top: 0;
 }
 
-.character-profile__header-names {
-  text-align: center;
+.character-contacts__empty {
+  color: var(--ink-muted);
+  font-style: italic;
 }
 
-.character-profile__header-subtitle {
-  font-family: $header-font;
-  font-size: 1.6em;
+body.body--dark .character-contacts h6 {
+  color: var(--ink-luminous);
 }
 
-.character-profile__details td {
-  padding: 4px 8px;
-}
-
-.character-profile__details tr>td:first-child {
-  font-weight: bold;
-}
-
-.character-profile__appearance-background {
-  margin-bottom: 24px;
-}
-
-.character-profile__appearance-background_no-header {
-  margin-top: 24px;
-}
-
-.character-profile__personality-box {
-  margin-bottom: 24px;
-}
-
-.character-profile__carrd-iframe {
-  border: none;
-}
 </style>

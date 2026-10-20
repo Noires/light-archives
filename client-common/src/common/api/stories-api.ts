@@ -1,3 +1,4 @@
+import { StorySeriesDto } from '@app/shared/dto/stories/story-series.dto';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { StoryFilterDto } from '@app/shared/dto/stories/story-filter.dto';
@@ -13,7 +14,8 @@ export default class StoriesAPI {
   }
 
   async getStories(filter?: StoryFilterDto): Promise<PagingResultDto<StorySummaryDto>> {
-    return this.transport.get<PagingResultDto<StorySummaryDto>>('', filter as QueryParams);
+    // Token optional: owners also get their own unpublished stories (ER2-810)
+    return this.transport.tokenGet<PagingResultDto<StorySummaryDto>>('', filter as QueryParams);
   }
 
   async getStory(id: number): Promise<StoryDto> {
@@ -30,6 +32,11 @@ export default class StoriesAPI {
 
   async deleteStory(id: number): Promise<void> {
     return this.transport.authDelete<void>(`${id}`);
+  }
+
+  /** ER2-808: ordered parts of the story's series (same seriesTitle and author). */
+  async getStorySeries(id: number): Promise<StorySeriesDto> {
+    return this.transport.tokenGet<StorySeriesDto>(`${id}/series`);
   }
 
   async getTags(): Promise<string[]> {

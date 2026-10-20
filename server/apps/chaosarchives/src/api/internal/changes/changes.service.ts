@@ -8,6 +8,13 @@ import { ImageCategory } from '@app/shared/enums/image-category.enum';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { ImagesService } from '../images/images.service';
+import { isTestContent } from '../test-content.filter';
+
+interface ChangeMedia {
+  authorAvatar?: string;
+  thumbnailUrl?: string;
+}
 
 @Injectable()
 export class ChangesService {
@@ -36,6 +43,7 @@ export class ChangesService {
     private readonly eventRepo: Repository<Event>,
     @InjectRepository(Image)
     private readonly imageRepo: Repository<Image>,
+    private readonly imagesService: ImagesService,
   ) {}
 
   async getChanges(filter: ChangesFilterDto): Promise<PagingResultDto<ChangeItemDto>> {
@@ -77,10 +85,44 @@ export class ChangesService {
     changes = this.applyFilters(changes, filter);
     changes.sort((a, b) => b.happenedAt - a.happenedAt);
 
+    const page = changes.slice(offset, offset + limit);
+    await this.attachVenueBanners(page);
+
     return {
       total: changes.length,
-      data: changes.slice(offset, offset + limit),
+      data: page,
     };
+  }
+
+  // ER2 round 2: venue banners for the returned page only, in one query
+  private async attachVenueBanners(items: ChangeItemDto[]): Promise<void> {
+    const venueIds = [...new Set(items.filter((item) => item.area === ChangeArea.VENUE).map((item) => item.entityId))];
+
+    if (venueIds.length === 0) {
+      return;
+    }
+
+    const rows: { venueId: number; ownerId: number; hash: string; filename: string }[] = await this.venueRepo
+      .createQueryBuilder('venue')
+      .innerJoin('venue.banner', 'banner')
+      .select('venue.id', 'venueId')
+      .addSelect('banner.ownerId', 'ownerId')
+      .addSelect('banner.hash', 'hash')
+      .addSelect('banner.filename', 'filename')
+      .where('venue.id IN (:...venueIds)', { venueIds })
+      .getRawMany();
+    const urls = new Map(rows.map((row) => [
+      Number(row.venueId),
+      this.imagesService.getThumbUrl({ owner: { id: row.ownerId }, hash: row.hash, filename: row.filename } as Image),
+    ]));
+
+    for (const item of items) {
+      const url = item.area === ChangeArea.VENUE ? urls.get(item.entityId) : undefined;
+
+      if (url) {
+        item.thumbnailUrl = url;
+      }
+    }
   }
 
   private normalizeLimit(limit?: number): number {
@@ -159,13 +201,19 @@ export class ChangesService {
       return [];
     }
 
-    return this.storyRepo.find({
+    const stories = await this.storyRepo.find({
+      where: {
+        published: true,
+      },
       relations: ['owner'],
       order: {
         updatedAt: 'DESC',
       },
       take: limit,
     });
+
+    // ER2-111 — stories titled "Test" or without a body stay out of the feed.
+    return stories.filter((story) => !isTestContent(story));
   }
 
   private async fetchNoticeboardItems(area: ChangeArea | undefined, limit: number): Promise<NoticeboardItem[]> {
@@ -226,6 +274,7 @@ export class ChangesService {
       this.profileLink(profile),
       profile.createdAt,
       profile.updatedAt,
+      { authorAvatar: profile.avatar || undefined, thumbnailUrl: profile.avatar || undefined },
     );
   }
 
@@ -239,6 +288,7 @@ export class ChangesService {
       `/venue/${venue.id}`,
       venue.createdAt,
       venue.updatedAt,
+      { authorAvatar: venue.owner?.avatar || undefined },
     );
   }
 
@@ -252,6 +302,7 @@ export class ChangesService {
       `/community/${encodeURIComponent(community.name)}`,
       community.createdAt,
       community.updatedAt,
+      { authorAvatar: community.owner?.avatar || undefined },
     );
   }
 
@@ -265,6 +316,7 @@ export class ChangesService {
       this.freeCompanyLink(company),
       company.createdAt,
       company.updatedAt,
+      { authorAvatar: company.leader?.avatar || undefined },
     );
   }
 
@@ -278,6 +330,7 @@ export class ChangesService {
       `/story/${story.id}`,
       story.createdAt,
       story.updatedAt,
+      { authorAvatar: story.owner?.avatar || undefined },
     );
   }
 
@@ -291,6 +344,7 @@ export class ChangesService {
       `/noticeboard/${item.id}`,
       item.createdAt,
       item.updatedAt,
+      { authorAvatar: item.owner?.avatar || undefined },
     );
   }
 
@@ -304,6 +358,7 @@ export class ChangesService {
       `/event/${event.id}`,
       event.createdAt,
       event.updatedAt,
+      { authorAvatar: event.owner?.avatar || undefined },
     );
   }
 
@@ -320,6 +375,10 @@ export class ChangesService {
       `/image/${image.id}`,
       image.createdAt,
       image.updatedAt,
+      {
+        authorAvatar: image.owner?.avatar || undefined,
+        thumbnailUrl: image.owner ? this.imagesService.getThumbUrl(image) : undefined,
+      },
     );
   }
 
@@ -332,6 +391,7 @@ export class ChangesService {
     link: string,
     createdAt: Date,
     updatedAt: Date,
+    media: ChangeMedia = {},
   ): ChangeItemDto[] {
     const createdAtMs = createdAt.getTime();
     const updatedAtMs = updatedAt.getTime();
@@ -347,6 +407,7 @@ export class ChangesService {
       happenedAt: createdAtMs,
       createdAt: createdAtMs,
       updatedAt: updatedAtMs,
+      ...media,
     }];
 
     if (updatedAtMs - createdAtMs > this.MIN_UPDATED_DELTA_MS) {
@@ -362,6 +423,7 @@ export class ChangesService {
         happenedAt: updatedAtMs,
         createdAt: createdAtMs,
         updatedAt: updatedAtMs,
+        ...media,
       });
     }
 

@@ -4,7 +4,7 @@
       <q-card-section class="row items-center q-pb-none">
         <div class="text-h6">Quellcode bearbeiten</div>
         <q-space />
-        <q-btn icon="close" flat round dense v-close-popup />
+        <q-btn icon="close" flat round dense v-close-popup aria-label="Schließen" />
       </q-card-section>
 
       <q-card-section class="code-editor-dialog__content q-pt-none">

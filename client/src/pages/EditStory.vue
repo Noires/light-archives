@@ -32,6 +32,29 @@
             @update:model-value="onTagsChanged"
             label="Schlagworte (mit Komma getrennt)"
           />
+          <!-- ER2-810: draft flag -->
+          <q-toggle
+            :model-value="story.published !== false"
+            @update:model-value="story.published = $event"
+            label="Veröffentlicht (sonst nur für dich sichtbar)"
+          />
+          <!-- ER2-808: story series -->
+          <div class="page-edit-story__series">
+            <q-input
+              v-model="story.seriesTitle"
+              label="Reihe (optional)"
+              hint="Teile mit gleichem Reihennamen werden als Kapitel verknüpft."
+              maxlength="120"
+            />
+            <q-input
+              :model-value="story.seriesIndex ?? ''"
+              @update:model-value="onSeriesIndexChanged"
+              type="number"
+              min="0"
+              label="Teil Nr."
+              :disable="!story.seriesTitle"
+            />
+          </div>
           <div class="page-edit-story__select-group">
             <div class="page-edit-story__select-title">Inhaltswarnungen</div>
             <q-option-group
@@ -42,6 +65,18 @@
               class="page-edit-story__options-grid"
             />
           </div>
+          <!-- ER2 round 2: optional cover image (diary preview); hidden when the API lacks it -->
+          <banner-edit-section
+            v-if="coverSupported"
+            class="page-edit-story__cover"
+            :model-value="story.banner || undefined"
+            title="Titelbild (optional)"
+            hint="Erscheint als Vorschaubild im Tagebuch und auf dem Profil. Wähle eines deiner Bilder oder lade ein neues hoch."
+            :ratio="16 / 9"
+            :min-aspect-ratio="1"
+            :character-id="coverCharacterId"
+            @update:model-value="story.banner = $event || null"
+          />
           <h6>Inhalt *</h6>
           <html-editor v-model="story.content" />
         </template>
@@ -56,7 +91,7 @@
           />
           <div class="page-edit-story__revert-submit">
             <q-btn label="Zurücksetzen" color="secondary" @click="revert" />&nbsp;
-            <q-btn label="Änderungen speichern" type="submit" color="primary" />
+            <q-btn label="Änderungen speichern" type="submit" color="primary" v-elpis-save-pulse="savePulseTrigger" />
           </div>
         </div>
         <q-inner-loading :showing="saving" />
@@ -91,6 +126,7 @@
 import { StoryDto } from '@app/shared/dto/stories/story.dto';
 import { StoryType } from '@app/shared/enums/story-type.enum';
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
+import BannerEditSection from 'components/common/BannerEditSection.vue';
 import CharacterSelector from 'components/common/CharacterSelector.vue';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
 import StoryView from 'components/stories/StoryView.vue';
@@ -101,6 +137,7 @@ import { RouteParams } from 'vue-router';
 
 @Options({
   components: {
+    BannerEditSection,
     CharacterSelector,
     HtmlEditor,
     StoryView,
@@ -124,15 +161,55 @@ export default class PageEditStory extends Vue {
   }));
 
   story = new StoryDto();
+
+  // ER2-808
+  onSeriesIndexChanged(value: string | number | null) {
+    const parsed = value === null || value === '' ? null : parseInt(String(value), 10);
+    this.story.seriesIndex = parsed === null || Number.isNaN(parsed) ? null : Math.max(0, parsed);
+  }
   storyBackup = new StoryDto();
   contentNoteOptions: {label: string, value: string}[];
   preview = false;
   loaded = false;
   saving = false;
+  savePulseTrigger = 0;
 
   confirmRevert = false;
 
   selectedCharacterId: number | null = null;
+  /** ER2 round 2: the API knows story cover images (it sends `imageUrl`). */
+  coverSupported = false;
+
+  /** Owner of the cover image: the chosen character, or the author of an existing story. */
+  get coverCharacterId(): number | null {
+    if (!this.story.id) {
+      return this.selectedCharacterId;
+    }
+
+    const author = this.$store.getters.characters.find(
+      (character) => character.name === this.story.author && character.server === this.story.authorServer,
+    );
+    return author ? author.id : null;
+  }
+
+  private async detectCoverSupport(story: StoryDto) {
+    if ('imageUrl' in story) {
+      this.coverSupported = true;
+      return;
+    }
+
+    if (story.id) {
+      this.coverSupported = false;
+      return;
+    }
+
+    try {
+      const list = await this.$api.stories.getStories({ offset: 0, limit: 1 });
+      this.coverSupported = list.data.length > 0 && 'imageUrl' in list.data[0];
+    } catch {
+      this.coverSupported = false;
+    }
+  }
 
   private async load(params: RouteParams) {
     const contentNotes = await this.$api.contentNotes.getContentNotes();
@@ -170,6 +247,7 @@ export default class PageEditStory extends Vue {
     this.selectedCharacterId = this.$store.getters.characterId || null;
 
     this.story = new StoryDto(this.storyBackup);
+    void this.detectCoverSupport(this.storyBackup);
   }
 
   revert() {
@@ -196,6 +274,7 @@ export default class PageEditStory extends Vue {
       }
 
       this.storyBackup = new StoryDto(this.story);
+      this.savePulseTrigger++;
 
       notifySuccess('Story saved.', {
         label: 'View',
@@ -226,6 +305,12 @@ export default class PageEditStory extends Vue {
 </script>
 
 <style lang="scss">
+.page-edit-story__series {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 8rem;
+  gap: 10px;
+}
+
 .page-edit-story {
   --edit-story-select-group-border: rgba(221, 180, 118, 0.25);
   --edit-story-select-group-bg: rgba(249, 247, 242, 0.95);
@@ -250,7 +335,12 @@ body.body--dark .page-edit-story {
   margin-bottom: 24px;
 }
 
+.page-edit-story__cover {
+  margin-top: 16px;
+}
+
 .page-edit-story__button-bar {
+
   display: flex;
   justify-content: space-between;
   margin-top: 16px;

@@ -1,0 +1,168 @@
+// Global q-drawer styles and the --drawer-* palette for both themes.
+// Formerly in ShellDrawer.vue (the shell drawer was retired in ER2-201). Page
+// drawers (pages/Character.vue, EditCharacter.vue, EditVenue.vue) still rely
+// on these rules, so MainLayout keeps loading them.
+
+.q-drawer .q-item__label--header {
+  font-family: Michroma, sans-serif;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--drawer-label-color);
+  padding: 16px 20px 8px;
+}
+
+.q-drawer .q-item.q-router-link--active,
+.q-drawer .q-item--active {
+  color: var(--drawer-item-hover-color);
+  font-weight: 600;
+  background: var(--drawer-item-active-bg);
+  border-left: 3px solid var(--drawer-item-active-border);
+}
+
+.q-drawer .q-list a {
+  border-bottom: none;
+}
+
+.q-drawer--left {
+  background: linear-gradient(135deg, var(--drawer-bg-start) 0%, var(--drawer-bg-end) 100%);
+  border-right: 1px solid var(--drawer-border);
+  backdrop-filter: blur(12px);
+}
+
+.q-drawer--left::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(180deg, var(--drawer-top-glow) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.q-drawer__backdrop {
+  background: var(--drawer-backdrop) !important;
+  backdrop-filter: blur(4px);
+}
+
+.q-drawer .q-list {
+  position: relative;
+  z-index: 1;
+}
+
+.q-drawer .q-item:first-child {
+  background: transparent;
+}
+
+.q-drawer .q-item:first-child:hover {
+  background: transparent;
+  transform: none;
+}
+
+.q-drawer .q-field {
+  margin: 0;
+}
+
+.q-drawer .q-field__control {
+  background: var(--drawer-field-bg) !important;
+  border: 1px solid var(--drawer-field-border);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  height: 48px;
+  min-height: 48px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.q-drawer .q-field__control:before {
+  display: none;
+}
+
+.q-drawer .q-field__control:after {
+  display: none;
+}
+
+.q-drawer .q-field__control:hover {
+  background: var(--drawer-field-hover-bg) !important;
+  border-color: var(--drawer-field-hover-border);
+}
+
+.q-drawer .q-field--focused .q-field__control {
+  background: var(--drawer-field-focus-bg) !important;
+  border-color: var(--drawer-field-focus-border);
+}
+
+.q-drawer .q-field__label {
+  color: var(--drawer-field-label);
+}
+
+.q-drawer .q-field__native {
+  color: var(--drawer-field-input);
+}
+
+.q-drawer .q-field__append {
+  color: var(--drawer-field-append);
+}
+
+.q-drawer .q-item {
+  color: var(--drawer-item-color);
+  transition: all 0.3s ease;
+  padding: 14px 5px;
+  margin: 4px 8px;
+  border-radius: 6px;
+}
+
+.q-drawer .q-item:hover {
+  color: var(--drawer-item-hover-color);
+  background: var(--drawer-item-hover-bg);
+  transform: translateX(4px);
+}
+
+body {
+  --drawer-label-color: rgba(221, 180, 118, 0.7);
+  --drawer-item-color: rgba(232, 212, 176, 0.9);
+  --drawer-item-hover-color: #ffffff;
+  --drawer-item-hover-bg: rgba(221, 180, 118, 0.1);
+  --drawer-item-active-bg: rgba(221, 180, 118, 0.15);
+  --drawer-item-active-border: #ddb476;
+  --drawer-bg-start: rgba(26, 26, 26, 0.98);
+  --drawer-bg-end: rgba(15, 15, 15, 0.98);
+  --drawer-border: rgba(221, 180, 118, 0.25);
+  --drawer-top-glow: rgba(221, 180, 118, 0.08);
+  --drawer-backdrop: rgba(0, 0, 0, 0.6);
+  --drawer-field-bg: rgba(255, 255, 255, 0.06);
+  --drawer-field-border: rgba(221, 180, 118, 0.25);
+  --drawer-field-hover-bg: rgba(255, 255, 255, 0.08);
+  --drawer-field-hover-border: rgba(221, 180, 118, 0.35);
+  --drawer-field-focus-bg: rgba(255, 255, 255, 0.1);
+  --drawer-field-focus-border: rgba(221, 180, 118, 0.5);
+  --drawer-field-label: rgba(232, 212, 176, 0.6);
+  --drawer-field-input: rgba(232, 212, 176, 0.95);
+  --drawer-field-append: rgba(232, 212, 176, 0.7);
+}
+
+body.body--dark {
+  --drawer-label-color: rgba(141, 181, 223, 0.74);
+  --drawer-item-color: rgba(214, 229, 245, 0.9);
+  --drawer-item-hover-color: #f2f7ff;
+  --drawer-item-hover-bg: rgba(141, 181, 223, 0.16);
+  --drawer-item-active-bg: rgba(141, 181, 223, 0.22);
+  --drawer-item-active-border: rgba(141, 181, 223, 0.9);
+  --drawer-bg-start: rgba(16, 25, 37, 0.97);
+  --drawer-bg-end: rgba(10, 16, 24, 0.97);
+  --drawer-border: rgba(141, 181, 223, 0.3);
+  --drawer-top-glow: rgba(141, 181, 223, 0.12);
+  --drawer-backdrop: rgba(2, 7, 12, 0.68);
+  --drawer-field-bg: rgba(17, 27, 40, 0.82);
+  --drawer-field-border: rgba(141, 181, 223, 0.3);
+  --drawer-field-hover-bg: rgba(24, 37, 53, 0.9);
+  --drawer-field-hover-border: rgba(141, 181, 223, 0.4);
+  --drawer-field-focus-bg: rgba(27, 42, 61, 0.92);
+  --drawer-field-focus-border: rgba(141, 181, 223, 0.56);
+  --drawer-field-label: rgba(214, 229, 245, 0.68);
+  --drawer-field-input: rgba(226, 237, 248, 0.95);
+  --drawer-field-append: rgba(214, 229, 245, 0.74);
+}

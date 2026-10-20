@@ -1,7 +1,10 @@
+@import 'aetherium/index';
+
 @import 'weather';
 @import 'locations';
 @import 'input_styles';
 @import 'fandom-tabs';
+@import 'vision';
 
 // font definition
 @font-face {
@@ -15,9 +18,11 @@
 	--app-body-bg-color: #ddb476;
 	--app-body-bg-image: url(assets/bg.jpg);
 	--app-text-color: #1f1f1f;
-	--app-link-color: #ddb476;
-	--app-link-hover-color: #c59826;
-	--app-link-visited-color: #ddb476;
+	// ER2-102 — links on parchment/pearl use bronze ink (5.48:1 on card,
+	// ≈5.2:1 on pearl). The gold #ddb476 brand token stays for ornaments only.
+	--app-link-color: var(--ink-link, #8A5A14);
+	--app-link-hover-color: #6B4410;
+	--app-link-visited-color: var(--ink-link, #8A5A14);
 	--app-item-color: #000000;
 	--app-scrollbar-track: #ddb476;
 	--app-scrollbar-thumb: #edd297;
@@ -33,8 +38,9 @@
 	--app-card-divider: rgba(31, 44, 56, 0.12);
 	--app-footer-bg: #ebebeb;
 	--app-footer-text: #000000;
-	--app-footer-link: #777777;
-	--app-footer-link-hover: #bbbbbb;
+	// Footer is Vellum in Hydaelyn: bronze link ink (5.48:1), darker on hover.
+	--app-footer-link: var(--ink-link, #8A5A14);
+	--app-footer-link-hover: var(--ink-primary, #2B2418);
 	--app-table-surface: #f0f0f0;
 	--app-select-control-bg: rgba(246, 241, 232, 0.95);
 	--app-select-control-text: #20323d;
@@ -130,6 +136,14 @@ body {
 	color: var(--app-text-color);
 }
 
+// ER2-107 — German body copy hyphenates at syllable boundaries (needs
+// <html lang="de">) instead of breaking compounds mid-word. Running text only:
+// headings, buttons and nav labels keep whole words.
+.q-page :where(p, li, dd, blockquote) {
+	hyphens: auto;
+	-webkit-hyphens: auto;
+}
+
 // Override Quasar's `body.body--dark { background: var(--q-dark-page); }`
 // so dark mode keeps the custom app background image.
 body.body--dark {
@@ -185,6 +199,13 @@ body.body--dark :where(.q-card.q-card--dark.q-dark:not(.q-card--flat)) {
 
 body.body--dark :where(.q-card.q-card--dark.q-dark .q-separator) {
 	background: var(--app-card-divider);
+}
+
+// ER2-104 — Quasar fills dark tab panels with the hard-coded $dark #1D1D1D,
+// which shows as a grey slab on the Zodiark surfaces. Panels inherit the
+// surface they sit on instead.
+body.body--dark :where(.q-tab-panels.q-dark) {
+	background: transparent;
 }
 
 .q-page .q-select .q-field__control {
@@ -316,21 +337,30 @@ h1, h2, h3, h4, h5, h6 {
 h2 {
 	font-family: 'Cinzel Eorzea', Cinzel, sans-serif;
 	text-align: center;
-	font-size: 2.5rem;
+	font-size: var(--type-scale-5);
 	margin-top: 0;
 	letter-spacing: 0;
-	line-height: 1.3;
+	line-height: var(--lh-heading);
 	margin-bottom: 24px;
 }
 
-h2.with-subtitle {
-	margin-bottom: 0;
+// ER2-108 — legacy hero titles sit on the content grid. The global h2 is
+// centred, and inside the hero text column (whose width follows the lead
+// paragraph) that pushed short titles inwards by different amounts per page.
+// Left-align them so every title starts at the hero's 22px inner edge.
+.page-changes__hero-text > h2,
+.page-support-tickets__hero-text > h2,
+.page-support-queue__hero-text > h2,
+.page-support-ticket__hero-text > h2,
+.page-support-ticket-admin__hero-text > h2,
+.page-new-support-ticket__hero-text > h2 {
+	text-align: left;
 }
 
 .subtitle {
 	text-align: center;
 	font-family: $header-font;
-	font-size: 1.6em;
+	font-size: var(--type-scale-3);
 	margin-bottom: 24px;
 }
 
@@ -339,23 +369,25 @@ h2.regular-header-font {
 }
 
 h3 {
-	font-size: 2rem;
+	font-size: var(--type-scale-4);
 	margin-top: 0.8em;
 	margin-bottom: 0.5em;
 }
 
 h4 {
-	font-size: 1.7rem;
+	font-size: var(--type-scale-3);
 	margin-top: 0.8em;
 	margin-bottom: 0.5em;
 }
 
 h5 {
+	font-size: var(--type-scale-2);
 	margin-top: 0.6em;
 	margin-bottom: 0.4em;
 }
 
 h6 {
+	font-size: var(--type-scale-1);
 	margin-top: 0.6em;
 	margin-bottom: 0.4em;
 }
@@ -370,7 +402,11 @@ a {
 	transition: color 0.3s ease;
 }
 
-.q-page a:visited {
+// Specificity (0,0,1), like `a` above: a component class that colours its
+// links (e.g. white chips on media heroes, the footer) must win over the
+// visited colour. `.q-page a:visited` (0,2,1) used to turn visited hero links
+// bronze in Hydaelyn.
+:where(.q-page) a:where(:visited) {
 	color: var(--app-link-visited-color);
 }
 
@@ -384,6 +420,14 @@ a {
 
 .q-page a:hover {
 	color: var(--app-link-hover-color);
+}
+
+// ER2-102 — text links show an underline on hover/focus so they read as links
+// without relying on colour alone (WCAG 1.4.1). Item/button links are excluded.
+.q-page a:not(.q-item):not(.q-btn):not(.q-tab):not(.q-chip):hover,
+.q-page a:not(.q-item):not(.q-btn):not(.q-tab):not(.q-chip):focus-visible {
+	text-decoration: underline;
+	text-underline-offset: 0.15em;
 }
 
 .q-page a.q-item:hover {
@@ -477,9 +521,7 @@ body.body--dark .striped-list tr:nth-child(even) {
 }
 
 // Global dark-mode overrides for list-heavy archive pages.
-body.body--dark .page-characters,
 body.body--dark .page-venues,
-body.body--dark .page-communities,
 body.body--dark .page-noticeboard,
 body.body--dark .page-stories,
 body.body--dark .page-changes {
@@ -487,9 +529,7 @@ body.body--dark .page-changes {
 	color: rgba(213, 226, 240, 0.92);
 }
 
-body.body--dark .page-characters::before,
 body.body--dark .page-venues::before,
-body.body--dark .page-communities::before,
 body.body--dark .page-noticeboard::before,
 body.body--dark .page-stories::before,
 body.body--dark .page-changes::before {
@@ -498,104 +538,64 @@ body.body--dark .page-changes::before {
 		radial-gradient(circle at 80% 0%, rgba(90, 125, 166, 0.16), transparent 50%);
 }
 
-body.body--dark .page-characters__hero,
-body.body--dark .page-venues__hero,
-body.body--dark .page-communities__hero,
-body.body--dark .page-noticeboard__hero,
-body.body--dark .page-stories__hero,
 body.body--dark .page-changes__hero,
-body.body--dark .page-characters__alphabet-nav,
-body.body--dark .page-characters__toolbar,
 body.body--dark .page-venues__toolbar,
-body.body--dark .page-communities__toolbar,
 body.body--dark .page-noticeboard__toolbar,
 body.body--dark .page-stories__toolbar,
 body.body--dark .page-changes__toolbar,
-body.body--dark .page-characters__list,
-body.body--dark .page-venues__list,
-body.body--dark .page-communities__list,
-body.body--dark .page-noticeboard__list,
-body.body--dark .page-stories__list,
 body.body--dark .page-changes__list-wrapper,
-body.body--dark .page-characters__empty,
-body.body--dark .page-venues__empty,
-body.body--dark .page-communities__empty,
-body.body--dark .page-noticeboard__empty,
-body.body--dark .page-stories__empty,
 body.body--dark .page-changes__empty {
 	background: rgba(17, 24, 34, 0.94);
 	border-color: rgba(141, 181, 223, 0.28);
 	box-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
 }
 
-body.body--dark .page-characters__eyebrow,
-body.body--dark .page-venues__eyebrow,
-body.body--dark .page-communities__eyebrow,
-body.body--dark .page-noticeboard__eyebrow,
-body.body--dark .page-stories__eyebrow,
 body.body--dark .page-changes__eyebrow {
 	color: rgba(171, 201, 235, 0.88);
 }
 
-body.body--dark .page-characters__lead,
-body.body--dark .page-venues__lead,
-body.body--dark .page-communities__lead,
-body.body--dark .page-noticeboard__lead,
-body.body--dark .page-stories__lead,
 body.body--dark .page-changes__lead,
-body.body--dark .page-characters__count-label,
-body.body--dark .page-venues__count-label,
-body.body--dark .page-communities__count-label,
-body.body--dark .page-noticeboard__count-label,
-body.body--dark .page-stories__hero-count-label,
 body.body--dark .page-changes__hero-count-label,
-body.body--dark .page-stories__card-meta,
-body.body--dark .page-stories__card-excerpt,
-body.body--dark .page-stories__empty,
-body.body--dark .page-stories__empty-subtitle,
 body.body--dark .page-changes__item-time,
 body.body--dark .page-changes__item-meta,
 body.body--dark .page-changes__item-summary,
 body.body--dark .page-changes__empty,
 body.body--dark .page-changes__empty-subtitle,
-body.body--dark .page-characters__card-meta,
-body.body--dark .page-characters__card-profession,
-body.body--dark .page-characters__empty,
-body.body--dark .page-venues__empty,
-body.body--dark .page-communities__empty,
-body.body--dark .page-noticeboard__empty,
 body.body--dark .venue-list__meta,
 body.body--dark .venue-list__server,
-body.body--dark .community-list__goal,
 body.body--dark .noticeboard-item-list__meta,
 body.body--dark .noticeboard-item-list__time {
 	color: rgba(213, 226, 240, 0.74);
 }
 
-body.body--dark .page-characters__count-number,
-body.body--dark .page-venues__count-number,
-body.body--dark .page-communities__count-number,
-body.body--dark .page-noticeboard__count-number,
-body.body--dark .page-stories__hero-count-number,
+// ER2-102 — the same meta/caption set in Hydaelyn: muted ink (#6E5F46,
+// ≥ 5.4:1 on pearl) instead of the per-page rgba(35,35,35,.5–.65) greys.
+body:not(.body--dark) .page-changes__lead,
+body:not(.body--dark) .page-changes__hero-count-label,
+body:not(.body--dark) .page-changes__item-time,
+body:not(.body--dark) .page-changes__item-meta,
+body:not(.body--dark) .page-changes__item-summary,
+body:not(.body--dark) .page-changes__empty,
+body:not(.body--dark) .page-changes__empty-subtitle,
+body:not(.body--dark) .venue-list__meta,
+body:not(.body--dark) .venue-list__server,
+body:not(.body--dark) .noticeboard-item-list__meta,
+body:not(.body--dark) .noticeboard-item-list__time {
+	color: var(--ink-muted);
+}
+
 body.body--dark .page-changes__hero-count-number,
-body.body--dark .page-characters__stats,
 body.body--dark .page-venues__stats,
-body.body--dark .page-communities__stats,
 body.body--dark .page-noticeboard__stats,
 body.body--dark .page-stories__stats,
 body.body--dark .page-changes__stats,
-body.body--dark .page-characters__card-name,
-body.body--dark .page-stories__card-title,
 body.body--dark .page-changes__item-title,
 body.body--dark .venue-list__name,
-body.body--dark .community-list__name,
 body.body--dark .noticeboard-item-list__title {
 	color: rgba(213, 226, 240, 0.94);
 }
 
-body.body--dark .page-characters .q-field__control,
 body.body--dark .page-venues .q-field__control,
-body.body--dark .page-communities .q-field__control,
 body.body--dark .page-noticeboard .q-field__control,
 body.body--dark .page-stories .q-field__control,
 body.body--dark .page-changes .q-field__control {
@@ -603,15 +603,9 @@ body.body--dark .page-changes .q-field__control {
 	box-shadow: inset 0 0 0 1px rgba(141, 181, 223, 0.28);
 }
 
-body.body--dark .page-characters .q-field__native,
-body.body--dark .page-characters .q-field__label,
-body.body--dark .page-characters .q-field__append,
 body.body--dark .page-venues .q-field__native,
 body.body--dark .page-venues .q-field__label,
 body.body--dark .page-venues .q-field__append,
-body.body--dark .page-communities .q-field__native,
-body.body--dark .page-communities .q-field__label,
-body.body--dark .page-communities .q-field__append,
 body.body--dark .page-noticeboard .q-field__native,
 body.body--dark .page-noticeboard .q-field__label,
 body.body--dark .page-noticeboard .q-field__append,
@@ -624,56 +618,19 @@ body.body--dark .page-changes .q-field__append {
 	color: rgba(213, 226, 240, 0.84);
 }
 
-body.body--dark .page-characters__card,
-body.body--dark .page-stories__card,
 body.body--dark .page-changes__item,
 body.body--dark .venue-list__item,
-body.body--dark .community-list__item,
 body.body--dark .noticeboard-item-list__item {
 	background: rgba(18, 26, 37, 0.96);
 	border-color: rgba(141, 181, 223, 0.24);
 	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
 }
 
-body.body--dark .page-characters__card:hover,
-body.body--dark .page-stories__card:hover,
 body.body--dark .page-changes__item:hover,
 body.body--dark .venue-list__item:hover,
-body.body--dark .community-list__item:hover,
 body.body--dark .noticeboard-item-list__item:hover {
 	border-color: rgba(141, 181, 223, 0.44);
 	box-shadow: 0 16px 28px rgba(0, 0, 0, 0.34);
-}
-
-body.body--dark .page-characters__alphabet-btn {
-	background: rgba(20, 29, 41, 0.96);
-	border-color: rgba(141, 181, 223, 0.32);
-	color: rgba(213, 226, 240, 0.9);
-	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.24);
-}
-
-body.body--dark .page-characters__alphabet-btn:hover {
-	background: rgba(141, 181, 223, 0.18);
-	border-color: rgba(141, 181, 223, 0.48);
-}
-
-body.body--dark .page-characters__alphabet-btn--active {
-	background: linear-gradient(135deg, rgba(141, 181, 223, 0.3) 0%, rgba(102, 149, 200, 0.18) 100%);
-	border-color: rgba(141, 181, 223, 0.58);
-	color: rgba(218, 232, 247, 0.96);
-}
-
-body.body--dark .page-stories__card-type {
-	color: rgba(196, 221, 247, 0.95);
-	background: rgba(141, 181, 223, 0.2);
-}
-
-body.body--dark .page-stories__card-action {
-	color: rgba(196, 221, 247, 0.95);
-}
-
-body.body--dark .page-stories__card-link:focus-visible {
-	box-shadow: inset 0 0 0 2px rgba(141, 181, 223, 0.44);
 }
 
 body.body--dark .page-changes__item-icon .q-icon {
@@ -689,7 +646,6 @@ body.body--dark .page-about,
 body.body--dark .page-beginner-guide,
 body.body--dark .page-faq,
 body.body--dark .page-rules,
-body.body--dark .page-free-companies,
 body.body--dark .page-support-tickets,
 body.body--dark .page-support-queue,
 body.body--dark .page-new-support-ticket,
@@ -703,7 +659,6 @@ body.body--dark .page-about::before,
 body.body--dark .page-beginner-guide::before,
 body.body--dark .page-faq::before,
 body.body--dark .page-rules::before,
-body.body--dark .page-free-companies::before,
 body.body--dark .page-support-tickets::before,
 body.body--dark .page-support-queue::before,
 body.body--dark .page-new-support-ticket::before,
@@ -722,10 +677,6 @@ body.body--dark .page-faq__hero,
 body.body--dark .page-faq__content,
 body.body--dark .page-rules__hero,
 body.body--dark .page-rules__content,
-body.body--dark .page-free-companies__hero,
-body.body--dark .page-free-companies__toolbar,
-body.body--dark .page-free-companies__list,
-body.body--dark .page-free-companies__empty,
 body.body--dark .page-support-tickets__hero,
 body.body--dark .page-support-tickets__toolbar,
 body.body--dark .page-support-tickets__table-shell,
@@ -744,9 +695,6 @@ body.body--dark .page-support-ticket-admin__messages-shell,
 body.body--dark .page-support-ticket-admin__reply-card,
 body.body--dark .page-support-ticket-admin__note-card,
 body.body--dark .page-support-ticket-admin__closed-banner,
-body.body--dark .page-free-company__members-header,
-body.body--dark .page-free-company__members-grid,
-body.body--dark .page-free-company__members-empty,
 body.body--dark .page-verify__card,
 body.body--dark .page-terms__card,
 body.body--dark .page-terms__terms-of-use {
@@ -765,7 +713,6 @@ body.body--dark .page-about__eyebrow,
 body.body--dark .page-beginner-guide__eyebrow,
 body.body--dark .page-faq__eyebrow,
 body.body--dark .page-rules__eyebrow,
-body.body--dark .page-free-companies__eyebrow,
 body.body--dark .page-support-tickets__eyebrow,
 body.body--dark .page-support-queue__eyebrow,
 body.body--dark .page-new-support-ticket__eyebrow,
@@ -778,9 +725,6 @@ body.body--dark .page-about__lead,
 body.body--dark .page-beginner-guide__hero p,
 body.body--dark .page-faq__hero p,
 body.body--dark .page-rules__hero p,
-body.body--dark .page-free-companies__lead,
-body.body--dark .page-free-companies__count-label,
-body.body--dark .page-free-companies__empty,
 body.body--dark .page-support-tickets__lead,
 body.body--dark .page-support-tickets__hero-count-label,
 body.body--dark .page-support-tickets__hero-stats,
@@ -797,44 +741,20 @@ body.body--dark .page-support-ticket__empty,
 body.body--dark .page-support-ticket-admin__lead,
 body.body--dark .page-support-ticket-admin__meta-line,
 body.body--dark .page-support-ticket-admin__empty,
-body.body--dark .page-free-company__member-meta,
-body.body--dark .page-free-company__member-profession,
-body.body--dark .page-free-company__members-empty,
-body.body--dark .free-company-name-list__goal,
-body.body--dark .free-company-name-list__server,
 body.body--dark .page-verify > p,
 body.body--dark .page-terms__card > p {
 	color: rgba(213, 226, 240, 0.74);
 }
 
-body.body--dark .page-free-companies__count-number,
-body.body--dark .page-free-companies__stats,
 body.body--dark .page-support-tickets__hero-count-number,
 body.body--dark .page-support-tickets__toolbar-meta,
 body.body--dark .page-support-tickets__ticket-number,
 body.body--dark .page-support-queue__hero-count-number,
 body.body--dark .page-support-ticket__reply-title,
-body.body--dark .page-support-ticket-admin__section-title,
-body.body--dark .page-free-company__members-count,
-body.body--dark .page-free-company__member-name,
-body.body--dark .free-company-name-list__name {
+body.body--dark .page-support-ticket-admin__section-title {
 	color: rgba(213, 226, 240, 0.94);
 }
 
-body.body--dark .free-company-name-list__item,
-body.body--dark .page-free-company__member-card {
-	background: rgba(18, 26, 37, 0.96);
-	border-color: rgba(141, 181, 223, 0.24);
-	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
-}
-
-body.body--dark .free-company-name-list__item:hover,
-body.body--dark .page-free-company__member-card:hover {
-	border-color: rgba(141, 181, 223, 0.44);
-	box-shadow: 0 16px 28px rgba(0, 0, 0, 0.34);
-}
-
-body.body--dark .page-free-companies .q-field__control,
 body.body--dark .page-support-tickets .q-field__control,
 body.body--dark .page-support-queue .q-field__control,
 body.body--dark .page-new-support-ticket .q-field__control,
@@ -846,9 +766,6 @@ body.body--dark .page-terms .q-field__control {
 	box-shadow: inset 0 0 0 1px rgba(141, 181, 223, 0.28);
 }
 
-body.body--dark .page-free-companies .q-field__native,
-body.body--dark .page-free-companies .q-field__label,
-body.body--dark .page-free-companies .q-field__append,
 body.body--dark .page-support-tickets .q-field__native,
 body.body--dark .page-support-tickets .q-field__label,
 body.body--dark .page-support-tickets .q-field__append,
@@ -948,44 +865,6 @@ body.body--dark .event-view {
 	color: rgba(213, 226, 240, 0.9);
 }
 
-body.body--dark .event-view__icon {
-	background: rgba(141, 181, 223, 0.2);
-	border-color: rgba(141, 181, 223, 0.32);
-	box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
-}
-
-body.body--dark .event-view__icon .q-icon,
-body.body--dark .event-view__subtitle {
-	color: rgba(213, 226, 240, 0.72);
-}
-
-body.body--dark .event-view__type,
-body.body--dark .event-view__meta-label,
-body.body--dark .event-view__warnings-title {
-	color: rgba(213, 226, 240, 0.62);
-}
-
-body.body--dark .event-view__chip,
-body.body--dark .event-view__warning-chip {
-	background: rgba(141, 181, 223, 0.2);
-	color: rgba(213, 226, 240, 0.92);
-}
-
-body.body--dark .event-view__meta,
-body.body--dark .event-view__location-card {
-	background: rgba(17, 24, 34, 0.94);
-	border-color: rgba(141, 181, 223, 0.28);
-	box-shadow: 0 12px 22px rgba(0, 0, 0, 0.3);
-}
-
-body.body--dark .event-view__meta-row {
-	color: rgba(213, 226, 240, 0.84);
-}
-
-body.body--dark .event-view__location-title {
-	color: rgba(213, 226, 240, 0.94);
-}
-
 body.body--dark .event-icon-edit-section__placeholder {
 	background: rgba(17, 24, 34, 0.94);
 	color: rgba(213, 226, 240, 0.72);
@@ -1019,6 +898,809 @@ body.body--dark .hide-details__title {
 
 .hide-details.hide-details_visible > .hide-details__content {
 	display: block;
+}
+
+// ELPIS-221 — revert confirmation dialog. Shared chrome for the seven editor
+// confirmation dialogs (`<q-card class="mat-aetherglass elevation-3 revert-confirm-dialog">`).
+// The dialog body uses the existing copy; this rule only sets sane padding /
+// min-width so Aetherglass's inset gold-rule frames the message cleanly.
+.revert-confirm-dialog {
+	min-width: 320px;
+	max-width: 460px;
+	padding: 4px;
+	border-radius: 8px;
+}
+
+// ELPIS-218 — Edit/Preview toggle as a Crystal-faceted segmented control.
+// Scoped to `.page-edit-character__button-bar` (seven character editors).
+// New consumers can be added by extending the selector lists — the markup
+// must use `toggle-color="secondary"` so the active segment lands on
+// `.bg-secondary`.
+.page-edit-character__button-bar .q-btn-toggle {
+	border: 1px solid var(--rule-gold-soft);
+	border-radius: 6px;
+	overflow: hidden;
+	background-color: var(--surface-vellum);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.6),
+		0 1px 2px rgba(43, 36, 24, 0.08);
+}
+
+.page-edit-character__button-bar .q-btn-toggle .q-btn {
+	font-family: var(--font-display);
+	font-size: var(--type-scale-1);
+	letter-spacing: var(--ls-eyebrow);
+	text-transform: uppercase;
+	color: var(--surface-ink);
+	transition:
+		background-color var(--motion-base) var(--ease-elpis),
+		color var(--motion-base) var(--ease-elpis);
+}
+
+// Active segment uses the prism crystal gradient so it reads as the "selected
+// facet" of the toggle. Both segments stay legible because the gradient sits
+// at a 45 % opacity tier on Hydaelyn / 55 % on Zodiark.
+.page-edit-character__button-bar .q-btn-toggle .q-btn.bg-secondary {
+	background: var(--crystal-prism) !important;
+	background-size: 200% 200%;
+	background-position: 0% 50%;
+	color: var(--surface-ink) !important;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+body.body--dark .page-edit-character__button-bar .q-btn-toggle {
+	background-color: var(--surface-deep);
+	border-color: var(--rule-arcane-soft);
+	box-shadow:
+		inset 0 1px 0 rgba(183, 211, 243, 0.18),
+		0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+body.body--dark .page-edit-character__button-bar .q-btn-toggle .q-btn {
+	color: var(--ink-luminous);
+}
+
+body.body--dark .page-edit-character__button-bar .q-btn-toggle .q-btn.bg-secondary {
+	color: var(--surface-ink) !important;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+// ELPIS-411 — Membership status banners (Anfrage gesendet / abgelehnt /
+// Mitglied). Three semantic tiers:
+//   --applied   → semantic-info  (cool blue, awaiting review)
+//   --rejected  → semantic-danger (warm red, blocking)
+//   --confirmed → semantic-success (warm green, member)
+// Consumers add `.elpis-membership-banner` plus one of the modifier classes
+// to the legacy `.page-{venue,community}__membership-status` section. The
+// banner gets a 4 px left rail (Discord-embed cue), a leading icon column,
+// and tier-tinted background + ink. Same idiom ELPIS-216 applied to the
+// CharacterFinderField registration banners.
+.elpis-membership-banner {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 12px 0 18px;
+	padding: 14px 18px;
+	border: 1px solid var(--rule-gold-soft);
+	border-radius: 6px;
+	background: var(--surface-vellum);
+	color: var(--surface-ink);
+	font-family: var(--font-section);
+	font-size: var(--type-scale-2);
+	line-height: var(--lh-body);
+	box-shadow: 0 1px 2px rgba(43, 36, 24, 0.06);
+}
+
+.elpis-membership-banner::before {
+	content: '';
+	font-family: 'Material Icons';
+	font-size: 22px;
+	line-height: 1;
+	flex: 0 0 auto;
+	color: var(--rule-gold);
+}
+
+.elpis-membership-banner--applied {
+	border-color: var(--semantic-info);
+	background: rgba(93, 169, 216, 0.10);
+	box-shadow:
+		inset 4px 0 0 var(--semantic-info),
+		0 1px 2px rgba(43, 36, 24, 0.06);
+	padding-left: 22px;
+}
+
+.elpis-membership-banner--applied::before {
+	content: 'hourglass_empty';
+	color: var(--semantic-info);
+}
+
+.elpis-membership-banner--rejected {
+	border-color: var(--semantic-danger);
+	background: rgba(199, 72, 79, 0.10);
+	box-shadow:
+		inset 4px 0 0 var(--semantic-danger),
+		0 1px 2px rgba(43, 36, 24, 0.06);
+	padding-left: 22px;
+}
+
+.elpis-membership-banner--rejected::before {
+	content: 'block';
+	color: var(--semantic-danger);
+}
+
+.elpis-membership-banner--confirmed {
+	border-color: var(--semantic-success);
+	background: rgba(79, 184, 144, 0.10);
+	box-shadow:
+		inset 4px 0 0 var(--semantic-success),
+		0 1px 2px rgba(43, 36, 24, 0.06);
+	padding-left: 22px;
+}
+
+.elpis-membership-banner--confirmed::before {
+	content: 'verified';
+	color: var(--semantic-success);
+}
+
+body.body--dark .elpis-membership-banner {
+	background: var(--surface-lift);
+	color: var(--ink-luminous);
+	border-color: var(--rule-arcane-soft);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+body.body--dark .elpis-membership-banner--applied {
+	background: rgba(93, 169, 216, 0.16);
+	box-shadow:
+		inset 4px 0 0 var(--semantic-info),
+		0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+body.body--dark .elpis-membership-banner--rejected {
+	background: rgba(199, 72, 79, 0.18);
+	box-shadow:
+		inset 4px 0 0 var(--semantic-danger),
+		0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+body.body--dark .elpis-membership-banner--confirmed {
+	background: rgba(79, 184, 144, 0.16);
+	box-shadow:
+		inset 4px 0 0 var(--semantic-success),
+		0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+// ELPIS-405 — Pagination input + chevron restyle. Used on the directory
+// pages (Venues / Communities / FreeCompanies) and any other consumer that
+// adds the class to a `q-pagination`. Page-jump input picks up the same
+// Aetherglass-focus idiom as the toolbar fields above; chevron buttons get
+// gold ink with a soft warm hover halo so they read as "navigate" rather
+// than as Quasar's default dark-grey utility buttons.
+//
+// Note: q-pagination renders its page-jump field with `borderless: true`,
+// so the input gets `q-field--borderless` (not `--filled`). The rules below
+// target the borderless variant explicitly and re-apply a Vellum / gold-rule
+// frame around it so it visually matches the toolbar's filled fields.
+.elpis-pagination .q-field--borderless .q-field__control {
+	background: var(--surface-vellum);
+	border-radius: 6px;
+	border: 1px solid var(--rule-gold-soft);
+	min-height: 32px;
+	padding: 0 6px;
+	font-feature-settings: 'tnum' 1, 'lnum' 1;
+	font-variant-numeric: tabular-nums lining-nums;
+	transition:
+		border-color var(--motion-fast) var(--ease-elpis),
+		box-shadow var(--motion-fast) var(--ease-elpis),
+		background-color var(--motion-fast) var(--ease-elpis);
+}
+
+.elpis-pagination .q-field--borderless .q-field__control::before,
+.elpis-pagination .q-field--borderless .q-field__control::after {
+	display: none;
+}
+
+.elpis-pagination .q-field--borderless:hover .q-field__control {
+	border-color: var(--rule-gold);
+}
+
+.elpis-pagination .q-field--borderless.q-field--focused .q-field__control {
+	border-color: var(--rule-gold);
+	background: rgba(186, 155, 91, 0.06);
+	box-shadow:
+		0 0 0 3px rgba(186, 155, 91, 0.22),
+		inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.elpis-pagination .q-field__native,
+.elpis-pagination .q-field__input {
+	color: var(--surface-ink);
+	font-family: var(--font-ui);
+	font-feature-settings: 'tnum' 1, 'lnum' 1;
+	font-variant-numeric: tabular-nums lining-nums;
+	text-align: center;
+}
+
+.elpis-pagination .q-pagination__content > .q-btn {
+	color: var(--rule-gold);
+	min-width: 32px;
+	min-height: 32px;
+	border-radius: 6px;
+	transition:
+		color var(--motion-fast) var(--ease-elpis),
+		background-color var(--motion-fast) var(--ease-elpis);
+}
+
+.elpis-pagination .q-pagination__content > .q-btn .q-icon {
+	font-size: 18px;
+}
+
+.elpis-pagination .q-pagination__content > .q-btn:hover {
+	background-color: rgba(186, 155, 91, 0.16);
+	color: var(--rule-gold);
+}
+
+.elpis-pagination .q-pagination__content > .q-btn:disabled,
+.elpis-pagination .q-pagination__content > .q-btn[disabled] {
+	opacity: 0.4;
+}
+
+body.body--dark .elpis-pagination .q-field--borderless .q-field__control {
+	background: var(--surface-lift);
+	border-color: var(--rule-arcane-soft);
+}
+
+body.body--dark .elpis-pagination .q-field--borderless:hover .q-field__control {
+	border-color: var(--rule-arcane);
+}
+
+body.body--dark .elpis-pagination .q-field--borderless.q-field--focused .q-field__control {
+	border-color: var(--rule-arcane);
+	background: rgba(141, 181, 223, 0.18);
+	box-shadow:
+		0 0 0 3px rgba(183, 211, 243, 0.24),
+		inset 0 1px 0 rgba(183, 211, 243, 0.18);
+}
+
+body.body--dark .elpis-pagination .q-field__native,
+body.body--dark .elpis-pagination .q-field__input {
+	color: var(--ink-luminous);
+}
+
+body.body--dark .elpis-pagination .q-pagination__content > .q-btn {
+	color: var(--rule-arcane);
+}
+
+body.body--dark .elpis-pagination .q-pagination__content > .q-btn:hover {
+	background-color: rgba(183, 211, 243, 0.18);
+	color: var(--ink-luminous);
+}
+
+// ELPIS-608 — Shared `.elpis-form` field chrome. Opted into per form (e.g.
+// StepImageDetails uses it on its `q-form` wrapper) so filled q-input /
+// q-select children pick up the Aetherium-token-driven Vellum-on-gold-rule
+// frame and gold-glow focus state. Lighter than `.elpis-directory-toolbar`
+// (no surrounding card chrome, just the field-level treatment) so it reads
+// well inside dialogs and wizards rather than competing with the dialog
+// surface itself.
+.elpis-form .q-field--filled .q-field__control {
+	background: var(--surface-vellum);
+	border-radius: 6px;
+	border: 1px solid var(--rule-gold-soft);
+	transition:
+		border-color var(--motion-fast) var(--ease-elpis),
+		box-shadow var(--motion-fast) var(--ease-elpis),
+		background-color var(--motion-fast) var(--ease-elpis);
+}
+
+.elpis-form .q-field--filled .q-field__control::before,
+.elpis-form .q-field--filled .q-field__control::after {
+	display: none;
+}
+
+.elpis-form .q-field--filled:hover .q-field__control {
+	border-color: var(--rule-gold);
+}
+
+.elpis-form .q-field--filled.q-field--focused .q-field__control {
+	border-color: var(--rule-gold);
+	background: rgba(186, 155, 91, 0.06);
+	box-shadow:
+		0 0 0 3px rgba(186, 155, 91, 0.18),
+		inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+// ELPIS-220 — Form error shake. When Quasar adds `q-field--error` to a filled
+// elpis-form field (e.g. after a failed `:rules` validation), the control
+// runs the `elpis-form-error-shake` keyframe once (3 px ± over 160 ms / motion-
+// fast). The base rule's transitions on border-color + box-shadow get a
+// matching transition-delay so the danger paint lands *after* the shake
+// completes — the shake reads as the attention cue, the colour shift confirms
+// the destination state. Reduced-motion guard at the bottom of this rule pair
+// suppresses the keyframe and zeroes the delay so the colour change is
+// immediate when the OS flag is on.
+.elpis-form .q-field--filled.q-field--error .q-field__control {
+	border-color: var(--semantic-danger);
+	box-shadow: inset 0 0 0 1px var(--semantic-danger);
+	animation: elpis-form-error-shake var(--motion-fast) var(--ease-zodiark);
+	transition:
+		border-color var(--motion-fast) var(--ease-elpis) var(--motion-fast),
+		box-shadow var(--motion-fast) var(--ease-elpis) var(--motion-fast),
+		background-color var(--motion-fast) var(--ease-elpis);
+}
+
+@keyframes elpis-form-error-shake {
+	0%, 100% {
+		transform: translateX(0);
+	}
+	20%, 60% {
+		transform: translateX(-3px);
+	}
+	40%, 80% {
+		transform: translateX(3px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.elpis-form .q-field--filled.q-field--error .q-field__control {
+		animation: none;
+		transition:
+			border-color var(--motion-instant) var(--ease-elpis),
+			box-shadow var(--motion-instant) var(--ease-elpis),
+			background-color var(--motion-instant) var(--ease-elpis);
+	}
+}
+
+.elpis-form .q-field__label,
+.elpis-form .q-field__native,
+.elpis-form .q-field__input {
+	color: var(--surface-ink);
+	font-family: var(--font-ui);
+}
+
+body.body--dark .elpis-form .q-field--filled .q-field__control {
+	background: var(--surface-lift);
+	border-color: var(--rule-arcane-soft);
+}
+
+body.body--dark .elpis-form .q-field--filled:hover .q-field__control {
+	border-color: var(--rule-arcane);
+}
+
+body.body--dark .elpis-form .q-field--filled.q-field--focused .q-field__control {
+	border-color: var(--rule-arcane);
+	background: rgba(141, 181, 223, 0.18);
+	box-shadow:
+		0 0 0 3px rgba(183, 211, 243, 0.22),
+		inset 0 1px 0 rgba(183, 211, 243, 0.18);
+}
+
+body.body--dark .elpis-form .q-field__label,
+body.body--dark .elpis-form .q-field__native,
+body.body--dark .elpis-form .q-field__input {
+	color: var(--ink-luminous);
+}
+
+// ELPIS-603 / 606 — Aetherium chrome over CropperJS. Opt-in by adding
+// `.elpis-cropper` to the wrapper that holds the cropper `<img>` (Cropper
+// transforms the `<img>` into a `.cropper-container` sibling tree). Shared
+// rule rather than per-component because the StepBannerCrop wizard step is
+// the canonical consumer today, but BannerEditSection or a future inline
+// crop-on-profile feature can opt in by adding the same class. Targets all
+// cropper internals (.cropper-view-box, .cropper-line, .cropper-point,
+// .cropper-dashed, .cropper-modal). Replaces the default cool-blue handles
+// + grey dashed grid with hex-faceted gold crystals + soft-gold rule-of-
+// thirds, on a deeper neutral modal so the gold reads cleanly.
+.elpis-cropper .cropper-view-box {
+	outline: 1px solid var(--rule-gold);
+	outline-color: var(--rule-gold);
+	box-shadow:
+		0 0 0 1px rgba(186, 155, 91, 0.32),
+		inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.elpis-cropper .cropper-line {
+	background-color: var(--rule-gold);
+	opacity: 0.45;
+}
+
+.elpis-cropper .cropper-dashed {
+	border-color: var(--rule-gold-soft);
+	opacity: 0.9;
+}
+
+.elpis-cropper .cropper-center {
+	opacity: 0;
+}
+
+.elpis-cropper .cropper-modal {
+	background-color: rgba(13, 17, 24, 0.65);
+}
+
+// Crystal-facet crop handles. Hex clip-path + warm gold gradient + soft
+// pearl ring + gold halo. Default Cropper handles are 5 px squares with
+// progressive media-query bumps up to 20 px on small screens — the rules
+// below normalise to 12 px across breakpoints (large enough to grab on
+// touch, small enough not to drown the crop box).
+.elpis-cropper .cropper-point {
+	width: 12px;
+	height: 12px;
+	background: linear-gradient(135deg, #f5d585 0%, var(--rule-gold) 55%, #8a6a2c 100%);
+	opacity: 1;
+	clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+	box-shadow:
+		0 0 0 1px rgba(255, 255, 255, 0.55),
+		0 0 8px rgba(186, 155, 91, 0.55);
+	transition:
+		transform var(--motion-fast) var(--ease-elpis),
+		filter var(--motion-fast) var(--ease-elpis);
+}
+
+.elpis-cropper .cropper-point:hover {
+	transform: scale(1.18);
+	filter: drop-shadow(0 0 6px rgba(186, 155, 91, 0.6));
+}
+
+.elpis-cropper .cropper-point.point-e { margin-top: -6px; right: -6px; }
+.elpis-cropper .cropper-point.point-n { margin-left: -6px; top: -6px; }
+.elpis-cropper .cropper-point.point-w { margin-top: -6px; left: -6px; }
+.elpis-cropper .cropper-point.point-s { margin-left: -6px; bottom: -6px; }
+.elpis-cropper .cropper-point.point-ne { right: -6px; top: -6px; }
+.elpis-cropper .cropper-point.point-nw { left: -6px; top: -6px; }
+.elpis-cropper .cropper-point.point-sw { left: -6px; bottom: -6px; }
+
+// .point-se has cascading width / height / opacity rules in cropper.css
+// across four media-query tiers (20 px → 15 → 10 → 5). The bare selector
+// below is enough to win on specificity at all four tiers because we
+// match `.elpis-cropper .cropper-point.point-se`, but cropper.css's
+// media queries use `.cropper-point.point-se` so are equal-specificity;
+// the !important on size keeps our 12 px stable across breakpoints.
+.elpis-cropper .cropper-point.point-se {
+	width: 12px !important;
+	height: 12px !important;
+	right: -6px;
+	bottom: -6px;
+	opacity: 1 !important;
+}
+
+body.body--dark .elpis-cropper .cropper-view-box {
+	outline-color: var(--rule-arcane);
+	box-shadow:
+		0 0 0 1px rgba(158, 196, 243, 0.32),
+		inset 0 0 0 1px rgba(183, 211, 243, 0.18);
+}
+
+body.body--dark .elpis-cropper .cropper-line {
+	background-color: var(--rule-arcane);
+	opacity: 0.5;
+}
+
+body.body--dark .elpis-cropper .cropper-dashed {
+	border-color: var(--rule-arcane-soft);
+}
+
+body.body--dark .elpis-cropper .cropper-modal {
+	background-color: rgba(0, 0, 0, 0.72);
+}
+
+body.body--dark .elpis-cropper .cropper-point {
+	background: linear-gradient(135deg, #c8def7 0%, var(--rule-arcane) 55%, #2a4f73 100%);
+	box-shadow:
+		0 0 0 1px rgba(183, 211, 243, 0.42),
+		0 0 8px rgba(183, 211, 243, 0.55);
+}
+
+body.body--dark .elpis-cropper .cropper-point:hover {
+	filter: drop-shadow(0 0 6px rgba(183, 211, 243, 0.6));
+}
+
+// ELPIS-605 — StepSelectImage drag-drop overlay. The wizard image-picker
+// already supports dragenter / dragover / dragleave / drop via its own
+// pointer events; the rule below tints the surrounding panel when the
+// `--dragging` modifier is applied. Aether glow on Hydaelyn / arcane on
+// Zodiark; both ride `--motion-fast` so reduced-motion collapses them
+// to ~80 ms via the global guard.
+.elpis-drop-zone {
+	position: relative;
+	border: 2px dashed var(--rule-gold-soft);
+	border-radius: 6px;
+	background: rgba(186, 155, 91, 0.04);
+	transition:
+		border-color var(--motion-fast) var(--ease-elpis),
+		background-color var(--motion-fast) var(--ease-elpis),
+		box-shadow var(--motion-fast) var(--ease-elpis);
+}
+
+.elpis-drop-zone--dragging {
+	border-color: var(--rule-gold);
+	border-style: solid;
+	background: rgba(186, 155, 91, 0.12);
+	box-shadow:
+		0 0 0 3px rgba(186, 155, 91, 0.22),
+		inset 0 0 0 1px rgba(255, 255, 255, 0.45),
+		0 0 24px rgba(186, 155, 91, 0.35);
+}
+
+body.body--dark .elpis-drop-zone {
+	border-color: var(--rule-arcane-soft);
+	background: rgba(141, 181, 223, 0.06);
+}
+
+body.body--dark .elpis-drop-zone--dragging {
+	border-color: var(--rule-arcane);
+	background: rgba(141, 181, 223, 0.18);
+	box-shadow:
+		0 0 0 3px rgba(183, 211, 243, 0.24),
+		inset 0 0 0 1px rgba(183, 211, 243, 0.22),
+		0 0 24px rgba(183, 211, 243, 0.4);
+}
+
+// ELPIS-310 / -311 / -604 — Shared `.elpis-stepper` chrome. Originally
+// introduced as scoped rules inside EditEvent.vue (ELPIS-310 / -311);
+// promoted to a shared utility by ELPIS-604 so UploadDialog can opt in
+// without duplicating the keyframes. Two effects:
+//   1. Active step's tab gets a 3 px Crystal-prism rule below the dot+label
+//      (horizontal layout) or along the right edge (vertical layout). The
+//      rule slowly shimmers via --motion-ambient × 1.2 so reduced-motion
+//      zeroes the duration.
+//   2. Completed step dots become Crystal-prism with a faceted hex SVG
+//      layered on top via ::after; the default Quasar checkmark icon is
+//      hidden via opacity: 0. Shimmer rides on --motion-ambient × 1.3 so
+//      reduced-motion zeroes it. Active-step dot keeps Quasar's default
+//      brand colour — only completed steps get the Crystal treatment.
+.elpis-stepper .q-stepper__tab {
+	position: relative;
+	transition: color var(--motion-fast) var(--ease-elpis);
+}
+
+.elpis-stepper .q-stepper__tab--active::after {
+	content: '';
+	position: absolute;
+	left: 14%;
+	right: 14%;
+	bottom: 0;
+	height: 3px;
+	border-radius: 2px;
+	background: var(--crystal-prism);
+	background-size: 200% 100%;
+	box-shadow: 0 0 12px rgba(167, 226, 255, 0.42);
+	pointer-events: none;
+	animation: elpis-stepper-prism-shift calc(var(--motion-ambient) * 1.2) ease-in-out infinite;
+}
+
+@keyframes elpis-stepper-prism-shift {
+	0%   { background-position: 0% 50%; }
+	50%  { background-position: 100% 50%; }
+	100% { background-position: 0% 50%; }
+}
+
+// Vertical (xs/md) layout: the active tab is rendered as a row, so
+// `bottom: 0` would underline only the dot row. Move the rule to the right
+// edge instead so it reads as a column-side accent.
+.elpis-stepper.q-stepper--vertical .q-stepper__tab--active::after {
+	left: auto;
+	right: 0;
+	top: 14%;
+	bottom: 14%;
+	width: 3px;
+	height: auto;
+	background-size: 100% 200%;
+	animation-name: elpis-stepper-prism-shift-vertical;
+}
+
+@keyframes elpis-stepper-prism-shift-vertical {
+	0%   { background-position: 50% 0%; }
+	50%  { background-position: 50% 100%; }
+	100% { background-position: 50% 0%; }
+}
+
+.elpis-stepper .q-stepper__tab--done .q-stepper__dot {
+	position: relative;
+	background: var(--crystal-prism);
+	background-size: 220% 220%;
+	background-position: 0% 50%;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.7),
+		inset 0 -1px 0 rgba(167, 226, 255, 0.45),
+		0 2px 8px rgba(127, 230, 226, 0.32);
+	animation: elpis-stepper-step-shimmer calc(var(--motion-ambient) * 1.3) ease-in-out infinite;
+}
+
+.elpis-stepper .q-stepper__tab--done .q-stepper__dot .q-icon {
+	opacity: 0;
+}
+
+.elpis-stepper .q-stepper__tab--done .q-stepper__dot::after {
+	content: '';
+	position: absolute;
+	inset: 4px;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><polygon points='12,2 22,7 22,17 12,22 2,17 2,7' fill='none' stroke='%23ffffff' stroke-width='1.4' opacity='0.92'/><polygon points='12,6 18,9 18,15 12,18 6,15 6,9' fill='none' stroke='%23ffffff' stroke-width='1' opacity='0.7'/><line x1='12' y1='2' x2='12' y2='22' stroke='%23ffffff' stroke-width='0.6' opacity='0.5'/><line x1='2' y1='7' x2='22' y2='17' stroke='%23ffffff' stroke-width='0.6' opacity='0.45'/><line x1='22' y1='7' x2='2' y2='17' stroke='%23ffffff' stroke-width='0.6' opacity='0.45'/></svg>");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	pointer-events: none;
+}
+
+@keyframes elpis-stepper-step-shimmer {
+	0%   { background-position: 0% 50%; }
+	50%  { background-position: 100% 50%; }
+	100% { background-position: 0% 50%; }
+}
+
+body.body--dark .elpis-stepper .q-stepper__tab--active::after {
+	box-shadow: 0 0 14px rgba(183, 211, 243, 0.45);
+}
+
+body.body--dark .elpis-stepper .q-stepper__tab--done .q-stepper__dot {
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.55),
+		inset 0 -1px 0 rgba(158, 196, 243, 0.45),
+		0 2px 8px rgba(183, 211, 243, 0.3);
+}
+
+// ELPIS-503 — Scroll progress rule. Thin gold gradient pinned to the top of
+// the viewport while the reader scrolls long-form content (Story, Wiki,
+// long-tail blog views). Native <progress> drives semantics; CSS owns paint.
+// The bar self-suppresses at value=0 so short pages or initial paint don't
+// show a sliver of gold under the header.
+.elpis-scroll-progress {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	width: 100%;
+	height: 3px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	appearance: none;
+	-webkit-appearance: none;
+	background: transparent;
+	z-index: 1000;
+	pointer-events: none;
+	overflow: hidden;
+	transition: opacity var(--motion-base) var(--ease-elpis);
+}
+
+.elpis-scroll-progress[value="0"] {
+	opacity: 0;
+}
+
+.elpis-scroll-progress::-webkit-progress-bar {
+	background: transparent;
+}
+
+.elpis-scroll-progress::-webkit-progress-value {
+	background: linear-gradient(
+		90deg,
+		rgba(186, 155, 91, 0.45) 0%,
+		var(--rule-gold) 55%,
+		rgba(245, 213, 133, 0.92) 100%
+	);
+	box-shadow: 0 0 6px rgba(186, 155, 91, 0.5);
+	transition: width var(--motion-instant) linear;
+}
+
+.elpis-scroll-progress::-moz-progress-bar {
+	background: linear-gradient(
+		90deg,
+		rgba(186, 155, 91, 0.45) 0%,
+		var(--rule-gold) 55%,
+		rgba(245, 213, 133, 0.92) 100%
+	);
+	box-shadow: 0 0 6px rgba(186, 155, 91, 0.5);
+}
+
+body.body--dark .elpis-scroll-progress::-webkit-progress-value {
+	background: linear-gradient(
+		90deg,
+		rgba(183, 211, 243, 0.45) 0%,
+		var(--rule-arcane) 55%,
+		rgba(195, 219, 255, 0.92) 100%
+	);
+	box-shadow: 0 0 8px rgba(183, 211, 243, 0.55);
+}
+
+body.body--dark .elpis-scroll-progress::-moz-progress-bar {
+	background: linear-gradient(
+		90deg,
+		rgba(183, 211, 243, 0.45) 0%,
+		var(--rule-arcane) 55%,
+		rgba(195, 219, 255, 0.92) 100%
+	);
+	box-shadow: 0 0 8px rgba(183, 211, 243, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.elpis-scroll-progress {
+		transition: none;
+	}
+	.elpis-scroll-progress::-webkit-progress-value {
+		transition: none;
+	}
+}
+
+// ELPIS-219 — Save confirmation pulse + 7-mote burst. Bound to a save
+// button via `v-elpis-save-pulse` (see `src/directives/elpis-save-pulse.ts`).
+// The directive adds `.elpis-save-pulse--active` for one frame to play the
+// pulse keyframe, and appends a `.elpis-save-burst` span containing 7
+// `.elpis-save-mote` children that radiate outward via `--mote-angle` /
+// `--mote-distance` custom properties. Reduced-motion → directive no-ops; the
+// CSS rule's `@media (prefers-reduced-motion)` block is a belt-and-suspenders
+// guard for any element that ends up with the active class regardless.
+.q-btn.elpis-save-pulse--active {
+	position: relative;
+	animation: elpis-save-pulse var(--motion-base) var(--ease-aether);
+	animation-iteration-count: 1;
+}
+
+@keyframes elpis-save-pulse {
+	0%   { transform: scale(1); }
+	50%  { transform: scale(1.04); }
+	100% { transform: scale(1); }
+}
+
+.elpis-save-burst {
+	position: absolute;
+	pointer-events: none;
+	inset: 0;
+	display: block;
+	overflow: visible;
+	z-index: 1;
+}
+
+.elpis-save-mote {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 7px;
+	height: 7px;
+	margin: -3.5px 0 0 -3.5px;
+	border-radius: 50%;
+	background: radial-gradient(
+		circle,
+		rgba(245, 213, 133, 0.95) 0%,
+		rgba(186, 155, 91, 0.7) 55%,
+		rgba(186, 155, 91, 0) 100%
+	);
+	box-shadow: 0 0 6px rgba(245, 213, 133, 0.6);
+	opacity: 0;
+	transform-origin: center center;
+	animation: elpis-save-mote var(--motion-cinematic) var(--ease-aether) var(--mote-delay, 0ms) forwards;
+}
+
+@keyframes elpis-save-mote {
+	0% {
+		opacity: 0;
+		transform: rotate(var(--mote-angle, 0deg)) translateX(0) scale(0.4);
+	}
+	18% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+		transform: rotate(var(--mote-angle, 0deg)) translateX(var(--mote-distance, 80px)) scale(1);
+	}
+}
+
+body.body--dark .elpis-save-mote {
+	background: radial-gradient(
+		circle,
+		rgba(195, 219, 255, 0.95) 0%,
+		rgba(183, 211, 243, 0.7) 55%,
+		rgba(183, 211, 243, 0) 100%
+	);
+	box-shadow: 0 0 8px rgba(195, 219, 255, 0.65);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.q-btn.elpis-save-pulse--active {
+		animation: none;
+	}
+	.elpis-save-mote {
+		animation: none;
+		opacity: 0;
+	}
 }
 
 // Mobile usability improvements

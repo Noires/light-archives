@@ -5,6 +5,7 @@ import { WeatherCreateResultDto } from "@app/shared/dto/weather/weather-create-r
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Connection, Repository } from "typeorm";
+import { looseIdEquals } from "../../../common/loose-id";
 
 @Injectable()
 export class WeatherService {
@@ -27,7 +28,7 @@ export class WeatherService {
 
 	async createWeather(weatherEditDto: WeatherEditDto): Promise<WeatherCreateResultDto> {
 		const weather = new Weather();
-		let result = await this.saveWeather(weatherEditDto, weather);
+		const result = await this.saveWeather(weatherEditDto, weather);
 		
 		return result as WeatherCreateResultDto;
 	}
@@ -41,16 +42,15 @@ export class WeatherService {
 		});
 
 		if (weatherToUpdate) {
-			let result = await this.saveWeather(weatherEditDto, weatherToUpdate);
+			const result = await this.saveWeather(weatherEditDto, weatherToUpdate);
 			return result as WeatherEditDto;
 		}
-		else {
-			throw new NotFoundException('Wetter wurde nicht gefunden');
-		}
+
+		throw new NotFoundException('Wetter wurde nicht gefunden');
 	}
 
 	async deleteWeather(weatherId: number): Promise<void> {
-		const weatherEntity = await this.connection.transaction(async (em) => {
+		await this.connection.transaction(async (em) => {
 			const weatherToDelete = await this.weatherRepo.findOne({
 				where: {
 					id: weatherId
@@ -67,7 +67,7 @@ export class WeatherService {
 			await em.getRepository(Weather).save(weatherToDelete); 
 			
 			// remove weatherToDelete from other Weather's followUps
-			let otherConnectedWeather = await this.weatherRepo.createQueryBuilder('otherWeather')
+			const otherConnectedWeather = await this.weatherRepo.createQueryBuilder('otherWeather')
 				.select(['otherWeather.id', 'otherWeatherFollowUps'])
 				.leftJoin('otherWeather.followUps', 'otherWeatherFollowUps')
 				.where('otherWeatherFollowUps.id = :id', { id: weatherToDelete.id })
@@ -97,9 +97,9 @@ export class WeatherService {
 			weather.imageFileName = weatherEditDto.imageFileName || '';
 
 			if (weatherEditDto.followUps) {
-				let followUps:Weather[] = [];
+				const followUps:Weather[] = [];
 				weatherEditDto.followUps.forEach(followUpId => {
-					let followUp = weatherArray.find(weatherItem => weatherItem.id == followUpId);
+					const followUp = weatherArray.find(weatherItem => looseIdEquals(weatherItem.id, followUpId));
 					if (followUp) {
 						followUps.push(followUp);
 					}
@@ -112,13 +112,13 @@ export class WeatherService {
 			return weather;
 		});
   
-		let result = this.convertToDto(weatherEntity, weatherEditDto.followUps);
+		const result = this.convertToDto(weatherEntity, weatherEditDto.followUps);
 
 		return result;
 	}
 
 	convertToDto(weatherEntity:Weather, followUps: number[] = []) {
-		let result = {name: '', slug: '', imageFileName: '', tier: 0, id: 0, probability: 0, followUps};
+		const result = {name: '', slug: '', imageFileName: '', tier: 0, id: 0, probability: 0, followUps};
 		result.name = weatherEntity.name;
 		result.slug = weatherEntity.slug;
 		result.imageFileName = weatherEntity.imageFileName;

@@ -105,6 +105,13 @@ export class Venue extends BasicEntity {
   })
   eventClosed: boolean;
 
+  // ER2 round 2: venue-level 18+ flag; null = not set (falls back to eventAdultOnly in summaries)
+  @Column({
+    type: 'boolean',
+    nullable: true,
+  })
+  adultOnly: boolean | null;
+
   @Column({
     type: 'integer',
     nullable: true,

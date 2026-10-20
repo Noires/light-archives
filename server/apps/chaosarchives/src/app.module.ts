@@ -3,8 +3,10 @@ import { dbConfiguration, redisConfiguration } from '@app/configuration';
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
+import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { InternalApiModule } from './api/internal/internal-api.module';
 import { RppModule } from './api/rpp/rpp.module';
 import { AppController } from './app.controller';
@@ -12,18 +14,20 @@ import { AppService } from './app.service';
 import { GlobalExceptionsFilter } from './global-exceptions.filter';
 import { SentryUserContextInterceptor } from './sentry-user-context.interceptor';
 import { UpdatesModule } from './websocket/updates/updates.module';
-import { RedisModule } from '@liaoliaots/nestjs-redis';
+import { PresenceModule } from './websocket/presence/presence.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({ useFactory: () => dbConfiguration }),
     RedisModule.forRootAsync({ useFactory: () => ({ config: redisConfiguration }) }),
     EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(), // ER2 social: reminders and notification retention
     SentryModule.forRoot(),
     AuthModule,
     InternalApiModule,
     RppModule,
     UpdatesModule,
+    PresenceModule,
   ],
   controllers: [AppController],
   providers: [

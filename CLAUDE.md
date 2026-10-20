@@ -91,3 +91,12 @@ server/
 - TypeORM with MariaDB for persistence
 - Socket.io for real-time RPP character updates
 - AWS S3 for image storage with Sharp processing
+
+## Visual rework — "Elpis Reborn"
+
+The client is mid-rework against a named design system called **Aetherium**
+(tokens + materials + motion contract). When touching any visible surface,
+read [`client/src/css/aetherium/AETHERIUM.md`](client/src/css/aetherium/AETHERIUM.md)
+first — components reference the system, not arbitrary numbers. Cold-start
+status and the active backlog live in [`memory.md`](memory.md) at the repo
+root.

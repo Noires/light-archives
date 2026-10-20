@@ -22,12 +22,19 @@ import { BadRequestException, ConflictException, ForbiddenException, GoneExcepti
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, EntityManager, IsNull, Not, Repository } from 'typeorm';
-import { checkCarrdProfile } from '../../../common/api-checks';
-import { andWhereExists, escapeForLike, isQueryFailedError } from '../../../common/db';
-import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
-import { ImagesService } from '../images/images.service';
 import { getTribeByName } from '@app/shared/enums/tribe.enum';
+import { RpPresenceDto } from '@app/shared/dto/characters/rp-presence.dto';
+import { RpStatusRequestDto } from '@app/shared/dto/characters/rp-status-request.dto';
+import { computeRpStatusExpiry, normalizeRpLocation, resolveRpPresence, RpPresence } from '@app/shared/presence';
+import { normalizeAccentColor, normalizePlayStyleTags } from '@app/shared/validation/profile-fields';
+import { CharacterLookupRequestDto, CharacterLookupResultDto } from '@app/shared/dto/characters/character-lookup.dto';
+import { communityRole, CommunityRole } from '@app/shared/dto/communities/community-member.dto';
 import { LodestoneService } from '../lodestone/lodestone.service';
+import { ImagesService } from '../images/images.service';
+import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
+import { andWhereExists, escapeForLike, isQueryFailedError } from '../../../common/db';
+import { assertUserCharacterId, checkCarrdProfile } from '../../../common/api-checks';
+import { lookupKey, normalizeLookupName, pickLookupMatch, profileLink } from './character-lookup';
 
 @Injectable()
 export class CharactersService {
@@ -125,6 +132,8 @@ export class CharactersService {
       openinformation: character.openinformation,
       commonrumors: character.commonrumors,
       rarerumors: character.rarerumors,
+      currently: character.currently,
+      oocInfo: character.oocInfo,
       profession: character.profession,
       age: character.age,
       apparentage: character.apparentage,
@@ -168,6 +177,9 @@ export class CharactersService {
         name: freeCompany.name,
         server: freeCompany.server.name
       },
+      ...this.getRpPresence(character),
+      accentColor: character.accentColor ?? null,
+      playStyleTags: character.playStyleTags || [],
     };
   }
 
@@ -254,6 +266,8 @@ export class CharactersService {
       mentioned: character.mentioned,
       commonrumors: character.commonrumors,
       rarerumors: character.rarerumors,
+      currently: character.currently,
+      oocInfo: character.oocInfo,
       profession: character.profession,
       apparentage: character.apparentage,
       age: character.age,
@@ -296,6 +310,9 @@ export class CharactersService {
         name: freeCompany.name,
         server: freeCompany.server.name
       },
+      ...this.getRpPresence(character),
+      accentColor: character.accentColor ?? null,
+      playStyleTags: character.playStyleTags || [],
     };
   }
 
@@ -360,6 +377,8 @@ export class CharactersService {
         mentioned: characterDto.mentioned,
         commonrumors: html.sanitize(characterDto.commonrumors),
         rarerumors: html.sanitize(characterDto.rarerumors),
+        currently: characterDto.currently,
+        oocInfo: characterDto.oocInfo,
         profession: characterDto.profession,
         apparentage: characterDto.apparentage,
 				age: characterDto.age,
@@ -387,6 +406,19 @@ export class CharactersService {
         showInventory: characterDto.showInventory,
         combinedDescription: characterDto.combinedDescription,
 			});
+
+      // ER2 round 2: optional, omitted = keep
+      if (characterDto.accentColor !== undefined) {
+        try {
+          character.accentColor = normalizeAccentColor(characterDto.accentColor);
+        } catch (e) {
+          throw new BadRequestException('accentColor must be #RRGGBB');
+        }
+      }
+
+      if (characterDto.playStyleTags !== undefined) {
+        character.playStyleTags = normalizePlayStyleTags(characterDto.playStyleTags);
+      }
 
       if (characterDto.banner && characterDto.banner.id) {
         const banner = await em.getRepository(Image).findOne({
@@ -450,7 +482,22 @@ export class CharactersService {
 			.where('character.verifiedAt IS NOT NULL')
 			.orderBy('character.name', 'ASC')
 			.innerJoinAndSelect('character.server', 'server')
-			.select([ 'character.name', 'character.profession', 'character.race', 'character.tribe', 'character.avatar', 'server.name' ]);
+			.select([
+        'character.id',
+        'character.title',
+        'character.updatedAt',
+        'character.accentColor',
+        'character.playStyleTags',
+        'character.name',
+        'character.profession',
+        'character.race',
+        'character.tribe',
+        'character.avatar',
+        'character.rpStatus',
+        'character.rpLocation',
+        'character.rpStatusExpiresAt',
+        'server.name',
+      ]);
 
     if (filter.searchQuery) {
       query.andWhere(`(character.name LIKE :searchQuery OR character.profession LIKE :searchQuery)`,
@@ -498,6 +545,11 @@ export class CharactersService {
     }
     
     const characters = await query.getMany();
+    const characterIds = characters.map((character) => character.id);
+    const [bannerUrls, roles] = await Promise.all([
+      this.getBannerUrls(characterIds),
+      filter.communityId ? this.getCommunityRoles(filter.communityId, characterIds) : Promise.resolve(new Map<number, CommunityRole>()),
+    ]);
 
 		return {
       total,
@@ -508,9 +560,221 @@ export class CharactersService {
         tribe: character.tribe,
 				avatar: character.avatar,
 				server: character.server.name,
+        ...this.getRpPresence(character),
+        // ER2 round 2
+        id: character.id,
+        bannerUrl: bannerUrls.get(character.id) || null,
+        title: character.title || null,
+        lastActiveAt: character.updatedAt ? character.updatedAt.getTime() : undefined,
+        playStyleTags: character.playStyleTags || [],
+        accentColor: character.accentColor ?? null,
+        communityRole: roles.get(character.id),
 			}))
     };
 	}
+
+  // ─── ER2 round 2: summary enrichment and lookup ─────────────────────────────
+
+  /** Banner URLs for many characters in one query. */
+  private async getBannerUrls(characterIds: number[]): Promise<Map<number, string>> {
+    const result = new Map<number, string>();
+
+    if (characterIds.length === 0) {
+      return result;
+    }
+
+    const rows: { characterId: number | string; ownerId: number | string; hash: string; filename: string }[] =
+      await this.connection.query(
+        'SELECT c.`id` AS characterId, i.`ownerId` AS ownerId, i.`hash` AS hash, i.`filename` AS filename '
+        + 'FROM `character` c INNER JOIN `image` i ON i.`id` = c.`bannerId` AND i.`deletedAt` IS NULL '
+        + 'WHERE c.`id` IN (?)',
+        [characterIds],
+      );
+
+    rows.forEach((row) => {
+      result.set(Number(row.characterId), this.imagesService.getUrl({
+        owner: { id: Number(row.ownerId) },
+        hash: row.hash,
+        filename: row.filename,
+      } as Image));
+    });
+
+    return result;
+  }
+
+  /** Roles in one community for many characters in one query. */
+  private async getCommunityRoles(communityId: number, characterIds: number[]): Promise<Map<number, CommunityRole>> {
+    const result = new Map<number, CommunityRole>();
+
+    if (characterIds.length === 0) {
+      return result;
+    }
+
+    const memberships = await this.communityMembershipRepo
+      .createQueryBuilder('membership')
+      .innerJoinAndSelect('membership.community', 'community')
+      .innerJoinAndSelect('community.owner', 'owner')
+      .innerJoinAndSelect('membership.character', 'character')
+      .where('community.id = :communityId', { communityId })
+      .andWhere('character.id IN (:...characterIds)', { characterIds })
+      .select(['membership.id', 'membership.status', 'membership.canEdit', 'membership.canManageMembers', 'community.id', 'owner.id', 'character.id'])
+      .getMany();
+
+    memberships.forEach((membership) => {
+      result.set(membership.character.id, communityRole(
+        membership.community.owner.id === membership.character.id,
+        membership.status,
+        membership.canEdit,
+        membership.canManageMembers,
+      ));
+    });
+
+    return result;
+  }
+
+  /** Profile cards for names from [[wikilinks]]; unmatched names are left out. */
+  async lookupCharacters(request: CharacterLookupRequestDto): Promise<CharacterLookupResultDto[]> {
+    const wanted = new Map<string, { query: string; name: string; server?: string }>();
+
+    request.names.forEach((entry) => {
+      const name = normalizeLookupName(entry.name);
+
+      if (name) {
+        const key = lookupKey(name, entry.server);
+
+        if (!wanted.has(key)) {
+          wanted.set(key, { query: entry.name, name, server: entry.server?.trim() || undefined });
+        }
+      }
+    });
+
+    const names = Array.from(new Set(Array.from(wanted.values()).map((entry) => entry.name)));
+
+    if (names.length === 0) {
+      return [];
+    }
+
+    // Collation makes IN case-insensitive, like the link resolver's equality match
+    const characters = await this.characterRepo
+      .createQueryBuilder('character')
+      .innerJoinAndSelect('character.server', 'server')
+      .where('character.verifiedAt IS NOT NULL')
+      .andWhere('character.name IN (:...names)', { names })
+      .orderBy('character.updatedAt', 'DESC')
+      .select(['character.id', 'character.name', 'character.avatar', 'character.updatedAt', 'server.name'])
+      .getMany();
+
+    const candidates = characters.map((character) => ({
+      name: character.name,
+      server: character.server.name,
+      avatar: character.avatar,
+    }));
+    const results: CharacterLookupResultDto[] = [];
+
+    wanted.forEach((entry) => {
+      const match = pickLookupMatch(candidates, entry.name, entry.server);
+
+      if (match) {
+        results.push({
+          query: entry.query,
+          name: match.name,
+          server: match.server,
+          avatar: match.avatar,
+          link: profileLink(match.name, match.server),
+        });
+      }
+    });
+
+    return results;
+  }
+
+  // ─── ER2-806: RP presence ────────────────────────────────────────────────────
+
+  private getRpPresence(character: Character): RpPresence {
+    return resolveRpPresence(character.rpStatus, character.rpLocation, character.rpStatusExpiresAt, Date.now());
+  }
+
+  async setRpStatus(characterId: number, request: RpStatusRequestDto, user: UserInfo): Promise<RpPresenceDto> {
+    const now = Date.now();
+    return this.updateRpStatus(characterId, user, {
+      rpStatus: request.rpStatus,
+      rpLocation: normalizeRpLocation(request.rpLocation),
+      rpStatusExpiresAt: new Date(computeRpStatusExpiry(now, request.durationMinutes)),
+    });
+  }
+
+  async clearRpStatus(characterId: number, user: UserInfo): Promise<RpPresenceDto> {
+    return this.updateRpStatus(characterId, user, {
+      rpStatus: null,
+      rpLocation: null,
+      rpStatusExpiresAt: null,
+    });
+  }
+
+  private async updateRpStatus(
+    characterId: number,
+    user: UserInfo,
+    values: { rpStatus: string | null; rpLocation: string | null; rpStatusExpiresAt: Date | null },
+  ): Promise<RpPresenceDto> {
+    assertUserCharacterId(characterId, user);
+
+    const character = await this.characterRepo.findOne({
+      where: { id: characterId, user: { id: user.id }, verifiedAt: Not(IsNull()) },
+      relations: ['server'],
+    });
+
+    if (!character) {
+      throw new NotFoundException('Character not found');
+    }
+
+    // Keep updatedAt untouched: a presence change is not a profile change (changes feed)
+    await this.characterRepo
+      .createQueryBuilder()
+      .update(Character)
+      .set({ ...values, updatedAt: () => '`updatedAt`' })
+      .where('id = :id', { id: character.id })
+      .execute();
+
+    Object.assign(character, values);
+    const presence = this.toRpPresenceDto(character);
+    void this.eventEmitter.emitAsync('presence.changed', presence);
+    return presence;
+  }
+
+  async getRpActiveCharacters(limit: number): Promise<RpPresenceDto[]> {
+    const characters = await this.characterRepo
+      .createQueryBuilder('character')
+      .innerJoinAndSelect('character.server', 'server')
+      .where('character.verifiedAt IS NOT NULL')
+      .andWhere('character.rpStatus IS NOT NULL')
+      .andWhere('character.rpStatusExpiresAt > :now', { now: new Date() })
+      .orderBy('character.rpStatusExpiresAt', 'DESC')
+      .select([
+        'character.id',
+        'character.name',
+        'character.avatar',
+        'character.rpStatus',
+        'character.rpLocation',
+        'character.rpStatusExpiresAt',
+        'server.name',
+      ])
+      .limit(Math.max(1, Math.min(50, limit || 12)))
+      .getMany();
+
+    return characters
+      .map((character) => this.toRpPresenceDto(character))
+      .filter((presence) => presence.rpStatus !== null);
+  }
+
+  private toRpPresenceDto(character: Character): RpPresenceDto {
+    return {
+      characterId: character.id,
+      name: character.name,
+      server: character.server?.name || '',
+      avatar: character.avatar,
+      ...this.getRpPresence(character),
+    };
+  }
 
   async refreshCharacter(characterId: IdWrapper, user: UserInfo): Promise<CharacterRefreshResultDto> {
     // Note that we intentionally don't check if the character is verified.
@@ -710,7 +974,7 @@ export class CharactersService {
 
     // Set all previously existing characters with this Lodestone ID as inactive
     await characterRepo.update({
-      lodestoneId: lodestoneId,
+      lodestoneId,
       user,
       active: true,
     }, {

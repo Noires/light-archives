@@ -1,6 +1,6 @@
 <template>
   <div class="banner-view">
-    <q-img v-if="banner" class="banner-view__banner" :src="banner.url" :initial-ratio="banner.width / banner.height" />
+    <q-img v-if="banner" class="banner-view__banner" alt="" :src="banner.url" :initial-ratio="banner.width / banner.height" />
   </div>
 </template>
 

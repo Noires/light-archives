@@ -42,6 +42,35 @@ export const EventTypeLabels: Record<string, string> = {
   [EventTypeValue.OTHER]: 'Sonstiges',
 };
 
+export const EventTypeIcons: Record<string, string> = {
+  [EventTypeValue.GENERAL]: 'place',
+  [EventTypeValue.TAVERN]: 'sports_bar',
+  [EventTypeValue.BAR_LOUNGE]: 'local_bar',
+  [EventTypeValue.CLUB]: 'nightlife',
+  [EventTypeValue.RESTAURANT_GASTHAUS]: 'restaurant',
+  [EventTypeValue.TEAHOUSE]: 'emoji_food_beverage',
+  [EventTypeValue.HEALERHOUSE]: 'healing',
+  [EventTypeValue.COMBAT_ARENA]: 'sports_kabaddi',
+  [EventTypeValue.SALES]: 'sell',
+  [EventTypeValue.LIBRARY]: 'menu_book',
+  [EventTypeValue.GALLERY_MUSEUM]: 'palette',
+  [EventTypeValue.BATHHOUSE]: 'hot_tub',
+  [EventTypeValue.MARKET]: 'storefront',
+  [EventTypeValue.ADVENTURERS_GUILD]: 'shield',
+  [EventTypeValue.EDUCATION_UNIVERSITY]: 'school',
+  [EventTypeValue.RP]: 'theater_comedy',
+  [EventTypeValue.ADULT]: 'whatshot',
+  [EventTypeValue.OTHER]: 'category',
+};
+
+export function getEventTypeIcon(type?: EventType | null): string {
+  if (!type) {
+    return EventTypeIcons[EventTypeValue.RP];
+  }
+
+  return EventTypeIcons[type] || EventTypeIcons[EventTypeValue.OTHER];
+}
+
 export const EventTypeOptions = [
   { label: EventTypeLabels[EventTypeValue.TAVERN], value: EventTypeValue.TAVERN },
   { label: EventTypeLabels[EventTypeValue.BAR_LOUNGE], value: EventTypeValue.BAR_LOUNGE },

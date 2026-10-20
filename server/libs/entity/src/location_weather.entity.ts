@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, JoinColumn} from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { BasicEntity } from './basic.entity';
 import { Location } from './location.entity';
 import { Weather } from './weather.entity';

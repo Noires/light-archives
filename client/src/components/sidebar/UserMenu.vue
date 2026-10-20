@@ -179,6 +179,28 @@
             <q-item-label>Meine Inhalte</q-item-label>
           </q-item-section>
         </q-item>
+        <!-- ER2 social: notifications and bookmarks -->
+        <q-item
+          v-if="showNotifications"
+          clickable
+          v-ripple
+          to="/benachrichtigungen"
+        >
+          <q-item-section>
+            <q-item-label>Benachrichtigungen</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item
+          v-if="showBookmarks"
+          clickable
+          v-ripple
+          to="/gemerkt"
+        >
+          <q-item-section>
+            <q-item-label>Gemerkt</q-item-label>
+          </q-item-section>
+        </q-item>
+        <!-- /ER2 social -->
         <q-separator dark />
         <q-item
           clickable
@@ -235,6 +257,7 @@ import { TelemetryConsentStatus } from '@app/shared/enums/telemetry-consent-stat
 import { notifyError, notifySuccess } from 'src/common/notify';
 import { persistTelemetryConsent } from 'src/common/telemetry-consent-actions';
 import { isSentryConfigured } from 'src/common/sentry';
+import { canUseSocial, socialState } from 'src/components/social/social-state';
 
 @Options({
   
@@ -242,6 +265,15 @@ import { isSentryConfigured } from 'src/common/sentry';
 export default class UserMenu extends Vue {
   readonly Role = Role;
   readonly sentryConfigured = isSentryConfigured();
+
+  // ER2 social: hidden for unverified accounts and when the API lacks the endpoints.
+  get showNotifications(): boolean {
+    return canUseSocial(this.$store.getters.realRole) && !socialState.unavailable.notifications;
+  }
+
+  get showBookmarks(): boolean {
+    return canUseSocial(this.$store.getters.realRole) && !socialState.unavailable.bookmarks;
+  }
 
   get canAccessModerationTools(): boolean {
     const role = this.$store.getters.role;

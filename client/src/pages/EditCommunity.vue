@@ -69,7 +69,13 @@
               v-model="community.recruitingOfficers"
               label="Rekrutierer"
             />
-            <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername]], in <strong>Ziel</strong>, <strong>Status</strong> und <strong>Rekrutierer</strong> nutzen.</div>
+            <!-- ER2-810 -->
+            <q-checkbox
+              :model-value="community.recruiting === true"
+              @update:model-value="community.recruiting = $event"
+              label="Wir suchen gerade Mitglieder"
+            />
+            <wikilink-hint note="Wikilinks funktionieren in Ziel, Status und Rekrutierer." />
             <q-input
               :model-value="tags"
               @update:model-value="onTagsChanged"
@@ -77,6 +83,8 @@
             />
           </section>
           <banner-edit-section v-model="community.banner" />
+          <!-- ER2 round 2: "Was wir spielen" -->
+          <focus-items-edit-section v-model="community.focusItems" />
           <h6>Beschreibung</h6>
           <html-editor v-model="community.description" />
           <carrd-edit-section
@@ -96,7 +104,7 @@
           />
           <div class="page-edit-community__revert-submit">
             <q-btn label="Zurücksetzen" color="secondary" @click="revert" />&nbsp;
-            <q-btn label="Änderungen speichern" type="submit" color="primary" />
+            <q-btn label="Änderungen speichern" type="submit" color="primary" v-elpis-save-pulse="savePulseTrigger" />
           </div>
         </div>
         <q-inner-loading :showing="saving" />
@@ -138,6 +146,8 @@ import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
 import CarrdEditSection from 'src/components/common/CarrdEditSection.vue';
 import CharacterSelector from 'src/components/common/CharacterSelector.vue';
+import WikilinkHint from 'src/components/common/WikilinkHint.vue';
+import FocusItemsEditSection from 'src/components/common/FocusItemsEditSection.vue';
 import CommunityProfile from 'src/components/communities/CommunityProfile.vue';
 import { useRouter } from 'src/router';
 import { useStore } from 'src/store';
@@ -177,6 +187,8 @@ async function load(params: RouteParams): Promise<CommunityDto|null> {
     BannerEditSection,
     CarrdEditSection,
     CharacterSelector,
+    WikilinkHint,
+    FocusItemsEditSection,
   },
 	async beforeRouteEnter(to, _, next) {
 		const content = await load(to.params);
@@ -188,8 +200,8 @@ async function load(params: RouteParams): Promise<CommunityDto|null> {
 })
 export default class PageEditCommunity extends Vue {
   readonly previewOptions = [
-    { label: 'Edit', value: false },
-    { label: 'Preview', value: true },
+    { label: 'Bearbeiten', value: false },
+    { label: 'Vorschau', value: true },
   ];
 
   readonly SharedConstants = SharedConstants;
@@ -201,6 +213,7 @@ export default class PageEditCommunity extends Vue {
   preview = false;
   loaded = false;
   saving = false;
+  savePulseTrigger = 0;
 
   confirmRevert = false;
 
@@ -277,6 +290,7 @@ export default class PageEditCommunity extends Vue {
       }
 
       this.communityBackup = new CommunityDto(this.community);
+      this.savePulseTrigger++;
 
       notifySuccess('Community gespeichert.', {
         label: 'Anschauen',

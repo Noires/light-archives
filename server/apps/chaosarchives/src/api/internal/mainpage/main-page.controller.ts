@@ -35,7 +35,7 @@ export class MainPageController {
         this.mainPageService.getMainPageContent(),
         this.newsService.getLatestSummaries(),
         this.storiesService.getStoryList({ limit: this.MAX_STORIES }),
-        this.noticeboardService.getNoticeboardItemList({ limit: this.MAX_NOTICEBOARD_ITEMS }),
+        this.noticeboardService.getNoticeboardItemList({ limit: this.MAX_NOTICEBOARD_ITEMS, pinnedFirst: false }),
         this.venuesService.getVenues({ limit: this.MAX_NEW_VENUES }),
         this.communitiesService.getCommunities({ limit: this.MAX_NEW_COMMUNITIES }, true),
       ]);

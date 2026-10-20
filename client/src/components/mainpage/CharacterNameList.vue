@@ -10,9 +10,7 @@
       @click="select(profile)"
     >
       <q-item-section side>
-        <q-avatar round>
-          <img :src="profile.avatar" />
-        </q-avatar>
+        <aetheryte-badge size="md" shape="round" :src="profile.avatar" :alt="profile.name" />
       </q-item-section>
       <q-item-section>
           <q-item-label>{{profile.name}}</q-item-label>
@@ -25,13 +23,14 @@
 <script lang="ts">
 import { CharacterSummaryDto } from '@app/shared/dto/characters/character-summary.dto';
 import { Options, prop, Vue } from 'vue-class-component';
+import AetheryteBadge from '../aetherium/AetheryteBadge.vue';
 
 class Props {
   profiles = prop<CharacterSummaryDto[]>({
     required: true,
   });
 
-  links = prop<boolean>({
+  links = prop<boolean>({ type: Boolean,
     default: true,
   })
 
@@ -45,6 +44,7 @@ class Props {
 }
 
 @Options({
+  components: { AetheryteBadge },
   emits: [ 'select' ]
 })
 export default class CharacterNameList extends Vue.with(Props) {

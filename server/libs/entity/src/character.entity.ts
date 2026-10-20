@@ -585,4 +585,39 @@ export class Character extends BasicEntity {
     default: '',
   })
   slogan: string;
+
+  // ER2-806: opt-in RP presence ('ic' | 'lfrp' | 'ooc'); always expires, no history kept
+  @Column({
+    type: 'varchar',
+    length: 8,
+    nullable: true,
+  })
+  rpStatus: string | null;
+
+  @Column({
+    type: 'varchar',
+    length: 80,
+    nullable: true,
+  })
+  rpLocation: string | null;
+
+  @Column({
+    type: 'datetime',
+    nullable: true,
+  })
+  rpStatusExpiresAt: Date | null;
+
+  // ER2 round 2: profile accent colour (#rrggbb) and play-style tags (max 6 x 24 chars)
+  @Column({
+    type: 'varchar',
+    length: 7,
+    nullable: true,
+  })
+  accentColor: string | null;
+
+  @Column({
+    type: 'simple-json',
+    nullable: true,
+  })
+  playStyleTags: string[] | null;
 }

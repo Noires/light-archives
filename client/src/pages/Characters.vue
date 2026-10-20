@@ -1,122 +1,153 @@
 <template>
-  <q-page class="page-characters">
-    <header class="page-characters__hero">
-      <div class="page-characters__hero-text">
-        <span class="page-characters__eyebrow">Archiv</span>
-        <h2>Die Bevölkerung Hydaelyns</h2>
-        <p class="page-characters__lead">
-          Entdecke Charakterprofile und ihre Geschichten.
-        </p>
-      </div>
-      <div class="page-characters__hero-meta">
-        <div class="page-characters__count">
-          <span class="page-characters__count-number">{{ pagination.rowsNumber }}</span>
-          <span class="page-characters__count-label">Profile</span>
-        </div>
-      </div>
-    </header>
+  <q-page class="characters-dir">
+    <page-head
+      :eyebrow="`Charaktere · ${totalAll} Profile auf Light`"
+      title="Wer ist unterwegs?"
+    >
+      <template #actions>
+        <q-btn
+          v-if="totalAll > 0"
+          class="elpis-btn elpis-btn--secondary"
+          flat
+          no-caps
+          icon="casino"
+          label="Zufälliger Charakter"
+          :loading="randomLoading"
+          @click="openRandom"
+        />
+        <q-btn
+          class="elpis-btn elpis-btn--primary"
+          unelevated
+          no-caps
+          icon="person_add"
+          label="Charakter anlegen"
+          @click="createCharacter"
+        />
+      </template>
+    </page-head>
 
-    <section class="page-characters__content">
-      <div class="page-characters__alphabet-nav">
-        <button
-          v-for="letter in alphabet"
-          :key="letter"
-          class="page-characters__alphabet-btn"
-          :class="{ 'page-characters__alphabet-btn--active': selectedLetter === letter }"
-          @click="selectLetter(letter)"
-        >
-          {{ letter }}
-        </button>
-        <button
-          class="page-characters__alphabet-btn page-characters__alphabet-btn--all"
-          :class="{ 'page-characters__alphabet-btn--active': selectedLetter === null }"
-          @click="selectLetter(null)"
-        >
-          Alle
-        </button>
-      </div>
-      <div class="page-characters__toolbar">
-        <q-input
-          class="page-characters__search"
-          v-model="searchQuery"
-          label="Suche"
-          debounce="200"
-          filled
-          dense
-          clearable
-          @update:model-value="onFilterChange"
-        />
-        <q-select
-          class="page-characters__race-select"
-          v-model="race"
-          label="Volk"
-          emit-value
-          map-options
-          :options="raceOptions"
-          filled
-          dense
-          @update:model-value="onFilterChange"
-        />
-        <q-select
-          class="page-characters__server-select"
-          v-model="server"
-          label="Server"
-          emit-value
-          map-options
-          :options="serverOptions"
-          filled
-          dense
-          @update:model-value="onFilterChange"
-        />
-        <div class="page-characters__stats">
-          {{ pagination.rowsNumber }} Profile
+    <rp-active-strip />
+
+    <section class="characters-dir__toolbar" aria-label="Filter">
+      <q-input
+        v-model="searchQuery"
+        class="characters-dir__search"
+        label="Name suchen"
+        debounce="250"
+        outlined
+        dense
+        clearable
+        @update:model-value="onFilterChange"
+      >
+        <template #prepend>
+          <q-icon name="search" aria-hidden="true" />
+        </template>
+      </q-input>
+
+      <div class="characters-dir__filters">
+        <div class="characters-dir__chip-group" role="group" aria-label="Volk">
+          <span class="characters-dir__chip-label" aria-hidden="true">Volk</span>
+          <button
+            v-for="option in raceOptions"
+            :key="option.label"
+            type="button"
+            class="characters-dir__chip"
+            :class="{ 'characters-dir__chip--active': race === option.value }"
+            :aria-pressed="race === option.value ? 'true' : 'false'"
+            @click="setRace(option.value)"
+          >{{ option.label }}</button>
         </div>
-        <q-pagination
-          class="page-characters__pagination"
-          :model-value="pagination.page"
-          :max="maxPage"
-          input
-          @update:model-value="setPage"
-        />
+        <div v-if="servers.length > 1" class="characters-dir__chip-group" role="group" aria-label="Welt">
+          <span class="characters-dir__chip-label" aria-hidden="true">Welt</span>
+          <button
+            v-for="option in serverOptions"
+            :key="option.label"
+            type="button"
+            class="characters-dir__chip"
+            :class="{ 'characters-dir__chip--active': server === option.value }"
+            :aria-pressed="server === option.value ? 'true' : 'false'"
+            @click="setServer(option.value)"
+          >{{ option.label }}</button>
+        </div>
+        <div class="characters-dir__chip-group" role="group" aria-label="Anfangsbuchstabe">
+          <span class="characters-dir__chip-label" aria-hidden="true">A–Z</span>
+          <q-select
+            v-model="selectedLetter"
+            class="characters-dir__letter"
+            :options="letterOptions"
+            emit-value
+            map-options
+            outlined
+            dense
+            options-dense
+            aria-label="Anfangsbuchstabe"
+            @update:model-value="onFilterChange"
+          />
+        </div>
       </div>
-      <div class="page-characters__list">
-        <q-table
-          class="page-characters__table"
-          :columns="columns"
-          :rows="profiles"
-          :row-key="row => `${row.server}-${row.name}`"
-          v-model:pagination="pagination"
-          grid
-          hide-header
-          hide-bottom
-          @request="onPageRequest"
-        >
-          <template v-slot:item="props">
-            <div class="page-characters__card">
-              <router-link :to="getLink(props.row)" class="page-characters__card-link">
-                <q-avatar round size="56px" class="page-characters__card-avatar">
-                  <img :src="props.row.avatar" />
-                </q-avatar>
-                <div class="page-characters__card-body">
-                  <div class="page-characters__card-name">{{ props.row.name }}</div>
-                  <div class="page-characters__card-meta">
-                    {{ $display.races[props.row.race] }} - {{ props.row.server }}
-                  </div>
-                  <div v-if="props.row.profession" class="page-characters__card-profession">
-                    {{ props.row.profession }}
-                  </div>
-                </div>
-              </router-link>
-            </div>
-          </template>
-          <template v-slot:no-data>
-            <div class="page-characters__empty">
-              Keine Profile gefunden.
-            </div>
-          </template>
-        </q-table>
+
+      <div class="characters-dir__summary" aria-live="polite">
+        <span>{{ total }} {{ total === 1 ? 'Profil' : 'Profile' }}{{ hasFilters ? ' gefunden' : '' }}</span>
+        <q-btn
+          v-if="hasFilters"
+          class="elpis-btn elpis-btn--ghost"
+          flat
+          no-caps
+          dense
+          label="Filter zurücksetzen"
+          @click="resetFilters"
+        />
       </div>
     </section>
+
+    <!-- ER2-902: keeps the outline h1 > h2 > h3 (card titles) without a visible label. -->
+    <h2 class="vision-sr-only">Charakterliste</h2>
+    <ul v-if="profiles.length > 0" class="characters-dir__grid">
+      <li v-for="profile in profiles" :key="`${profile.server}-${profile.name}`">
+        <directory-card
+          class="characters-dir__card"
+          :class="{ 'characters-dir__card--accent': !!accent(profile) }"
+          :style="accent(profile) ? { '--character-accent': accent(profile) } : undefined"
+          :to="getLink(profile)"
+          :banner-src="profile.bannerUrl || ''"
+          :avatar-src="profile.avatar"
+          :avatar-alt="`Porträt von ${profile.name}`"
+          :title="profile.name"
+          :subtitle="subtitle(profile)"
+          :meta="meta(profile)"
+        >
+          <template v-if="rpStatus(profile)" #badges>
+            <status-badge :type="rpBadge(profile)" :label="rpLabel(profile)" />
+          </template>
+          <p v-if="activeLabel(profile)" class="characters-dir__active">{{ activeLabel(profile) }}</p>
+          <template #tags>
+            <status-badge type="server" :label="profile.server" icon="public" />
+            <span v-for="tag in playStyles(profile)" :key="tag" class="characters-dir__tag">{{ tag }}</span>
+          </template>
+        </directory-card>
+      </li>
+    </ul>
+
+    <empty-state
+      v-else-if="!loading"
+      icon="person_search"
+      title="Keine Profile gefunden"
+      :text="hasFilters ? 'Mit diesen Filtern ist niemand unterwegs. Probier es mit weniger.' : 'Hier hat sich noch niemand eingetragen.'"
+      :action-label="hasFilters ? 'Filter zurücksetzen' : ''"
+      @action="resetFilters"
+    />
+
+    <div v-if="hasMore" class="characters-dir__more">
+      <q-btn
+        class="elpis-btn elpis-btn--secondary"
+        flat
+        no-caps
+        label="Mehr laden"
+        :loading="loading"
+        @click="loadMore"
+      />
+      <span class="characters-dir__more-count">{{ profiles.length }} von {{ total }}</span>
+    </div>
   </q-page>
 </template>
 
@@ -125,53 +156,91 @@ import { CharacterProfileFilterDto } from '@app/shared/dto/characters/character-
 import { CharacterSummaryDto } from '@app/shared/dto/characters/character-summary.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { ServerDto } from '@app/shared/dto/servers/server-dto';
+import { SessionCharacterDto } from '@app/shared/dto/user/session-character.dto';
 import { Race } from '@app/shared/enums/race.enum';
-import SharedConstants from '@app/shared/SharedConstants';
+import { RpStatus } from '@app/shared/enums/rp-status.enum';
+import RpActiveStrip from 'components/character/RpActiveStrip.vue';
+import { isEmptyFieldValue } from 'components/character/empty-field';
+import { stripWikilinks } from 'components/character/profile-sections';
+import { activeRpStatus, RP_STATUS_BADGES, RP_STATUS_LABELS } from 'components/character/rp-status';
+import DirectoryCard from 'components/vision/DirectoryCard.vue';
+import EmptyState from 'components/vision/EmptyState.vue';
+import PageHead from 'components/vision/PageHead.vue';
+import StatusBadge from 'components/vision/StatusBadge.vue';
+import type { StatusBadgeType } from 'components/vision/types';
 import { useApi } from 'src/boot/axios';
+import { notifyError } from 'src/common/notify';
 import { Options, Vue } from 'vue-class-component';
+import { LocationQuery } from 'vue-router';
 
 const $api = useApi();
+
+const PER_PAGE = 24;
+const MAX_PLAY_STYLES = 3;
+const ACCENT_PATTERN = /^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\)|hsla?\([\d\s.,%deg]+\))$/i;
+
+interface Filters {
+  searchQuery: string;
+  race: Race | null;
+  server: number | null;
+  letter: string | null;
+}
+
+function filtersFromQuery(query: LocationQuery): Filters {
+  const race = query.race && Object.values(Race).includes(query.race as Race) ? query.race as Race : null;
+  const letter = query.letter && /^[A-Z]$/.test(query.letter as string) ? query.letter as string : null;
+  return {
+    searchQuery: (query.searchQuery as string) || '',
+    race,
+    server: parseInt(query.server as string || '', 10) || null,
+    letter,
+  };
+}
+
+function toApiFilter(filters: Filters, offset: number): CharacterProfileFilterDto {
+  const filter: CharacterProfileFilterDto = {
+    offset,
+    limit: PER_PAGE,
+    searchQuery: filters.searchQuery,
+  };
+  if (filters.server) {
+    filter.server = filters.server;
+  }
+  if (filters.race) {
+    filter.race = filters.race;
+  }
+  if (filters.letter) {
+    filter.letter = filters.letter;
+  }
+  return filter;
+}
 
 @Options({
   name: 'PageCharacters',
   components: {
+    DirectoryCard,
+    EmptyState,
+    PageHead,
+    RpActiveStrip,
+    StatusBadge,
   },
   async beforeRouteEnter(to, __, next) {
-    const searchQuery = to.query.searchQuery as string || '';
-    const server = parseInt(to.query.server as string || '');
-    const race = to.query.race && Object.values(Race).includes(to.query.race as Race) ? to.query.race as Race : null;
-    const letter = to.query.letter && /^[A-Z]$/.test(to.query.letter as string) ? to.query.letter as string : null;
-    const page = parseInt(to.query.page as string, 10) || 1;
-    const rowsPerPage = parseInt(to.query.rowsPerPage as string, 10) || SharedConstants.DEFAULT_ROWS_PER_PAGE;
-
-    const filter: CharacterProfileFilterDto = {
-      offset: (page - 1) * rowsPerPage,
-      limit: SharedConstants.DEFAULT_ROWS_PER_PAGE,
-      searchQuery,
-    };
-
-    const servers = await $api.servers.getServers();
-    if (server) {
-      filter.server = server;
-    }
-    if (race) {
-      filter.race = race;
-    }
-    if (letter) {
-      filter.letter = letter;
-    }
-
-    const profiles = await $api.characters.getCharacterProfiles(filter);
-    next((vm) => (vm as PageCharacters).setContent(servers, profiles, searchQuery, race, server, letter, { page, rowsPerPage }));
+    const filters = filtersFromQuery(to.query);
+    const [ servers, profiles, all ] = await Promise.all([
+      $api.servers.getServers(),
+      $api.characters.getCharacterProfiles(toApiFilter(filters, 0)),
+      $api.characters.getCharacterProfiles({ offset: 0, limit: 1 }),
+    ]);
+    next((vm) => (vm as PageCharacters).setContent(servers, profiles, all.total, filters));
   }
 })
 export default class PageCharacters extends Vue {
   profiles: CharacterSummaryDto[] = [];
-  pagination = {
-    page: 1,
-    rowsPerPage: SharedConstants.DEFAULT_ROWS_PER_PAGE,
-    rowsNumber: 0,
-  };
+  total = 0;
+  totalAll = 0;
+  loading = false;
+  randomLoading = false;
+  requestId = 0;
 
   searchQuery = '';
   race: Race | null = null;
@@ -179,441 +248,363 @@ export default class PageCharacters extends Vue {
   selectedLetter: string | null = null;
   servers: ServerDto[] = [];
 
-  readonly alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-
-  get columns() {
+  get raceOptions(): { label: string; value: Race | null }[] {
     return [
-      {
-        name: 'name',
-        field: 'name',
-        label: 'Name',
-        align: 'left',
-        sortable: false,
-      }
-    ];
-  }
-
-  get raceOptions() {
-    return [
-      { label: '(Alle)', value: null },
+      { label: 'Alle', value: null },
       ...Object.values(Race).map((race) => ({ value: race, label: this.$display.races[race] })),
     ];
   }
 
-  get serverOptions() {
+  get serverOptions(): { label: string; value: number | null }[] {
     return [
-      { label: '(Alle)', value: null},
-      ...this.servers.map(server => ({ value: server.id, label: server.name}))
-    ]
+      { label: 'Alle', value: null },
+      ...this.servers.map((server) => ({ value: server.id, label: server.name })),
+    ];
   }
 
-  get maxPage() {
-    return Math.max(1, Math.ceil(this.pagination.rowsNumber / this.pagination.rowsPerPage));
+  get letterOptions(): { label: string; value: string | null }[] {
+    return [
+      { label: 'Alle', value: null },
+      ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((letter) => ({ label: letter, value: letter })),
+    ];
   }
 
-  setContent(servers: ServerDto[], profiles: PagingResultDto<CharacterSummaryDto>, searchQuery: string, race: Race | null,
-      server: number | null, letter: string | null,
-      pagination: { page: number; rowsPerPage: number }) {
+  get filters(): Filters {
+    return {
+      searchQuery: this.searchQuery || '',
+      race: this.race,
+      server: this.server,
+      letter: this.selectedLetter,
+    };
+  }
+
+  get hasFilters(): boolean {
+    return !!(this.searchQuery || this.race || this.server || this.selectedLetter);
+  }
+
+  get hasMore(): boolean {
+    return this.profiles.length < this.total;
+  }
+
+  setContent(servers: ServerDto[], profiles: PagingResultDto<CharacterSummaryDto>, totalAll: number, filters: Filters) {
     this.servers = servers;
     this.profiles = profiles.data;
-    this.searchQuery = searchQuery;
-    this.race = race;
-    this.server = server || null;
-    this.selectedLetter = letter;
-    this.pagination.page = pagination.page;
-    this.pagination.rowsPerPage = pagination.rowsPerPage;
-    this.pagination.rowsNumber = profiles.total;
+    this.total = profiles.total;
+    this.totalAll = totalAll;
+    this.searchQuery = filters.searchQuery;
+    this.race = filters.race;
+    this.server = filters.server;
+    this.selectedLetter = filters.letter;
   }
 
-  getLink(profile: CharacterSummaryDto) {
+  getLink(profile: { name: string; server: string }): string {
     return `/${profile.server}/${profile.name.replace(/ /g, '_')}`;
   }
 
-  selectLetter(letter: string | null) {
-    this.selectedLetter = letter;
-    this.pagination.page = 1;
-    this.refresh();
+  profession(profile: CharacterSummaryDto): string {
+    return profile.profession && !isEmptyFieldValue(profile.profession) ? stripWikilinks(profile.profession) : '';
+  }
+
+  /** ER2 round 2: the lore title when the API sends one, else the profession. */
+  subtitle(profile: CharacterSummaryDto): string {
+    const title = profile.title && !isEmptyFieldValue(profile.title) ? stripWikilinks(profile.title).trim() : '';
+    return title || this.profession(profile);
+  }
+
+  playStyles(profile: CharacterSummaryDto): string[] {
+    return (profile.playStyleTags || []).filter((tag) => !!tag && tag.trim()).slice(0, MAX_PLAY_STYLES);
+  }
+
+  activeLabel(profile: CharacterSummaryDto): string {
+    if (!profile.lastActiveAt) {
+      return '';
+    }
+    const relative = this.$display.relativeTime(profile.lastActiveAt);
+    if (!relative) {
+      return '';
+    }
+    return relative === 'Gerade' ? 'gerade aktiv' : `aktiv ${relative}`;
+  }
+
+  /** Only plain colour values reach the inline style. */
+  accent(profile: CharacterSummaryDto): string {
+    const color = (profile.accentColor || '').trim();
+    return ACCENT_PATTERN.test(color) ? color : '';
+  }
+
+  meta(profile: CharacterSummaryDto): string {
+    return [
+      this.$display.races[profile.race],
+      profile.tribe ? this.$display.tribes[profile.tribe] : '',
+    ].filter((part) => !!part).join(' · ');
+  }
+
+  rpStatus(profile: CharacterSummaryDto): RpStatus | null {
+    return activeRpStatus(profile);
+  }
+
+  rpBadge(profile: CharacterSummaryDto): StatusBadgeType {
+    const status = activeRpStatus(profile);
+    return status ? RP_STATUS_BADGES[status] : 'rp-ooc';
+  }
+
+  rpLabel(profile: CharacterSummaryDto): string {
+    const status = activeRpStatus(profile);
+    return status ? RP_STATUS_LABELS[status] : '';
+  }
+
+  setRace(race: Race | null) {
+    this.race = race;
+    this.onFilterChange();
+  }
+
+  setServer(server: number | null) {
+    this.server = server;
+    this.onFilterChange();
+  }
+
+  resetFilters() {
+    this.searchQuery = '';
+    this.race = null;
+    this.server = null;
+    this.selectedLetter = null;
+    this.onFilterChange();
   }
 
   onFilterChange() {
-    this.pagination.page = 1;
-    this.refresh();
+    void this.fetch(false);
+    this.writeQuery();
   }
 
-  setPage(newPage: number) {
-    this.pagination.page = Math.min(Math.max(newPage, 1), this.maxPage);
-    this.refresh();
+  loadMore() {
+    void this.fetch(true);
   }
 
-	refresh() {
-		void this.onPageRequest({ pagination: this.pagination });
-	}
-
-  async onPageRequest(props: { pagination: { page: number; rowsPerPage: number } }) {
-    const { page, rowsPerPage } = props.pagination;
-    const filter: CharacterProfileFilterDto = {
-      offset: (page - 1) * rowsPerPage,
-      limit: rowsPerPage,
-      searchQuery: this.searchQuery,
-    };
-
-    if (this.race) {
-      filter.race = this.race;
+  async fetch(append: boolean) {
+    const requestId = ++this.requestId;
+    this.loading = true;
+    try {
+      const result = await this.$api.characters.getCharacterProfiles(
+        toApiFilter(this.filters, append ? this.profiles.length : 0),
+      );
+      if (requestId !== this.requestId) {
+        return;
+      }
+      this.profiles = append ? [ ...this.profiles, ...result.data ] : result.data;
+      this.total = result.total;
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      if (requestId === this.requestId) {
+        this.loading = false;
+      }
     }
+  }
 
-    if (this.server) {
-      filter.server = this.server;
-    }
-
-    if (this.selectedLetter) {
-      filter.letter = this.selectedLetter;
-    }
-
-    const profiles = await this.$api.characters.getCharacterProfiles(filter);
-    this.profiles = profiles.data;
-    this.pagination.rowsNumber = profiles.total;
-    this.pagination.rowsPerPage = rowsPerPage;
-    this.pagination.page = page;
-
-    const queryParams: { [ k: string] : string|number } = {
-      page: this.pagination.page,
-      rowsPerPage: this.pagination.rowsPerPage
-    };
-
+  writeQuery() {
+    const query: Record<string, string> = {};
     if (this.searchQuery) {
-      queryParams.searchQuery = this.searchQuery;
+      query.searchQuery = this.searchQuery;
     }
-
     if (this.server) {
-      queryParams.server = this.server;
+      query.server = String(this.server);
     }
-
     if (this.race) {
-      queryParams.race = this.race;
+      query.race = this.race;
     }
-
     if (this.selectedLetter) {
-      queryParams.letter = this.selectedLetter;
+      query.letter = this.selectedLetter;
     }
+    void this.$router.replace({ path: '/profiles', query });
+  }
 
-    void this.$router.replace({
-      path: '/profiles',
-      query: queryParams,
-    })
+  /** No random endpoint: pick a random offset in the unfiltered list. */
+  async openRandom() {
+    this.randomLoading = true;
+    try {
+      const offset = Math.floor(Math.random() * this.totalAll);
+      const result = await this.$api.characters.getCharacterProfiles({ offset, limit: 1 });
+      if (result.data.length > 0) {
+        void this.$router.push(this.getLink(result.data[0]));
+      }
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      this.randomLoading = false;
+    }
+  }
+
+  /** Adding a character goes through the character dialog; guests sign in first. */
+  async createCharacter() {
+    if (!this.$store.state.user) {
+      window.location.href = this.$api.user.getDiscordLoginUrl(window.location.origin);
+      return;
+    }
+    const SwitchCharacterDialog = (await import('components/character/SwitchCharacterDialog.vue')).default;
+    this.$q.dialog({ component: SwitchCharacterDialog }).onOk((character: SessionCharacterDto) => {
+      void this.$router.push(character.verified ? this.getLink(character) : '/verify');
+    });
   }
 }
 </script>
 
-<style lang="scss">
-.page-characters {
-  position: relative;
-  padding: 28px 18px 42px;
-  background: linear-gradient(180deg, #f8f4ee 0%, #ffffff 45%, #f2ede4 100%);
-  border-radius: 30px;
-  overflow: hidden;
+<style lang="scss" scoped>
+.characters-dir {
+  padding-top: 0;
 }
 
-.page-characters::before {
+.characters-dir__toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.characters-dir__search {
+  max-width: 480px;
+}
+
+.characters-dir__filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.characters-dir__chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.characters-dir__chip-label {
+  min-width: 44px;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.characters-dir__chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  background-color: transparent;
+  color: var(--ink-primary);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 18px;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--ease-elpis),
+    border-color var(--motion-fast) var(--ease-elpis),
+    color var(--motion-fast) var(--ease-elpis);
+
+  &:hover {
+    background-color: var(--rule-tint);
+    border-color: var(--rule-strong);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--glow-aether),
+      0 0 0 3px var(--vision-focus-edge);
+  }
+}
+
+.characters-dir__chip--active,
+.characters-dir__chip--active:hover {
+  background-color: var(--vision-primary);
+  border-color: var(--vision-primary);
+  color: var(--vision-on-primary);
+  font-weight: 600;
+}
+
+.characters-dir__letter {
+  width: 110px;
+}
+
+.characters-dir__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.characters-dir__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  > li {
+    display: flex;
+    min-width: 0;
+  }
+}
+
+.characters-dir__card {
+  flex: 1 1 auto;
+}
+
+// ER2 round 2: the character's accent colour as a thin top edge.
+// A pseudo-element instead of border-top, so the card's own hover border
+// colour cannot override it; the card clips it to its rounded corners.
+.characters-dir__card--accent::before {
   content: '';
   position: absolute;
-  inset: -120px 0 auto;
-  height: 260px;
-  background: radial-gradient(circle at 20% 30%, rgba(221, 180, 118, 0.18), transparent 55%),
-    radial-gradient(circle at 80% 0%, rgba(15, 76, 104, 0.12), transparent 50%);
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  height: 3px;
+  background-color: var(--character-accent);
   pointer-events: none;
 }
 
-.page-characters h2 {
+.characters-dir__active {
   margin: 0;
-  font-family: $header-font;
-  letter-spacing: 0.02em;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-muted);
 }
 
-.page-characters__hero {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 24px;
-  padding: 20px 22px;
-  margin-bottom: 18px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
-}
-
-.page-characters__eyebrow {
-  font-size: 0.75rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(139, 103, 58, 0.9);
-  font-weight: 600;
-}
-
-.page-characters__hero-text {
-  display: grid;
-  gap: 8px;
-}
-
-.page-characters__lead {
-  margin: 0;
-  color: rgba(35, 35, 35, 0.7);
-  max-width: 520px;
-}
-
-.page-characters__hero-meta {
-  display: grid;
-  gap: 6px;
-  justify-items: end;
-}
-
-.page-characters__count {
-  display: grid;
-  justify-items: end;
-  line-height: 1;
-}
-
-.page-characters__count-number {
-  font-family: $header-font;
-  font-size: 2rem;
-  color: #20323d;
-}
-
-.page-characters__count-label {
-  font-size: 0.85rem;
-  color: rgba(35, 35, 35, 0.6);
-}
-
-.page-characters__content {
-  position: relative;
-  z-index: 1;
-}
-
-.page-characters__alphabet-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 12px 14px;
-  margin-bottom: 12px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
-  justify-content: center;
-}
-
-.page-characters__alphabet-btn {
-  min-width: 36px;
-  height: 36px;
-  padding: 0 10px;
-  border: 1px solid rgba(221, 180, 118, 0.3);
-  background: #ffffff;
-  color: rgba(35, 35, 35, 0.75);
-  font-family: $header-font;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.page-characters__alphabet-btn:hover {
-  background: rgba(221, 180, 118, 0.1);
-  border-color: rgba(221, 180, 118, 0.5);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.page-characters__alphabet-btn--active {
-  background: linear-gradient(135deg, rgba(221, 180, 118, 0.25) 0%, rgba(221, 180, 118, 0.15) 100%);
-  border-color: rgba(221, 180, 118, 0.6);
-  color: #20323d;
-  box-shadow: 0 4px 12px rgba(221, 180, 118, 0.3);
-}
-
-.page-characters__alphabet-btn--all {
-  min-width: 48px;
-  font-size: 0.85rem;
-}
-
-.page-characters__toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(140px, 0.6fr) minmax(160px, 0.6fr) auto auto;
-  gap: 12px;
+.characters-dir__tag {
+  display: inline-flex;
   align-items: center;
-  padding: 12px 14px;
-  width: 100%;
-  margin-bottom: 18px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  padding: 1px 8px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ink-muted);
 }
 
-.page-characters__search .q-field__control,
-.page-characters__race-select .q-field__control,
-.page-characters__server-select .q-field__control {
-  background: #f6f1e8;
-  border-radius: 0;
-}
-
-.page-characters__stats {
-  text-align: right;
-  white-space: nowrap;
-  font-family: $header-font;
-  font-size: 1.05rem;
-  color: #20323d;
-}
-
-.page-characters__pagination {
-  justify-self: end;
-}
-
-.page-characters__list {
-  padding: 12px;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
-}
-
-.page-characters__table {
-  position: relative;
-  z-index: 1;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-}
-
-.page-characters__table .q-table__top {
-  padding: 0;
-}
-
-.page-characters__table .q-table__middle {
-  padding: 0;
-}
-
-.page-characters__table .q-table__grid-content {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 12px;
-  padding: 0;
-}
-
-.page-characters__table .q-table__grid-item {
-  padding: 0;
-}
-
-.page-characters__card {
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: #ffffff;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.page-characters__card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
-  border-color: rgba(221, 180, 118, 0.4);
-}
-
-.page-characters__card-link {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px;
+.characters-dir__more {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 16px;
-  color: inherit;
-  text-decoration: none;
+  gap: 6px;
+  margin-top: 28px;
 }
 
-.page-characters__card-avatar {
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
-}
-
-.page-characters__card-name {
-  font-weight: 700;
-  color: #1f2c38;
-}
-
-.page-characters__card-meta {
-  color: rgba(35, 35, 35, 0.7);
-  font-size: 0.85rem;
-}
-
-.page-characters__card-profession {
-  color: rgba(35, 35, 35, 0.65);
-  font-size: 0.85rem;
-}
-
-.page-characters__empty {
-  margin: 0;
-  padding: 18px;
-  color: rgba(35, 35, 35, 0.7);
-  border: 1px solid rgba(221, 180, 118, 0.2);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
-}
-
-@media screen and (max-width: 1100px) {
-  .page-characters__hero {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .page-characters__hero-meta {
-    width: 100%;
-    justify-items: start;
-  }
-
-  .page-characters__toolbar {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .page-characters__stats {
-    text-align: left;
-  }
-
-  .page-characters__pagination {
-    justify-self: start;
-  }
-}
-
-@media screen and (max-width: $breakpoint-sm) {
-  .page-characters {
-    padding: 20px 14px 36px;
-  }
-
-  .page-characters__hero {
-    padding: 16px;
-  }
-
-  .page-characters__alphabet-nav {
-    gap: 4px;
-    padding: 10px;
-  }
-
-  .page-characters__alphabet-btn {
-    min-width: 32px;
-    height: 32px;
-    padding: 0 8px;
-    font-size: 0.85rem;
-  }
-
-  .page-characters__alphabet-btn--all {
-    min-width: 44px;
-  }
-
-  .page-characters__table .q-table__grid-content {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .page-characters__card {
-    transition: none;
-  }
-
-  .page-characters__card:hover {
-    transform: none;
-  }
+.characters-dir__more-count {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--ink-muted);
 }
 </style>

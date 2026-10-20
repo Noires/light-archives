@@ -1,4 +1,5 @@
-import { CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { EventRegistrationKind } from '@app/shared/enums/event-registration-kind.enum';
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
 import { Character } from './character.entity';
 import { Event } from './event.entity';
 
@@ -19,6 +20,21 @@ export class EventRegistration {
     onDelete: 'CASCADE',
   })
   character: Character;
+
+  @Column({
+    type: 'varchar',
+    length: 16,
+    nullable: false,
+    default: EventRegistrationKind.GOING,
+  })
+  kind: EventRegistrationKind;
+
+  // ER2 social: set when the 'event-reminder' notification was handled for this registration
+  @Column({
+    type: 'datetime',
+    nullable: true,
+  })
+  remindedAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

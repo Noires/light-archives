@@ -2,7 +2,7 @@ import { UserInfo } from '@app/auth/model/user-info';
 import { Character, Community, CommunityMembership, CommunityTag, Image } from '@app/entity';
 import { CharacterIdWrapper } from '@app/shared/dto/common/character-id-wrapper.dto';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
-import { CommunityMemberDto } from '@app/shared/dto/communities/community-member.dto';
+import { communityRole, CommunityMemberDto } from '@app/shared/dto/communities/community-member.dto';
 import { CommunitySummaryDto } from '@app/shared/dto/communities/community-summary.dto';
 import { CommunityDto } from '@app/shared/dto/communities/community.dto';
 import { MemberFlagsDto } from '@app/shared/dto/communities/member-flags.dto';
@@ -10,6 +10,7 @@ import { MyCommunitySummaryDto } from '@app/shared/dto/communities/my-community-
 import { MembershipStatus } from '@app/shared/enums/membership-status.enum';
 import html from '@app/shared/html';
 import SharedConstants from '@app/shared/SharedConstants';
+import { normalizeFocusItems } from '@app/shared/validation/profile-fields';
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import crypto from 'crypto';
@@ -18,6 +19,7 @@ import { Connection, EntityManager, FindOneOptions, IsNull, Not, Repository } fr
 import { assertUserCharacterId, checkCarrdProfile, getVerifiedCharacter } from '../../../common/api-checks';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import { ImagesService } from '../images/images.service';
+import { loadGroupSummaryExtras } from '../../../common/group-summary';
 
 @Injectable()
 export class CommunitiesService {
@@ -92,6 +94,8 @@ export class CommunitiesService {
         'membership.status',
         'membership.canEdit',
         'membership.canManageMembers',
+        'community.id',
+        'owner.id',
       ])
       .getMany();
 
@@ -103,6 +107,12 @@ export class CommunitiesService {
       status: membership.status,
       canEdit: membership.canEdit,
       canManageMembers: membership.canManageMembers,
+      role: communityRole(
+        membership.community.owner.id === membership.character.id,
+        membership.status,
+        membership.canEdit,
+        membership.canManageMembers,
+      ),
     }));
   }
 
@@ -110,14 +120,19 @@ export class CommunitiesService {
     const query = this.communityRepo
       .createQueryBuilder('community')
       .orderBy(orderByDate ? { 'community.foundedAt': 'DESC' } : { 'community.name': 'ASC' })
-      .select(['community.id', 'community.name', 'community.goal']);
+      .select(['community.id', 'community.name', 'community.goal', 'community.recruiting']);
 
     if (filter.limit) {
       query.limit(filter.limit);
     }
 
     const communities = await query.getMany();
-    return communities.map((community) => this.toCommunitySummary(community));
+    const extras = await loadGroupSummaryExtras(
+      this.connection.manager,
+      'community',
+      communities.map((community) => community.id),
+    );
+    return communities.map((community) => ({ ...this.toCommunitySummary(community), ...extras.get(community.id) }));
   }
 
   private toCommunitySummary(community: Community): CommunitySummaryDto {
@@ -125,6 +140,7 @@ export class CommunitiesService {
       id: community.id,
       name: community.name,
       goal: community.goal,
+      recruiting: community.recruiting ?? null,
     };
   }
 
@@ -184,7 +200,9 @@ export class CommunitiesService {
       discord: community.discord,
       status: community.status,
       recruitingOfficers: community.recruitingOfficers,
+      recruiting: community.recruiting ?? null,
       carrdProfile: community.carrdProfile,
+      focusItems: community.focusItems || [],
       tags: community.tags.map((tag) => tag.name),
       banner: !banner
         ? null
@@ -276,7 +294,14 @@ export class CommunitiesService {
     community.goal = communityDto.goal;
     community.status = communityDto.status;
     community.recruitingOfficers = communityDto.recruitingOfficers;
+    if (communityDto.recruiting !== undefined) {
+      community.recruiting = communityDto.recruiting;
+    }
     community.carrdProfile = checkCarrdProfile(communityDto.carrdProfile, user);
+
+    if (communityDto.focusItems !== undefined) {
+      community.focusItems = normalizeFocusItems(communityDto.focusItems);
+    }
 
     // Validate founding date
 
@@ -380,7 +405,7 @@ export class CommunitiesService {
   }
 
   private async assertEditRights(communityId: number, user: UserInfo): Promise<void> {
-    if (!this.checkFlag(communityId, user, false)) {
+    if (!(await this.checkFlag(communityId, user, false))) {
       throw new ForbiddenException('Operation not permitted');
     }
   }
@@ -390,13 +415,17 @@ export class CommunitiesService {
   }
 
   private async assertManageMembersRights(communityId: number, user: UserInfo): Promise<void> {
-    if (!this.checkFlag(communityId, user, true)) {
+    if (!(await this.checkFlag(communityId, user, true))) {
       throw new ForbiddenException('Operation not permitted');
     }
   }
 
   private async checkFlag(communityId: number, user: UserInfo, manageMembersFlag: boolean): Promise<boolean> {
     const flagName = manageMembersFlag ? 'canManageMembers' : 'canEdit';
+
+    if (user.characters.length === 0) {
+      return false;
+    }
 
     const membershipCount = await this.communityMembershipRepo
       .createQueryBuilder('membership')

@@ -1,0 +1,14 @@
+// Aetherium — Light Archives "Elpis Reborn" design tokens + materials.
+// News-app mirror of client/src/css/aetherium/. Keep these files in lockstep
+// with the client copy unless a documented news-specific override is required
+// (and call it out inline). Loaded near the top of news/src/css/app.scss so
+// tokens are available to every downstream rule.
+//
+// Order matters: tokens (color → space → type → motion) before composed
+// utility classes (materials), since materials reference the token vars.
+
+@import './color';
+@import './space';
+@import './type';
+@import './motion';
+@import './materials';

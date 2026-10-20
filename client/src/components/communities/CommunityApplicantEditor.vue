@@ -19,7 +19,7 @@
         <q-td :props="props">
           <router-link :to="getLink(props.row)">
             <q-avatar round>
-              <img :src="props.row.avatar" />
+              <img :src="props.row.avatar" alt="" />
             </q-avatar>
           </router-link>
         </q-td>
@@ -107,7 +107,7 @@ export default class CommunityApplicantEditor extends Vue.with(Props) {
   onRejectClick(member: CommunityMemberDto) {
     this.$q
       .dialog({
-        title: 'Confirm Reject',
+        title: 'Ablehnen bestätigen',
         message: `Möchtest du den Mitgliedschaftsantrag von ${member.name} ablehnen?`,
         ok: {
           label: 'Ablehnen',

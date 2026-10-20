@@ -1,11 +1,11 @@
 <template>
   <q-page class="page-wiki">
     <template v-if="wikiPage.id">
-      <section v-if="canEdit || canDelete" class="edit-bar">
-        <q-btn v-if="canEdit" flat color="secondary" label="Wikibeitrag bearbeiten" :to="`/edit-wiki-page/${wikiPage.id}`" />
-        <q-btn v-if="canDelete" flat color="negative" label="Wikibeitrag löschen" @click="onDeleteClick" />
+      <breadcrumbs class="page-wiki__crumbs" :items="crumbs" />
+      <section v-if="canDelete" class="page-wiki__edit-bar" aria-label="Wikibeitrag verwalten">
+        <q-btn class="elpis-btn elpis-btn--ghost" flat no-caps icon="delete_outline" label="Wikibeitrag löschen" @click="onDeleteClick" />
       </section>
-      <wiki-page-view :wikiPage="wikiPage" />
+      <wiki-page-view :wiki-page="wikiPage" :can-edit="canEdit" />
       <report-violation-section :pageType="PageType.WIKI_PAGE" :pageId="wikiPage.id" />
     </template>
   </q-page>
@@ -19,6 +19,8 @@ import errors from '@app/shared/errors';
 import { unwikify } from '@common/common/wikilinks';
 import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
+import Breadcrumbs from 'components/vision/Breadcrumbs.vue';
+import type { BreadcrumbItem } from 'components/vision/types';
 import ReportViolationSection from 'src/components/common/ReportViolationSection.vue';
 import WikiPageView from 'src/components/wiki/WikiPageView.vue';
 import { useRouter } from 'src/router';
@@ -57,6 +59,7 @@ async function load(params: RouteParams): Promise<WikiPageDto> {
 @Options({
   name: 'PageWiki',
   components: {
+    Breadcrumbs,
     WikiPageView,
     ReportViolationSection,
   },
@@ -76,6 +79,10 @@ export default class PageWiki extends Vue {
 
   setContent(wikiPage: WikiPageDto) {
     this.wikiPage = wikiPage;
+  }
+
+  get crumbs(): BreadcrumbItem[] {
+    return [ { label: 'Wiki', to: '/wiki' }, { label: this.wikiPage.title || 'Wikibeitrag' } ];
   }
 
   get canEdit(): boolean {
@@ -114,4 +121,14 @@ export default class PageWiki extends Vue {
 }
 </script>
 
-<style lang="scss"></style>
+<style lang="scss" scoped>
+.page-wiki__crumbs {
+  margin-bottom: 16px;
+}
+
+.page-wiki__edit-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+</style>

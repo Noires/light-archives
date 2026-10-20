@@ -1,5 +1,7 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { FreeCompanyApplicationStatus } from '@app/shared/enums/free-company-application-status.enum';
+import { FOCUS_ITEMS_MAX, FocusItemDto } from '../../validation/profile-fields';
 import { BannerDto } from '../characters/banner.dto';
 
 export class FreeCompanyDto {
@@ -54,6 +56,11 @@ export class FreeCompanyDto {
   @IsString()
   recruitingOfficers: string;
 
+  // ER2-810: null = not specified. Omit to keep.
+  @IsBoolean()
+  @IsOptional()
+  recruiting?: boolean | null;
+
   @IsString()
   carrdProfile: string;
 
@@ -61,6 +68,27 @@ export class FreeCompanyDto {
   @ValidateNested()
   @IsOptional()
   banner: BannerDto|null;
+
+  // ER2 round 2 (optional, read only): for the character passed as ?characterId=
+  @IsBoolean()
+  @IsOptional()
+  canApply?: boolean;
+
+  @IsOptional()
+  myApplicationStatus?: FreeCompanyApplicationStatus | null;
+
+  // ER2 round 2 (read only): pending applications, only for FC managers
+  @IsNumber()
+  @IsOptional()
+  pendingApplicationCount?: number;
+
+  // ER2 round 2 (optional): "Was wir spielen" cards. Omit to keep, [] or null clears.
+  @IsArray()
+  @ArrayMaxSize(FOCUS_ITEMS_MAX)
+  @ValidateNested({ each: true })
+  @Type(() => FocusItemDto)
+  @IsOptional()
+  focusItems?: FocusItemDto[] | null;
 	
 	constructor(properties?: Readonly<FreeCompanyDto>) {
     if (properties) {

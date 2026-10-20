@@ -25,7 +25,7 @@ export class RppController {
 		summary: 'Start a Discord OAuth login for RPP',
 	})
 	async loginWithDiscord(): Promise<void> {
-		return;
+		// The passport guard redirects to Discord; nothing to do here.
 	}
 
 	@Get('login/discord/callback')

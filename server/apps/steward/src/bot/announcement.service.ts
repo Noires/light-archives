@@ -100,6 +100,13 @@ export class AnnouncementService {
 		const subtitle = `${noticeboardLocations[noticeboardItem.location]} — by ${noticeboardItem.owner.name}`
 		try {
 			await this.botGateway.sendNoticeboardItem(this.buildNoticeboardMessage(noticeboardItem, subtitle));
+			// ER2 round 2: remember the Discord post; keep updatedAt so it is not shown as an edit
+			await this.noticeboardItemRepo
+				.createQueryBuilder()
+				.update(NoticeboardItem)
+				.set({ discordPosted: true, updatedAt: () => 'updatedAt' })
+				.where('id = :id', { id: noticeboardItem.id })
+				.execute();
 		} catch (e) {
 			if (e instanceof Error) {
 				this.logger.error(e.message, e.stack);
@@ -544,19 +551,25 @@ export class AnnouncementService {
 		let match: RegExpExecArray | null = null;
 
 		const userRegex = /@([A-Za-z0-9_-]+#[0-9]+)/g;
-		while ((match = userRegex.exec(content)) !== null) {
+		match = userRegex.exec(content);
+		while (match !== null) {
 			matches.add(`@${match[1]}`);
+			match = userRegex.exec(content);
 		}
 
 		const nicknameRegex = /@\{([^}]+)\}/g;
-		while ((match = nicknameRegex.exec(content)) !== null) {
+		match = nicknameRegex.exec(content);
+		while (match !== null) {
 			matches.add(`@{${match[1]}}`);
+			match = nicknameRegex.exec(content);
 		}
 
 		const roleSource = content.replace(/@([A-Za-z0-9_-]+#[0-9]+)/g, '').replace(/@\{([^}]+)\}/g, '');
 		const roleRegex = /(^|[\s(])@([A-Za-z0-9-]+)/g;
-		while ((match = roleRegex.exec(roleSource)) !== null) {
+		match = roleRegex.exec(roleSource);
+		while (match !== null) {
 			matches.add(`@${match[2]}`);
+			match = roleRegex.exec(roleSource);
 		}
 
 		return matches.size > 0 ? Array.from(matches).join(' ') : undefined;
@@ -595,11 +608,12 @@ export class AnnouncementService {
 		const publicRootUrl = s3Configuration.publicRootUrl.endsWith('/')
 			? s3Configuration.publicRootUrl
 			: `${s3Configuration.publicRootUrl}/`;
-		const filename = variant === 'icon'
-			? `icon_${image.filename}`
-			: variant === 'thumb'
-				? `thumb_${image.filename}`
-				: image.filename;
+		let filename = image.filename;
+		if (variant === 'icon') {
+			filename = `icon_${image.filename}`;
+		} else if (variant === 'thumb') {
+			filename = `thumb_${image.filename}`;
+		}
 		const path = [
 			String(image.owner.id),
 			image.hash,

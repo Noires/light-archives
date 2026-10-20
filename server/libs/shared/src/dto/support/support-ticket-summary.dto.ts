@@ -5,16 +5,27 @@ import { SupportTicketStatus } from '@app/shared/enums/support-ticket-status.enu
 
 export class SupportTicketSummaryDto {
   id: number;
+
   ticketNumber: number;
+
   subject: string;
+
   category: SupportTicketCategory;
+
   priority: SupportTicketPriority;
+
   status: SupportTicketStatus;
+
   supportLevel: SupportLevel;
+
   assigneeUserId: number | null;
+
   createdAt: number;
+
   updatedAt: number;
+
   closedAt: number | null;
+
   lastPublicMessageAt: number | null;
 
   constructor(properties?: Readonly<SupportTicketSummaryDto>) {

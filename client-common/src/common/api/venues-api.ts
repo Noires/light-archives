@@ -2,6 +2,7 @@ import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { VenueMemberDto } from '@app/shared/dto/venues/venue-member.dto';
 import { VenueMemberFlagsDto } from '@app/shared/dto/venues/venue-member-flags.dto';
 import { VenueOfferingsDto } from '@app/shared/dto/venues/venue-offering.dto';
+import { VenueOpeningHoursDto } from '@app/shared/dto/venues/venue-opening-hours.dto';
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import APITransport, { QueryParams } from './api-transport';
@@ -67,6 +68,16 @@ export default class VenuesAPI {
   }
 
   // ─── Offerings ──────────────────────────────────────────────────────────────
+
+  /** ER2-805: stored weekly hours + today/future exceptions (empty when none; no template fallback). */
+  async getOpeningHours(venueId: number): Promise<VenueOpeningHoursDto> {
+    return this.transport.get<VenueOpeningHoursDto>(`${venueId}/opening-hours`);
+  }
+
+  /** ER2-805: replaces all opening hours and exceptions. Requires edit rights. */
+  async saveOpeningHours(venueId: number, openingHours: VenueOpeningHoursDto): Promise<VenueOpeningHoursDto> {
+    return this.transport.authPut<VenueOpeningHoursDto>(`${venueId}/opening-hours`, openingHours);
+  }
 
   async getOfferings(venueId: number): Promise<VenueOfferingsDto> {
     return this.transport.get<VenueOfferingsDto>(`${venueId}/offerings`);

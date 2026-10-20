@@ -1,9 +1,9 @@
 <template>
   <div class="character-diary">
     <section>
-      <h6>Tagebuch</h6>
+      <h6 aria-level="2">Tagebuch</h6>
       <div class="character-diary__list" v-if="content.stories.length > 0">
-        <div v-for="story in content.stories" :key="story.id" class="character-diary__card">
+        <div v-for="story in content.stories" :key="story.id" class="character-diary__card mat-parchment">
           <router-link :to="getLink(story)" class="character-diary__card-link">
             <div class="character-diary__card-top">
               <span class="character-diary__card-type">
@@ -48,7 +48,7 @@ class Props {
     required: true,
   });
 
-  preview = prop<boolean>({
+  preview = prop<boolean>({ type: Boolean,
     default: false,
   });
 }
@@ -66,40 +66,13 @@ export default class CharacterDiary extends Vue.with(Props) {
 </script>
 
 <style lang="scss">
-.character-diary {
-  --diary-card-border: rgba(221, 180, 118, 0.2);
-  --diary-card-bg: #ffffff;
-  --diary-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
-  --diary-card-type-bg: rgba(221, 180, 118, 0.2);
-  --diary-card-type-color: #6b4c21;
-  --diary-card-title: #1f2c38;
-  --diary-card-meta: rgba(35, 35, 35, 0.65);
-  --diary-card-excerpt: rgba(35, 35, 35, 0.72);
-  --diary-card-action: #1f4d64;
-  --diary-card-hover-shadow: 0 18px 32px rgba(0, 0, 0, 0.16);
-  --diary-card-hover-border: rgba(221, 180, 118, 0.5);
-  --diary-card-focus-ring: inset 0 0 0 2px rgba(31, 77, 100, 0.3);
-  --diary-empty: rgba(35, 35, 35, 0.7);
-
-  h6 {
-    margin-bottom: 16px;
-  }
-}
-
-body.body--dark .character-diary {
-  --diary-card-border: rgba(141, 181, 223, 0.28);
-  --diary-card-bg: rgba(17, 25, 37, 0.94);
-  --diary-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.34);
-  --diary-card-type-bg: rgba(141, 181, 223, 0.2);
-  --diary-card-type-color: rgba(213, 226, 240, 0.94);
-  --diary-card-title: rgba(226, 237, 248, 0.96);
-  --diary-card-meta: rgba(213, 226, 240, 0.72);
-  --diary-card-excerpt: rgba(213, 226, 240, 0.82);
-  --diary-card-action: #8db5df;
-  --diary-card-hover-shadow: 0 18px 32px rgba(0, 0, 0, 0.38);
-  --diary-card-hover-border: rgba(141, 181, 223, 0.44);
-  --diary-card-focus-ring: inset 0 0 0 2px rgba(141, 181, 223, 0.36);
-  --diary-empty: rgba(213, 226, 240, 0.72);
+// ELPIS-208 — Diary cards re-skinned to Parchment. The legacy --diary-card-*
+// ad-hoc tokens are gone; surface, ink, and rule colour come from the
+// material + Aetherium tokens. Hover lift / shadow / border colour all ride
+// on motion-fast + ease-elpis so the global reduced-motion guard handles the
+// fallback (no per-component @media block).
+.character-diary h6 {
+  margin-bottom: 16px;
 }
 
 .character-diary__list {
@@ -109,12 +82,11 @@ body.body--dark .character-diary {
 }
 
 .character-diary__card {
-  border-radius: 0;
-  border: 1px solid var(--diary-card-border);
-  background: var(--diary-card-bg);
-  box-shadow: var(--diary-card-shadow);
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform var(--motion-fast) var(--ease-elpis),
+    box-shadow var(--motion-fast) var(--ease-elpis),
+    border-color var(--motion-fast) var(--ease-elpis);
 }
 
 .character-diary__card-link {
@@ -134,24 +106,38 @@ body.body--dark .character-diary {
   gap: 12px;
 }
 
+// Type badge re-skinned: Hydaelyn = soft gold tint with deep gold ink;
+// Zodiark = soft arcane tint with luminous ink. Letter-spacing kept.
 .character-diary__card-type {
   align-self: flex-start;
   padding: 4px 10px;
-  border-radius: 0;
-  background: var(--diary-card-type-bg);
-  color: var(--diary-card-type-color);
+  border-radius: 2px;
+  background: var(--rule-gold-soft);
+  color: var(--rule-gold);
+  font-family: var(--font-ui);
   font-weight: 600;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
+body.body--dark .character-diary__card-type {
+  background: var(--rule-arcane-soft);
+  color: var(--ink-luminous);
+}
+
+// Title in Cinzel (--font-display), excerpt in IM Fell English italic
+// (--font-lore — falls back to Spectral → serif until ELPIS-001 lands).
 .character-diary__card-title {
   margin: 0;
-  font-family: $header-font;
+  font-family: var(--font-display);
   font-size: 1.05rem;
   line-height: 1.3;
-  color: var(--diary-card-title);
+  color: var(--ink-primary);
+}
+
+body.body--dark .character-diary__card-title {
+  color: var(--ink-luminous);
 }
 
 .character-diary__card-meta {
@@ -159,52 +145,81 @@ body.body--dark .character-diary {
   justify-items: end;
   text-align: right;
   gap: 2px;
-  color: var(--diary-card-meta);
+  color: var(--ink-muted);
+  font-family: var(--font-ui);
   font-size: 0.8rem;
+}
+
+body.body--dark .character-diary__card-meta {
+  // No --ink-muted on Zodiark (per AETHERIUM.md table — use ink-luminous at
+  // lower opacity instead).
+  color: rgba(217, 225, 234, 0.72);
 }
 
 .character-diary__card-excerpt {
   margin: 0;
-  color: var(--diary-card-excerpt);
+  font-family: var(--font-lore);
+  font-style: italic;
+  color: var(--ink-primary);
   font-size: 0.92rem;
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  opacity: 0.85;
+}
+
+body.body--dark .character-diary__card-excerpt {
+  color: var(--ink-luminous);
+  opacity: 0.85;
 }
 
 .character-diary__card-action {
   margin-top: auto;
+  font-family: var(--font-ui);
   font-weight: 600;
-  color: var(--diary-card-action);
+  color: var(--rule-gold);
   letter-spacing: 0.01em;
+}
+
+body.body--dark .character-diary__card-action {
+  color: var(--glow-aether-d);
 }
 
 .character-diary__card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--diary-card-hover-shadow);
-  border-color: var(--diary-card-hover-border);
+  // Lift: stronger shadow + brighter rule. Stays composed with mat-parchment's
+  // base box-shadow because the hover replaces (not adds) the outer shadow.
+  box-shadow:
+    0 12px 28px rgba(43, 36, 24, 0.14),
+    inset 0 0 28px rgba(186, 155, 91, 0.06);
+  border-color: var(--rule-gold);
+}
+
+body.body--dark .character-diary__card:hover {
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.5),
+    inset 0 0 28px rgba(141, 181, 223, 0.16);
+  border-color: var(--rule-arcane);
 }
 
 .character-diary__card-link:focus-visible {
   outline: none;
-  box-shadow: var(--diary-card-focus-ring);
-  border-radius: 0;
+  box-shadow: inset 0 0 0 2px var(--glow-aether);
+  border-radius: 4px;
+}
+
+body.body--dark .character-diary__card-link:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--glow-aether-d);
 }
 
 .character-diary__empty {
-  color: var(--diary-empty);
+  color: var(--ink-muted);
   padding: 16px 0;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .character-diary__card {
-    transition: none;
-  }
-
-  .character-diary__card:hover {
-    transform: none;
-  }
+body.body--dark .character-diary__empty {
+  color: rgba(217, 225, 234, 0.72);
 }
 </style>

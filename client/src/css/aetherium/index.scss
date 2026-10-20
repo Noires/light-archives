@@ -1,0 +1,10 @@
+// Aetherium — Light Archives "Elpis Reborn" design tokens + materials.
+// Loaded near the top of app.scss so tokens are available to every downstream rule.
+// Order matters: tokens (color → space → type → motion) before composed
+// utility classes (materials), since materials reference the token vars.
+
+@import './color';
+@import './space';
+@import './type';
+@import './motion';
+@import './materials';

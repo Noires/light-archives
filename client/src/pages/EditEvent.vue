@@ -4,7 +4,7 @@
       <h2>{{ eventId ? 'Event bearbeiten' : 'Neues Event erstellen' }}</h2>
       <q-stepper
         v-model="step"
-        class="page-edit-event__stepper"
+        class="page-edit-event__stepper elpis-stepper"
         color="secondary"
         animated
         bordered
@@ -37,16 +37,61 @@
               />
               <q-select
                 v-model="event.locations[0].venueId"
-                label="Verknüpfter Treffpunkt (optional)"
+                label="Treffpunkt verknüpfen (optional)"
+                hint="Deine Treffpunkte erscheinen beim Öffnen. Tippe, um alle Treffpunkte zu durchsuchen."
                 use-input
+                hide-selected
+                fill-input
                 input-debounce="250"
                 emit-value
                 map-options
                 clearable
+                :loading="loadingVenues"
                 :options="venueOptions"
                 @filter="onVenueSearch"
                 @update:model-value="onVenueSelected"
-              />
+              >
+                <template v-slot:prepend>
+                  <q-icon name="place" />
+                </template>
+                <template v-slot:option="scope">
+                  <q-item-label
+                    v-if="isFirstOfVenueGroup(scope.index)"
+                    header
+                    class="page-edit-event__venue-group"
+                  >
+                    {{ scope.opt.group === 'mine' ? 'Meine Treffpunkte' : 'Weitere Treffpunkte' }}
+                  </q-item-label>
+                  <q-item v-bind="scope.itemProps">
+                    <q-item-section>
+                      <q-item-label>{{ scope.opt.venue.name }}</q-item-label>
+                      <q-item-label caption>{{ scope.opt.venue.server }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </template>
+                <template v-slot:no-option>
+                  <q-item>
+                    <q-item-section class="page-edit-event__venue-empty">
+                      <template v-if="venueError">
+                        Treffpunkte konnten nicht geladen werden. Bitte versuche es erneut.
+                      </template>
+                      <template v-else-if="venueQuery.length >= 2">
+                        Kein Treffpunkt „{{ venueQuery }}“ gefunden.
+                      </template>
+                      <template v-else-if="venueQuery.length === 1">
+                        Bitte mindestens 2 Buchstaben eingeben.
+                      </template>
+                      <template v-else>
+                        <span>
+                          Du verwaltest noch keinen Treffpunkt. Tippe den Namen, um einen bestehenden zu suchen,
+                          oder
+                          <a :href="$router.resolve('/create-venue').href" target="_blank" rel="noopener">lege einen Treffpunkt an</a>.
+                        </span>
+                      </template>
+                    </q-item-section>
+                  </q-item>
+                </template>
+              </q-select>
               <q-input
                 v-model="event.locations[0].name"
                 label="Treffpunktname *"
@@ -117,16 +162,30 @@
                     />
                     <div class="page-edit-event__select-group">
                       <div class="page-edit-event__select-title">Event-Typ *</div>
-                      <q-option-group
-                        v-model="event.eventType"
-                        :options="eventTypeOptions"
-                        type="radio"
-                        color="secondary"
-                        class="page-edit-event__options-grid"
-                        :rules="[
-                          $rules.required('Dieses Feld ist erforderlich.'),
-                        ]"
-                      />
+                      <div
+                        class="page-edit-event__type-tile-grid"
+                        role="radiogroup"
+                        aria-label="Event-Typ"
+                      >
+                        <button
+                          v-for="option in eventTypeOptions"
+                          :key="option.value"
+                          type="button"
+                          class="page-edit-event__type-tile"
+                          :class="{
+                            'page-edit-event__type-tile--active': event.eventType === option.value,
+                          }"
+                          role="radio"
+                          :aria-checked="event.eventType === option.value"
+                          @click="event.eventType = option.value"
+                        >
+                          <q-icon
+                            :name="getEventTypeIcon(option.value)"
+                            class="page-edit-event__type-tile-icon"
+                          />
+                          <span class="page-edit-event__type-tile-label">{{ option.label }}</span>
+                        </button>
+                      </div>
                     </div>
                     <div class="page-edit-event__select-group">
                       <div class="page-edit-event__select-title">Nicht jugendfrei (18+)</div>
@@ -331,6 +390,70 @@
                   </section>
                 </div>
               </q-expansion-item>
+              <!-- ER2-804-C: recurring series ("Wiederkehrend") -->
+              <q-expansion-item
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-facts"
+                icon="event_repeat"
+                label="Wiederkehrend"
+                :caption="seriesCaption"
+              >
+                <div class="page-edit-event__expansion-body">
+                  <section class="page-edit-event__form-controls">
+                    <p v-if="!seriesAvailable" class="page-edit-event__section-hint">
+                      Wiederkehrende Reihen sind derzeit nicht verfügbar.
+                    </p>
+                    <template v-else>
+                      <q-toggle
+                        v-model="seriesEnabled"
+                        label="Dieses Event gehört zu einer wiederkehrenden Reihe"
+                      />
+                      <template v-if="seriesEnabled">
+                        <q-select
+                          v-model="seriesChoice"
+                          :options="seriesOptions"
+                          emit-value
+                          map-options
+                          label="Reihe"
+                        />
+                        <template v-if="seriesChoice === 'new'">
+                          <q-input v-model="newSeries.title" label="Name der Reihe" maxlength="200" />
+                          <q-select
+                            v-model="newSeries.rule"
+                            :options="seriesRuleOptions"
+                            emit-value
+                            map-options
+                            label="Rhythmus"
+                          />
+                          <q-select
+                            v-if="newSeries.rule === 'monthly-nth'"
+                            v-model="newSeries.nth"
+                            :options="seriesNthOptions"
+                            emit-value
+                            map-options
+                            label="Welcher Wochentag im Monat"
+                          />
+                          <q-select
+                            v-model="newSeries.weekday"
+                            :options="seriesWeekdayOptions"
+                            emit-value
+                            map-options
+                            label="Wochentag"
+                          />
+                          <div class="page-edit-event__date-time-grid">
+                            <q-input v-model="newSeries.startTime" label="Beginn" mask="##:##" placeholder="20:00" />
+                            <q-input v-model="newSeries.endTime" label="Ende (optional)" mask="##:##" placeholder="23:00" />
+                          </div>
+                        </template>
+                        <p v-if="seriesPreview" class="page-edit-event__section-hint">
+                          {{ seriesPreview }}
+                        </p>
+                      </template>
+                    </template>
+                  </section>
+                </div>
+              </q-expansion-item>
             </div>
           </q-form>
         </q-step>
@@ -377,6 +500,40 @@
               >
                 <div class="page-edit-event__expansion-body">
                   <html-editor v-model="event.extraInfo" />
+                </div>
+              </q-expansion-item>
+              <!-- ER2-803: optional programme -->
+              <q-expansion-item
+                class="page-edit-event__expansion-item"
+                header-class="page-edit-event__expansion-header"
+                group="edit-event-content"
+                icon="schedule"
+                label="Programm (optional)"
+                :caption="programmeCaption"
+              >
+                <div class="page-edit-event__expansion-body">
+                  <p class="page-edit-event__section-hint">
+                    Ein kurzer Ablauf hilft Gästen bei der Planung, z. B. „20:00 – Einlass“.
+                  </p>
+                  <div
+                    v-for="(item, index) in (event.programme || [])"
+                    :key="`programme-${index}`"
+                    class="page-edit-event__programme-row"
+                  >
+                    <q-input v-model="item.time" label="Uhrzeit" maxlength="20" placeholder="20:00" />
+                    <q-input v-model="item.title" label="Programmpunkt" maxlength="120" />
+                    <q-input v-model="item.note" label="Hinweis (optional)" maxlength="300" />
+                    <q-btn
+                      flat
+                      color="negative"
+                      icon="delete"
+                      aria-label="Programmpunkt entfernen"
+                      @click="removeProgrammeItem(index)"
+                    />
+                  </div>
+                  <div class="page-edit-event__inline-actions">
+                    <q-btn flat color="secondary" icon="add" label="Programmpunkt hinzufügen" @click="addProgrammeItem" />
+                  </div>
                 </div>
               </q-expansion-item>
             </div>
@@ -574,6 +731,7 @@
                 label="Änderungen speichern"
                 color="primary"
                 @click="onSubmit"
+                v-elpis-save-pulse="savePulseTrigger"
               />
             </div>
           </q-stepper-navigation>
@@ -611,6 +769,9 @@ import { EventAnnouncementDto } from '@app/shared/dto/events/event-announcement.
 import { EventEditDto } from '@app/shared/dto/events/event-edit.dto';
 import { EventLinkDto } from '@app/shared/dto/events/event-link.dto';
 import { EventLocationDto } from '@app/shared/dto/events/event-location.dto';
+import { EventSeriesDto } from '@app/shared/dto/events/event-series.dto';
+import { EventSeriesRule } from '@app/shared/enums/event-series-rule.enum';
+import { computeNextOccurrences, formatEventSeriesLabel, GERMAN_WEEKDAYS } from '@app/shared/event-series';
 import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { VenueSummaryDto } from '@app/shared/dto/venues/venue-summary.dto';
 import { EventType } from '@app/shared/enums/event-type.enum';
@@ -619,7 +780,7 @@ import errors from '@app/shared/errors';
 import SharedConstants from '@app/shared/SharedConstants';
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
 import { QForm } from 'quasar';
-import { EventTypeOptions } from 'src/common/event-types';
+import { EventTypeOptions, getEventTypeIcon as resolveEventTypeIcon } from 'src/common/event-types';
 import HtmlEditor from 'components/common/HtmlEditor.vue';
 import EventAnnouncementEditor from 'components/event/EventAnnouncementEditor.vue';
 import { DateTime } from 'luxon';
@@ -691,6 +852,11 @@ async function load(params: RouteParams): Promise<{
 		(this as PageEditEvent).setContent(await load(to.params));
 	},
   watch: {
+    seriesChoice(value: number | 'new' | null) {
+      if (value === 'new') {
+        (this as PageEditEvent).prefillNewSeriesFromEvent();
+      }
+    },
     startDate() {
       (this as PageEditEvent).syncStartDateTime();
     },
@@ -723,8 +889,16 @@ export default class PageEditEvent extends Vue {
   eventBackup = new EventEditDto();
   contentNoteOptions: { label: string; value: string }[] = [];
   readonly eventTypeOptions = EventTypeOptions;
+  readonly getEventTypeIcon = resolveEventTypeIcon;
   readonly minDiscordBannerAspectRatio = SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO;
   venueOptions: VenueOption[] = [];
+  // Venues the user owns or may edit: shown as soon as the picker opens, so
+  // nobody has to guess a name (report: "die Liste bleibt leer").
+  editableVenues: VenueSummaryDto[] = [];
+  loadingVenues = false;
+  venueQuery = '';
+  venueError = false;
+  private editableVenuesLoad: Promise<void> | null = null;
 
   startDate: string | null = null;
   startTime: string | null = null;
@@ -734,6 +908,7 @@ export default class PageEditEvent extends Vue {
   step = this.STEP_LOCATION;
   loaded = false;
   saving = false;
+  savePulseTrigger = 0;
 
   confirmRevert = false;
 
@@ -742,6 +917,33 @@ export default class PageEditEvent extends Vue {
   factsTimingExpanded = false;
   eventLinksExpanded = false;
   private syncingDateTimeFields = false;
+
+  // ER2-804-C: recurring series state
+  seriesAvailable = true;
+  seriesEnabled = false;
+  seriesChoice: number | 'new' | null = null;
+  mySeries: EventSeriesDto[] = [];
+  newSeries = {
+    title: '',
+    rule: EventSeriesRule.WEEKLY as EventSeriesRule,
+    weekday: 6,
+    nth: 1 as number | null,
+    startTime: '20:00',
+    endTime: '' as string | null,
+  };
+  readonly seriesRuleOptions = [
+    { label: 'Wöchentlich', value: EventSeriesRule.WEEKLY },
+    { label: 'Alle zwei Wochen', value: EventSeriesRule.BIWEEKLY },
+    { label: 'Monatlich (z. B. jeden ersten Freitag)', value: EventSeriesRule.MONTHLY_NTH },
+  ];
+  readonly seriesNthOptions = [
+    { label: 'Erster', value: 1 },
+    { label: 'Zweiter', value: 2 },
+    { label: 'Dritter', value: 3 },
+    { label: 'Vierter', value: 4 },
+    { label: 'Letzter', value: -1 },
+  ];
+  readonly seriesWeekdayOptions = GERMAN_WEEKDAYS.map((label, index) => ({ label, value: index + 1 }));
 
   get canGoBack() {
     return this.step > this.STEP_LOCATION;
@@ -811,6 +1013,7 @@ export default class PageEditEvent extends Vue {
     }
 
     this.venueOptions = [];
+    this.editableVenuesLoad = this.loadEditableVenues();
     if (this.eventBackup.locations[0]?.venueId) {
       void this.seedVenueOption(this.eventBackup.locations[0].venueId);
     }
@@ -827,6 +1030,120 @@ export default class PageEditEvent extends Vue {
     this.factsBasicsExpanded = true;
     this.factsTimingExpanded = false;
     this.eventLinksExpanded = (this.event.links?.length || 0) > 0;
+    this.resetSeriesState();
+  }
+
+  // ER2-804-C: recurring series
+  private resetSeriesState() {
+    this.seriesEnabled = !!this.event.seriesId;
+    this.seriesChoice = this.event.seriesId || null;
+    void this.loadMySeries();
+  }
+
+  private async loadMySeries() {
+    try {
+      this.mySeries = await this.$api.eventSeries.getMySeries();
+      this.seriesAvailable = true;
+    } catch (e) {
+      // Older API versions do not know event series
+      this.mySeries = [];
+      this.seriesAvailable = false;
+    }
+  }
+
+  get seriesOptions() {
+    return [
+      ...this.mySeries.map((series) => ({
+        label: `${series.title} (${series.label || ''})`,
+        value: series.id as number,
+      })),
+      { label: 'Neue Reihe anlegen …', value: 'new' as const },
+    ];
+  }
+
+  get seriesCaption() {
+    if (!this.seriesEnabled || this.seriesChoice === null) {
+      return 'Einmaliges Event';
+    }
+
+    if (this.seriesChoice === 'new') {
+      return 'Neue Reihe';
+    }
+
+    const series = this.mySeries.find((candidate) => candidate.id === this.seriesChoice);
+    return series?.label || 'Teil einer Reihe';
+  }
+
+  get seriesPreview(): string {
+    let spec: Parameters<typeof computeNextOccurrences>[0] | null = null;
+
+    if (this.seriesChoice === 'new') {
+      spec = { ...this.newSeries, endTime: this.newSeries.endTime || null };
+    } else if (this.seriesChoice !== null) {
+      const series = this.mySeries.find((candidate) => candidate.id === this.seriesChoice);
+      spec = series ? { ...series } : null;
+    }
+
+    if (!spec) {
+      return '';
+    }
+
+    const next = computeNextOccurrences(spec, Date.now(), 3, SharedConstants.FFXIV_SERVER_TIMEZONE);
+    if (next.length === 0) {
+      return 'Bitte Rhythmus, Wochentag und Beginn (HH:MM) angeben.';
+    }
+
+    const dates = next
+      .map((occurrence) => DateTime.fromMillis(occurrence.startDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE })
+        .toFormat('dd.MM.yyyy HH:mm'))
+      .join(', ');
+    return `${formatEventSeriesLabel(spec)} – nächste Termine: ${dates}`;
+  }
+
+  prefillNewSeriesFromEvent() {
+    this.newSeries.title = this.newSeries.title || this.event.title || '';
+
+    if (this.event.startDateTime) {
+      const start = DateTime.fromMillis(this.event.startDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE });
+      this.newSeries.weekday = start.weekday;
+      this.newSeries.startTime = start.toFormat('HH:mm');
+      this.newSeries.nth = Math.min(4, Math.ceil(start.day / 7));
+    }
+
+    if (this.event.endDateTime) {
+      this.newSeries.endTime = DateTime.fromMillis(this.event.endDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE })
+        .toFormat('HH:mm');
+    }
+  }
+
+  /** Resolves the series selection into event.seriesId; creates a new series when requested. */
+  private async applySeriesSelection() {
+    if (!this.seriesAvailable) {
+      return;
+    }
+
+    if (!this.seriesEnabled || this.seriesChoice === null) {
+      this.event.seriesId = null;
+      return;
+    }
+
+    if (this.seriesChoice === 'new') {
+      const characterId = this.selectedCharacterId || this.$store.getters.characterId;
+      const created = await this.$api.eventSeries.createSeries(new EventSeriesDto({
+        characterId: characterId || undefined,
+        title: (this.newSeries.title || this.event.title || '').trim(),
+        rule: this.newSeries.rule,
+        weekday: this.newSeries.weekday,
+        nth: this.newSeries.rule === EventSeriesRule.MONTHLY_NTH ? this.newSeries.nth : null,
+        startTime: this.newSeries.startTime,
+        endTime: this.newSeries.endTime || null,
+        venueId: this.event.locations[0]?.venueId || null,
+      }));
+      this.mySeries = [...this.mySeries, created];
+      this.seriesChoice = created.id as number;
+    }
+
+    this.event.seriesId = this.seriesChoice;
   }
 
   private normalizeEvent(target: EventEditDto) {
@@ -848,6 +1165,8 @@ export default class PageEditEvent extends Vue {
       target.registrationDeadlineTime = null;
     }
     target.extraInfo = target.extraInfo || '';
+    // ER2-803: copy so that edits never leak into the backup
+    target.programme = (target.programme || []).map((item) => ({ ...item }));
     target.links = this.normalizeLinks(target.links, target.link, target.linkText);
     target.link = target.links[0]?.url || '';
     target.linkText = target.links[0]?.label || '';
@@ -1143,6 +1462,24 @@ export default class PageEditEvent extends Vue {
     this.event.announcements.splice(index, 1);
   }
 
+  // ER2-803: programme
+  get programmeCaption() {
+    const count = this.event.programme?.length || 0;
+    return count > 0 ? `${count} ${count === 1 ? 'Programmpunkt' : 'Programmpunkte'}` : 'Kein Programm';
+  }
+
+  addProgrammeItem() {
+    if (!this.event.programme) {
+      this.event.programme = [];
+    }
+
+    this.event.programme.push({ time: '', title: '', note: '' });
+  }
+
+  removeProgrammeItem(index: number) {
+    this.event.programme?.splice(index, 1);
+  }
+
   addEventLink() {
     if (!this.event.links) {
       this.event.links = [];
@@ -1217,28 +1554,66 @@ export default class PageEditEvent extends Vue {
     return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(normalized) ? normalized : null;
   }
 
+  private async loadEditableVenues() {
+    this.loadingVenues = true;
+    try {
+      this.editableVenues = await this.$api.venues.getEditableVenues();
+    } catch (e) {
+      this.editableVenues = [];
+      this.venueError = true;
+    } finally {
+      this.loadingVenues = false;
+    }
+  }
+
+  // Own venues first (all worlds), then other venues matching the name. No
+  // world filter: the label shows the world, and a venue on another world
+  // than the selected character must still be findable.
   async onVenueSearch(value: string, update: (fn: () => void) => void) {
     const query = value.trim();
+    this.venueQuery = query;
+    this.venueError = false;
+    await this.editableVenuesLoad;
 
-    if (query.length < 2) {
-      update(() => {
-        this.venueOptions = [];
-      });
+    const needle = query.toLowerCase();
+    const mine = this.editableVenues
+      .filter((venue) => !needle || venue.name.toLowerCase().includes(needle))
+      .map((venue) => this.toVenueOption(venue, 'mine'));
+
+    let others: VenueOption[] = [];
+    if (query.length >= 2) {
+      try {
+        const venues = await this.$api.venues.searchVenues(query);
+        others = venues
+          .filter((venue) => !mine.some((option) => option.value === venue.id))
+          .map((venue) => this.toVenueOption(venue, 'other'));
+      } catch (e) {
+        this.venueError = true;
+      }
+    }
+
+    if (this.venueQuery !== query) {
+      // A newer search has started; let it fill the list.
+      update(() => undefined);
       return;
     }
 
-    const server = this.event.locations[0]?.server || undefined;
-    const venues = await this.$api.venues.searchVenues(query, server || undefined);
+    update(() => {
+      this.venueOptions = [...mine, ...others];
+    });
+  }
 
-    const options = venues.map((venue) => ({
+  isFirstOfVenueGroup(index: number): boolean {
+    return index === 0 || this.venueOptions[index - 1]?.group !== this.venueOptions[index]?.group;
+  }
+
+  private toVenueOption(venue: VenueSummaryDto, group?: VenueOption['group']): VenueOption {
+    return {
       label: `${venue.name} (${venue.server})`,
       value: venue.id,
       venue,
-    }));
-
-    update(() => {
-      this.venueOptions = options;
-    });
+      group: group || (this.editableVenues.some((own) => own.id === venue.id) ? 'mine' : 'other'),
+    };
   }
 
   async onVenueSelected(venueId: number | null) {
@@ -1272,20 +1647,11 @@ export default class PageEditEvent extends Vue {
       if (option) {
         this.venueOptions = this.venueOptions.map((candidate) =>
           candidate.value === venueId
-            ? {
-                ...candidate,
-                label: `${summary.name} (${summary.server})`,
-                venue: summary,
-              }
+            ? { ...candidate, label: `${summary.name} (${summary.server})`, venue: summary }
             : candidate,
         );
       } else {
-        const seededOption = {
-          label: `${summary.name} (${summary.server})`,
-          value: summary.id,
-          venue: summary,
-        };
-        this.venueOptions = [seededOption];
+        this.venueOptions = [this.toVenueOption(summary)];
       }
 
       this.applyVenueToLocation(updatedLocation, summary);
@@ -1299,13 +1665,8 @@ export default class PageEditEvent extends Vue {
     try {
       const venue = await this.$api.venues.getVenue(venueId);
       const summary = this.toVenueSummary(venue);
-      this.venueOptions = [
-        {
-          label: `${summary.name} (${summary.server})`,
-          value: summary.id,
-          venue: summary,
-        },
-      ];
+      await this.editableVenuesLoad;
+      this.venueOptions = [this.toVenueOption(summary)];
 
       const backupLocation = this.eventBackup.locations[0];
       if (backupLocation && backupLocation.venueId === venueId) {
@@ -1559,6 +1920,7 @@ export default class PageEditEvent extends Vue {
       }
 
       this.applyAnnouncementDefaults();
+      await this.applySeriesSelection();
 
       if (!this.eventId) {
         if (!this.selectedCharacterId) {
@@ -1575,6 +1937,7 @@ export default class PageEditEvent extends Vue {
       }
 
       this.eventBackup = new EventEditDto(this.event);
+      this.savePulseTrigger++;
 
       notifySuccess('Event gespeichert.', {
         label: 'Anschauen',
@@ -1631,6 +1994,8 @@ type VenueOption = {
   label: string;
   value: number;
   venue: VenueSummaryDto;
+  /** "Meine Treffpunkte" vs. "Weitere Treffpunkte" in the picker. */
+  group: 'mine' | 'other';
 };
 </script>
 
@@ -1664,6 +2029,11 @@ body.body--dark .page-edit-event {
   margin-bottom: 18px;
   background: transparent;
 }
+
+// ELPIS-310 / -311 prism-rule + Crystal-facet stepper chrome was promoted
+// to the shared `.elpis-stepper` rule in app.scss by ELPIS-604. The class
+// is co-applied on the q-stepper above; this leaves only the page-local
+// margin/background rule above.
 
 .page-edit-event__accordion {
   display: grid;
@@ -1707,6 +2077,20 @@ body.body--dark .page-edit-event {
   color: var(--edit-event-section-hint);
 }
 
+// Venue picker menu (teleported): group subheads and the empty-state text.
+.page-edit-event__venue-group {
+  padding: 10px 16px 4px;
+  font: 600 11px/16px var(--font-ui);
+  letter-spacing: var(--ls-eyebrow, 0.08em);
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.page-edit-event__venue-empty {
+  max-width: 420px;
+  color: var(--ink-muted);
+}
+
 .page-edit-event__preview {
   margin-bottom: 24px;
 }
@@ -1739,6 +2123,115 @@ body.body--dark .page-edit-event {
   margin: 0;
 }
 
+// ELPIS-312 — event-type tile selector. Each option is a Vellum tile with
+// icon + label; selected state gets gold rule + glow. Replaces the prior
+// q-option-group radio rendering.
+.page-edit-event__type-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.page-edit-event__type-tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background-color: var(--surface-vellum);
+  border: 1px solid var(--rule-gold-soft);
+  border-radius: 6px;
+  color: var(--ink-primary);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-ui);
+  font-size: var(--type-scale-1);
+  transition:
+    border-color var(--motion-fast) var(--ease-elpis),
+    box-shadow var(--motion-fast) var(--ease-elpis),
+    transform var(--motion-fast) var(--ease-elpis),
+    background-color var(--motion-fast) var(--ease-elpis);
+}
+
+.page-edit-event__type-tile:hover {
+  border-color: var(--rule-gold);
+  background-color: rgba(186, 155, 91, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 2px 8px rgba(186, 155, 91, 0.18);
+  transform: translateY(-1px);
+}
+
+.page-edit-event__type-tile:focus-visible {
+  outline: none;
+  border-color: var(--rule-gold);
+  box-shadow:
+    inset 0 0 0 1px var(--rule-gold-soft),
+    0 0 0 3px var(--glow-aether);
+}
+
+.page-edit-event__type-tile--active {
+  background-color: rgba(186, 155, 91, 0.18);
+  border-color: var(--rule-gold);
+  box-shadow:
+    inset 0 0 0 1px var(--rule-gold-soft),
+    0 0 0 2px rgba(186, 155, 91, 0.18),
+    0 4px 14px rgba(186, 155, 91, 0.22);
+}
+
+.page-edit-event__type-tile-icon {
+  font-size: 22px;
+  color: var(--rule-gold);
+  flex: 0 0 auto;
+}
+
+.page-edit-event__type-tile--active .page-edit-event__type-tile-icon {
+  color: var(--rule-gold);
+  filter: drop-shadow(0 0 8px rgba(186, 155, 91, 0.5));
+}
+
+.page-edit-event__type-tile-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+body.body--dark .page-edit-event__type-tile {
+  background-color: var(--surface-deep);
+  border-color: var(--rule-arcane-soft);
+  color: var(--ink-luminous);
+}
+
+body.body--dark .page-edit-event__type-tile:hover {
+  border-color: var(--rule-arcane);
+  background-color: rgba(141, 181, 223, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 2px 8px rgba(141, 181, 223, 0.3);
+}
+
+body.body--dark .page-edit-event__type-tile:focus-visible {
+  border-color: var(--rule-arcane);
+  box-shadow:
+    inset 0 0 0 1px var(--rule-arcane-soft),
+    0 0 0 3px var(--glow-aether-d);
+}
+
+body.body--dark .page-edit-event__type-tile--active {
+  background-color: rgba(141, 181, 223, 0.24);
+  border-color: var(--rule-arcane);
+  box-shadow:
+    inset 0 0 0 1px var(--rule-arcane-soft),
+    0 0 0 2px rgba(141, 181, 223, 0.32),
+    0 4px 14px rgba(183, 211, 243, 0.22);
+}
+
+body.body--dark .page-edit-event__type-tile-icon {
+  color: var(--glow-aether-d);
+}
+
+body.body--dark .page-edit-event__type-tile--active .page-edit-event__type-tile-icon {
+  filter: drop-shadow(0 0 8px rgba(183, 211, 243, 0.55));
+}
+
 .page-edit-event__date-time-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1756,6 +2249,20 @@ body.body--dark .page-edit-event {
   gap: 10px;
   align-items: center;
   margin-bottom: 8px;
+}
+
+.page-edit-event__programme-row {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 599px) {
+  .page-edit-event__programme-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .page-edit-event__inline-actions {

@@ -1,5 +1,5 @@
 import { UserInfo } from '@app/auth/model/user-info';
-import { Character, ContentNote, Image, Server, Venue, VenueMembership, VenueOffering, VenueOfferingCategory } from '@app/entity';
+import { Character, ContentNote, EventLocation, Image, Server, Venue, VenueMembership, VenueOffering, VenueOfferingCategory } from '@app/entity';
 import { VenueTag } from '@app/entity/venue-tag.entity';
 import { CharacterIdWrapper } from '@app/shared/dto/common/character-id-wrapper.dto';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
@@ -12,7 +12,6 @@ import { VenueStaffMemberDto } from '@app/shared/dto/venues/venue-staff-member.d
 import { EventIconDto } from '@app/shared/dto/events/event-icon.dto';
 import { EventLinkDto } from '@app/shared/dto/events/event-link.dto';
 import { EventType } from '@app/shared/enums/event-type.enum';
-import { HousingArea } from '@app/shared/enums/housing-area.enum';
 import { ImageCategory } from '@app/shared/enums/image-category.enum';
 import { ImageFormat } from '@app/shared/enums/image-format.enum';
 import { MembershipStatus } from '@app/shared/enums/membership-status.enum';
@@ -26,20 +25,15 @@ import crypto from 'crypto';
 import { DateTime } from 'luxon';
 import sharp from 'sharp';
 import { Connection, EntityManager, FindOneOptions, IsNull, Not, Repository } from 'typeorm';
+import { hashFile } from '@app/security';
 import { assertUserCharacterId, checkCarrdProfile, getVerifiedCharacter } from '../../../common/api-checks';
 import { Contains } from '../../../common/db';
 import { getBannerAspectRatioErrorMessage } from '../../../common/image-requirements';
 import { ImagesService } from '../images/images.service';
 import { StorageService } from '../images/storage.service';
-import { hashFile } from '@app/security';
+import { VenueOpeningHoursService } from './venue-opening-hours.service';
+import { deriveVenueTags, HOUSING_AREA_LABELS, selectNextEvents, VenueEventRow } from './venue-summary.helpers';
 
-const HOUSING_AREA_LABELS: Record<HousingArea, string> = {
-  [HousingArea.MIST]: 'Dorf des Nebels',
-  [HousingArea.LAVENDER_BEDS]: 'Lavendelbeete',
-  [HousingArea.GOBLET]: 'Kelchkuppe',
-  [HousingArea.SHIROGANE]: 'Shirogane',
-  [HousingArea.EMPYREUM]: 'Empyreum',
-};
 
 @Injectable()
 export class VenuesService {
@@ -52,7 +46,111 @@ export class VenuesService {
     private connection: Connection,
     private imagesService: ImagesService,
     private storageService: StorageService,
+    private openingHoursService: VenueOpeningHoursService,
   ) {}
+
+  // ER2-805: attach the computed opening status (optional fields) to summaries
+  private async toVenueSummaryDtos(venues: Venue[]): Promise<VenueSummaryDto[]> {
+    const venueIds = venues.map((venue) => venue.id);
+    const [statuses, bannerUrls, tags, nextEvents] = await Promise.all([
+      this.openingHoursService.getOpeningStatuses(venues),
+      this.getBannerUrls(venueIds),
+      this.getTagNames(venueIds),
+      this.getNextEvents(venueIds),
+    ]);
+
+    return venues.map((venue) => ({
+      ...this.toVenueSummaryDto(venue),
+      ...(statuses.get(venue.id) || {}),
+      bannerUrl: bannerUrls.get(venue.id) || null,
+      tags: deriveVenueTags(tags.get(venue.id) || [], venue.location, venue.housingArea),
+      adultOnly: venue.adultOnly ?? !!venue.eventAdultOnly,
+      nextEvent: nextEvents.get(venue.id) || null,
+    }));
+  }
+
+  // ER2 round 2: batched summary extras (one query each, no N+1)
+  private async getBannerUrls(venueIds: number[]): Promise<Map<number, string>> {
+    const result = new Map<number, string>();
+
+    if (venueIds.length === 0) {
+      return result;
+    }
+
+    const rows: { venueId: number; ownerId: number; hash: string; filename: string }[] = await this.venueRepo
+      .createQueryBuilder('venue')
+      .innerJoin('venue.banner', 'banner')
+      .select('venue.id', 'venueId')
+      .addSelect('banner.ownerId', 'ownerId')
+      .addSelect('banner.hash', 'hash')
+      .addSelect('banner.filename', 'filename')
+      .where('venue.id IN (:...venueIds)', { venueIds })
+      .getRawMany();
+
+    for (const row of rows) {
+      result.set(Number(row.venueId), this.storageService.getUrl(`${row.ownerId}/${row.hash}/${row.filename}`));
+    }
+
+    return result;
+  }
+
+  private async getTagNames(venueIds: number[]): Promise<Map<number, string[]>> {
+    const result = new Map<number, string[]>();
+
+    if (venueIds.length === 0) {
+      return result;
+    }
+
+    const rows: { venueId: number; name: string }[] = await this.connection
+      .getRepository(VenueTag)
+      .createQueryBuilder('tag')
+      .select('tag.venueId', 'venueId')
+      .addSelect('tag.name', 'name')
+      .where('tag.venueId IN (:...venueIds)', { venueIds })
+      .orderBy('tag.id', 'ASC')
+      .getRawMany();
+
+    for (const row of rows) {
+      const venueId = Number(row.venueId);
+      result.set(venueId, [...(result.get(venueId) || []), row.name]);
+    }
+
+    return result;
+  }
+
+  private async getNextEvents(venueIds: number[]): Promise<ReturnType<typeof selectNextEvents>> {
+    if (venueIds.length === 0) {
+      return new Map();
+    }
+
+    const now = new Date();
+    const rows: { venueId: number; id: number; title: string; startDateTime: Date; endDateTime: Date | null }[] =
+      await this.connection
+        .getRepository(EventLocation)
+        .createQueryBuilder('location')
+        .innerJoin('location.event', 'event')
+        .select('location.venueId', 'venueId')
+        .addSelect('event.id', 'id')
+        .addSelect('event.title', 'title')
+        .addSelect('event.startDateTime', 'startDateTime')
+        .addSelect('event.endDateTime', 'endDateTime')
+        .where('location.venueId IN (:...venueIds)', { venueIds })
+        .andWhere('event.hidden = :hidden', { hidden: false })
+        .andWhere('event.deletedAt IS NULL')
+        .andWhere('(event.startDateTime >= :now OR event.endDateTime >= :now)', { now })
+        .getRawMany();
+
+    return selectNextEvents(
+      rows.map((row): VenueEventRow => ({
+        venueId: Number(row.venueId),
+        id: Number(row.id),
+        title: row.title,
+        startDateTime: new Date(row.startDateTime),
+        endDateTime: row.endDateTime ? new Date(row.endDateTime) : null,
+      })),
+      now,
+    );
+  }
 
 	async getVenues(filter: { characterId?: number, limit?: number }): Promise<VenueSummaryDto[]> {
 		const myVenues = await this.venueRepo.find({
@@ -62,7 +160,7 @@ export class VenuesService {
 			take: filter.limit || undefined,
 		});
 
-		return myVenues.map(venue => this.toVenueSummaryDto(venue));
+		return this.toVenueSummaryDtos(myVenues);
 	}
 
   async getEditableVenues(user: UserInfo): Promise<VenueSummaryDto[]> {
@@ -94,7 +192,7 @@ export class VenuesService {
       uniqueVenues.set(venue.id, venue);
     }
 
-    return Array.from(uniqueVenues.values()).map((venue) => this.toVenueSummaryDto(venue));
+    return this.toVenueSummaryDtos(Array.from(uniqueVenues.values()));
   }
 
   async searchVenues(query: string, server?: string): Promise<VenueSummaryDto[]> {
@@ -118,7 +216,7 @@ export class VenuesService {
       take: 10,
     });
 
-    return venues.map((venue) => this.toVenueSummaryDto(venue));
+    return this.toVenueSummaryDtos(venues);
   }
 
 	private toVenueSummaryDto(venue: Venue): VenueSummaryDto {
@@ -361,9 +459,12 @@ export class VenuesService {
 
     const isSelectedCharacterOwner = !!characterId && venue.owner.id === characterId;
     const membership = characterId ? await this.getMembership(this.venueMembershipRepo, venue.id, characterId) : null;
-    const membershipStatus = membership
-      ? membership.status
-      : (isSelectedCharacterOwner ? MembershipStatus.CONFIRMED : null);
+    let membershipStatus: MembershipStatus | null = null;
+    if (membership) {
+      membershipStatus = membership.status;
+    } else if (isSelectedCharacterOwner) {
+      membershipStatus = MembershipStatus.CONFIRMED;
+    }
     const canEdit = isSelectedCharacterOwner || (!!membership && membership.status === MembershipStatus.CONFIRMED && membership.canEdit);
     const canManageMembers = isSelectedCharacterOwner
       || (!!membership && membership.status === MembershipStatus.CONFIRMED && membership.canManageMembers);
@@ -390,7 +491,10 @@ export class VenuesService {
       await this.imagesService.ensureIconThumb(eventIcon);
     }
 
+    const openingStatus = (await this.openingHoursService.getOpeningStatuses([venue])).get(venue.id) || {};
+
 		return {
+      ...openingStatus,
 			id: venue.id,
 			mine: !!venue.owner && !!user && userCharacterIds.includes(venue.owner!.id),
       membershipStatus,
@@ -411,6 +515,7 @@ export class VenuesService {
       eventType: this.normalizeEventType(venue.eventType),
       eventAdultOnly: !!venue.eventAdultOnly,
       eventClosed: !!venue.eventClosed,
+      adultOnly: venue.adultOnly ?? null,
       eventRegistrationDeadlineDays: venue.eventRegistrationDeadlineDays,
       eventRegistrationDeadlineTime,
       eventStartDateTime: venue.eventStartDateTime ? venue.eventStartDateTime.getTime() : null,
@@ -617,6 +722,9 @@ export class VenuesService {
     venue.eventType = eventType;
     venue.eventAdultOnly = venueDto.eventAdultOnly ?? this.isLegacyAdultType(venueDto.eventType);
     venue.eventClosed = !!venueDto.eventClosed;
+    if (venueDto.adultOnly !== undefined) {
+      venue.adultOnly = venueDto.adultOnly ?? null;
+    }
     venue.eventRegistrationDeadlineDays = venue.eventClosed
       ? this.normalizeRegistrationDeadlineDays(venueDto.eventRegistrationDeadlineDays)
       : null;
@@ -644,18 +752,19 @@ export class VenuesService {
     const effectiveEndTime = hasExplicitEndTemplate
       ? normalizedEndTime
       : this.toTimeStringFromDate(legacyEndDateTime);
+    const legacyEndDurationDays = legacyStartDateTime && legacyEndDateTime
+      ? Math.max(
+          0,
+          Math.floor(
+            DateTime.fromJSDate(legacyEndDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE })
+              .diff(DateTime.fromJSDate(legacyStartDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE }), 'days')
+              .days,
+          ),
+        )
+      : null;
     const effectiveEndDurationDays = hasExplicitEndTemplate
       ? normalizedEndDurationDays
-      : (legacyStartDateTime && legacyEndDateTime
-        ? Math.max(
-            0,
-            Math.floor(
-              DateTime.fromJSDate(legacyEndDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE })
-                .diff(DateTime.fromJSDate(legacyStartDateTime, { zone: SharedConstants.FFXIV_SERVER_TIMEZONE }), 'days')
-                .days,
-            ),
-          )
-        : null);
+      : legacyEndDurationDays;
 
     if (effectiveStartWeekday !== null && effectiveStartTime === null) {
       throw new BadRequestException('eventStartTime is required when eventStartWeekday is set');
@@ -1278,7 +1387,9 @@ export class VenuesService {
         await em.getRepository(Image).delete(imageIdsToDelete);
       }
 
-      // Create new structure
+      // Create new structure. Sequential on purpose: rows are inserted in display
+      // order on the single transaction connection and children need their parent's id.
+      /* eslint-disable no-await-in-loop */
       for (let i = 0; i < dto.categories.length; i++) {
         const catDto = dto.categories[i];
         const cat = em.getRepository(VenueOfferingCategory).create({
@@ -1315,6 +1426,7 @@ export class VenuesService {
           }
         }
       }
+      /* eslint-enable no-await-in-loop */
     });
 
     // Delete orphaned images from S3 after successful transaction

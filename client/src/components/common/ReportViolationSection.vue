@@ -1,9 +1,9 @@
 <template>
 	<section class="report-violation-section">
-		<q-btn flat color="secondary" label="Link kopieren" @click="copyLink" />
+		<q-btn v-if="!hideCopyLink" flat class="elpis-btn elpis-btn--ghost" icon="link" label="Link kopieren" @click="copyLink" />
 		<template v-if="verified">
-			<q-btn v-if="!reported" flat color="secondary" label="Seite melden" @click="reportPage" />
-			<q-btn v-else disable flat color="secondary" label="Seite gemeldet" />
+			<q-btn v-if="!reported" flat class="elpis-btn elpis-btn--ghost" icon="flag" label="Seite melden" @click="reportPage" />
+			<q-btn v-else disable flat class="elpis-btn elpis-btn--ghost" icon="flag" label="Seite gemeldet" />
 		</template>
 	</section>
 </template>
@@ -22,6 +22,11 @@ class Props {
 
 	pageId = prop<number>({
 		required: true,
+	});
+
+	/** Hide "Link kopieren" on pages whose header already has a "Teilen" action. */
+	hideCopyLink = prop<boolean>({ type: Boolean,
+		default: false,
 	});
 }
 

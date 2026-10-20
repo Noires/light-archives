@@ -1,196 +1,282 @@
 <template>
   <div class="event-view">
-    <banner-view :banner="event.banner" />
-
-    <header class="event-view__header">
-      <div class="event-view__icon">
-        <q-img
-          v-if="event.icon"
-          class="event-view__icon-img"
-          :src="eventIconUrl"
-          :ratio="1"
-          fit="cover"
+    <header class="event-view__hero" :class="{ 'event-view__hero--image': !!bannerUrl }">
+      <img v-if="bannerUrl" class="event-view__hero-img" :src="bannerUrl" alt="" />
+      <div class="event-view__scrim" aria-hidden="true"></div>
+      <div class="event-view__hero-inner">
+        <breadcrumbs
+          v-if="!preview"
+          class="event-view__crumbs"
+          :items="[{ label: 'Events', to: '/calendar' }, { label: event.title }]"
         />
-        <q-icon v-else name="event" />
-      </div>
-      <div class="event-view__title-block">
-        <h2 class="event-view__title regular-header-font">{{ event.title }}</h2>
-        <div class="event-view__subtitle">
-          <span v-if="hasStartDate" class="event-view__time">
-            {{ timeRangeServer }}
-            <q-tooltip>{{ timeRangeLocal }}</q-tooltip>
-          </span>
-          <span class="event-view__type">{{ eventTypeLabel }}</span>
+        <div class="event-view__hero-row">
+          <time v-if="hasStartDate" class="event-view__date" :datetime="startIso">
+            <span class="event-view__date-weekday">{{ start.toFormat('ccc') }}</span>
+            <span class="event-view__date-day">{{ start.toFormat('d') }}</span>
+            <span class="event-view__date-month">{{ start.toFormat('LLL') }}</span>
+          </time>
+          <div class="event-view__hero-text">
+            <div class="event-view__chips">
+              <span v-if="live" class="event-view__badge event-view__badge--live">
+                <span class="event-view__live-dot" aria-hidden="true"></span>
+                Live
+              </span>
+              <span class="event-view__badge">
+                <q-icon :name="eventTypeIcon" aria-hidden="true" />
+                {{ eventTypeLabel }}
+              </span>
+              <span class="event-view__badge" :class="{ 'event-view__badge--adult': adult }">
+                {{ adult ? '18+' : 'SFW' }}
+              </span>
+              <span v-if="seriesLabel" class="event-view__badge">
+                <q-icon name="repeat" aria-hidden="true" />
+                {{ seriesLabel }}
+              </span>
+            </div>
+            <h1 class="event-view__title">{{ event.title }}</h1>
+            <p class="event-view__subline">
+              <span v-if="hasStartDate">
+                <q-icon name="schedule" aria-hidden="true" />
+                {{ timeRangeServer }}
+                <q-tooltip>Deine Ortszeit: {{ timeRangeLocal }}</q-tooltip>
+              </span>
+              <span v-if="primaryLocation">
+                <q-icon name="place" aria-hidden="true" />
+                {{ primaryLocation }}
+              </span>
+              <span v-if="organiser">
+                <q-icon name="person" aria-hidden="true" />
+                {{ organiser }}
+              </span>
+            </p>
+          </div>
         </div>
       </div>
     </header>
 
-    <section class="event-view__meta">
-      <div v-if="hasStartDate" class="event-view__meta-row">
-        <q-icon name="schedule" />
-        <div class="event-view__meta-body">
-          <div class="event-view__meta-label">Beginn</div>
-          <div class="event-view__meta-value">
-            {{ formatServer(event.startDateTime) }}
-            <q-tooltip>{{ formatLocal(event.startDateTime) }}</q-tooltip>
-          </div>
-        </div>
-      </div>
-      <div v-if="hasEndDate" class="event-view__meta-row">
-        <q-icon name="schedule" />
-        <div class="event-view__meta-body">
-          <div class="event-view__meta-label">Ende</div>
-          <div class="event-view__meta-value">
-            {{ formatServer(event.endDateTime) }}
-            <q-tooltip>{{ formatLocal(event.endDateTime) }}</q-tooltip>
-          </div>
-        </div>
-      </div>
-      <div class="event-view__meta-row">
-        <q-icon name="category" />
-        <div class="event-view__meta-body">
-          <div class="event-view__meta-label">Typ</div>
-          <div class="event-view__meta-value">{{ eventTypeLabel }}</div>
-        </div>
-      </div>
-      <div v-if="eventLinks.length" class="event-view__meta-row">
-        <q-icon name="link" />
-        <div class="event-view__meta-body">
-          <div class="event-view__meta-label">Links</div>
-          <div class="event-view__meta-value">
-            <div v-for="(item, index) in eventLinks" :key="`event-link-${index}`">
-              <a :href="item.url" target="_blank" rel="noopener">{{ linkLabel(item.url, item.label) }}</a>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="event-view__meta-row">
-        <q-icon :name="event.closedEvent ? 'lock' : 'lock_open'" />
-        <div class="event-view__meta-body">
-          <div class="event-view__meta-label">Geschlossenes Event</div>
-          <div class="event-view__meta-value">
-            {{ event.closedEvent ? 'Ja' : 'Nein' }}
-            <span v-if="event.closedEvent && event.registrationDeadlineDays !== null && event.registrationDeadlineDays !== undefined">
-              · Anmeldefrist: {{ event.registrationDeadlineDays }} Tag(e) vor Beginn
-              <span v-if="event.registrationDeadlineTime"> um {{ event.registrationDeadlineTime }} Uhr</span>
-            </span>
-          </div>
-        </div>
-      </div>
-      <div v-if="event.contact" class="event-view__meta-row">
-        <q-icon name="contact_page" />
-        <div class="event-view__meta-body">
-          <div class="event-view__meta-label">Kontakt</div>
-          <div class="event-view__meta-value">
-            <link-field :content="event.contact" />
-          </div>
-        </div>
-      </div>
-    </section>
+    <slot name="actions" />
 
-    <section v-if="contentNotes.length" class="event-view__warnings">
-      <div class="event-view__warnings-title">Inhaltswarnungen</div>
-      <div class="event-view__warnings-chips">
-        <q-chip
-          v-for="item in contentNotes"
-          :key="item"
-          dense
-          class="event-view__warning-chip"
+    <div class="event-view__body">
+      <div class="event-view__main">
+        <!-- ER2 round 2: description, programme, OOC and extra info behind the CW veil -->
+        <cw-veil
+          class="event-view__veil"
+          :warnings="contentNotes"
+          :disabled="preview"
+          title="Dieses Event enthält Inhaltswarnungen"
+          confirm-label="Trotzdem ansehen"
+          back-label="Zum Eventkalender"
+          :back-to="{ path: '/calendar' }"
         >
-          {{ item }}
-        </q-chip>
-      </div>
-    </section>
+        <div class="event-view__veiled">
+        <section class="event-view__section event-view__about mat-parchment" aria-labelledby="event-about">
+          <h2 id="event-about" class="event-view__section-title">Worum geht's</h2>
+          <html-viewer v-if="hasDetails" :content="event.details" />
+          <p v-else class="event-view__muted">Der Veranstalter hat noch keine Beschreibung eingetragen.</p>
+        </section>
 
-    <section v-if="event.locations && event.locations.length" class="event-view__locations">
-      <h3>Standorte</h3>
-      <div class="event-view__location-list">
-        <div
+        <event-programme
+          v-if="programme.length"
+          class="event-view__section"
+          :items="programme"
+          :start-date-time="event.startDateTime"
+          :end-date-time="event.endDateTime"
+        />
+
+        <section v-if="hasOocDetails" class="event-view__section" aria-labelledby="event-ooc">
+          <h2 id="event-ooc" class="event-view__section-title">OOC-Hinweise</h2>
+          <html-viewer :content="event.oocDetails" />
+        </section>
+
+        <section v-if="hasExtraInfo" class="event-view__section" aria-labelledby="event-extra">
+          <h2 id="event-extra" class="event-view__section-title">Weitere Infos</h2>
+          <html-viewer :content="event.extraInfo" />
+        </section>
+        </div>
+        </cw-veil>
+
+        <section v-if="contentNotes.length" class="event-view__warnings" aria-labelledby="event-cw">
+          <div id="event-cw" class="event-view__warnings-title">
+            <q-icon name="warning" size="16px" aria-hidden="true" />
+            Inhaltswarnungen
+          </div>
+          <div class="event-view__warnings-chips">
+            <q-chip
+              v-for="item in contentNotes"
+              :key="item"
+              dense
+              icon="warning"
+              class="event-view__warning-chip"
+            >
+              {{ item }}
+            </q-chip>
+          </div>
+        </section>
+      </div>
+
+      <aside class="event-view__aside" aria-label="Ort und Details">
+        <event-location-card
           v-for="(location, index) in event.locations"
           :key="location.id || index"
-          class="event-view__location-card"
-        >
-          <div class="event-view__location-header">
-            <div class="event-view__location-title">
-              {{ locationTitle(location, index) }}
-            </div>
-            <router-link
-              v-if="location.venueId"
-              :to="`/venue/${location.venueId}`"
-              class="event-view__location-link"
-            >
-              Treffpunkt anzeigen
-            </router-link>
-          </div>
-          <div v-if="location.address" class="event-view__location-row">
-            <q-icon name="place" />
-            <span>{{ location.address }}</span>
-          </div>
-          <div v-if="location.server" class="event-view__location-row">
-            <q-icon name="public" />
-            <span>{{ location.server }}</span>
-          </div>
-          <div v-if="location.link" class="event-view__location-row">
-            <q-icon name="link" />
-            <a :href="location.link" target="_blank" rel="noopener">{{ linkLabel(location.link, location.linkText) }}</a>
-          </div>
-        </div>
-      </div>
-    </section>
+          :location="location"
+          :venue="location.venueId ? venues[location.venueId] || null : null"
+          :index="index"
+        />
 
-    <section v-if="hasDetails" class="event-view__details">
-      <h3>Details</h3>
-      <html-viewer :content="event.details" />
-    </section>
+        <section class="event-view__card" aria-labelledby="event-facts">
+          <h2 id="event-facts" class="event-view__card-title">Details</h2>
+          <dl class="event-view__facts">
+            <template v-if="hasStartDate">
+              <dt>Beginn</dt>
+              <dd>{{ formatServer(event.startDateTime) }}</dd>
+            </template>
+            <template v-if="hasEndDate">
+              <dt>Ende</dt>
+              <dd>{{ formatServer(event.endDateTime) }}</dd>
+            </template>
+            <dt>Teilnahme</dt>
+            <dd>
+              {{ event.closedEvent ? 'Geschlossenes Event, mit Anmeldung' : 'Offen für alle' }}
+            </dd>
+            <template v-if="event.contact">
+              <dt>Kontakt</dt>
+              <dd><link-field :content="event.contact" /></dd>
+            </template>
+            <template v-if="eventLinks.length">
+              <dt>Links</dt>
+              <dd>
+                <a
+                  v-for="(item, index) in eventLinks"
+                  :key="`event-link-${index}`"
+                  class="event-view__fact-link"
+                  :href="item.url"
+                  target="_blank"
+                  rel="noopener"
+                >{{ linkLabel(item.url, item.label) }}</a>
+              </dd>
+            </template>
+          </dl>
+        </section>
 
-    <section v-if="hasOocDetails" class="event-view__details">
-      <h3>OOC Details</h3>
-      <html-viewer :content="event.oocDetails" />
-    </section>
-
-    <section v-if="hasExtraInfo" class="event-view__details">
-      <h3>Extra Infos</h3>
-      <html-viewer :content="event.extraInfo" />
-    </section>
+        <slot name="attendees" />
+      </aside>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import { BaseEventDto } from '@app/shared/dto/events/base-event.dto';
 import { EventLinkDto } from '@app/shared/dto/events/event-link.dto';
-import { EventLocationDto } from '@app/shared/dto/events/event-location.dto';
+import { EventProgrammeItemDto } from '@app/shared/dto/events/event-programme-item.dto';
+import { VenueDto } from '@app/shared/dto/venues/venue.dto';
 import { ContentNoteTexts } from '@common/common/api/content-notes-api';
-import { getEventTypeLabel } from 'src/common/event-types';
+import { getEventTypeIcon, getEventTypeLabel } from 'src/common/event-types';
+import CwVeil from 'components/vision/CwVeil.vue';
+import { DateTime } from 'luxon';
 import { Options, prop, Vue } from 'vue-class-component';
-import BannerView from '../common/BannerView.vue';
+import Breadcrumbs from 'components/vision/Breadcrumbs.vue';
 import HtmlViewer from '../common/HtmlViewer.vue';
 import LinkField from '../common/LinkField.vue';
+import EventLocationCard from './EventLocationCard.vue';
+import EventProgramme from './EventProgramme.vue';
+import { isAdultEvent, isEventLive, locationLabel, serverDateTime } from './event-display';
+
+// ER2-504 — event detail: hero (banner or gradient, left-to-right scrim,
+// glass date block, chips, Cinzel title, subline), then a two-column body.
+// Slots: `actions` (sticky bar under the hero) and `attendees` (right
+// rail). The programme timeline (ER2-506) renders from `event.programme`.
+
+type EventWithExtras = BaseEventDto & { seriesLabel?: string };
 
 class Props {
-  event = prop<BaseEventDto>({
+  event = prop<EventWithExtras>({
     required: true,
   });
 
-  preview = prop<boolean>({
+  preview = prop<boolean>({ type: Boolean,
     default: false,
+  });
+
+  /** Venues linked from `locations[].venueId`, keyed by ID (ER2-505). */
+  venues = prop<Record<number, VenueDto>>({
+    default: () => ({}),
   });
 }
 
 @Options({
   name: 'EventView',
   components: {
-    BannerView,
+    Breadcrumbs,
+    CwVeil,
     HtmlViewer,
     LinkField,
+    EventLocationCard,
+    EventProgramme,
   },
 })
 export default class EventView extends Vue.with(Props) {
-  get eventIconUrl(): string {
-    return this.event.icon?.previewUrl || this.event.icon?.url || this.event.icon?.thumbUrl || '';
+  now = Date.now();
+  private timer: number | null = null;
+
+  mounted() {
+    this.timer = window.setInterval(() => {
+      this.now = Date.now();
+    }, 60000);
+  }
+
+  beforeUnmount() {
+    if (this.timer !== null) {
+      window.clearInterval(this.timer);
+    }
+  }
+
+  get bannerUrl(): string {
+    return this.event.banner?.url || '';
+  }
+
+  get start(): DateTime {
+    return serverDateTime(this.hasStartDate ? this.event.startDateTime : Date.now());
+  }
+
+  get startIso(): string {
+    return this.start.toISO() || '';
+  }
+
+  get live(): boolean {
+    return this.hasStartDate && isEventLive(this.event, this.now);
+  }
+
+  get adult(): boolean {
+    return isAdultEvent(this.event);
+  }
+
+  get seriesLabel(): string {
+    return this.event.seriesLabel || '';
   }
 
   get eventTypeLabel(): string {
     return getEventTypeLabel(this.event.eventType);
+  }
+
+  get eventTypeIcon(): string {
+    return getEventTypeIcon(this.event.eventType);
+  }
+
+  get primaryLocation(): string {
+    return locationLabel((this.event.locations || [])[0]);
+  }
+
+  /** Contact as plain text for the subline (wikilinks reduced to their label). */
+  get organiser(): string {
+    const text = (this.event.contact || '')
+      .replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target: string, label?: string) => label || target)
+      .replace(/<[^>]*>/g, '')
+      .trim();
+    return text.length > 0 && text.length <= 60 && !text.includes('\n') ? text : '';
+  }
+
+  get programme(): EventProgrammeItemDto[] {
+    return (this.event.programme || []).filter((item) => !!item && !!item.title);
   }
 
   get contentNotes(): string[] {
@@ -227,27 +313,33 @@ export default class EventView extends Vue.with(Props) {
   }
 
   get hasEndDate(): boolean {
-    return this.isValidTimestamp(this.event.endDateTime);
+    return this.isValidTimestamp(this.event.endDateTime) && this.event.endDateTime !== this.event.startDateTime;
   }
 
+  /** "Sa., 18. Oktober · 20:00–23:00 MESZ" in server time. */
   get timeRangeServer(): string {
     if (!this.hasStartDate) {
       return '';
     }
-    if (!this.hasEndDate || this.event.endDateTime === this.event.startDateTime) {
-      return this.formatServer(this.event.startDateTime);
+    const start = this.start;
+    let text = `${start.toFormat('ccc., d. LLLL')} · ${start.toFormat('HH:mm')}`;
+    if (this.hasEndDate) {
+      const end = serverDateTime(this.event.endDateTime as number);
+      text += end.hasSame(start, 'day') || end.diff(start, 'hours').hours < 24
+        ? `–${end.toFormat('HH:mm')}`
+        : ` bis ${end.toFormat('ccc., d. LLLL, HH:mm')}`;
     }
-    return `${this.formatServer(this.event.startDateTime)} - ${this.formatServer(this.event.endDateTime)}`;
+    return `${text} ${start.toFormat('ZZZZ')}`;
   }
 
   get timeRangeLocal(): string {
     if (!this.hasStartDate) {
       return '';
     }
-    if (!this.hasEndDate || this.event.endDateTime === this.event.startDateTime) {
+    if (!this.hasEndDate) {
       return this.formatLocal(this.event.startDateTime);
     }
-    return `${this.formatLocal(this.event.startDateTime)} - ${this.formatLocal(this.event.endDateTime)}`;
+    return `${this.formatLocal(this.event.startDateTime)} – ${this.formatLocal(this.event.endDateTime)}`;
   }
 
   get hasDetails(): boolean {
@@ -276,10 +368,6 @@ export default class EventView extends Vue.with(Props) {
     return this.$display.formatDateTimeLocal(value);
   }
 
-  locationTitle(location: EventLocationDto, index: number): string {
-    return location.name || location.address || location.server || `Standort ${index + 1}`;
-  }
-
   linkLabel(link: string, linkText?: string): string {
     return (linkText || '').trim() || link;
   }
@@ -288,13 +376,9 @@ export default class EventView extends Vue.with(Props) {
     if (!content) {
       return false;
     }
-    return this.stripHtml(content).trim().length > 0;
-  }
-
-  private stripHtml(content: string): string {
     const container = document.createElement('div');
     container.innerHTML = content;
-    return container.textContent || '';
+    return (container.textContent || '').trim().length > 0 || !!container.querySelector('img');
   }
 
   private isValidTimestamp(value: number | null | undefined): value is number {
@@ -303,110 +387,321 @@ export default class EventView extends Vue.with(Props) {
 }
 </script>
 
-<style lang="scss">
-@import url($extraGoogleFonts);
+<style lang="scss" scoped>
+// Hero text sits on a dark scrim in both themes, so it uses fixed light ink
+// rather than theme tokens. Fallback gradient: Aetherium ink to arcane violet.
+$hero-ink: #FFFFFF;
+$hero-ink-soft: rgba(255, 255, 255, 0.86);
 
-.event-view__header {
+.event-view__hero {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
+  align-items: flex-end;
+  min-height: 380px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: linear-gradient(120deg, #2B2418 0%, #3D2A55 55%, #6B4FA8 100%);
+  color: $hero-ink;
+
+  @media (max-width: 599px) {
+    min-height: 320px;
+    border-radius: 12px;
+  }
 }
 
-.event-view__icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 12px;
-  background: rgba(221, 180, 118, 0.18);
-  border: 1px solid rgba(221, 180, 118, 0.35);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+.event-view__hero-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.event-view__scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(13, 17, 24, 0.9) 0%, rgba(13, 17, 24, 0.7) 45%, rgba(13, 17, 24, 0.25) 100%),
+    linear-gradient(0deg, rgba(13, 17, 24, 0.55) 0%, rgba(13, 17, 24, 0) 60%);
+}
+
+.event-view__hero-inner {
+  position: relative;
+  display: grid;
+  gap: 18px;
+  width: 100%;
+  padding: 24px 32px 32px;
+
+  @media (max-width: 599px) {
+    padding: 16px 18px 22px;
+  }
+}
+
+.event-view__crumbs {
+  justify-self: start;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background-color: rgba(13, 17, 24, 0.55);
+  backdrop-filter: blur(6px);
+
+  :deep(*) {
+    color: $hero-ink-soft !important;
+  }
+
+  :deep(a:hover) {
+    color: $hero-ink !important;
+  }
+}
+
+.event-view__hero-row {
   display: flex;
+  align-items: flex-end;
+  gap: 24px;
+
+  @media (max-width: 599px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+}
+
+.event-view__date {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  flex-shrink: 0;
+  width: 92px;
+  padding: 10px 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 14px;
+  background-color: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  font-family: var(--font-ui);
+  line-height: 1.1;
+  text-align: center;
+
+  @supports not (backdrop-filter: blur(1px)) {
+    background-color: rgba(13, 17, 24, 0.6);
+  }
 }
 
-.event-view__icon .q-icon {
-  font-size: 28px;
-  color: rgba(35, 35, 35, 0.65);
+.event-view__date-weekday,
+.event-view__date-month {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: $hero-ink-soft;
 }
 
-.event-view__icon-img {
-  width: 50px;
-  height: 50px;
+.event-view__date-day {
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 1.1;
+  font-variant-numeric: lining-nums;
+}
+
+.event-view__hero-text {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.event-view__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.event-view__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  border-radius: 999px;
+  background-color: rgba(13, 17, 24, 0.45);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: $hero-ink;
+}
+
+.event-view__badge--live {
+  border-color: #6EDCA8;
+  color: #B9F2D6;
+}
+
+.event-view__badge--adult {
+  border-color: #FF8FA0;
+  color: #FFC7D0;
+}
+
+.event-view__live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #6EDCA8;
+  box-shadow: 0 0 0 0 rgba(110, 220, 168, 0.6);
+  animation: event-view-pulse 2s ease-out infinite;
+}
+
+@keyframes event-view-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(110, 220, 168, 0.6); }
+  70% { box-shadow: 0 0 0 8px rgba(110, 220, 168, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(110, 220, 168, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-view__live-dot {
+    animation: none;
+  }
 }
 
 .event-view__title {
-  text-align: left;
-  margin-bottom: 6px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: 0;
+  color: $hero-ink;
+  overflow-wrap: anywhere;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+
+  @media (max-width: 599px) {
+    font-size: 32px;
+  }
 }
 
-.event-view__subtitle {
+.event-view__subline {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  color: rgba(35, 35, 35, 0.7);
-  font-weight: 600;
+  gap: 6px 18px;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.4;
+  color: $hero-ink-soft;
+
+  > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
 }
 
-.event-view__time {
-  font-size: 0.95rem;
-}
-
-.event-view__type {
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(35, 35, 35, 0.55);
-}
-
-.event-view__meta {
+.event-view__body {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-  padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
-  margin-bottom: 16px;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 28px;
+  align-items: start;
+  margin-top: 24px;
+
+  @media (max-width: 1023px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
-.event-view__meta-row {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  color: rgba(35, 35, 35, 0.75);
-}
-
-.event-view__meta-body {
+.event-view__main,
+.event-view__aside {
   display: grid;
-  gap: 2px;
+  gap: 20px;
+  min-width: 0;
 }
 
-.event-view__meta-label {
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 0.75rem;
-  color: rgba(35, 35, 35, 0.55);
+.event-view__veil,
+.event-view__veiled {
+  min-width: 0;
 }
 
-.event-view__meta-value {
-  font-weight: 600;
+.event-view__veiled {
+  display: grid;
+  gap: 20px;
 }
 
-.event-view__warnings {
-  margin: 12px 0 18px;
+.event-view__section {
+  min-width: 0;
 }
 
+.event-view__about {
+  padding: 28px 32px;
+  border-radius: 12px;
+
+  @media (max-width: 599px) {
+    padding: 20px 18px;
+  }
+}
+
+.event-view__section-title,
+.event-view__card-title {
+  text-align: left;
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: var(--ink-primary);
+}
+
+.event-view__card-title {
+  font-size: 17px;
+}
+
+.event-view__muted {
+  margin: 0;
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+.event-view__card {
+  padding: 18px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 12px;
+  background-color: var(--vision-card);
+  color: var(--ink-primary);
+}
+
+.event-view__facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 14px;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 14px;
+
+  dt {
+    font-weight: 600;
+    color: var(--ink-muted);
+  }
+
+  dd {
+    margin: 0;
+    color: var(--ink-primary);
+    overflow-wrap: anywhere;
+  }
+}
+
+.event-view__fact-link {
+  display: block;
+  color: var(--ink-link) !important;
+}
+
+// ER2-101 — content warnings use the dedicated CW tokens in both themes.
 .event-view__warnings-title {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.75rem;
-  color: rgba(35, 35, 35, 0.6);
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-bottom: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--vision-cw-text);
 }
 
 .event-view__warnings-chips {
@@ -415,68 +710,14 @@ export default class EventView extends Vue.with(Props) {
   gap: 8px;
 }
 
-.event-view__warning-chip {
-  background: rgba(221, 180, 118, 0.22);
-  color: #6b4c21;
+.q-chip.event-view__warning-chip {
+  background: var(--vision-cw-bg);
+  color: var(--vision-cw-text);
   font-weight: 600;
-}
+  border: 1px solid var(--vision-cw-border);
 
-.event-view__locations {
-  margin: 18px 0 24px;
-}
-
-.event-view__location-list {
-  display: grid;
-  gap: 12px;
-}
-
-.event-view__location-card {
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.95);
-  padding: 12px 16px;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
-}
-
-.event-view__location-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.event-view__location-title {
-  font-weight: 700;
-  color: #1f2c38;
-}
-
-.event-view__location-link {
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.event-view__location-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.event-view__details {
-  margin-bottom: 24px;
-}
-
-@media screen and (max-width: $breakpoint-sm) {
-  .event-view__header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .event-view__title {
-    text-align: left;
-  }
-
-  .event-view__meta {
-    grid-template-columns: 1fr;
+  :deep(.q-icon) {
+    color: inherit;
   }
 }
 </style>

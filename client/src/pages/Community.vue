@@ -1,94 +1,204 @@
 <template>
-  <q-page class="page-community">
+  <q-page class="community-detail">
     <template v-if="community.id">
-      <section v-if="!$store.getters.characterId"><!-- Not logged in --></section>
-      <section v-else-if="!community.membershipStatus" class="page-community__join-button-bar">
-        <q-btn outline color="primary" label="Community beitreten" @click="onJoinClick" />
-      </section>
-      <section
-        v-else-if="community.membershipStatus === MembershipStatus.APPLIED"
-        class="page-community__edit-bar page-community__membership-status"
+      <group-plate
+        ref="plate"
+        :name="community.name"
+        :banner-url="community.banner ? community.banner.url : ''"
+        placeholder-icon="groups"
+        :eyebrow-parts="eyebrowParts"
+        :chips="chips"
+        :crumbs="crumbs"
       >
-        Du hast eine Anfrage für eine Mitgliedschaft in dieser Community gesendet. Eine Führungsperson muss deine Bewerbung überprüfen bevor du beitreten kannst.
-        </section>
-      <section
-        v-else-if="community.membershipStatus === MembershipStatus.REJECTED"
-        class="page-community__edit-bar page-community__membership-status"
-      >
-        Deine Mitgliedschaftsanfrage wurde abgelehnt.
-      </section>
-      <section v-else-if="community.canEdit" class="page-community__edit-bar">
-        <q-btn flat color="secondary" label="Community bearbeiten" :to="`/edit-community/${community.id}`" />
-        <q-btn flat color="negative" label="Community löschen" @click="onDeleteClick" />
-      </section>
-      <section
-        v-else-if="community.membershipStatus === MembershipStatus.CONFIRMED"
-        class="page-community__edit-bar page-community__membership-status"
-      >
-        Du bist ein Mitglied dieser Community.
-      </section>
-      <community-profile :community="community" />
-      <template v-if="!community.canManageMembers">
-        <section class="page-community__members">
-          <header class="page-community__members-header">
-            <h3>Mitglieder</h3>
-            <div class="page-community__members-count">
-              {{ members.length }} {{ members.length === 1 ? 'Mitglied' : 'Mitglieder' }}
-            </div>
-          </header>
+        <template #actions>
+          <q-btn
+            v-if="community.canEdit"
+            class="elpis-btn group-plate__btn-media"
+            flat
+            no-caps
+            icon="edit"
+            label="Bearbeiten"
+            :to="`/edit-community/${community.id}`"
+          />
+        </template>
+        <template #primary>
+          <q-btn
+            v-if="canJoin"
+            class="elpis-btn elpis-btn--primary"
+            unelevated
+            no-caps
+            icon="how_to_reg"
+            label="Beitreten"
+            @click="onJoinClick"
+          />
+        </template>
+      </group-plate>
 
-          <div class="page-community__members-grid">
-            <div
-              v-for="profile in members"
-              :key="`${profile.name}_${profile.server}`"
-              class="page-community__member-card"
-            >
-              <router-link :to="getLink(profile)" class="page-community__member-link">
-                <q-avatar round size="56px" class="page-community__member-avatar">
-                  <img :src="profile.avatar" />
-                </q-avatar>
-                <div class="page-community__member-body">
-                  <div class="page-community__member-name">{{ profile.name }}</div>
-                  <div class="page-community__member-meta">
-                    {{ $display.races[profile.race] }} - {{ profile.server }}
-                  </div>
-                  <div v-if="profile.profession" class="page-community__member-profession">
-                    {{ profile.profession }}
-                  </div>
-                </div>
-              </router-link>
-            </div>
+      <section-tabs
+        v-model="tab"
+        class="community-detail__tabs"
+        glass
+        sync="query"
+        aria-label="Bereiche der Community"
+        :tabs="tabs"
+      />
+
+      <div class="community-detail__body">
+        <section
+          v-if="community.membershipStatus === MembershipStatus.APPLIED"
+          class="elpis-membership-banner elpis-membership-banner--applied"
+        >
+          <span>Du hast eine Mitgliedschaft angefragt. Eine Führungsperson muss deine Bewerbung prüfen, bevor du beitreten kannst.</span>
+        </section>
+        <section
+          v-else-if="community.membershipStatus === MembershipStatus.REJECTED"
+          class="elpis-membership-banner elpis-membership-banner--rejected"
+        >
+          <span>Deine Mitgliedschaftsanfrage wurde abgelehnt.</span>
+        </section>
+
+        <div v-if="tab === 'uebersicht'" class="community-detail__overview">
+          <div class="community-detail__main">
+            <section v-if="community.description" aria-labelledby="community-about">
+              <h2 id="community-about" class="community-detail__heading">Über uns</h2>
+              <div class="community-detail__about mat-parchment">
+                <html-viewer :content="community.description" />
+              </div>
+            </section>
+            <!-- ER2 round 2: "Was wir spielen" -->
+            <focus-items :items="community.focusItems" />
+            <iframe
+              v-if="community.carrdProfile"
+              v-iframe-resize
+              class="community-detail__carrd"
+              :src="carrdLink"
+              :title="`Carrd-Seite von ${community.name}`"
+              width="100%"
+              height="500px"
+            ></iframe>
+            <empty-state
+              v-if="!community.description && !community.carrdProfile && !(community.focusItems && community.focusItems.length)"
+              :variant="community.canEdit ? 'owner' : 'visitor'"
+              icon="groups"
+              title="Noch keine Beschreibung"
+              :text="community.canEdit ? 'Erzähl, wer ihr seid und was euch verbindet.' : 'Diese Community hat sich noch nicht vorgestellt.'"
+              :action-label="community.canEdit ? 'Beschreibung schreiben' : ''"
+              :action-to="community.canEdit ? `/edit-community/${community.id}` : null"
+            />
           </div>
 
-          <div v-if="members.length === 0" class="page-community__members-empty">
-            Keine Mitglieder gefunden.
-          </div>
-        </section>
-      </template>
-      <template v-else>
-				<template v-if="applicants.length > 0">
-					<h3>Bewerber</h3>
-					<community-applicant-editor
-						:community-id="community.id"
-						:members="applicants"
-						@updated="refreshEditableMembers"
-					/>
-				</template>
-				<h3>Mitglieder</h3>
-        <community-member-editor
-          :community="community"
-          :members="confirmedMembers"
-          @updated="refreshEditableMembers"
+          <aside class="community-detail__rail" aria-label="Eckdaten">
+            <section v-if="community.recruiting" class="community-detail__card community-detail__card--seek" aria-labelledby="community-seek">
+              <h2 id="community-seek" class="community-detail__card-title">Wir suchen</h2>
+              <p class="community-detail__card-text">
+                {{ community.name }} nimmt neue Mitglieder auf.
+                <template v-if="community.recruitingOfficers"> Ansprechpartner: {{ community.recruitingOfficers }}.</template>
+              </p>
+              <q-btn
+                v-if="canJoin"
+                class="elpis-btn elpis-btn--primary"
+                unelevated
+                no-caps
+                label="Beitreten"
+                @click="onJoinClick"
+              />
+            </section>
+
+            <group-facts :items="facts" :tags="community.tags || []" />
+
+            <section v-if="members.length > 0" class="community-detail__card" aria-labelledby="community-members-preview">
+              <h2 id="community-members-preview" class="community-detail__card-title">Mitglieder</h2>
+              <avatar-stack :avatars="memberAvatars" :max="6" :label="memberLabel" />
+              <q-btn
+                class="elpis-btn elpis-btn--ghost"
+                flat
+                no-caps
+                dense
+                label="Alle ansehen"
+                @click="tab = 'mitglieder'"
+              />
+            </section>
+
+            <q-btn
+              v-if="community.canEdit"
+              class="elpis-btn elpis-btn--danger community-detail__delete"
+              unelevated
+              no-caps
+              icon="delete"
+              label="Community löschen"
+              @click="onDeleteClick"
+            />
+          </aside>
+        </div>
+
+        <div v-else-if="tab === 'mitglieder'" class="community-detail__members">
+          <template v-if="community.canManageMembers">
+            <section v-if="applicants.length > 0" class="community-detail__manage" aria-labelledby="community-applicants">
+              <h2 id="community-applicants" class="community-detail__heading">Bewerbungen</h2>
+              <community-applicant-editor
+                :community-id="community.id"
+                :members="applicants"
+                @updated="refreshEditableMembers"
+              />
+            </section>
+            <section class="community-detail__manage" aria-labelledby="community-manage-members">
+              <h2 id="community-manage-members" class="community-detail__heading">Mitglieder verwalten</h2>
+              <community-member-editor
+                :community="community"
+                :members="confirmedMembers"
+                @updated="refreshEditableMembers"
+              />
+            </section>
+          </template>
+          <template v-else>
+            <h2 class="community-detail__heading">{{ memberLabel }}</h2>
+            <ul v-if="members.length > 0" class="community-detail__member-grid">
+              <li v-for="profile in members" :key="`${profile.name}_${profile.server}`">
+                <member-card
+                  :to="getLink(profile)"
+                  :avatar-src="profile.avatar"
+                  :name="profile.name"
+                  :meta="`${$display.races[profile.race]} · ${profile.server}`"
+                  :subtitle="profession(profile)"
+                  :rank="profile.communityRole ? '' : rank(profile)"
+                  :role="profile.communityRole || null"
+                  :rp-status="rpStatus(profile)"
+                />
+              </li>
+            </ul>
+            <empty-state
+              v-else
+              icon="group"
+              title="Noch keine Mitglieder"
+              text="Wer beitritt und bestätigt wird, erscheint hier."
+              :action-label="canJoin ? 'Beitreten' : ''"
+              @action="onJoinClick"
+            />
+          </template>
+        </div>
+
+        <group-member-content
+          v-else-if="tab === 'galerie' || tab === 'geschichten'"
+          :kind="tab"
+          :member-ids="memberIds"
+          :group-name="community.name"
         />
-      </template>
-    	<report-violation-section :pageType="PageType.COMMUNITY" :pageId="community.id" />
+
+        <group-events
+          v-else-if="tab === 'events' && groupEvents"
+          :upcoming="groupEvents.upcoming"
+          :past="groupEvents.past"
+          :group-name="community.name"
+        />
+
+        <report-violation-section :pageType="PageType.COMMUNITY" :pageId="community.id" hide-copy-link />
+      </div>
     </template>
   </q-page>
 </template>
 
 <script lang="ts">
 import { CommunityDto } from '@app/shared/dto/communities/community.dto';
-import CommunityProfile from 'components/communities/CommunityProfile.vue';
 import { useApi } from 'src/boot/axios';
 import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
@@ -100,10 +210,29 @@ import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { CharacterSummaryDto } from '@app/shared/dto/characters/character-summary.dto';
 import { useStore } from 'src/store';
 import { MembershipStatus } from '@app/shared/enums/membership-status.enum';
+import { RpStatus } from '@app/shared/enums/rp-status.enum';
 import { CommunityMemberDto } from '@app/shared/dto/communities/community-member.dto';
+import { isEmptyFieldValue } from 'components/character/empty-field';
+import { keepTabsInView } from 'components/character/keep-tabs-in-view';
+import { stripWikilinks } from 'components/character/profile-sections';
+import { activeRpStatus } from 'components/character/rp-status';
+import FocusItems from 'components/communities/FocusItems.vue';
+import GroupFacts from 'components/communities/GroupFacts.vue';
+import GroupEvents from 'components/communities/GroupEvents.vue';
+import GroupMemberContent from 'components/communities/GroupMemberContent.vue';
+import { loadGroupEvents } from 'components/communities/member-content';
+import type { GroupEvents as GroupEventLists } from 'components/communities/member-content';
+import GroupPlate from 'components/communities/GroupPlate.vue';
+import type { GroupFact, GroupPlateChip } from 'components/communities/group-plate';
+import AvatarStack from 'components/vision/AvatarStack.vue';
+import EmptyState from 'components/vision/EmptyState.vue';
+import MemberCard from 'components/vision/MemberCard.vue';
+import SectionTabs from 'components/vision/SectionTabs.vue';
+import type { AvatarItem, BreadcrumbItem, SectionTab } from 'components/vision/types';
 import CommunityApplicantEditor from 'src/components/communities/CommunityApplicantEditor.vue';
 import CommunityMemberEditor from 'src/components/communities/CommunityMemberEditor.vue';
 import { PageType } from '@app/shared/enums/page-type.enum';
+import HtmlViewer from 'src/components/common/HtmlViewer.vue';
 import ReportViolationSection from 'src/components/common/ReportViolationSection.vue';
 
 const $api = useApi();
@@ -134,23 +263,38 @@ async function load(
 
 @Options({
   components: {
-    CommunityProfile,
+    AvatarStack,
     CommunityApplicantEditor,
-		CommunityMemberEditor,
-		ReportViolationSection,
+    CommunityMemberEditor,
+    EmptyState,
+    FocusItems,
+    GroupEvents,
+    GroupFacts,
+    GroupMemberContent,
+    GroupPlate,
+    HtmlViewer,
+    MemberCard,
+    ReportViolationSection,
+    SectionTabs,
   },
   async beforeRouteEnter(to, _, next) {
     const { community, members } = await load(to.params);
     next((vm) => (vm as PageCommunity).setContent(community, members));
   },
-  async beforeRouteUpdate(to) {
+  async beforeRouteUpdate(to, from) {
+    const vm = this as PageCommunity;
+    // Tab changes only touch the query.
+    if (to.path === from.path && vm.community.id) {
+      keepTabsInView((vm.$refs.plate as Vue | undefined)?.$el as HTMLElement | undefined);
+      return;
+    }
     const { community, members } = await load(to.params);
-    (this as PageCommunity).setContent(community, members);
+    vm.setContent(community, members);
   },
   mixins: [
     createMetaMixin(function (this: PageCommunity) {
       const result: MetaOptions = {
-        title: `${this.community.name} — Chaos Archives`,
+        title: `${this.community.name} — Elpisgarten`,
         meta: {},
       };
 
@@ -172,21 +316,133 @@ async function load(
   ],
 })
 export default class PageCommunity extends Vue {
-	readonly PageType = PageType;
+  readonly PageType = PageType;
   readonly MembershipStatus = MembershipStatus;
 
+  tab = 'uebersicht';
   community: CommunityDto = new CommunityDto();
   members: CharacterSummaryDto[] = [];
   applicants: CommunityMemberDto[] = [];
   confirmedMembers: CommunityMemberDto[] = [];
+  /** ER2: null while loading or when the API lacks the endpoint */
+  groupEvents: GroupEventLists | null = null;
+  private eventsToken = 0;
 
   setContent(community: CommunityDto, members: PagingResultDto<CharacterSummaryDto>) {
+    const previousId = this.community.id;
     this.community = community;
     this.members = members.data;
+
+    if (community.id !== previousId || !this.groupEvents) {
+      void this.loadEvents();
+    }
 
     if (community.canManageMembers) {
       void this.refreshEditableMembers();
     }
+  }
+
+  async loadEvents() {
+    const token = ++this.eventsToken;
+    const id = this.community.id;
+    this.groupEvents = null;
+
+    if (!id) {
+      return;
+    }
+
+    const events = await loadGroupEvents('community', id);
+
+    if (token === this.eventsToken) {
+      this.groupEvents = events;
+    }
+  }
+
+  get hasEvents(): boolean {
+    return !!this.groupEvents && (this.groupEvents.upcoming.length > 0 || this.groupEvents.past.length > 0);
+  }
+
+  get canJoin(): boolean {
+    return !!this.$store.getters.characterId && !this.community.membershipStatus;
+  }
+
+  get tabs(): SectionTab[] {
+    return [
+      { key: 'uebersicht', label: 'Übersicht', icon: 'groups' },
+      { key: 'mitglieder', label: 'Mitglieder', icon: 'group', count: this.members.length },
+      // ER2 round 2: only when the member list carries character ids (newer API)
+      { key: 'galerie', label: 'Galerie', icon: 'photo_library', hidden: this.memberIds.length === 0 },
+      { key: 'geschichten', label: 'Geschichten', icon: 'auto_stories', hidden: this.memberIds.length === 0 },
+      // ER2: hidden when the endpoint fails (older API) or there are no events
+      { key: 'events', label: 'Events', icon: 'event', hidden: !this.hasEvents },
+    ];
+  }
+
+  get memberIds(): number[] {
+    return this.members.map((member) => member.id).filter((id): id is number => typeof id === 'number');
+  }
+
+  get crumbs(): BreadcrumbItem[] {
+    return [
+      { label: 'Communities', to: '/communities' },
+      { label: this.community.name },
+    ];
+  }
+
+  get eyebrowParts(): string[] {
+    return [
+      'Community',
+      this.community.foundedAt ? `gegründet ${this.$display.formatDate(this.community.foundedAt)}` : '',
+    ].filter((part) => !!part);
+  }
+
+  get chips(): GroupPlateChip[] {
+    const chips: GroupPlateChip[] = [];
+    if (this.community.recruiting) {
+      chips.push({ label: 'Nimmt Mitglieder auf', live: true });
+    }
+    if (this.members.length > 0) {
+      chips.push({ label: this.memberLabel, icon: 'group' });
+    }
+    switch (this.community.membershipStatus) {
+      case MembershipStatus.CONFIRMED:
+        chips.push({ label: 'Du bist Mitglied', icon: 'verified' });
+        break;
+      case MembershipStatus.APPLIED:
+        chips.push({ label: 'Bewerbung gesendet', icon: 'hourglass_empty' });
+        break;
+    }
+    return chips;
+  }
+
+  get memberLabel(): string {
+    return `${this.members.length} ${this.members.length === 1 ? 'Mitglied' : 'Mitglieder'}`;
+  }
+
+  get memberAvatars(): AvatarItem[] {
+    return this.members.map((member) => ({ src: member.avatar, alt: member.name }));
+  }
+
+  get facts(): GroupFact[] {
+    const c = this.community;
+    const owner = c.owner ? `${c.owner}${c.ownerServer ? ` (${c.ownerServer})` : ''}` : '';
+    return [
+      { label: 'Gegründet von', value: owner },
+      { label: 'Gründung', value: c.foundedAt ? this.$display.formatDate(c.foundedAt) : '' },
+      { label: 'Ziel', value: c.goal },
+      { label: 'Status', value: c.status },
+      { label: 'Rekrutierer', value: c.recruitingOfficers },
+      { label: 'Webseite', value: c.website, href: this.safeUrl(c.website) },
+      { label: 'Discord', value: c.discord, href: this.safeUrl(c.discord) },
+    ];
+  }
+
+  get carrdLink(): string {
+    return `${this.$api.prefix}carrd/character/preview/${this.community.carrdProfile}`;
+  }
+
+  safeUrl(value?: string | null): string {
+    return value && /^https?:\/\//i.test(value.trim()) ? value.trim() : '';
   }
 
   async refreshEditableMembers() {
@@ -195,8 +451,22 @@ export default class PageCommunity extends Vue {
     this.confirmedMembers = allMembers.filter((member) => member.status === MembershipStatus.CONFIRMED);
   }
 
-  getLink(profile: CharacterSummaryDto) {
+  getLink(profile: CharacterSummaryDto): string {
     return `/${profile.server}/${profile.name.replace(/ /g, '_')}`;
+  }
+
+  profession(profile: CharacterSummaryDto): string {
+    return profile.profession && !isEmptyFieldValue(profile.profession) ? stripWikilinks(profile.profession) : '';
+  }
+
+  /** Only the founder is known without the management endpoint. */
+  rank(profile: CharacterSummaryDto): string {
+    const c = this.community;
+    return c.owner && profile.name === c.owner && (!c.ownerServer || profile.server === c.ownerServer) ? 'Gründer:in' : '';
+  }
+
+  rpStatus(profile: CharacterSummaryDto): RpStatus | null {
+    return activeRpStatus(profile);
   }
 
   onDeleteClick() {
@@ -224,7 +494,10 @@ export default class PageCommunity extends Vue {
   }
 
   onJoinClick() {
-    const character = this.$store.getters.character!;
+    const character = this.$store.getters.character;
+    if (!character) {
+      return;
+    }
 
     this.$q
       .dialog({
@@ -254,160 +527,134 @@ export default class PageCommunity extends Vue {
 }
 </script>
 
-<style lang="scss">
-.page-community {
-  --community-members-surface-bg: rgba(255, 255, 255, 0.92);
-  --community-members-surface-border: rgba(221, 180, 118, 0.25);
-  --community-members-card-bg: #ffffff;
-  --community-members-card-border: rgba(221, 180, 118, 0.2);
-  --community-members-card-border-hover: rgba(221, 180, 118, 0.4);
-  --community-members-surface-shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.12);
-  --community-members-surface-shadow-md: 0 16px 32px rgba(0, 0, 0, 0.12);
-  --community-members-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
-  --community-members-card-shadow-hover: 0 18px 32px rgba(0, 0, 0, 0.16);
-  --community-members-count: #20323d;
-  --community-members-name: #1f2c38;
-  --community-members-meta: rgba(35, 35, 35, 0.7);
-  --community-members-meta-muted: rgba(35, 35, 35, 0.65);
-  --community-members-empty: rgba(35, 35, 35, 0.7);
+<style lang="scss" scoped>
+.community-detail {
+  padding: 0 0 48px;
 }
 
-body.body--dark .page-community {
-  --community-members-surface-bg: rgba(17, 24, 34, 0.92);
-  --community-members-surface-border: rgba(141, 181, 223, 0.24);
-  --community-members-card-bg: rgba(21, 30, 43, 0.96);
-  --community-members-card-border: rgba(141, 181, 223, 0.24);
-  --community-members-card-border-hover: rgba(141, 181, 223, 0.4);
-  --community-members-surface-shadow-lg: 0 20px 42px rgba(0, 0, 0, 0.3);
-  --community-members-surface-shadow-md: 0 18px 34px rgba(0, 0, 0, 0.28);
-  --community-members-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
-  --community-members-card-shadow-hover: 0 18px 32px rgba(0, 0, 0, 0.34);
-  --community-members-count: rgba(226, 237, 248, 0.95);
-  --community-members-name: #f2f7ff;
-  --community-members-meta: rgba(213, 226, 240, 0.78);
-  --community-members-meta-muted: rgba(213, 226, 240, 0.68);
-  --community-members-empty: rgba(213, 226, 240, 0.78);
+.community-detail__tabs {
+  position: sticky;
+  top: var(--nav-height, 68px);
+  z-index: 5;
 }
 
-.page-community__edit-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.community-detail__body {
+  padding: 24px 24px 0;
+
+  @media (max-width: 599px) {
+    padding: 16px 12px 0;
+  }
 }
 
-.page-community__join-button-bar {
-  text-align: center;
-  margin-bottom: 8px;
-}
-
-.page-community__members {
-  margin: 32px 0;
-}
-
-.page-community__members-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-  padding: 20px 22px;
-  border: 1px solid var(--community-members-surface-border);
-  background: var(--community-members-surface-bg);
-  box-shadow: var(--community-members-surface-shadow-lg);
-}
-
-.page-community__members-header h3 {
-  margin: 0;
-  font-family: $header-font;
-  letter-spacing: 0.02em;
-}
-
-.page-community__members-count {
-  font-family: $header-font;
-  font-size: 1.05rem;
-  color: var(--community-members-count);
-}
-
-.page-community__members-grid {
+.community-detail__overview {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid var(--community-members-surface-border);
-  background: var(--community-members-surface-bg);
-  box-shadow: var(--community-members-surface-shadow-md);
-}
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 32px;
+  align-items: start;
 
-.page-community__member-card {
-  border: 1px solid var(--community-members-card-border);
-  background: var(--community-members-card-bg);
-  box-shadow: var(--community-members-card-shadow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.page-community__member-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--community-members-card-shadow-hover);
-  border-color: var(--community-members-card-border-hover);
-}
-
-.page-community__member-link {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px;
-  align-items: center;
-  padding: 16px;
-  color: inherit;
-  text-decoration: none;
-}
-
-.page-community__member-avatar {
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
-}
-
-.page-community__member-name {
-  font-weight: 700;
-  color: var(--community-members-name);
-}
-
-.page-community__member-meta {
-  color: var(--community-members-meta);
-  font-size: 0.85rem;
-}
-
-.page-community__member-profession {
-  color: var(--community-members-meta-muted);
-  font-size: 0.85rem;
-}
-
-.page-community__members-empty {
-  margin: 0;
-  padding: 18px;
-  color: var(--community-members-empty);
-  border: 1px solid var(--community-members-card-border);
-  background: var(--community-members-surface-bg);
-  box-shadow: var(--community-members-surface-shadow-md);
-  text-align: center;
-}
-
-@media screen and (max-width: $breakpoint-sm) {
-  .page-community__members-grid {
+  @media (max-width: 1023px) {
     grid-template-columns: minmax(0, 1fr);
   }
+}
 
-  .page-community__members-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+.community-detail__main,
+.community-detail__rail {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.community-detail__rail {
+  gap: 20px;
+}
+
+.community-detail__heading {
+  text-align: left;
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: var(--ink-primary);
+}
+
+.community-detail__about {
+  padding: 28px 32px;
+  border-radius: 12px;
+  font-size: 17px;
+  line-height: 1.7;
+
+  @media (max-width: 599px) {
+    padding: 20px 18px;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .page-community__member-card {
-    transition: none;
-  }
+.community-detail__carrd {
+  border: none;
+  min-height: 380px;
+}
 
-  .page-community__member-card:hover {
-    transform: none;
+.community-detail__card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 18px 20px 20px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 12px;
+  background-color: var(--vision-card);
+}
+
+.community-detail__card--seek {
+  border-color: var(--vision-live);
+  box-shadow: inset 4px 0 0 var(--vision-live);
+  padding-left: 24px;
+}
+
+.community-detail__card-title {
+  text-align: left;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: var(--ink-primary);
+}
+
+.community-detail__card-text {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-primary);
+}
+
+.community-detail__delete {
+  align-self: flex-start;
+}
+
+.community-detail__manage + .community-detail__manage {
+  margin-top: 32px;
+}
+
+.community-detail__member-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  > li {
+    display: flex;
+    min-width: 0;
+
+    > * {
+      flex: 1 1 auto;
+    }
   }
 }
 </style>

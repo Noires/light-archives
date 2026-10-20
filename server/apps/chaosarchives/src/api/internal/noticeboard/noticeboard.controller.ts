@@ -4,7 +4,7 @@ import { OptionalJwtAuthGuard } from '@app/auth/guards/optional-jwt-auth.guard';
 import { UserInfo } from '@app/auth/model/user-info';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { NoticeboardItemSummaryDto } from '@app/shared/dto/noticeboard/noticeboard-item-summary.dto';
-import { NoticeboardItemDto } from '@app/shared/dto/noticeboard/noticeboard-item.dto';
+import { NoticeboardItemDto, NoticeboardPinnedRequestDto } from '@app/shared/dto/noticeboard/noticeboard-item.dto';
 import { Role } from '@app/shared/enums/role.enum';
 import { BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { Transform } from 'class-transformer';
@@ -42,6 +42,13 @@ export class NoticeboardController {
 	async editNoticeboardItem(@Param('id', ParseIntPipe) id: number, @Body() noticeboardItem: NoticeboardItemDto, @CurrentUser() user: UserInfo): Promise<void> {
 		const noticeboardItemToEdit = new NoticeboardItemDto({...noticeboardItem, id}) as NoticeboardItemDto & { id: number };
 		await this.noticeboardService.editNoticeboardItem(noticeboardItemToEdit, user);
+	}
+
+	// ER2 round 2: moderators pin items to the top of the noticeboard
+	@Put(':id/pinned')
+	@RoleRequired(Role.MODERATOR)
+	async setPinned(@Param('id', ParseIntPipe) id: number, @Body() request: NoticeboardPinnedRequestDto): Promise<void> {
+		await this.noticeboardService.setPinned(id, request.pinned);
 	}
 
 	@Delete(':id')

@@ -1,11 +1,14 @@
 import { AddCharacterRequestDto } from '@app/shared/dto/characters/add-character-request.dto';
 import { CharacterContentDto } from '@app/shared/dto/characters/character-content.dto';
+import type { CharacterLookupNameDto, CharacterLookupResultDto } from '@app/shared/dto/characters/character-lookup.dto';
 import { CharacterProfileFilterDto } from '@app/shared/dto/characters/character-profile-filter.dto';
 import { CharacterProfileDto } from '@app/shared/dto/characters/character-profile.dto';
 import { CharacterRefreshResultDto } from '@app/shared/dto/characters/character-refresh-result.dto';
 import { CharacterRegistrationStatusResultDto } from '@app/shared/dto/characters/character-registration-status-result.dto';
 import { CharacterSummaryDto } from '@app/shared/dto/characters/character-summary.dto';
 import { MyContentDto } from '@app/shared/dto/characters/my-content.dto';
+import { RpPresenceDto } from '@app/shared/dto/characters/rp-presence.dto';
+import { RpStatusRequestDto } from '@app/shared/dto/characters/rp-status-request.dto';
 import { IdWrapper } from '@app/shared/dto/common/id-wrapper.dto';
 import { PagingResultDto } from '@app/shared/dto/common/paging-result.dto';
 import { ImageDto } from '@app/shared/dto/image/image.dto';
@@ -65,7 +68,35 @@ export default class CharactersAPI {
     return this.transport.authGet<ImageDto[]>(`${characterId}/my-images`);
   }
 
+  /**
+   * ER2-806: set the opt-in RP status of an own character. Expires automatically
+   * (default 180 minutes, max 360). Changes are broadcast on the socket.io namespace `presence`
+   * as event `presence.changed` with an RpPresenceDto payload.
+   */
+  async setRpStatus(characterId: number, request: RpStatusRequestDto): Promise<RpPresenceDto> {
+    return this.transport.authPut<RpPresenceDto>(`${characterId}/rp-status`, request);
+  }
+
+  /** ER2-806: clear the RP status of an own character. */
+  async clearRpStatus(characterId: number): Promise<RpPresenceDto> {
+    return this.transport.authDelete<RpPresenceDto>(`${characterId}/rp-status`);
+  }
+
+  /** ER2-806: characters with an active RP status (default 12, max 50). */
+  async getRpActiveCharacters(limit = 12): Promise<RpPresenceDto[]> {
+    return this.transport.get<RpPresenceDto[]>('rp-active', { limit });
+  }
+
   async getMyContent(characterId: number): Promise<MyContentDto> {
     return this.transport.authGet<MyContentDto>(`${characterId}/my-content`);
+  }
+
+  /**
+   * ER2 round 2: profile cards for names from [[wikilinks]] (max. 50). Names match
+   * case-insensitively (underscores = spaces, `[[Name|Text]]` accepted); unmatched
+   * names are left out, `query` echoes the requested name.
+   */
+  async lookupCharacters(names: CharacterLookupNameDto[]): Promise<CharacterLookupResultDto[]> {
+    return this.transport.post<CharacterLookupResultDto[]>('lookup', { names });
   }
 }

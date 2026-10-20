@@ -1,6 +1,7 @@
-import { Character, FreeCompany, FreeCompanyMemberPermission } from '@app/entity';
+import { Character, FreeCompany, FreeCompanyApplication, FreeCompanyMemberPermission } from '@app/entity';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { EventsModule } from '../events/events.module';
 import { ImagesModule } from '../images/images.module';
 import { FreeCompaniesController } from './free-companies.controller';
 import { FreeCompaniesService } from './free-companies.service';
@@ -8,9 +9,10 @@ import { LodestoneModule } from '../lodestone/lodestone.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FreeCompany, Character, FreeCompanyMemberPermission]),
+    TypeOrmModule.forFeature([FreeCompany, Character, FreeCompanyMemberPermission, FreeCompanyApplication]),
     ImagesModule,
     LodestoneModule,
+    EventsModule,
   ],
   controllers: [FreeCompaniesController],
   providers: [FreeCompaniesService]

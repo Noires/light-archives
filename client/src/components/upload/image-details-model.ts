@@ -10,4 +10,6 @@ export interface ImageDetailsModel {
   credits: string;
   event: EventSearchResultDto|null;
   venue: VenueSummaryDto|null;
+  /** ER2 round 2: albums of the image owner; undefined = unknown / leave unchanged */
+  albumIds?: number[];
 }

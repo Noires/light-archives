@@ -27,6 +27,56 @@
             <q-checkbox v-model="character.showInventory" @update:model-value="updateCharacter" label="Zeige Inventar" />
           </section>
         </section>
+        <!-- ER2 round 2: Akzentfarbe & Spielstil -->
+        <section class="page-edit-character__style">
+          <h6>Akzentfarbe &amp; Spielstil</h6>
+          <div class="page-edit-character__form-controls">
+            <q-input
+              :model-value="character.accentColor || ''"
+              @update:model-value="onAccentColorChange"
+              label="Akzentfarbe"
+              hint="Farbe für dein Profil im Format #RRGGBB. Leer lassen für die Standardfarbe."
+              maxlength="7"
+              clearable
+              :rules="[(v: string) => !v || ACCENT_COLOR_REGEX.test(v) || 'Bitte gib eine Farbe im Format #RRGGBB an.']"
+            >
+              <template v-slot:prepend>
+                <span
+                  class="page-edit-character__swatch"
+                  :style="{ background: isValidAccentColor(character.accentColor) ? character.accentColor : 'transparent' }"
+                  aria-hidden="true"
+                />
+              </template>
+              <template v-slot:append>
+                <q-btn flat round dense icon="colorize" aria-label="Farbe auswählen">
+                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                    <q-color
+                      :model-value="character.accentColor || '#ba9b5b'"
+                      @update:model-value="onAccentColorChange"
+                      format-model="hex"
+                      no-header-tabs
+                      default-view="palette"
+                    />
+                  </q-popup-proxy>
+                </q-btn>
+              </template>
+            </q-input>
+            <q-select
+              :model-value="character.playStyleTags || []"
+              @update:model-value="onPlayStyleTagsChange"
+              @new-value="onNewPlayStyleTag"
+              label="Spielstil-Tags"
+              :hint="`Bis zu ${PLAY_STYLE_TAGS_MAX} Tags mit je max. ${PLAY_STYLE_TAG_MAX_LENGTH} Zeichen, z. B. Abenteuer oder Slice of Life. Mit Enter hinzufügen.`"
+              multiple
+              use-chips
+              use-input
+              hide-dropdown-icon
+              input-debounce="0"
+              :max-values="PLAY_STYLE_TAGS_MAX"
+              :options="[]"
+            />
+          </div>
+        </section>
         <banner-edit-section v-model="character.banner" />
         <h6>Biografie</h6>
         <div class="page-edit-character__lodestone-info">
@@ -56,8 +106,7 @@
           <q-input @update:model-value="onChange" v-model="character.birthplace" label="Geburtsort" />
           <q-input @update:model-value="onChange" v-model="character.residence" label="Wohnort" />
           <q-input @update:model-value="onChange" v-model="character.relationsshipstatus" label="Beziehungsstatus" />
-          <div class="text-caption">Du kannst [[Wikilinks]], z.B. [[Charaktername]], in allen obigen Feldern nutzen.
-          </div>
+          <wikilink-hint note="Wikilinks funktionieren in allen obigen Feldern." />
         </section>
         <h6>Einleitung</h6>
         <html-editor @update:model-value="onChange" v-model="character.background" />
@@ -71,7 +120,7 @@
         <q-btn-toggle v-model="preview" :options="previewOptions" toggle-color="secondary" />
         <div class="page-edit-character__revert-submit">
           <q-btn label="Zurücksetzen" color="secondary" @click="onRevertClick" />&nbsp;
-          <q-btn label="Änderungen speichern" type="submit" color="primary" />
+          <q-btn label="Änderungen speichern" type="submit" color="primary" v-elpis-save-pulse="savePulseTrigger" />
         </div>
       </div>
       <q-inner-loading :showing="saving" />
@@ -80,7 +129,7 @@
   <q-spinner v-else />
 
   <q-dialog v-model="confirmRevert" persistent>
-    <q-card>
+    <q-card class="mat-aetherglass elevation-3 revert-confirm-dialog">
       <q-card-section class="row items-center">
         <span class="q-ml-sm">Möchtest du die ungespeicherten Änderungen auf die letzte gespeicherte Version
           zurücksetzen?</span>
@@ -103,6 +152,7 @@ import { useApi } from 'src/boot/axios';
 import { notifyError, notifySuccess } from 'src/common/notify';
 import BannerEditSection from 'src/components/common/BannerEditSection.vue';
 import CarrdEditSection from 'src/components/common/CarrdEditSection.vue';
+import WikilinkHint from 'src/components/common/WikilinkHint.vue';
 import { useStore } from 'src/store';
 import { Options, Vue } from 'vue-class-component';
 import { RouteParams } from 'vue-router';
@@ -110,9 +160,14 @@ import HtmlEditor from '../components/common/HtmlEditor.vue';
 import { ref } from 'vue';
 import { Dialog } from 'quasar';
 import type { ParsedCharacterData } from 'src/common/wiki-import';
+import {
+  ACCENT_COLOR_REGEX,
+  isValidAccentColor,
+  PLAY_STYLE_TAG_MAX_LENGTH,
+  PLAY_STYLE_TAGS_MAX,
+} from '@app/shared/validation/profile-fields';
 
 const $api = useApi();
-const isDirty = ref(false);
 
 async function load(params: RouteParams): Promise<CharacterProfileDto> {
   const id = parseInt(params.id as string, 10);
@@ -134,14 +189,14 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
     CharacterProfile,
     BannerEditSection,
     CarrdEditSection,
+    WikilinkHint,
   },
   async beforeRouteEnter(to, _, next) {
-    isDirty.value = false;
     const character = await load(to.params);
     next((vm) => (vm as PageEditProfile).setContent(character));
   },
   beforeRouteLeave(to, from, next) {
-    if (isDirty.value) {
+    if ((this as PageEditProfile).isDirty) {
       if (to.path.includes('edit-character')) {
         Dialog.create({
           title: 'Warnung',
@@ -184,6 +239,10 @@ async function load(params: RouteParams): Promise<CharacterProfileDto> {
 })
 export default class PageEditProfile extends Vue {
   readonly SharedConstants = SharedConstants;
+  readonly ACCENT_COLOR_REGEX = ACCENT_COLOR_REGEX;
+  readonly PLAY_STYLE_TAGS_MAX = PLAY_STYLE_TAGS_MAX;
+  readonly PLAY_STYLE_TAG_MAX_LENGTH = PLAY_STYLE_TAG_MAX_LENGTH;
+  readonly isValidAccentColor = isValidAccentColor;
 
   readonly previewOptions = [
     { label: 'Bearbeitung', value: false },
@@ -197,6 +256,8 @@ export default class PageEditProfile extends Vue {
   confirmRevert = false;
   drawer = ref(false);
   miniState = true;
+  isDirty = false;
+  savePulseTrigger = 0;
 
   setContent(character: CharacterProfileDto) {
     this.characterBackup = character;
@@ -237,7 +298,30 @@ export default class PageEditProfile extends Vue {
   }
 
   onChange() {
-    isDirty.value = true;
+    this.isDirty = true;
+  }
+
+  // ER2 round 2
+  onAccentColorChange(value: string | null) {
+    this.character.accentColor = value ? value.trim() : null;
+    this.onChange();
+  }
+
+  onPlayStyleTagsChange(tags: string[] | null) {
+    this.character.playStyleTags = tags || [];
+    this.onChange();
+  }
+
+  onNewPlayStyleTag(value: string, done: (item?: string, mode?: 'add' | 'add-unique' | 'toggle') => void) {
+    const tag = value.replace(/\s+/g, ' ').trim().substring(0, PLAY_STYLE_TAG_MAX_LENGTH);
+    const existing = (this.character.playStyleTags || []).map((t) => t.toLowerCase());
+
+    if (!tag || existing.includes(tag.toLowerCase()) || existing.length >= PLAY_STYLE_TAGS_MAX) {
+      done();
+      return;
+    }
+
+    done(tag, 'add-unique');
   }
 
   onRevertClick() {
@@ -246,7 +330,7 @@ export default class PageEditProfile extends Vue {
 
   onConfirmRevert() {
     this.character = new CharacterProfileDto(this.characterBackup);
-    isDirty.value = false;
+    this.isDirty = false;
   }
 
   async onSubmit() {
@@ -255,6 +339,7 @@ export default class PageEditProfile extends Vue {
     try {
       await this.$api.characters.saveCharacter(this.character);
       this.characterBackup = new CharacterProfileDto(this.character);
+      this.savePulseTrigger++;
 
       notifySuccess('Charakter gespeichert.', {
         label: 'Schließen',
@@ -266,12 +351,12 @@ export default class PageEditProfile extends Vue {
     } finally {
       this.saving = false;
       this.updateCharacter();
-      isDirty.value = false;
+      this.isDirty = false;
     }
   }
 
   updateCharacter() {
-    isDirty.value = true;
+    this.isDirty = true;
     this.$emit('updateCharacter', this.character);
   }
 
@@ -302,6 +387,18 @@ export default class PageEditProfile extends Vue {
 
 .page-edit-character__preview {
   margin-bottom: 24px;
+}
+
+.page-edit-character__style {
+  margin-bottom: 16px;
+}
+
+.page-edit-character__swatch {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--rule-gold-soft, rgba(186, 155, 91, 0.28));
 }
 
 .page-edit-character__age,

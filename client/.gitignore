@@ -34,3 +34,6 @@ yarn-error.log*
 
 server.txt
 
+
+# E2E / a11y script output
+/scripts/e2e/out

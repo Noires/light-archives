@@ -1,6 +1,10 @@
 <template>
   <q-dialog ref="dialog" no-backdrop-dismiss @hide="onDialogHide">
-    <q-card class="refresh-character-dialog">
+    <q-card class="refresh-character-dialog mat-aetherglass elevation-3">
+      <glyph-corner size="sm" position="tl" class="refresh-character-dialog__corner" />
+      <glyph-corner size="sm" position="tr" class="refresh-character-dialog__corner" />
+      <glyph-corner size="sm" position="br" class="refresh-character-dialog__corner" />
+      <glyph-corner size="sm" position="bl" class="refresh-character-dialog__corner" />
 			<q-card-section>
 				<h5>Aktualisierung bestätigen</h5>
 				<p>
@@ -22,6 +26,7 @@
 <script lang="ts">
 import { notifyError, notifySuccess } from 'src/common/notify';
 import { Options, prop, Vue } from 'vue-class-component';
+import GlyphCorner from '../aetherium/GlyphCorner.vue';
 
 interface DialogRef {
   show(): void;
@@ -40,6 +45,7 @@ class Props {
 
 @Options({
   name: 'RefreshCharacterDialog',
+  components: { GlyphCorner },
   emits: ['ok', 'hide'],
 })
 export default class RefreshCharacterDialog extends Vue.with(Props) {
@@ -85,4 +91,28 @@ export default class RefreshCharacterDialog extends Vue.with(Props) {
 </script>
 
 <style lang="scss">
+.refresh-character-dialog {
+  position: relative;
+  min-width: 400px;
+  max-width: 520px;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.refresh-character-dialog h5 {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: var(--type-scale-4);
+  letter-spacing: var(--ls-display);
+}
+
+.refresh-character-dialog__corner {
+  position: absolute;
+  z-index: 2;
+}
+
+.refresh-character-dialog__corner.glyph-corner--tl { top: 6px;    left: 6px;    }
+.refresh-character-dialog__corner.glyph-corner--tr { top: 6px;    right: 6px;   }
+.refresh-character-dialog__corner.glyph-corner--br { bottom: 6px; right: 6px;   }
+.refresh-character-dialog__corner.glyph-corner--bl { bottom: 6px; left: 6px;    }
 </style>

@@ -50,8 +50,33 @@ export default class CharacterDetail extends Vue.with(Props) {
   flex-basis: 50%;
   flex-grow: 0.5;
   max-width: 50%;
-  border-bottom: 1px solid #ddd;
+  /* ELPIS-205 — Aetherium-token divider replaces the bare #ddd. The base
+     rule sits on --rule-gold-soft (Hydaelyn) / --rule-arcane-soft (Zodiark)
+     so it integrates with both themes; on hover the colour lifts to a
+     stronger gold/arcane (alpha 0 → 0.4 in the transition). 160 ms / elpis
+     ease per plan §4.2 — falls back to instant via the global reduced-motion
+     guard, no per-component @media needed. */
+  border-bottom: 1px solid var(--rule-gold-soft);
+  transition: border-bottom-color var(--motion-fast) var(--ease-elpis);
   margin-bottom: -1px; /* So that odd last child doesn't have uneven borders */
+}
+
+.character-detail:hover {
+  /* --rule-gold (#BA9B5B) channel triple at 0.4 alpha. The hover bump from
+     0.28 (--rule-gold-soft) → 0.40 reads as the rule "warming up" rather
+     than appearing from nothing. */
+  border-bottom-color: rgba(186, 155, 91, 0.4);
+}
+
+/* ER2-104 — a quiet 8 % white hairline in Zodiark (vision spec) instead of a
+   hard divider; hover still lifts it to arcane. */
+body.body--dark .character-detail {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body.body--dark .character-detail:hover {
+  /* --rule-arcane (#4F7BA6) channel triple at 0.4 alpha. */
+  border-bottom-color: rgba(141, 181, 223, 0.4);
 }
 
 .character-detail:only-child {

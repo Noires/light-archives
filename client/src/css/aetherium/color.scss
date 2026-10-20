@@ -1,0 +1,104 @@
+// Aetherium — color tokens.
+// Hydaelyn (light) lives on :root, Zodiark (dark) on body.body--dark.
+// Zodiark uses the original blue night palette from main (steel-blue rules,
+// sky-blue links/CTA); the "arcane" token names are kept for compatibility.
+// Tokens are additive: do not modify the legacy --app-* tokens in app.scss.
+// Source of truth: UI_UX_REWORK_PLAN.md §3.2.
+
+:root {
+	// Hydaelyn surfaces
+	--surface-pearl:     #F5EFE2;
+	--surface-vellum:    #FBF6EA;
+	--surface-ink:       #2B2418;
+	--ink-muted:         #6E5F46;
+
+	// Hydaelyn rules + auras
+	--rule-gold:         #BA9B5B;
+	--rule-gold-soft:    rgba(186, 155, 91, 0.28);
+	--glow-aether:       #7FE6E2;
+	--glow-elpis:        #FFD3B0;
+
+	// Reserved accent material — used by brand mark, theme toggle, primary CTA.
+	--crystal-prism:     linear-gradient(135deg, #A7E2FF 0%, #FFFFFF 45%, #E8C9FF 100%);
+
+	// Semantic — all four pass AA on --surface-pearl and --surface-vellum.
+	// --semantic-danger replaces the legacy #C10015, which fails AA on #fdfdffee.
+	--semantic-success:  #4FB890;
+	--semantic-warning:  #E5B25E;
+	--semantic-danger:   #C7484F;
+	--semantic-info:     #5DA9D8;
+
+	// ---------------------------------------------------------------------
+	// Role aliases (ER2-003). Theme-neutral names that the vision components
+	// consume; each one resolves to the Hydaelyn / Zodiark value below, so a
+	// component never needs a body.body--dark override for these roles.
+	// ---------------------------------------------------------------------
+	--surface-raised:    #FBF6EA;                      // = --surface-vellum
+	--surface-glass:     rgba(251, 246, 234, 0.86);    // sticky bars over pearl
+	--ink-primary:       #2B2418;                      // = --surface-ink
+	--ink-link:          #8A5A14;                      // bronze; 5.48:1 on card
+	--rule-strong:       #9C7A3C;                      // 3.70:1 on card (non-text)
+	--rule-soft:         rgba(186, 155, 91, 0.28);     // = --rule-gold-soft
+	--rule-tint:         rgba(186, 155, 91, 0.14);     // hover / chip fill
+
+	// ---------------------------------------------------------------------
+	// Vision tokens (ER2-003) — mirror of the Penpot `vision.*` set.
+	// Contrast table: AETHERIUM.md › "Vision tokens".
+	// ---------------------------------------------------------------------
+	--vision-primary:        #DDB476;
+	--vision-on-primary:     #2B2418;
+	--vision-primary-hover:  #E8C68E;
+	--vision-danger:         #B3363E;
+	--vision-on-danger:      #FFFFFF;
+	--vision-live:           #2E7D4F;
+	--vision-live-bg:        rgba(46, 125, 79, 0.12);
+	--vision-live-text:      #256A42;                  // label on --vision-live-bg (AA)
+	--vision-cw-bg:          rgba(229, 178, 94, 0.16);
+	--vision-cw-text:        #6B4C21;
+	--vision-cw-border:      rgba(186, 140, 60, 0.55);
+	--vision-now:            #C7484F;
+	--vision-on-now:         #FFFFFF;
+	--vision-card:           #FBF6EA;
+	--vision-focus-edge:     #2B2418;                  // outer edge so the aether ring reaches 3:1
+}
+
+body.body--dark {
+	// Zodiark surfaces
+	--surface-obsidian:  #0D1118;
+	--surface-deep:      #0E131B;
+	--surface-lift:      #111822;
+	--ink-luminous:      #D9E1EA;
+
+	// Zodiark rules + auras
+	--rule-arcane:       #4F7BA6;
+	--rule-arcane-soft:  rgba(141, 181, 223, 0.32);
+	--glow-aether-d:     #B7D3F3;
+	--glow-zodiark:      #9EC4F3;
+
+	// Role aliases (ER2-003) — Zodiark values.
+	--surface-raised:    #111822;                      // = --surface-lift
+	--surface-glass:     rgba(14, 19, 27, 0.82);
+	--ink-primary:       #D9E1EA;                      // = --ink-luminous
+	--ink-muted:         #A2ADBA;                      // 7.83:1 on card
+	--ink-link:          #9EC4F3;
+	--rule-strong:       #8DB5DF;                      // 8.33:1 on card (non-text)
+	--rule-soft:         rgba(141, 181, 223, 0.32);     // = --rule-arcane-soft
+	--rule-tint:         rgba(158, 196, 243, 0.10);
+
+	// Vision tokens (ER2-003) — Zodiark values.
+	--vision-primary:        #9EC4F3;
+	--vision-on-primary:     #0F1824;
+	--vision-primary-hover:  #C3DBFF;
+	--vision-danger:         #F08A93;
+	--vision-on-danger:      #0F1824;
+	--vision-live:           #6EDCA8;
+	--vision-live-bg:        rgba(110, 220, 168, 0.14);
+	--vision-live-text:      #6EDCA8;
+	--vision-cw-bg:          rgba(243, 217, 164, 0.10);
+	--vision-cw-text:        #F3D9A4;
+	--vision-cw-border:      rgba(243, 217, 164, 0.45);
+	--vision-now:            #FF8FA0;
+	--vision-on-now:         #0F1824;
+	--vision-card:           #111822;
+	--vision-focus-edge:     transparent;              // #7FE6E2 already 12.16:1 on card
+}
