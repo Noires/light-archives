@@ -14,7 +14,10 @@ import type { TimelineEvent } from 'components/vision/timeline';
 export const SERVER_ZONE = SharedConstants.FFXIV_SERVER_TIMEZONE;
 /** Assumed duration of events without an end (timeline, live detection). */
 export const DEFAULT_EVENT_MINUTES = 120;
-/** "Heute Abend" = 18:00 until 02:00 the next day, server time. */
+/**
+ * "Heute Abend" = 18:00 until 02:00 the next day, server time. Drives the tab
+ * counts and loading; the timeline itself uses a window around the clock.
+ */
 export const EVENING_START_HOUR = 18;
 export const EVENING_END_HOUR = 26;
 
