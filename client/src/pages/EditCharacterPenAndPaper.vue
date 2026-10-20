@@ -8,7 +8,7 @@
       bleiben in ihren jeweiligen Tabs.
     </p>
     <p class="text-caption page-edit-character-sheet__hint">
-      Die Vorschau fasst alle ausgefüllten Angaben als kompaktes Dossier zusammen und enthält ein kleines lokales Würfel-Orakel.
+      Die Vorschau fasst alle ausgefüllten Angaben als kompaktes Dossier zusammen und enthält einen einfachen Würfel.
     </p>
     <q-form @submit="onSubmit">
       <template v-if="!preview">

@@ -15,23 +15,19 @@
       </div>
 
       <aside
+        ref="oracle"
         class="character-sheet__oracle character-sheet__page"
-        :class="{ 'character-sheet__oracle--just-rolled': runeFlashing }"
       >
         <div class="character-sheet__oracle-head">
-          <span class="character-sheet__oracle-label">Würfel-Orakel</span>
+          <span class="character-sheet__oracle-label">Würfeln</span>
           <strong>{{ diceResultLabel }}</strong>
         </div>
-        <p
-          class="character-sheet__oracle-reading"
-          :class="{ 'character-sheet__oracle-reading--w100': diceLabel === 'W100' && diceResult !== null }"
-        >{{ diceReading }}</p>
         <div class="character-sheet__oracle-actions">
           <q-btn class="elpis-btn elpis-btn--secondary character-sheet__oracle-die" flat label="W6" @click="rollDie(6, 'W6')" />
           <q-btn class="elpis-btn elpis-btn--secondary character-sheet__oracle-die" flat label="W20" @click="rollDie(20, 'W20')" />
           <q-btn class="elpis-btn elpis-btn--primary character-sheet__oracle-die" unelevated label="W100" @click="rollPercentile" />
         </div>
-        <p class="character-sheet__oracle-note">Lokaler Zufallswurf als kleines Runden-Gimmick. Es werden keine Werte gespeichert.</p>
+        <p class="character-sheet__oracle-note">Der Wurf wird nicht gespeichert.</p>
       </aside>
     </header>
 
@@ -135,8 +131,7 @@ class Props {
 })
 export default class CharacterPenAndPaper extends Vue.with(Props) {
   diceResult: number | null = null;
-  diceLabel = 'Noch kein Wurf';
-  runeFlashing = false;
+  diceLabel = 'Noch nicht gewürfelt';
   private runeFlashTimer: number | null = null;
 
   // ELPIS-211 — Pen & Paper journal-page reveal. Each major card (hero copy,
@@ -150,46 +145,6 @@ export default class CharacterPenAndPaper extends Vue.with(Props) {
 
   get diceResultLabel(): string {
     return this.diceResult === null ? this.diceLabel : `${this.diceLabel}: ${this.diceResult}`;
-  }
-
-  get diceReading(): string {
-    if (this.diceResult === null) {
-      return 'Ein schneller lokaler Wurf für spontane Entscheidungen am Spieltisch.';
-    }
-
-    if (this.diceLabel === 'W100') {
-      if (this.diceResult <= 5) {
-        return 'Kritischer Erfolg';
-      }
-
-      if (this.diceResult <= 25) {
-        return 'Deutlicher Erfolg';
-      }
-
-      if (this.diceResult <= 50) {
-        return 'Erfolg mit Druck';
-      }
-
-      if (this.diceResult <= 75) {
-        return 'Komplizierter Ausgang';
-      }
-
-      if (this.diceResult <= 95) {
-        return 'Fehlschlag';
-      }
-
-      return 'Patzer';
-    }
-
-    return this.diceResult === 1
-      ? 'Maximales Glück'
-      : this.diceResult === this.maxDiceValue
-        ? 'Hartes Los'
-        : 'Offenes Ergebnis';
-  }
-
-  get maxDiceValue(): number {
-    return this.diceLabel === 'W20' ? 20 : 6;
   }
 
   get owner(): boolean {
@@ -380,16 +335,23 @@ export default class CharacterPenAndPaper extends Vue.with(Props) {
     cards.forEach((card) => card.classList.add('character-sheet__page--revealed'));
   }
 
+  // The flash class is toggled on the element, not via :class: a class
+  // binding re-render would drop the imperatively added
+  // `character-sheet__page--revealed` and hide the card again (opacity 0).
   private triggerRuneFlash(): void {
+    const oracle = this.$refs.oracle as HTMLElement | undefined;
+    if (!oracle) {
+      return;
+    }
     if (this.runeFlashTimer !== null) {
       window.clearTimeout(this.runeFlashTimer);
     }
-    this.runeFlashing = false;
-    // Force a reflow tick so re-adding the class restarts the animation.
+    oracle.classList.remove('character-sheet__oracle--just-rolled');
+    // Wait a frame so re-adding the class restarts the animation.
     void window.requestAnimationFrame(() => {
-      this.runeFlashing = true;
+      oracle.classList.add('character-sheet__oracle--just-rolled');
       this.runeFlashTimer = window.setTimeout(() => {
-        this.runeFlashing = false;
+        oracle.classList.remove('character-sheet__oracle--just-rolled');
         this.runeFlashTimer = null;
       }, 720);
     });
@@ -602,15 +564,6 @@ export default class CharacterPenAndPaper extends Vue.with(Props) {
   min-height: 40px;
 }
 
-.character-sheet__oracle-reading--w100 {
-  font-family: var(--font-section, 'Spectral', serif);
-  font-style: italic;
-  font-size: 1.05rem;
-  letter-spacing: 0.01em;
-  color: #5d3a16;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
-}
-
 .character-sheet__oracle-head {
   display: grid;
   gap: 6px;
@@ -632,13 +585,6 @@ export default class CharacterPenAndPaper extends Vue.with(Props) {
   font-size: 0.88rem;
   line-height: 1.5;
   color: rgba(45, 32, 20, 0.72);
-}
-
-.character-sheet__oracle-reading {
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  color: #4d3421;
 }
 
 .character-sheet__summary {
@@ -791,14 +737,6 @@ body.body--dark .character-sheet__oracle-note {
   color: rgba(241, 228, 206, 0.72);
 }
 
-body.body--dark .character-sheet__oracle-reading {
-  color: rgba(241, 228, 206, 0.88);
-}
-
-body.body--dark .character-sheet__oracle-reading--w100 {
-  color: rgba(245, 220, 178, 0.94);
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
-}
 
 body.body--dark .character-sheet__oracle::after {
   background:
