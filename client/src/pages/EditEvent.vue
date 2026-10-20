@@ -37,7 +37,8 @@
               />
               <q-select
                 v-model="event.locations[0].venueId"
-                label="Verknüpfter Treffpunkt (optional)"
+                label="Treffpunkt verknüpfen (optional)"
+                hint="Deine Treffpunkte erscheinen beim Öffnen. Tippe, um alle Treffpunkte zu durchsuchen."
                 use-input
                 hide-selected
                 fill-input
@@ -45,10 +46,52 @@
                 emit-value
                 map-options
                 clearable
+                :loading="loadingVenues"
                 :options="venueOptions"
                 @filter="onVenueSearch"
                 @update:model-value="onVenueSelected"
-              />
+              >
+                <template v-slot:prepend>
+                  <q-icon name="place" />
+                </template>
+                <template v-slot:option="scope">
+                  <q-item-label
+                    v-if="isFirstOfVenueGroup(scope.index)"
+                    header
+                    class="page-edit-event__venue-group"
+                  >
+                    {{ scope.opt.group === 'mine' ? 'Meine Treffpunkte' : 'Weitere Treffpunkte' }}
+                  </q-item-label>
+                  <q-item v-bind="scope.itemProps">
+                    <q-item-section>
+                      <q-item-label>{{ scope.opt.venue.name }}</q-item-label>
+                      <q-item-label caption>{{ scope.opt.venue.server }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </template>
+                <template v-slot:no-option>
+                  <q-item>
+                    <q-item-section class="page-edit-event__venue-empty">
+                      <template v-if="venueError">
+                        Treffpunkte konnten nicht geladen werden. Bitte versuche es erneut.
+                      </template>
+                      <template v-else-if="venueQuery.length >= 2">
+                        Kein Treffpunkt „{{ venueQuery }}“ gefunden.
+                      </template>
+                      <template v-else-if="venueQuery.length === 1">
+                        Bitte mindestens 2 Buchstaben eingeben.
+                      </template>
+                      <template v-else>
+                        <span>
+                          Du verwaltest noch keinen Treffpunkt. Tippe den Namen, um einen bestehenden zu suchen,
+                          oder
+                          <a :href="$router.resolve('/create-venue').href" target="_blank" rel="noopener">lege einen Treffpunkt an</a>.
+                        </span>
+                      </template>
+                    </q-item-section>
+                  </q-item>
+                </template>
+              </q-select>
               <q-input
                 v-model="event.locations[0].name"
                 label="Treffpunktname *"
@@ -849,6 +892,13 @@ export default class PageEditEvent extends Vue {
   readonly getEventTypeIcon = resolveEventTypeIcon;
   readonly minDiscordBannerAspectRatio = SharedConstants.MIN_DISCORD_BANNER_ASPECT_RATIO;
   venueOptions: VenueOption[] = [];
+  // Venues the user owns or may edit: shown as soon as the picker opens, so
+  // nobody has to guess a name (report: "die Liste bleibt leer").
+  editableVenues: VenueSummaryDto[] = [];
+  loadingVenues = false;
+  venueQuery = '';
+  venueError = false;
+  private editableVenuesLoad: Promise<void> | null = null;
 
   startDate: string | null = null;
   startTime: string | null = null;
@@ -963,6 +1013,7 @@ export default class PageEditEvent extends Vue {
     }
 
     this.venueOptions = [];
+    this.editableVenuesLoad = this.loadEditableVenues();
     if (this.eventBackup.locations[0]?.venueId) {
       void this.seedVenueOption(this.eventBackup.locations[0].venueId);
     }
@@ -1503,28 +1554,66 @@ export default class PageEditEvent extends Vue {
     return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(normalized) ? normalized : null;
   }
 
+  private async loadEditableVenues() {
+    this.loadingVenues = true;
+    try {
+      this.editableVenues = await this.$api.venues.getEditableVenues();
+    } catch (e) {
+      this.editableVenues = [];
+      this.venueError = true;
+    } finally {
+      this.loadingVenues = false;
+    }
+  }
+
+  // Own venues first (all worlds), then other venues matching the name. No
+  // world filter: the label shows the world, and a venue on another world
+  // than the selected character must still be findable.
   async onVenueSearch(value: string, update: (fn: () => void) => void) {
     const query = value.trim();
+    this.venueQuery = query;
+    this.venueError = false;
+    await this.editableVenuesLoad;
 
-    if (query.length < 2) {
-      update(() => {
-        this.venueOptions = [];
-      });
+    const needle = query.toLowerCase();
+    const mine = this.editableVenues
+      .filter((venue) => !needle || venue.name.toLowerCase().includes(needle))
+      .map((venue) => this.toVenueOption(venue, 'mine'));
+
+    let others: VenueOption[] = [];
+    if (query.length >= 2) {
+      try {
+        const venues = await this.$api.venues.searchVenues(query);
+        others = venues
+          .filter((venue) => !mine.some((option) => option.value === venue.id))
+          .map((venue) => this.toVenueOption(venue, 'other'));
+      } catch (e) {
+        this.venueError = true;
+      }
+    }
+
+    if (this.venueQuery !== query) {
+      // A newer search has started; let it fill the list.
+      update(() => undefined);
       return;
     }
 
-    const server = this.event.locations[0]?.server || undefined;
-    const venues = await this.$api.venues.searchVenues(query, server || undefined);
+    update(() => {
+      this.venueOptions = [...mine, ...others];
+    });
+  }
 
-    const options = venues.map((venue) => ({
+  isFirstOfVenueGroup(index: number): boolean {
+    return index === 0 || this.venueOptions[index - 1]?.group !== this.venueOptions[index]?.group;
+  }
+
+  private toVenueOption(venue: VenueSummaryDto, group?: VenueOption['group']): VenueOption {
+    return {
       label: `${venue.name} (${venue.server})`,
       value: venue.id,
       venue,
-    }));
-
-    update(() => {
-      this.venueOptions = options;
-    });
+      group: group || (this.editableVenues.some((own) => own.id === venue.id) ? 'mine' : 'other'),
+    };
   }
 
   async onVenueSelected(venueId: number | null) {
@@ -1558,20 +1647,11 @@ export default class PageEditEvent extends Vue {
       if (option) {
         this.venueOptions = this.venueOptions.map((candidate) =>
           candidate.value === venueId
-            ? {
-                ...candidate,
-                label: `${summary.name} (${summary.server})`,
-                venue: summary,
-              }
+            ? { ...candidate, label: `${summary.name} (${summary.server})`, venue: summary }
             : candidate,
         );
       } else {
-        const seededOption = {
-          label: `${summary.name} (${summary.server})`,
-          value: summary.id,
-          venue: summary,
-        };
-        this.venueOptions = [seededOption];
+        this.venueOptions = [this.toVenueOption(summary)];
       }
 
       this.applyVenueToLocation(updatedLocation, summary);
@@ -1585,13 +1665,8 @@ export default class PageEditEvent extends Vue {
     try {
       const venue = await this.$api.venues.getVenue(venueId);
       const summary = this.toVenueSummary(venue);
-      this.venueOptions = [
-        {
-          label: `${summary.name} (${summary.server})`,
-          value: summary.id,
-          venue: summary,
-        },
-      ];
+      await this.editableVenuesLoad;
+      this.venueOptions = [this.toVenueOption(summary)];
 
       const backupLocation = this.eventBackup.locations[0];
       if (backupLocation && backupLocation.venueId === venueId) {
@@ -1919,6 +1994,8 @@ type VenueOption = {
   label: string;
   value: number;
   venue: VenueSummaryDto;
+  /** "Meine Treffpunkte" vs. "Weitere Treffpunkte" in the picker. */
+  group: 'mine' | 'other';
 };
 </script>
 
@@ -1998,6 +2075,20 @@ body.body--dark .page-edit-event {
 .page-edit-event__section-hint {
   margin: 0 0 12px;
   color: var(--edit-event-section-hint);
+}
+
+// Venue picker menu (teleported): group subheads and the empty-state text.
+.page-edit-event__venue-group {
+  padding: 10px 16px 4px;
+  font: 600 11px/16px var(--font-ui);
+  letter-spacing: var(--ls-eyebrow, 0.08em);
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.page-edit-event__venue-empty {
+  max-width: 420px;
+  color: var(--ink-muted);
 }
 
 .page-edit-event__preview {
@@ -2111,10 +2202,10 @@ body.body--dark .page-edit-event__type-tile {
 
 body.body--dark .page-edit-event__type-tile:hover {
   border-color: var(--rule-arcane);
-  background-color: rgba(107, 79, 168, 0.18);
+  background-color: rgba(141, 181, 223, 0.18);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 2px 8px rgba(107, 79, 168, 0.3);
+    0 2px 8px rgba(141, 181, 223, 0.3);
 }
 
 body.body--dark .page-edit-event__type-tile:focus-visible {
@@ -2125,12 +2216,12 @@ body.body--dark .page-edit-event__type-tile:focus-visible {
 }
 
 body.body--dark .page-edit-event__type-tile--active {
-  background-color: rgba(107, 79, 168, 0.24);
+  background-color: rgba(141, 181, 223, 0.24);
   border-color: var(--rule-arcane);
   box-shadow:
     inset 0 0 0 1px var(--rule-arcane-soft),
-    0 0 0 2px rgba(107, 79, 168, 0.32),
-    0 4px 14px rgba(184, 165, 255, 0.22);
+    0 0 0 2px rgba(141, 181, 223, 0.32),
+    0 4px 14px rgba(183, 211, 243, 0.22);
 }
 
 body.body--dark .page-edit-event__type-tile-icon {
@@ -2138,7 +2229,7 @@ body.body--dark .page-edit-event__type-tile-icon {
 }
 
 body.body--dark .page-edit-event__type-tile--active .page-edit-event__type-tile-icon {
-  filter: drop-shadow(0 0 8px rgba(184, 165, 255, 0.55));
+  filter: drop-shadow(0 0 8px rgba(183, 211, 243, 0.55));
 }
 
 .page-edit-event__date-time-grid {
