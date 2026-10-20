@@ -130,6 +130,7 @@ export default class SectionTabs extends Vue.with(Props) {
 	private lastWidth = 0;
 	private fitting = false;
 	private fitPending = false;
+	private boundFit: (() => void) | null = null;
 
 	mounted() {
 		const list = this.$refs.list as HTMLElement | undefined;
@@ -146,13 +147,13 @@ export default class SectionTabs extends Vue.with(Props) {
 		// change then, so the ResizeObserver alone would miss it.
 		if (typeof document !== 'undefined' && document.fonts) {
 			void document.fonts.ready.then(() => this.fit());
-			document.fonts.addEventListener('loadingdone', this.onFontsLoaded);
+			// Bound here, not as an arrow class field: vue-class-component
+			// collects fields from a throwaway instance, so an arrow's `this`
+			// would have no $refs ("reading 'list' of undefined").
+			this.boundFit = () => void this.fit();
+			document.fonts.addEventListener('loadingdone', this.boundFit);
 		}
 	}
-
-	private onFontsLoaded = () => {
-		void this.fit();
-	};
 
 	updated() {
 		this.updateOverflow();
@@ -196,7 +197,10 @@ export default class SectionTabs extends Vue.with(Props) {
 	}
 
 	beforeUnmount() {
-		document.fonts?.removeEventListener('loadingdone', this.onFontsLoaded);
+		if (this.boundFit) {
+			document.fonts?.removeEventListener('loadingdone', this.boundFit);
+			this.boundFit = null;
+		}
 		this.resizeObserver?.disconnect();
 		this.resizeObserver = null;
 	}
