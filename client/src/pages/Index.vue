@@ -421,9 +421,10 @@ export default class PageIndex extends Vue {
     ];
   }
 
+  // All loaded events (today + the next 7 days): the strip's window follows
+  // the clock and can be moved, so it clips the events itself.
   get timelineEvents() {
-    const source = this.timelineView === 'week' ? this.weekEvents : this.tonightEvents;
-    return source.map(toTimelineEvent);
+    return this.events.map(toTimelineEvent);
   }
 
   get timelineAriaLabel(): string {
@@ -431,16 +432,16 @@ export default class PageIndex extends Vue {
       case 'now':
         return 'Zeitleiste heute Abend, laufende Events hervorgehoben';
       case 'week':
-        return 'Zeitleiste der nächsten sieben Abende';
+        return 'Zeitleiste der nächsten sieben Tage';
       default:
         return 'Zeitleiste heute Abend';
     }
   }
 
   get timelineEmptyText(): string {
-    return this.timelineView === 'now' && this.tonightEvents.length === 0
-      ? 'Gerade läuft nichts und für heute Abend ist noch nichts eingetragen.'
-      : 'Für heute Abend ist noch nichts eingetragen.';
+    return this.timelineView === 'now' && this.liveEvents.length === 0
+      ? 'Gerade läuft nichts.'
+      : 'In diesem Zeitraum ist nichts eingetragen.';
   }
 
   get isLoggedIn() {

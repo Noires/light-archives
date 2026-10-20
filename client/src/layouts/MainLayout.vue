@@ -14,7 +14,7 @@
         <div id="inhalt" class="layout__page-container" tabindex="-1">
           <router-view />
         </div>
-        <!-- Calendar widget beside the content on every page except /calendar
+        <!-- Calendar widget beside the content on every page except / and /calendar
              (reinstated 2026-10-19 on request). -->
         <calendar-sidebar-widget v-if="showCalendarWidget" class="layout__calendar-outer" />
       </div>
@@ -50,7 +50,7 @@ import { isSentryConfigured } from 'src/common/sentry';
 
 // App shell. Mounted once by the single '/' parent route (see
 // router/routes.ts). Owns the command palette state, the page shell (content
-// plus the calendar widget column, which is hidden on /calendar) and the
+// plus the calendar widget column, which is hidden on / and /calendar) and the
 // telemetry consent prompt. The visible chrome lives
 // in ./shell/*: ShellHeader (top bar, nav model in nav.ts), ShellHero,
 // ShellFooter and ShellMobileNav (bottom bar + "Mehr" sheet below 1024px).
@@ -122,9 +122,13 @@ export default class MainLayout extends Vue {
     return this.$route.path === '/';
   }
 
-  /** The events page has its own calendar, so the widget stays away there. */
+  /**
+   * The events page has its own calendar and the start page its own event
+   * hub ("Was läuft heute Abend?"), so the widget stays away there.
+   */
   get showCalendarWidget(): boolean {
-    return !this.$route.path.startsWith('/calendar');
+    const path = this.$route.path;
+    return path !== '/' && !path.startsWith('/calendar');
   }
 
   async switchCharacter() {

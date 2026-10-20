@@ -1,5 +1,41 @@
 <template>
 	<div class="vision-timeline" :class="{ 'vision-timeline--days': days > 1 }" role="region" :aria-label="ariaLabel">
+		<div class="vision-timeline__controls">
+			<q-btn
+				class="elpis-btn elpis-btn--secondary vision-timeline__pan"
+				flat
+				dense
+				no-caps
+				icon="chevron_left"
+				label="Früher"
+				:aria-label="`Zeitleiste ${panStepHours} Stunden früher`"
+				:disable="offsetHours <= minOffsetHours"
+				@click="pan(-panStepHours)"
+			/>
+			<span class="vision-timeline__range" aria-live="polite">{{ rangeLabel }}</span>
+			<q-btn
+				class="elpis-btn elpis-btn--secondary vision-timeline__pan"
+				flat
+				dense
+				no-caps
+				icon-right="chevron_right"
+				label="Später"
+				:aria-label="`Zeitleiste ${panStepHours} Stunden später`"
+				:disable="offsetHours >= maxOffsetHours"
+				@click="pan(panStepHours)"
+			/>
+			<q-btn
+				v-if="offsetHours !== 0"
+				class="elpis-btn elpis-btn--secondary vision-timeline__pan"
+				flat
+				dense
+				no-caps
+				icon="my_location"
+				label="Jetzt"
+				aria-label="Zurück zur aktuellen Zeit"
+				@click="offsetHours = 0"
+			/>
+		</div>
 		<!-- Scrolls sideways on narrow screens. Without event links inside there
 		     is nothing to tab to, so the scroller itself takes focus (arrow keys
 		     scroll it). -->
@@ -89,11 +125,13 @@ import { Options, prop, Vue } from 'vue-class-component';
 import type { RouteLocationRaw } from 'vue-router';
 import type { TimelineEvent } from './timeline';
 
-// ER2-302 — "Heute Abend" timeline: one row per day across a fixed evening
-// window (default 18:00–02:00, server time). Events become bars sized by
-// duration and packed into lanes; running events use the live colours, past
-// ones are muted, and a "Jetzt HH:MM" marker moves every minute. No
-// animation, so reduced motion needs nothing beyond the hover guard below.
+// ER2-302 — "Heute Abend" timeline: one row per day across a window that
+// follows the clock (default 2 h before the current hour until 6 h after,
+// server time) and can be moved earlier/later in 2 h steps. Every day row
+// uses the same hours. Events become bars sized by duration and packed into
+// lanes; running events use the live colours, past ones are muted, and a
+// "Jetzt HH:MM" marker moves every minute. No animation, so reduced motion
+// needs nothing beyond the hover guard below.
 
 interface Bar {
 	key: string;
@@ -124,17 +162,18 @@ interface Row {
 
 class Props {
 	events = prop<TimelineEvent[]>({ default: () => [] });
-	/** Number of day rows, starting with the current evening. */
+	/** Number of day rows, starting with today. */
 	days = prop<number>({ default: 1 });
-	startHour = prop<number>({ default: 18 });
-	/** Hours past midnight continue counting: 26 = 02:00 the next day. */
-	endHour = prop<number>({ default: 26 });
+	/** Hours shown before the current (full) hour. */
+	hoursBefore = prop<number>({ default: 2 });
+	/** Hours shown after the current (full) hour. */
+	hoursAfter = prop<number>({ default: 6 });
 	zone = prop<string>({ default: SharedConstants.FFXIV_SERVER_TIMEZONE });
 	/** Mute every bar that is not running right now ("Jetzt" view). */
 	dimNonLive = prop<boolean>({ type: Boolean, default: false });
 	/** Assumed duration of events without an end. */
 	defaultDurationMinutes = prop<number>({ default: 120 });
-	emptyText = prop<string>({ default: 'Für heute Abend ist noch nichts eingetragen.' });
+	emptyText = prop<string>({ default: 'In diesem Zeitraum ist nichts eingetragen.' });
 	ariaLabel = prop<string>({ default: 'Zeitleiste heute Abend' });
 }
 
@@ -157,6 +196,11 @@ function toMillis(value: string | number | Date | null | undefined): number | nu
 })
 export default class TimelineStrip extends Vue.with(Props) {
 	nowMillis = Date.now();
+	/** Pan offset in hours, moved by the Früher/Später buttons. */
+	offsetHours = 0;
+	readonly panStepHours = 2;
+	readonly minOffsetHours = -12;
+	readonly maxOffsetHours = 24;
 
 	readonly laneHeight = 44;
 	readonly laneGap = 6;
@@ -186,7 +230,26 @@ export default class TimelineStrip extends Vue.with(Props) {
 	}
 
 	get spanHours(): number {
-		return Math.max(1, this.endHour - this.startHour);
+		return Math.max(1, this.hoursBefore + this.hoursAfter);
+	}
+
+	/** Start of the first row's window: the current full hour, shifted. */
+	get windowBase(): DateTime {
+		return this.now.startOf('hour').plus({ hours: this.offsetHours - this.hoursBefore });
+	}
+
+	get rangeLabel(): string {
+		const start = this.windowBase;
+		const end = start.plus({ hours: this.spanHours });
+		const range = `${start.toFormat('HH:mm')}–${end.toFormat('HH:mm')}`;
+		if (this.days > 1 || start.hasSame(this.now, 'day')) {
+			return range;
+		}
+		return `${start.setLocale('de').toFormat('ccc d.')} ${range}`;
+	}
+
+	pan(hours: number) {
+		this.offsetHours = Math.min(this.maxOffsetHours, Math.max(this.minOffsetHours, this.offsetHours + hours));
 	}
 
 	get gridSize(): string {
@@ -195,8 +258,8 @@ export default class TimelineStrip extends Vue.with(Props) {
 
 	get ticks(): string[] {
 		const result: string[] = [];
-		for (let h = this.startHour; h <= this.endHour; h++) {
-			result.push(`${String(h % 24).padStart(2, '0')}:00`);
+		for (let h = 0; h <= this.spanHours; h++) {
+			result.push(this.windowBase.plus({ hours: h }).toFormat('HH:00'));
 		}
 		return result;
 	}
@@ -207,16 +270,6 @@ export default class TimelineStrip extends Vue.with(Props) {
 
 	get nowClock(): string {
 		return this.now.toFormat('HH:mm');
-	}
-
-	/** The evening that is "tonight": before the window's end hour (e.g. 01:30) it is still yesterday's. */
-	get baseDay(): DateTime {
-		const today = this.now.startOf('day');
-		const overflow = this.endHour - 24;
-		if (overflow > 0 && this.now.hour < overflow) {
-			return today.minus({ days: 1 });
-		}
-		return today;
 	}
 
 	trackHeight(laneCount: number): number {
@@ -256,8 +309,8 @@ export default class TimelineStrip extends Vue.with(Props) {
 			.sort((a, b) => a.start - b.start || b.end - a.end);
 
 		for (let d = 0; d < Math.max(1, this.days); d++) {
-			const day = this.baseDay.plus({ days: d });
-			const windowStart = day.set({ hour: this.startHour, minute: 0, second: 0, millisecond: 0 }).toMillis();
+			const day = this.windowBase.plus({ days: d });
+			const windowStart = day.toMillis();
 			const windowEnd = windowStart + spanMs;
 			const laneEnds: number[] = [];
 			const bars: Bar[] = [];
@@ -343,6 +396,31 @@ export default class TimelineStrip extends Vue.with(Props) {
 
 .vision-timeline__inner {
 	min-width: 640px;
+}
+
+// Früher · range · Später (· Jetzt) above the axis.
+.vision-timeline__controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 4px 8px;
+	margin-bottom: 8px;
+}
+
+.vision-timeline__range {
+	min-width: 96px;
+	font-size: 13px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+	color: var(--ink-primary);
+}
+
+.vision-timeline__pan.q-btn {
+	min-height: 32px;
+	padding: 0 8px;
+	font-size: 13px;
 }
 
 .vision-timeline__axis,
