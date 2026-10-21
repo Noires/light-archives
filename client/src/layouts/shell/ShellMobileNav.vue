@@ -48,7 +48,7 @@
           class="shell-sheet__icon-btn"
           :icon="themeIcon"
           :aria-label="themeAriaLabel"
-          @click="toggleTheme"
+          @click="toggleTheme($event)"
         />
         <q-btn v-close-popup flat round dense class="shell-sheet__icon-btn" icon="close" aria-label="Schließen" />
       </div>
@@ -56,21 +56,20 @@
       <div class="shell-sheet__body">
         <section class="shell-sheet__section" aria-labelledby="shell-sheet-areas">
           <h3 id="shell-sheet-areas" class="shell-sheet__label">Bereiche</h3>
-          <template v-for="area in sheetAreas" :key="area.key">
+          <template v-for="(area, areaIndex) in sheetAreas" :key="area.key">
             <template v-if="area.menu">
               <button
                 type="button"
                 class="shell-sheet__row shell-sheet__toggle"
                 :class="{ 'shell-sheet__toggle--current': isActive(area) }"
+                :style="{ '--i': areaIndex }"
                 :aria-expanded="expandedKey === area.key ? 'true' : 'false'"
                 :aria-controls="`shell-sheet-sub-${area.key}`"
                 @click="toggleArea(area.key)"
               >
                 <q-icon :name="area.icon" size="20px" aria-hidden="true" />
                 <span class="shell-sheet__row-label">{{ area.label }}</span>
-                <q-icon
-                  name="expand_more"
-                  size="20px"
+                <span
                   class="shell-sheet__chevron"
                   :class="{ 'shell-sheet__chevron--open': expandedKey === area.key }"
                   aria-hidden="true"
@@ -98,6 +97,7 @@
               :to="area.to"
               class="shell-sheet__row"
               :class="{ 'shell-sheet__row--active': isActive(area) }"
+              :style="{ '--i': areaIndex }"
               active-class=""
               exact-active-class=""
               :aria-current="isActive(area) ? 'page' : undefined"
@@ -141,6 +141,7 @@ import { Options, Vue } from 'vue-class-component';
 import { PRIMARY_AREAS, ShellNavArea, WIKI_AREA, isAreaActive } from './nav';
 import { shellTheme, themeAriaLabel, themeIcon, toggleShellTheme } from './theme-state';
 import { shellMenu } from './menu-state';
+import { startThemeWipe } from './seam-motion';
 import { canUseSocial, socialState } from 'src/components/social/social-state';
 
 // ER2-205 — below 1024px: fixed bottom bar (Start, Events, Charaktere,
@@ -246,14 +247,17 @@ export default class ShellMobileNav extends Vue {
     return themeAriaLabel(shellTheme.mode);
   }
 
-  toggleTheme() {
-    toggleShellTheme();
+  toggleTheme(event: MouseEvent) {
+    startThemeWipe(event.currentTarget as HTMLElement | null, () => toggleShellTheme());
   }
 }
 </script>
 
 <style lang="scss">
-// Unscoped: the sheet is teleported. Hidden from 1024px up.
+// Unscoped: the sheet is teleported. Hidden from 1024px up. "Kristallkiel"
+// shapes (see ShellHeader): the bar's top border is the seam, the current
+// tab gets the rule, the node and the light shaft; the sheet has a keel cut.
+@import './facet.scss';
 
 .shell-mobile-bar {
   position: fixed;
@@ -304,12 +308,22 @@ body {
   &::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 28%;
-    right: 28%;
+    top: -1px;
+    left: 0;
+    right: 0;
     height: 2px;
-    border-radius: 0 0 2px 2px;
-    background: transparent;
+    background: var(--rule-strong);
+    transform: scaleX(0);
+    transition: transform var(--motion-fast) var(--ease-elpis);
+  }
+
+  // Aether node on the seam.
+  &::after {
+    @include rhombus(7px, var(--rule-strong));
+    top: -4.5px;
+    left: calc(50% - 3.5px);
+    transform: rotate(45deg) scale(0);
+    transition: transform var(--motion-fast) var(--ease-elpis);
   }
 
   &:hover {
@@ -317,25 +331,31 @@ body {
   }
 
   &:focus-visible {
-    outline: none;
+    outline: 2px solid var(--glow-aether);
+    outline-offset: -4px;
     color: var(--ink-primary);
-    box-shadow: inset 0 0 0 2px var(--glow-aether);
-    border-radius: 8px;
   }
 }
 
 .shell-mobile-bar__item--active {
   color: var(--ink-primary);
+  background-image: linear-gradient(to bottom, var(--rule-tint), transparent);
 
   &::before {
-    background: var(--rule-strong);
+    transform: scaleX(1);
+  }
+
+  &::after {
+    transform: rotate(45deg) scale(1);
   }
 }
 
 .shell-mobile-bar__label {
   max-width: 100%;
   overflow: hidden;
-  font: 600 11px/14px var(--font-ui);
+  font: 600 10px/14px var(--font-ui);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -361,30 +381,55 @@ body {
 
 .shell-sheet-dialog .q-dialog__inner--bottom {
   padding: 0;
+  // The keel cut clips box-shadow; the dialog casts it instead.
+  filter: drop-shadow(0 -10px 30px rgba(43, 36, 24, 0.2));
+}
+
+body.body--dark .shell-sheet-dialog .q-dialog__inner--bottom {
+  filter: drop-shadow(0 -10px 30px rgba(0, 0, 0, 0.55));
+}
+
+// Quasar's `.q-dialog__inner > div` radius would beat a plain class.
+.q-dialog__inner > div.shell-sheet {
+  @include facet-tl(22px, var(--rule-soft), var(--surface-raised));
+  border-top: 2px solid var(--rule-strong);
+  border-bottom: 0;
 }
 
 .shell-sheet {
+  position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   font-family: var(--font-ui);
   color: var(--ink-primary);
-  background: var(--surface-raised);
-  border: 1px solid var(--rule-soft);
+  border-top: 2px solid var(--rule-strong);
   border-bottom: 0;
-  border-radius: 16px 16px 0 0;
-  box-shadow: 0 -12px 40px rgba(43, 36, 24, 0.2);
-}
+  box-shadow: none;
 
-body.body--dark .shell-sheet {
-  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.55);
+  // Grabber: hairline with a node.
+  &::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: calc(50% - 18px);
+    width: 36px;
+    height: 2px;
+    background: var(--rule-soft);
+  }
+
+  &::after {
+    @include rhombus(7px, var(--rule-strong));
+    top: 7.5px;
+    left: calc(50% - 3.5px);
+  }
 }
 
 .shell-sheet__head {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 12px 12px 8px 20px;
+  padding: 20px 12px 8px 26px;
   border-bottom: 1px solid var(--rule-soft);
 }
 
@@ -399,6 +444,11 @@ body.body--dark .shell-sheet {
 
 .shell-sheet__icon-btn.q-btn {
   color: var(--ink-muted);
+  border-radius: 0;
+
+  .q-focus-helper {
+    border-radius: 0;
+  }
 }
 
 .shell-sheet__body {
@@ -423,16 +473,17 @@ body.body--dark .shell-sheet {
 }
 
 .shell-sheet__row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
   min-height: 44px;
-  padding: 8px;
+  padding: 8px 8px 8px 14px;
   font: 500 15px/20px var(--font-ui);
   color: var(--ink-primary);
   text-decoration: none;
   border-bottom: none;
-  border-radius: 8px;
+  border-radius: 0;
 
   .q-icon {
     color: var(--ink-muted);
@@ -443,14 +494,39 @@ body.body--dark .shell-sheet {
   }
 
   &:focus-visible {
-    outline: none;
-    box-shadow: inset 0 0 0 2px var(--glow-aether);
+    outline: 2px solid var(--glow-aether);
+    outline-offset: -2px;
   }
 }
 
-.shell-sheet__row--active {
+// Current row: tint plus the 3px marker (as in the dropdowns).
+.shell-sheet__row--active,
+.shell-sheet__toggle--current {
   background: var(--rule-tint);
-  box-shadow: inset 2px 0 0 var(--rule-strong);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 4px;
+    width: 3px;
+    height: 20px;
+    margin-top: -10px;
+    background: var(--rule-strong);
+  }
+}
+
+// Rows follow 30ms apart when the sheet opens or an area expands
+// (kiel-rise lives in ShellHeader.vue; reduced motion zeroes the durations).
+.shell-sheet__row {
+  animation: kiel-rise var(--motion-base) var(--ease-elpis) calc(var(--i, 0) * 30ms + 120ms) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell-sheet__row {
+    animation-name: kiel-fade;
+    animation-delay: 0ms;
+  }
 }
 
 .shell-sheet__toggle {
@@ -466,11 +542,13 @@ body.body--dark .shell-sheet {
 }
 
 .shell-sheet__chevron {
-  transition: transform var(--motion-fast) var(--ease-elpis);
+  @include chevron(8px);
+  margin-right: 6px;
+  color: var(--ink-muted);
 }
 
 .shell-sheet__chevron--open {
-  transform: rotate(180deg);
+  @include chevron-open;
 }
 
 .shell-sheet__sub {
@@ -493,6 +571,7 @@ body.body--dark .shell-sheet {
 }
 
 .shell-sheet__count {
+  @include facet-clip(3px);
   flex: none;
   min-width: 22px;
   padding: 0 7px;
@@ -500,7 +579,6 @@ body.body--dark .shell-sheet {
   color: var(--vision-on-now);
   text-align: center;
   background: var(--vision-now);
-  border-radius: 999px;
 }
 
 .shell-sheet__empty {
