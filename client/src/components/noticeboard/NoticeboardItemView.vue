@@ -63,15 +63,11 @@
       <!-- Discord preview only for the author (and in the editor preview); readers do not need it. -->
       <section v-if="preview || noticeboardItem.mine" aria-labelledby="nb-view-discord">
         <h2 id="nb-view-discord" class="nb-view__rail-label">So sieht es auf Discord aus</h2>
-        <discord-embed-preview
-          :color="embed.color"
-          :author-name="embed.authorName"
-          :title="embed.title"
-          :description="embed.description"
-          :fields="embed.fields"
-          :footer="embed.footer"
-          :timestamp="embed.timestamp"
-          :caption="preview ? 'Nur beim Erstellen mit „Auf Discord posten“.' : ''"
+        <discord-message-preview
+          :message="discordMessage"
+          :label="noticeboardItem.title"
+          :timestamp="noticeboardItem.createdAt || null"
+          :caption="discordCaption"
         />
       </section>
       <slot name="rail" />
@@ -84,14 +80,15 @@ import { NoticeboardItemDto } from '@app/shared/dto/noticeboard/noticeboard-item
 import { Options, prop, Vue } from 'vue-class-component';
 import TriskelionDivider from '../aetherium/TriskelionDivider.vue';
 import HtmlViewer from '../common/HtmlViewer.vue';
-import DiscordEmbedPreview from '../vision/DiscordEmbedPreview.vue';
-import { buildNoticeboardEmbed, NoticeboardEmbed } from './discord-message';
+import DiscordMessagePreview from '../vision/DiscordMessagePreview.vue';
+import { DiscordPreviewMessage } from '../vision/discord-preview';
+import { buildNoticeboardDiscordPreview } from './discord-message';
 import { noticeboardTypeColor } from './noticeboard-types';
 
 // ER2-606 — noticeboard item on parchment: "[Typ] · Ort" eyebrow, title, IM
 // Fell subline, meta row, optional image with caption, prose with drop cap,
 // Triskelion and contact box. The rail shows the Discord embed exactly as
-// the Steward bot builds it (also in the editor preview) plus a `rail` slot
+// the Steward bot posts it (Components V2, also in the editor preview) plus a `rail` slot
 // for the page's related notices. Image and the Discord flag are optional
 // fields a newer API may add.
 
@@ -118,7 +115,7 @@ class Props {
 @Options({
   name: 'NoticeboardItemView',
   components: {
-    DiscordEmbedPreview,
+    DiscordMessagePreview,
     HtmlViewer,
     TriskelionDivider,
   },
@@ -173,10 +170,19 @@ export default class NoticeboardItemView extends Vue.with(Props) {
     return words >= DROP_CAP_WORD_THRESHOLD;
   }
 
-  get embed(): NoticeboardEmbed {
+  get discordMessage(): DiscordPreviewMessage {
     const character = this.$store.getters.character;
     const fallback = character ? { name: character.name, server: character.server } : null;
-    return buildNoticeboardEmbed(this.noticeboardItem, window.location.origin, fallback);
+    return buildNoticeboardDiscordPreview(this.noticeboardItem, window.location.origin, fallback, this.noticeboardItem.imageUrl);
+  }
+
+  get discordCaption(): string {
+    if (this.preview) {
+      return 'Nur beim Erstellen mit „Auf Discord posten“. Spätere Änderungen und das Löschen übernimmt der Bot auf Discord.';
+    }
+    return this.noticeboardItem.postedToDiscord || this.noticeboardItem.discordPosted
+      ? 'Auf Discord gepostet. Änderungen und das Löschen dieses Aushangs werden dort übernommen.'
+      : 'Dieser Aushang wurde nicht auf Discord gepostet.';
   }
 }
 </script>
