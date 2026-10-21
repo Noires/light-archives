@@ -69,6 +69,21 @@ export class NoticeboardItem extends BasicEntity {
   })
   discordPosted: boolean;
 
+  // Steward: the Discord post of this item, edited or deleted with it.
+  @Column({
+    type: 'varchar',
+    length: 32,
+    nullable: true,
+  })
+  discordChannelId: string | null;
+
+  @Column({
+    type: 'varchar',
+    length: 32,
+    nullable: true,
+  })
+  discordMessageId: string | null;
+
   @ManyToOne(() => Image, {
     nullable: true,
     onDelete: 'SET NULL',

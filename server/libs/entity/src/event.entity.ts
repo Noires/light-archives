@@ -137,6 +137,14 @@ export class Event extends BasicEntity {
   })
   hidden: boolean;
 
+  // Steward: the mirrored Discord scheduled event (guild "Events" list).
+  @Column({
+    type: 'varchar',
+    length: 32,
+    nullable: true,
+  })
+  discordScheduledEventId: string | null;
+
   @Column({
     type: 'mediumtext',
     nullable: false,

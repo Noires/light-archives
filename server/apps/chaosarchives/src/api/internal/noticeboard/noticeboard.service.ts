@@ -118,7 +118,7 @@ export class NoticeboardService {
     });
 
     if (postOnDiscord) {
-      void this.notifySteward(noticeboardItemEntity); // no await
+      void this.notifySteward(noticeboardItemEntity.id, 'create'); // no await
     }
 
     return {
@@ -159,6 +159,9 @@ export class NoticeboardService {
 
       await noticeboardItemRepo.save(noticeboardItem);
     });
+
+    // Steward edits the Discord post if there is one (it never creates one on edit).
+    void this.notifySteward(noticeboardItemDto.id, 'update'); // no await
   }
 
   async deleteNoticeboardItem(id: number, user: UserInfo): Promise<void> {
@@ -179,6 +182,9 @@ export class NoticeboardService {
 
       await noticeboardItemRepo.softRemove(noticeboardItem);
     });
+
+    // Steward deletes the Discord post if there is one.
+    void this.notifySteward(id, 'delete'); // no await
   }
 
   /**
@@ -358,10 +364,10 @@ export class NoticeboardService {
     }
   }
 
-	private async notifySteward(noticeboardItem: NoticeboardItem): Promise<void> {
+	private async notifySteward(noticeboardItemId: number, action: 'create' | 'update' | 'delete'): Promise<void> {
 		try {
-			this.logger.debug(`Notifying Steward about noticeboard ${noticeboardItem.id} creation`);
-			await firstValueFrom(this.httpService.post(`${serverConfiguration.stewardWebhookUrl}/noticeboard`, { noticeboardItemId: noticeboardItem.id }));
+			this.logger.debug(`Notifying Steward about noticeboard ${noticeboardItemId} (${action})`);
+			await firstValueFrom(this.httpService.post(`${serverConfiguration.stewardWebhookUrl}/noticeboard`, { noticeboardItemId, action }));
 		} catch (e) {
 			if (e instanceof Error) {
 				this.logger.error(e.message, e.stack);
