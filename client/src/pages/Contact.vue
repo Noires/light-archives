@@ -1,23 +1,57 @@
 <template>
-  <q-page>
-		<h2>Kontakt</h2>
-		<p>
-			The primary developer and administrator of Chaos Archives is <router-link to="/Omega/Vielle_Janlenoux">Vielle Janlenoux</router-link>, also known as Lintian Wintermist. I can be contacted on Discord as <strong>Lintian#3278</strong> or by <a href="mailto:admin@chaosarchives.org">email <q-icon name="mail_outline" /></a>.
-		</p>
-		<p>
-			Chaos Archives are part of the <a href="https://discord.gg/rCHdUdSVsr" target="_blank">Chaos Roleplaying <q-icon name="discord" /></a> Discord community. Visit the <code>#gubal-dev</code> channel to discuss its development.
-		</p>
-		<h5>Bug reporting</h5>
-		<p>
-			The Chaos Archives code is open source and available <a href="https://github.com/great-gubal-library/chaos-archives" target="_blank">on GitHub <q-icon class="external-link-icon" name="launch" /></a>. Feel free to report any bugs there.
-		</p>
-	</q-page>	
+  <q-page class="info-page">
+    <page-head
+      eyebrow="Über Elpisgarten"
+      title="Kontakt"
+      lead="Fragen, Ideen oder etwas funktioniert nicht? So erreichst du das Team hinter Elpisgarten."
+    >
+      <nav class="info-page__links" aria-label="Weitere Infos">
+        <router-link to="/faq">FAQ</router-link>
+        <router-link to="/about">Über uns</router-link>
+      </nav>
+    </page-head>
+
+    <section class="info-grid">
+      <article class="info-panel">
+        <h2 class="info-panel__title"><q-icon name="discord" aria-hidden="true" /> Discord</h2>
+        <p>
+          Unser offizieller Discordserver „Projekt Elpis“ ist der schnellste Weg zu uns: für Fragen zum Portal,
+          Feedback, Vorschläge und Hinweise auf Inhalte, die gegen das
+          <router-link to="/rules">Regelwerk</router-link> verstoßen.
+        </p>
+        <a class="info-action" href="https://discord.gg/wFT8DGkr3J" target="_blank" rel="noopener noreferrer">
+          Projekt Elpis beitreten <q-icon class="external-link-icon" name="launch" aria-hidden="true" />
+        </a>
+      </article>
+
+      <article class="info-panel">
+        <h2 class="info-panel__title"><q-icon name="bug_report" aria-hidden="true" /> Fehler melden</h2>
+        <p>
+          Elpisgarten ist Open Source. Fehler kannst du direkt auf GitHub als Issue melden; dafür brauchst du ein
+          GitHub-Konto. Beschreib kurz, was du gemacht hast, was passiert ist und was du erwartet hättest, und nenn
+          Seite, Gerät und Browser.
+        </p>
+        <a
+          class="info-action"
+          href="https://github.com/Noires/light-archives/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Issue auf GitHub öffnen <q-icon class="external-link-icon" name="launch" aria-hidden="true" />
+        </a>
+        <p class="info-note">Ohne GitHub-Konto? Melde den Fehler einfach auf Discord.</p>
+      </article>
+    </section>
+  </q-page>
 </template>
 
 <script lang="ts">
-import { Vue } from 'vue-class-component'
+import { Options, Vue } from 'vue-class-component';
+import PageHead from 'src/components/vision/PageHead.vue';
 
-export default class PageContact extends Vue {
-	
-}
+@Options({
+  name: 'PageContact',
+  components: { PageHead },
+})
+export default class PageContact extends Vue {}
 </script>

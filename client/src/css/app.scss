@@ -5,6 +5,7 @@
 @import 'input_styles';
 @import 'fandom-tabs';
 @import 'vision';
+@import 'info-page';
 
 // font definition
 @font-face {
@@ -642,10 +643,6 @@ body.body--dark .page-changes__item-arrow .q-icon {
 }
 
 // Additional dark-mode coverage for support and static content pages.
-body.body--dark .page-about,
-body.body--dark .page-beginner-guide,
-body.body--dark .page-faq,
-body.body--dark .page-rules,
 body.body--dark .page-support-tickets,
 body.body--dark .page-support-queue,
 body.body--dark .page-new-support-ticket,
@@ -655,10 +652,6 @@ body.body--dark .page-support-ticket-admin {
 	color: rgba(213, 226, 240, 0.92);
 }
 
-body.body--dark .page-about::before,
-body.body--dark .page-beginner-guide::before,
-body.body--dark .page-faq::before,
-body.body--dark .page-rules::before,
 body.body--dark .page-support-tickets::before,
 body.body--dark .page-support-queue::before,
 body.body--dark .page-new-support-ticket::before,
@@ -669,14 +662,6 @@ body.body--dark .page-support-ticket-admin::before {
 		radial-gradient(circle at 80% 0%, rgba(90, 125, 166, 0.16), transparent 50%);
 }
 
-body.body--dark .page-about__hero,
-body.body--dark .page-about__panel,
-body.body--dark .page-beginner-guide__hero,
-body.body--dark .page-beginner-guide__content,
-body.body--dark .page-faq__hero,
-body.body--dark .page-faq__content,
-body.body--dark .page-rules__hero,
-body.body--dark .page-rules__content,
 body.body--dark .page-support-tickets__hero,
 body.body--dark .page-support-tickets__toolbar,
 body.body--dark .page-support-tickets__table-shell,
@@ -709,10 +694,6 @@ body.body--dark .page-support-tickets__limit-banner {
 	color: rgba(255, 224, 184, 0.95);
 }
 
-body.body--dark .page-about__eyebrow,
-body.body--dark .page-beginner-guide__eyebrow,
-body.body--dark .page-faq__eyebrow,
-body.body--dark .page-rules__eyebrow,
 body.body--dark .page-support-tickets__eyebrow,
 body.body--dark .page-support-queue__eyebrow,
 body.body--dark .page-new-support-ticket__eyebrow,
@@ -721,10 +702,6 @@ body.body--dark .page-support-ticket-admin__eyebrow {
 	color: rgba(171, 201, 235, 0.88);
 }
 
-body.body--dark .page-about__lead,
-body.body--dark .page-beginner-guide__hero p,
-body.body--dark .page-faq__hero p,
-body.body--dark .page-rules__hero p,
 body.body--dark .page-support-tickets__lead,
 body.body--dark .page-support-tickets__hero-count-label,
 body.body--dark .page-support-tickets__hero-stats,
@@ -806,42 +783,6 @@ body.body--dark .page-support-tickets__tabs .q-tab {
 
 body.body--dark .page-support-tickets__tabs .q-tab--active {
 	color: rgba(171, 201, 235, 0.96);
-}
-
-body.body--dark .page-about__hero-links a,
-body.body--dark .page-about__lead a {
-	color: rgba(171, 201, 235, 0.94);
-}
-
-body.body--dark .page-about__link-list p {
-	color: rgba(213, 226, 240, 0.72);
-}
-
-body.body--dark .page-about__table {
-	box-shadow: inset 0 0 0 1px rgba(141, 181, 223, 0.24);
-}
-
-body.body--dark .page-about__table th {
-	background: rgba(27, 38, 53, 0.96);
-}
-
-body.body--dark .page-faq__markdown h3,
-body.body--dark .page-rules__markdown h4 {
-	border-top-color: rgba(141, 181, 223, 0.38);
-}
-
-body.body--dark .page-faq__markdown h4 {
-	border-left-color: rgba(141, 181, 223, 0.7);
-	background: linear-gradient(90deg, rgba(141, 181, 223, 0.22), rgba(141, 181, 223, 0.06));
-	color: rgba(213, 226, 240, 0.94);
-}
-
-body.body--dark .page-rules__markdown hr {
-	border-top-color: rgba(141, 181, 223, 0.4);
-}
-
-body.body--dark .page-rules__markdown dfn {
-	color: rgba(187, 214, 242, 0.9);
 }
 
 body.body--dark .page-verify__card {
