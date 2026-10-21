@@ -1,141 +1,32 @@
 <template>
-  <q-page class="page-rules">
-    <header class="page-rules__hero">
-      <span class="page-rules__eyebrow">Wissenswertes</span>
-      <h2>Regelwerk</h2>
-      <p>
-        Diese Regeln sorgen für ein respektvolles, sicheres und rollenspielnahes Miteinander auf Elpisgarten.
-        Lies dir die Punkte bitte sorgfältig durch.
-      </p>
-    </header>
+  <q-page class="info-page">
+    <page-head
+      eyebrow="Wissenswertes"
+      title="Regelwerk"
+      lead="Diese Regeln sorgen für ein respektvolles, sicheres und rollenspielnahes Miteinander auf Elpisgarten. Lies dir die Punkte bitte sorgfältig durch."
+    >
+      <nav class="info-page__links" aria-label="Weitere Infos">
+        <router-link to="/faq">FAQ</router-link>
+        <router-link to="/contact">Kontakt</router-link>
+      </nav>
+    </page-head>
 
-    <section class="page-rules__content">
-      <div class="page-rules__markdown" v-html="rules"></div>
+    <section class="info-panel">
+      <div class="info-prose info-prose--rules" v-html="rules"></div>
     </section>
   </q-page>
 </template>
 
 <script lang="ts">
-import { Vue } from 'vue-class-component';
+import { Options, Vue } from 'vue-class-component';
+import PageHead from 'src/components/vision/PageHead.vue';
 import rules from 'src/markdown/rules.md';
 
+@Options({
+  name: 'PageRules',
+  components: { PageHead },
+})
 export default class PageRules extends Vue {
   readonly rules = rules;
 }
 </script>
-
-<style lang="scss">
-.page-rules {
-  position: relative;
-  padding: 28px 18px 42px;
-  background: linear-gradient(180deg, #f8f4ee 0%, #ffffff 45%, #f2ede4 100%);
-  border-radius: 30px;
-  overflow: hidden;
-}
-
-.page-rules::before {
-  content: '';
-  position: absolute;
-  inset: -120px 0 auto;
-  height: 260px;
-  background:
-    radial-gradient(circle at 20% 30%, rgba(221, 180, 118, 0.18), transparent 55%),
-    radial-gradient(circle at 80% 0%, rgba(15, 76, 104, 0.12), transparent 50%);
-  pointer-events: none;
-}
-
-.page-rules h2 {
-  margin: 0;
-  font-family: $header-font;
-  letter-spacing: 0.02em;
-}
-
-.page-rules__hero {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding: 20px 22px;
-  border-radius: 0;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
-}
-
-.page-rules__hero h2 {
-  margin-bottom: 0;
-}
-
-.page-rules__hero p {
-  margin: 0;
-  color: rgba(35, 35, 35, 0.72);
-}
-
-.page-rules__eyebrow {
-  font-size: 0.75rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(139, 103, 58, 0.9);
-  font-weight: 600;
-}
-
-.page-rules__content {
-  position: relative;
-  z-index: 1;
-  padding: 16px 18px 18px;
-  border-radius: 0;
-  border: 1px solid rgba(221, 180, 118, 0.25);
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
-}
-
-.page-rules__markdown h4 {
-  font-size: 1.32rem;
-  margin-top: 1.55em;
-  margin-bottom: 0.45em;
-  padding-top: 0.6em;
-  border-top: 1px solid rgba(221, 180, 118, 0.35);
-}
-
-.page-rules__markdown h4:first-of-type {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: 0;
-}
-
-.page-rules__markdown p {
-  margin-top: 0.35em;
-  margin-bottom: 0.9em;
-}
-
-.page-rules__markdown ul {
-  margin-bottom: 1em;
-}
-
-.page-rules__markdown hr {
-  border: 0;
-  border-top: 1px solid rgba(221, 180, 118, 0.4);
-  margin: 24px 0 16px;
-}
-
-.page-rules__markdown dfn {
-  font-style: normal;
-  font-weight: 600;
-  color: #604722;
-}
-
-@media (max-width: 700px) {
-  .page-rules {
-    padding: 20px 14px 36px;
-  }
-
-  .page-rules__hero {
-    padding: 16px;
-  }
-
-  .page-rules__content {
-    padding: 12px 14px 14px;
-  }
-}
-</style>

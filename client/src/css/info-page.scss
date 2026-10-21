@@ -1,0 +1,222 @@
+// Info pages (Über uns, Kontakt, FAQ, Regeln, Anfängerguide): one shared
+// pattern on top of PageHead (components/vision/PageHead.vue). Aetherium
+// tokens only, so Hydaelyn and Zodiark need no overrides. The page frame
+// (surface, radius, padding) comes from MainLayout; pages must not redo it.
+
+.info-page {
+  display: grid;
+  gap: 20px;
+  align-content: start;
+  color: var(--ink-primary);
+}
+
+// Links below the page head (default slot of PageHead).
+.info-page__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  font: 600 14px/20px var(--font-ui);
+
+  a {
+    color: var(--ink-link);
+  }
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.info-panel {
+  min-width: 0;
+  padding: 20px 22px;
+  background: var(--surface-raised);
+  border: 1px solid var(--rule-soft);
+  border-radius: 0;
+
+  p {
+    margin: 0;
+  }
+
+  p + p {
+    margin-top: 10px;
+  }
+
+  a {
+    color: var(--ink-link);
+  }
+}
+
+.info-panel--full {
+  grid-column: 1 / -1;
+}
+
+// h2 inside a panel: overrides the centred global h2.
+.info-panel__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  line-height: 1.3;
+  text-align: left;
+  color: var(--ink-primary);
+}
+
+.info-panel__subtitle {
+  margin: 0 0 8px;
+  font: 600 11px/16px var(--font-ui);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.info-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-weight: 600;
+  color: var(--ink-link);
+}
+
+.info-note {
+  font-size: 0.9rem;
+  color: var(--ink-muted);
+}
+
+.info-panel .info-note {
+  margin-top: 10px;
+}
+
+.info-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li + li {
+    margin-top: 10px;
+  }
+
+  p {
+    margin-top: 4px;
+    color: var(--ink-muted);
+  }
+}
+
+// Markdown bodies (FAQ, Regelwerk).
+.info-prose {
+  h3,
+  h4 {
+    text-align: left;
+    color: var(--ink-primary);
+  }
+
+  // Section headings with a hairline divider.
+  h3 {
+    margin: 1.55em 0 0.5em;
+    padding-top: 0.6em;
+    font-size: 1.32rem;
+    border-top: 1px solid var(--rule-soft);
+  }
+
+  > h3:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  p {
+    margin: 0.3em 0 0.9em;
+  }
+
+  ul,
+  ol {
+    margin-bottom: 0.9em;
+  }
+
+  hr {
+    margin: 24px 0 16px;
+    border: 0;
+    border-top: 1px solid var(--rule-soft);
+  }
+
+  dfn {
+    font-style: normal;
+    font-weight: 600;
+    color: var(--ink-link);
+  }
+}
+
+// FAQ: questions as accented bars.
+.info-prose--faq h4 {
+  margin: 1.1em 0 0.35em;
+  padding: 8px 12px;
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  line-height: 1.35;
+  background: var(--rule-tint);
+  border-left: 3px solid var(--rule-strong);
+
+  + p {
+    margin-top: 0.45em;
+  }
+}
+
+.info-prose--faq h3 + h4 {
+  margin-top: 0.75em;
+}
+
+// Regelwerk: numbered sections as h4 with a divider.
+.info-prose--rules h4 {
+  margin: 1.55em 0 0.45em;
+  padding-top: 0.6em;
+  font-size: 1.32rem;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.info-prose--rules h4:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+// Statistics tables (Über uns).
+.info-table.q-table__card,
+.info-table.q-markup-table {
+  color: var(--ink-primary);
+  background: transparent;
+  border: 1px solid var(--rule-soft);
+  border-radius: 0;
+  box-shadow: none;
+
+  th {
+    font: 600 11px/16px var(--font-ui);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    background: var(--rule-tint);
+  }
+
+  th,
+  td {
+    border-color: var(--rule-soft);
+  }
+
+  td {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (max-width: 599px) {
+  .info-panel {
+    padding: 16px;
+  }
+
+  .info-prose--faq h4 {
+    padding: 7px 10px;
+    font-size: 0.96rem;
+  }
+}
