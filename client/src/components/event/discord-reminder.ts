@@ -177,7 +177,7 @@ export function buildEventReminderPreview(
   const body = truncate(reminderBody(event, announcement.content), Math.max(0, V2_TEXT_LIMIT - fixedLength - 50));
 
   const components: DiscordPreviewComponent[] = [];
-  const iconUrl = event.icon?.thumbUrl || event.icon?.url || '';
+  const iconUrl = event.icon?.previewUrl || event.icon?.thumbUrl || event.icon?.url || '';
   components.push(iconUrl ? { type: 'section', content: header, thumbnailUrl: iconUrl } : { type: 'text', content: header });
   components.push({ type: 'text', content: meta });
 

@@ -561,7 +561,7 @@ export default class CalendarSidebarWidget extends Vue {
   }
 
   eventIconUrl(event: EventSummaryDto) {
-    return event.icon?.thumbUrl || event.icon?.url || '';
+    return event.icon?.previewUrl || event.icon?.thumbUrl || event.icon?.url || '';
   }
 
   eventLinkLabel(event: EventSummaryDto): string {

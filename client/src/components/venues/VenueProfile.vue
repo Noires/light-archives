@@ -156,7 +156,7 @@ export default class VenueProfile extends Vue.with(Props) {
       title: event.title,
       startDateTime: event.startDateTime,
       endDateTime: effectiveEnd(event),
-      imageSrc: event.icon?.thumbUrl || event.icon?.url || null,
+      imageSrc: event.icon?.previewUrl || event.icon?.thumbUrl || event.icon?.url || null,
       locationLabel: locationLabel((event.locations || [])[0], false),
       recurringLabel: event.seriesLabel || null,
       live: this.isLive(event),

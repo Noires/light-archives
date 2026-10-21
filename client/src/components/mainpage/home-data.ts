@@ -73,7 +73,7 @@ export function upcomingEvents(events: EventSummaryDto[], now: number): EventSum
 }
 
 export function eventImage(event: EventSummaryDto): string | null {
-	return event.icon?.thumbUrl || event.icon?.previewUrl || event.icon?.url || null;
+	return event.icon?.previewUrl || event.icon?.thumbUrl || event.icon?.url || null;
 }
 
 export function eventLocationLabel(event: EventSummaryDto): string | null {
