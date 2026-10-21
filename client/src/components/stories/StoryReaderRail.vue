@@ -1,5 +1,5 @@
 <template>
-  <aside class="reader-rail" aria-label="Leseeinstellungen und Kapitel">
+  <aside v-if="hasSeries || seriesFollowKey || readingControls" class="reader-rail" aria-label="Leseeinstellungen und Kapitel">
     <nav v-if="hasSeries" class="reader-rail__block reader-rail__series" aria-labelledby="reader-rail-series">
       <h2 id="reader-rail-series" class="reader-rail__label">Reihe</h2>
       <p class="reader-rail__series-title">{{ series.seriesTitle }}</p>
@@ -57,7 +57,7 @@
     </section>
     <!-- /ER2 social: series follow -->
 
-    <section class="reader-rail__block" aria-labelledby="reader-rail-read">
+    <section v-if="readingControls" class="reader-rail__block" aria-labelledby="reader-rail-read">
       <h2 id="reader-rail-read" class="reader-rail__label">Lesen</h2>
 
       <div class="reader-rail__group" role="group" aria-label="Schriftgröße">
@@ -123,6 +123,8 @@ class Props {
   surface = prop<ReaderSurface | null>({ default: null });
   /** ER2 social: author character id for the series follow key; 0 hides "Benachrichtigen". */
   authorCharacterId = prop<number>({ default: 0 });
+  /** The story page moved these into the byline ("Aa"); other hosts keep them here. */
+  readingControls = prop<boolean>({ default: true });
 }
 
 @Options({

@@ -24,6 +24,10 @@
             <template v-if="story.createdAt">{{ date }} · </template>{{ minutes }} Min. Lesezeit · {{ wordLabel }}
           </span>
         </div>
+        <!-- e.g. the reading settings ("Aa") on the story page -->
+        <div v-if="$slots['byline-actions']" class="story-view__byline-actions">
+          <slot name="byline-actions" />
+        </div>
       </div>
 
       <div v-if="contentNotes.length" class="story-view__cw" role="note" aria-label="Inhaltswarnungen">
@@ -202,8 +206,9 @@ export default class StoryView extends Vue.with(Props) {
   --reader-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 0 28px rgba(141, 181, 223, 0.12);
 }
 
+// The page decides the column width; the measure is set on the text itself
+// (in the reading font, so it follows the A-/A+ size).
 .story-view {
-  max-width: 68ch;
   margin: 0 auto;
   font-size: 16px;
 }
@@ -260,6 +265,10 @@ export default class StoryView extends Vue.with(Props) {
   align-items: center;
   gap: 12px;
   margin-top: 20px;
+}
+
+.story-view__byline-actions {
+  margin-left: auto;
 }
 
 .story-view__avatar {
@@ -342,6 +351,8 @@ export default class StoryView extends Vue.with(Props) {
 }
 
 .story-view__content {
+  max-width: 60ch; // ~65 characters per line in Spectral
+  margin-inline: auto;
   font-family: var(--font-body);
   font-size: 1em;
   line-height: 1.75;
