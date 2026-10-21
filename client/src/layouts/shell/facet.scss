@@ -1,0 +1,77 @@
+// "Kristallkiel" shell shapes (Penpot: Vision › M · TopBar-Konzept).
+// Mixins only, no output: imported by ShellHeader and ShellMobileNav.
+//
+// Facets cut the top-left and bottom-right corners ("keel cut") instead of a
+// border-radius. clip-path is the baseline, so the diagonal edges get their
+// hairline from two corner gradients. Where CSS corner-shape exists
+// (Chromium 139+) the real bevel takes over: borders, outlines and shadows
+// then follow the cut and border-radius is only ever set inside @supports.
+
+@mixin facet($c, $line: var(--rule-soft), $fill: var(--rule-tint)) {
+  border: 1px solid $line;
+  border-radius: 0;
+  background:
+    linear-gradient(135deg, transparent calc(50% - 0.75px), $line 0 calc(50% + 0.75px), transparent 0) top left / $c $c no-repeat,
+    linear-gradient(135deg, transparent calc(50% - 0.75px), $line 0 calc(50% + 0.75px), transparent 0) bottom right / $c $c no-repeat,
+    $fill;
+  background-origin: border-box;
+  clip-path: polygon($c 0, 100% 0, 100% calc(100% - #{$c}), calc(100% - #{$c}) 100%, 0 100%, 0 $c);
+
+  @supports (corner-shape: bevel) {
+    background: $fill;
+    border-radius: $c 0 $c 0;
+    corner-shape: bevel;
+    clip-path: none;
+  }
+}
+
+// Top-left cut only (mobile sheet).
+@mixin facet-tl($c, $line: var(--rule-soft), $fill: var(--surface-raised)) {
+  border: 1px solid $line;
+  border-radius: 0;
+  background:
+    linear-gradient(135deg, transparent calc(50% - 0.75px), $line 0 calc(50% + 0.75px), transparent 0) top left / $c $c no-repeat,
+    $fill;
+  background-origin: border-box;
+  clip-path: polygon($c 0, 100% 0, 100% 100%, 0 100%, 0 $c);
+
+  @supports (corner-shape: bevel) {
+    background: $fill;
+    border-radius: $c 0 0 0;
+    corner-shape: bevel;
+    clip-path: none;
+  }
+}
+
+// Plain clip for small solid shapes (badges, avatar frame, menu panel).
+@mixin facet-clip($tl, $br: $tl) {
+  clip-path: polygon($tl 0, 100% 0, 100% calc(100% - #{$br}), calc(100% - #{$br}) 100%, 0 100%, 0 $tl);
+}
+
+// Aether node: a small rhombus, for ::before / ::after.
+@mixin rhombus($s, $color) {
+  content: '';
+  position: absolute;
+  width: $s;
+  height: $s;
+  background: $color;
+  transform: rotate(45deg);
+}
+
+// Angular chevron drawn with two borders; rotate the element 180deg to flip.
+@mixin chevron($s: 7px) {
+  display: inline-block;
+  flex: none;
+  width: $s;
+  height: $s;
+  margin: -3px 1px 0 2px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform var(--motion-fast) var(--ease-elpis), margin var(--motion-fast) var(--ease-elpis);
+}
+
+@mixin chevron-open {
+  margin-top: 4px;
+  transform: rotate(225deg);
+}

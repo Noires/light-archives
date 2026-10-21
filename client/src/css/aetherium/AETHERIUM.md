@@ -294,6 +294,73 @@ Verified manually; do not remove.
 the reduced-motion guard zeroes them automatically — they become static
 surfaces, not flickering ones.
 
+### Shell shapes: facet and aether seam ("Kristallkiel")
+
+The top bar, its menus, the mobile bar and the "Mehr" sheet use sharp edges
+instead of radii. They follow the Penpot concept "Vision › M · TopBar-Konzept".
+The mixins live in `layouts/shell/facet.scss`; they emit no CSS on their own.
+
+- **Facet (keel cut).** `facet($c)` cuts the top-left and bottom-right
+  corners. It is used on the search slot (7px), the avatar (8px) and the
+  menu panels (bottom-right only, 16px). `facet-tl` cuts only the top-left
+  corner and is used on the sheet (22px).
+  - The baseline is `clip-path`; corner gradients redraw the hairline on the
+    cut edge.
+  - `corner-shape: bevel` is only an enhancement inside
+    `@supports (corner-shape: bevel)` (Chromium 139+). `border-radius` is set
+    only there.
+- **Aether seam.** The bar's bottom border is the seam. The current area
+  gets a 2px `--rule-strong` underline that grows from the centre, a 7px
+  rhombus node on the seam (`rhombus()`) and a light shaft
+  (`--rule-tint` → transparent). The same marks appear on the mobile bar's
+  top edge.
+- **Focus.** Use an inner `outline` (negative offset) or an inset ring,
+  never an outer ring: `clip-path` cuts outlines and box-shadows.
+- **Shadows on clipped panels** go on the parent as
+  `filter: drop-shadow()`.
+- **Condensing.** The bar condenses from 68px to 52px only through
+  `animation-timeline: scroll()`, inside `@supports`, from 1024px up and
+  without reduced motion. Everywhere else it stays static at 68px.
+  `--nav-height` stays 68px.
+- **Motion choreography.** Each motion has its own trigger, and only one
+  plays at a time. Helpers are in `layouts/shell/seam-motion.ts`, styles and
+  `kiel-*` keyframes in `ShellHeader.vue`. A preview is the Motion Lab
+  artifact.
+  - **First visit in a session (ignition):** the wedge grows, the areas
+    drop in one after another, and the node lands on the seam. Then a single
+    glint runs along the seam and ends in a flare at the node. Total about
+    1.5s; skipped under reduced motion.
+  - **Route change (seam glide):** one shared indicator (line, node, light
+    shaft) glides 320ms to the new area and flares when it arrives. It uses
+    transforms, not a View Transition, so it never fights the condense
+    timeline.
+  - **Theme switch (prism wipe):** a View Transition. The new theme opens
+    as a rhombus from the crystal; under reduced motion it fades.
+  - **Menus (facet unfold):** the QMenu transition `kiel` opens downwards
+    out of the seam and closes back the same way. Entries follow 30ms apart.
+  - **Mouse over search, cells or plate (facet highlight):** a faint aether
+    light follows the pointer. Fine pointers only.
+  - **Reading pages (reading seam):** the seam fills with scroll progress.
+    Routes come from `isReadingRoute()`. Scroll timelines only; with no
+    support, nothing is shown.
+  - **Elpis petals (Hydaelyn) and fireflies (Zodiark), the only continuous
+    motion:** the same seven elements in the logo facet, over its ER1 135°
+    gradient.
+    - **Petals:** translucent white with a warm sunlit edge and a faint
+      glow, because Elpis flowers are white and turn "sun-bright" around
+      joy. Each petal has two layers: the outer one falls slowly (8.6–12.5s
+      per cycle) and drifts, the inner one sways gently like a pendulum (±30°
+      around a pivot above it). Even petals are mirrored, and size and opacity
+      vary to suggest depth. The fall loops continuously. Under reduced
+      motion, three petals rest on the bottom edge instead.
+    - **Fireflies:** 3px motes in `--vision-primary` drift upwards; they are
+      hidden under reduced motion.
+    - **Pause:** neither has a pause control. This is a deliberate exception
+      to WCAG 2.2.2.
+  - **Limits:** apart from the fireflies, nothing loops, and nothing lasts
+    longer than 1.5s (WCAG 2.2.2). Reduced motion keeps only opacity and
+    colour changes (WCAG 2.3.3, C39).
+
 ---
 
 ## Do / don't
