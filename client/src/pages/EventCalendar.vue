@@ -734,7 +734,7 @@ export default class PageEventCalendar extends Vue {
       title: event.title,
       startDateTime: event.startDateTime,
       endDateTime: effectiveEnd(event),
-      imageSrc: event.icon?.thumbUrl || event.icon?.url || null,
+      imageSrc: event.icon?.previewUrl || event.icon?.thumbUrl || event.icon?.url || null,
       locationLabel: locationLabel(location, !this.filterServer),
       recurringLabel: event.seriesLabel || null,
       live: this.isLive(event),
