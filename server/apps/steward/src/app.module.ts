@@ -8,7 +8,9 @@ import { WebhookModule } from "./webhook/webhook.module";
 
 @Module({
 	imports: [
-		TypeOrmModule.forRootAsync({ useFactory: () => dbConfiguration }),
+		// Only the main API synchronizes the shared schema; two apps altering it at
+		// startup race each other (duplicate column / constraint errors).
+		TypeOrmModule.forRootAsync({ useFactory: () => ({ ...dbConfiguration, synchronize: false }) }),
     SentryModule.forRoot(),
 		BotModule,
 		WebhookModule,

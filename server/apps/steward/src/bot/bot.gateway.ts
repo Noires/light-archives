@@ -23,7 +23,8 @@ export class BotGateway {
 
 	constructor(private readonly discordProvider: DiscordClientProvider) {}
 
-	@Once('ready')
+	// discord.js 14.22+ renamed 'ready' to 'clientReady' ('ready' goes away in v15).
+	@Once('clientReady')
 	async onReady(): Promise<void> {
 		const client = this.discordProvider.getClient();
 		this.logger.log(`Logged in as ${client.user!.tag}`);
