@@ -1,6 +1,6 @@
 import { EventAnnouncement } from '@app/entity';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { Repository } from 'typeorm';
@@ -21,13 +21,25 @@ export function reminderJobId(announcementId: number): string {
 // per future announcement of a visible event, rescheduled when the time
 // moves, removed when the announcement or event disappears. Idempotent.
 @Injectable()
-export class ReminderSchedulerService {
+export class ReminderSchedulerService implements OnModuleInit {
 	private readonly logger = new Logger(ReminderSchedulerService.name);
+
+	private lastRedisError = '';
 
 	constructor(
 		@InjectQueue(REMINDER_QUEUE) private readonly queue: Queue<ReminderJobData>,
 		@InjectRepository(EventAnnouncement) private readonly announcementRepo: Repository<EventAnnouncement>,
 	) {}
+
+	onModuleInit(): void {
+		// ioredis retries silently; surface connection problems once per distinct error.
+		this.queue.on('error', (error: Error) => {
+			if (error.message !== this.lastRedisError) {
+				this.lastRedisError = error.message;
+				this.logger.error(`Redis connection problem (reminder queue): ${error.message}`);
+			}
+		});
+	}
 
 	async reconcile(eventId?: number): Promise<void> {
 		const now = Date.now();

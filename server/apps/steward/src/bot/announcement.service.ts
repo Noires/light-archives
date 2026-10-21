@@ -12,6 +12,8 @@ import { ScheduledEventSyncService } from './scheduled-event-sync.service';
 
 export type NoticeboardAction = 'create' | 'update' | 'delete';
 
+const RECONCILE_TIMEOUT_MS = 15000;
+
 const ANNOUNCEMENT_RELATIONS = [
 	'event',
 	'event.locations',
@@ -41,23 +43,43 @@ export class AnnouncementService implements OnApplicationBootstrap {
 		@InjectRepository(NoticeboardItem) private readonly noticeboardItemRepo: Repository<NoticeboardItem>,
 	) {}
 
-	async onApplicationBootstrap(): Promise<void> {
-		try {
-			await this.reminderScheduler.reconcile();
-		} catch (e) {
-			this.logError('Initial reminder reconcile failed', e);
-		}
+	onApplicationBootstrap(): void {
+		// Not awaited: Nest only opens the webhook port after all bootstrap hooks,
+		// and a slow or unreachable Redis must never keep Steward offline.
+		void this.reconcileReminders().then((ok) => {
+			if (ok) {
+				this.logger.log('Initial reminder reconcile done');
+			}
+		});
 	}
 
 	/** Called by the site whenever an event is created, edited or deleted. */
 	async refresh(eventId: number): Promise<void> {
-		await this.reminderScheduler.reconcile(eventId);
+		await this.reconcileReminders(eventId);
 		await this.scheduledEventSync.sync(eventId);
 
 		try {
 			await this.updatePostedReminders(eventId);
 		} catch (e) {
 			this.logError(`Updating posted reminders of event ${eventId} failed`, e);
+		}
+	}
+
+	/** Reconciles reminder jobs; logs instead of throwing, and gives up after a timeout. */
+	private async reconcileReminders(eventId?: number): Promise<boolean> {
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		const timeout = new Promise<never>((_, reject) => {
+			timer = setTimeout(() => reject(new Error(`Redis did not answer within ${RECONCILE_TIMEOUT_MS / 1000}s`)), RECONCILE_TIMEOUT_MS);
+		});
+
+		try {
+			await Promise.race([this.reminderScheduler.reconcile(eventId), timeout]);
+			return true;
+		} catch (e) {
+			this.logError(`Reminder reconcile${eventId !== undefined ? ` for event ${eventId}` : ''} failed`, e);
+			return false;
+		} finally {
+			clearTimeout(timer);
 		}
 	}
 
