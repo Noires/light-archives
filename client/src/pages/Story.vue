@@ -19,8 +19,7 @@
             :font-size="fontSize"
             :surface="surface"
             :author-character-id="authorProfile && !story.mine ? authorProfile.id : 0"
-            @update:font-size="onFontSize"
-            @update:surface="onSurface"
+            :reading-controls="false"
           />
 
           <div ref="article" class="page-story__article">
@@ -31,12 +30,22 @@
               :author-avatar="authorAvatar"
               :part-index="partIndex"
               :part-count="partCount"
-            />
+            >
+              <template #byline-actions>
+                <story-reading-settings
+                  :font-size="fontSize"
+                  :surface="surface"
+                  @update:font-size="onFontSize"
+                  @update:surface="onSurface"
+                />
+              </template>
+            </story-view>
             <story-reactions
               :story-id="story.id"
               :initial-counts="story.reactionCounts || null"
               :initial-mine="story.myReactions || null"
               :mine="story.mine"
+              :end-label="partCount > 1 && partIndex > 0 ? `Ende von Teil ${partIndex}` : 'Ende'"
             />
             <story-part-nav :series="series" :current-id="story.id" />
           </div>
@@ -68,6 +77,7 @@ import StoryAuthorRail from 'components/stories/StoryAuthorRail.vue';
 import StoryPartNav from 'components/stories/StoryPartNav.vue';
 import StoryReactions from 'components/stories/StoryReactions.vue';
 import StoryReaderRail from 'components/stories/StoryReaderRail.vue';
+import StoryReadingSettings from 'components/stories/StoryReadingSettings.vue';
 import StoryView from 'components/stories/StoryView.vue';
 import {
   getReadingProgress,
@@ -131,6 +141,7 @@ const PROGRESS_SAVE_INTERVAL_MS = 2000;
     StoryPartNav,
     StoryReactions,
     StoryReaderRail,
+    StoryReadingSettings,
     StoryView,
   },
   async beforeRouteEnter(to, _, next) {
@@ -329,8 +340,8 @@ export default class PageStory extends Vue {
 <style lang="scss" scoped>
 .page-story {
   position: relative;
-  // clip, not hidden: hidden would make this a scroll container and break the
-  // sticky reader rail.
+  // clip, not hidden: hidden would make this a scroll container (and the
+  // page-turn transition overflows the pane while it runs).
   overflow: clip;
 }
 
@@ -352,18 +363,32 @@ export default class PageStory extends Vue {
   margin-bottom: 16px;
 }
 
+// One reading column (at most 800px, centred in the page container): the
+// reading controls sit above the text as a toolbar and the author section
+// closes the article below it. The calendar widget stays beside the page, so
+// the text keeps its 68ch measure (StoryView) instead of being squeezed by
+// side rails.
 .page-story__layout {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 240px;
-  grid-template-areas: 'left article right';
-  gap: 40px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'left'
+    'article'
+    'right';
+  gap: 28px;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-.page-story__left {
+.page-story__layout > .page-story__left {
   grid-area: left;
-  position: sticky;
-  top: calc(var(--nav-height, 68px) + 24px);
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px 32px;
+
+  > :deep(*) {
+    flex: 1 1 240px;
+  }
 }
 
 .page-story__article {
@@ -373,36 +398,21 @@ export default class PageStory extends Vue {
 
 .page-story__right {
   grid-area: right;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule-soft);
 }
 
-@media screen and (max-width: 1279px) {
-  .page-story__layout {
-    grid-template-columns: minmax(0, 1fr) 240px;
-    grid-template-areas:
-      'left left'
-      'article right';
-    gap: 28px 32px;
-  }
+// Author card on the left, "Auch von …" and tags on the right.
+@media screen and (min-width: 700px) {
+  .page-story__layout > .page-story__right {
+    display: grid;
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    gap: 16px 28px;
+    align-items: start;
 
-  .page-story__layout > .page-story__left {
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 16px 32px;
-
-    > :deep(*) {
-      flex: 1 1 240px;
+    > :deep(.author-rail__card) {
+      grid-row: span 2;
     }
-  }
-}
-
-@media screen and (max-width: 1023px) {
-  .page-story__layout {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      'left'
-      'article'
-      'right';
   }
 }
 

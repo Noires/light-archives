@@ -1,25 +1,25 @@
 <template>
-  <section v-if="available" class="story-reactions" aria-labelledby="story-reactions-title">
-    <h2 id="story-reactions-title" class="story-reactions__title">Wie hat dir dieser Teil gefallen?</h2>
-    <div class="story-reactions__pills">
-      <button
-        v-for="kind in kinds"
-        :key="kind"
-        type="button"
-        class="story-reactions__pill"
-        :class="{ 'story-reactions__pill--mine': isMine(kind) }"
-        :aria-pressed="canReact ? (isMine(kind) ? 'true' : 'false') : undefined"
-        :disabled="!canReact || busy"
-        @click="toggle(kind)"
-      >
-        <q-icon :name="icons[kind]" size="18px" aria-hidden="true" />
-        <span>{{ labels[kind] }}</span>
-        <span class="story-reactions__count" :aria-label="`${counts[kind] || 0} Reaktionen`">{{ counts[kind] || 0 }}</span>
-      </button>
-    </div>
-    <p v-if="!canReact" class="story-reactions__hint">
-      {{ hint }}
-    </p>
+  <section v-if="available" class="story-end" aria-labelledby="story-end-title">
+    <h2 id="story-end-title" class="story-end__title">{{ endLabel }}</h2>
+    <p class="story-end__prompt">{{ mine ? 'So reagieren deine Leserinnen und Leser' : 'Wie hat dich das berührt?' }}</p>
+
+    <ul class="story-end__reactions" aria-label="Reaktionen">
+      <li v-for="kind in kinds" :key="kind">
+        <button
+          type="button"
+          class="story-end__chip"
+          :class="{ 'story-end__chip--mine': isMine(kind), 'story-end__chip--empty': !counts[kind] }"
+          :aria-pressed="canReact ? (isMine(kind) ? 'true' : 'false') : undefined"
+          :disabled="mine || busy"
+          :title="chipTitle"
+          @click="onChipClick(kind)"
+        >
+          <q-icon :name="icons[kind]" size="18px" aria-hidden="true" />
+          <span>{{ labels[kind] }}</span>
+          <span v-if="counts[kind]" class="story-end__count" :aria-label="`${counts[kind]} Reaktionen`">{{ counts[kind] }}</span>
+        </button>
+      </li>
+    </ul>
   </section>
 </template>
 
@@ -34,12 +34,15 @@ import {
 import { notifyError } from 'src/common/notify';
 import { Options, prop, Vue } from 'vue-class-component';
 
-// ER2-601 — "Wie hat dir dieser Teil gefallen?" (ER2-807 reactions). Counts
+// ER2-601 / ER2-807 — the end of a story part: "Ende von Teil N", a prompt
+// and the reactions as chips like in the Lightbox (zero counts hidden). A
+// click while logged out starts the Discord login, without a verified
+// character it opens /verify; authors see their counts read-only. Counts
 // come from the StoryDto when present, otherwise from GET /reactions. If
 // neither is available (older API), the whole block stays hidden.
 
 const ICONS: { [kind: string]: string } = {
-  [ReactionKind.GAENSEHAUT]: 'auto_awesome',
+  [ReactionKind.GAENSEHAUT]: 'ac_unit',
   [ReactionKind.MEHR_DAVON]: 'add_circle_outline',
   [ReactionKind.HERZSCHMERZ]: 'heart_broken',
   [ReactionKind.SPANNEND]: 'bolt',
@@ -51,6 +54,8 @@ class Props {
   initialMine = prop<ReactionKind[] | null>({ default: null });
   /** Own stories cannot be reacted to by their author. */
   mine = prop<boolean>({ type: Boolean, default: false });
+  /** Heading of the colophon, e.g. "Ende von Teil 2". */
+  endLabel = prop<string>({ default: 'Ende' });
 }
 
 @Options({
@@ -80,16 +85,30 @@ export default class StoryReactions extends Vue.with(Props) {
     return !!this.characterId && !!character && character.verified && !this.mine;
   }
 
-  get hint(): string {
+  get hintKind(): 'own' | 'login' | 'verify' {
     if (this.mine) {
-      return 'Reaktionen deiner Leserinnen und Leser erscheinen hier.';
+      return 'own';
     }
 
-    if (!this.$store.getters.character) {
-      return 'Melde dich an, um zu reagieren.';
+    return this.$store.getters.character ? 'verify' : 'login';
+  }
+
+  get chipTitle(): string | undefined {
+    if (this.canReact || this.mine) {
+      return undefined;
     }
 
-    return 'Verifiziere deinen Charakter, um zu reagieren.';
+    return this.hintKind === 'login' ? 'Mit Discord anmelden, um zu reagieren' : 'Charakter verifizieren, um zu reagieren';
+  }
+
+  onChipClick(kind: ReactionKind) {
+    if (this.canReact) {
+      void this.toggle(kind);
+    } else if (this.hintKind === 'login') {
+      window.location.href = this.$api.user.getDiscordLoginUrl(window.location.origin);
+    } else if (this.hintKind === 'verify') {
+      void this.$router.push('/verify');
+    }
   }
 
   created() {
@@ -149,53 +168,67 @@ export default class StoryReactions extends Vue.with(Props) {
 </script>
 
 <style lang="scss" scoped>
-.story-reactions {
-  max-width: 68ch;
-  margin: 8px auto 0;
+// Under StoryView's closing triskelion: "Ende", a prompt, then the chips.
+.story-end {
+  margin: 4px auto 0;
   text-align: center;
-  font-family: var(--font-ui);
-}
-
-.story-reactions__title {
-  text-align: left;
-  margin: 0 0 14px;
-  font-family: var(--font-lore);
-  font-style: italic;
-  font-weight: 400;
-  font-size: 1.25rem;
   color: var(--ink-primary);
 }
 
-.story-reactions__pills {
+.story-end__title {
+  margin: 0;
+  font: 500 13px/1.4 var(--font-display);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.story-end__prompt {
+  margin: 14px 0 16px;
+  font: italic 400 1.05rem/1.4 var(--font-body);
+  color: var(--ink-muted);
+}
+
+.story-end__reactions {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.story-reactions__pill {
+.story-end__chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   min-height: 40px;
-  padding: 0 14px;
-  border: 1px solid var(--rule-strong);
-  border-radius: 999px;
-  background: var(--vision-card);
+  padding: 6px 16px;
+  font: 600 14px/1 var(--font-ui);
   color: var(--ink-primary);
-  font: 600 var(--type-scale-1) / 1 var(--font-ui);
+  background: transparent;
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
   cursor: pointer;
-  transition:
-    background-color var(--motion-fast) var(--ease-elpis),
-    border-color var(--motion-fast) var(--ease-elpis);
+  transition: background-color var(--motion-fast) var(--ease-elpis), border-color var(--motion-fast) var(--ease-elpis), color var(--motion-fast) var(--ease-elpis), transform var(--motion-fast) var(--ease-elpis);
+
+  .q-icon {
+    color: var(--ink-muted);
+  }
 
   &:hover:not(:disabled) {
     background: var(--rule-tint);
+    border-color: var(--rule-strong);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.96);
   }
 
   &:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--glow-aether), 0 0 0 3px var(--vision-focus-edge);
+    outline: 2px solid var(--glow-aether);
+    outline-offset: 2px;
   }
 
   &:disabled {
@@ -203,30 +236,36 @@ export default class StoryReactions extends Vue.with(Props) {
   }
 }
 
-.story-reactions__pill--mine,
-.story-reactions__pill--mine:hover:not(:disabled) {
-  background: var(--vision-primary);
-  border-color: var(--vision-primary);
-  color: var(--vision-on-primary);
+// Authors see all four kinds; unused ones step back.
+.story-end__chip--empty:disabled {
+  opacity: 0.55;
 }
 
-.story-reactions__count {
-  min-width: 20px;
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: var(--rule-tint);
-  font-size: var(--type-scale-0);
-}
-
-.story-reactions__hint {
-  margin: 10px 0 0;
-  font-size: var(--type-scale-1);
+.story-end__count {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-muted);
 }
 
+.story-end__chip--mine,
+.story-end__chip--mine:hover:not(:disabled) {
+  color: var(--vision-on-primary);
+  background: var(--vision-primary);
+  border-color: var(--vision-primary);
+
+  .q-icon,
+  .story-end__count {
+    color: inherit;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .story-reactions__pill {
+  .story-end__chip {
     transition: none;
+
+    &:active:not(:disabled) {
+      transform: none;
+    }
   }
 }
 </style>
