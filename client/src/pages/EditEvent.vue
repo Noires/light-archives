@@ -687,7 +687,7 @@
                 :default-opened="index === 0"
               >
                 <div class="page-edit-event__expansion-body">
-                  <event-announcement-editor v-model="event.announcements[index]" @remove="removeAnnouncement(index)" />
+                  <event-announcement-editor v-model="event.announcements[index]" :event="event" @remove="removeAnnouncement(index)" />
                 </div>
               </q-expansion-item>
             </div>

@@ -32,8 +32,10 @@ services:
     init: true
     links:
       - mariadb
+      - redis
     depends_on:
       - mariadb
+      - redis
     command: node dist/apps/steward/main.js
     expose:
       - 8112

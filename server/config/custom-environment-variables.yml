@@ -37,3 +37,6 @@ discord:
   serverId: DISCORD_SERVER_ID
   announcementChannel: DISCORD_ANNOUNCEMENT_CHANNEL
   noticeboardChannel: DISCORD_NOTICEBOARD_CHANNEL
+  syncScheduledEvents:
+    __name: DISCORD_SYNC_SCHEDULED_EVENTS
+    __format: json

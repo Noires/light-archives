@@ -46,3 +46,4 @@ discord:
   serverId: '_SERVERID_'
   announcementChannel: '_ANNOUNCEMENTCHANNEL_'
   noticeboardChannel: '_NOTICEBOARDCHANNEL_'
+  syncScheduledEvents: true

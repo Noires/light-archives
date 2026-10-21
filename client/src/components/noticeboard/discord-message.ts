@@ -1,32 +1,25 @@
 import type { NoticeboardItemDto } from '@app/shared/dto/noticeboard/noticeboard-item.dto';
 import { noticeboardLocations } from '@app/shared/enums/noticeboard-location.enum';
 import { NoticeboardType, noticeboardTypes } from '@app/shared/enums/noticeboard-type.enum';
+import {
+  DiscordPreviewComponent,
+  DiscordPreviewMessage,
+  escapeLinkLabel,
+  extractMentionTokens,
+  hexColor,
+  truncate,
+  V2_TEXT_LIMIT,
+} from '../vision/discord-preview';
 
-// ER2-606 — client-side mirror of AnnouncementService.buildNoticeboardMessage()
-// (server/apps/steward/src/bot/announcement.service.ts). Keep both in sync:
-// colour, author "Name (Server)", title, description = body as Discord
-// Markdown, fields Typ / Ort / Treffpunkt / Link(s), footer
-// "Anschlagbrett • <Typ>", timestamp = creation time.
+// Client-side mirror of buildNoticeboardMessage() in
+// server/apps/steward/src/bot/messages/noticeboard-message.ts. Keep both in
+// sync: accent container, "Anschlagbrett · Typ · Ort · von Name (Server)"
+// subtext, linked title, body as Discord Markdown, image, venue line, footer
+// with the creation date, link buttons "Aushang ansehen" / "Treffpunkt".
 
-export const NOTICEBOARD_EMBED_COLOR = '#8B6B79';
+export const NOTICEBOARD_ACCENT = 0x8b6b79;
 
-const EMBED_DESCRIPTION_LIMIT = 4096;
-const EMBED_FIELD_LIMIT = 1024;
 const ALLOWED_TAGS = [ 'a', 'b', 'i', 'strong', 'em', 'code', 'tt', 'blockquote', 'p', 'br', 'ul', 'ol', 'li' ];
-
-export interface NoticeboardEmbed {
-  color: string;
-  authorName: string;
-  title: string;
-  description: string;
-  fields: { name: string; value: string; inline?: boolean }[];
-  footer: string;
-  timestamp: number | null;
-}
-
-function truncate(value: string, maxLength: number): string {
-  return value.length <= maxLength ? value : `${value.slice(0, Math.max(0, maxLength - 3)).trimEnd()}...`;
-}
 
 function inlineText(node: Node): string {
   return Array.from(node.childNodes).map((child) => nodeToMarkdown(child, 0)).join('');
@@ -103,47 +96,59 @@ export function htmlToDiscordMarkdown(html: string): string {
     .trim();
 }
 
-export function buildNoticeboardEmbed(item: NoticeboardItemDto, origin: string, fallbackAuthor?: { name: string; server: string } | null): NoticeboardEmbed {
+export function buildNoticeboardDiscordPreview(
+  item: NoticeboardItemDto,
+  origin: string,
+  fallbackAuthor?: { name: string; server: string } | null,
+  imageUrl?: string,
+): DiscordPreviewMessage {
+  const url = `${origin}/noticeboard/${item.id || '…'}`;
+  const title = (item.title || '').trim() || 'Aushang';
   const typeLabel = noticeboardTypes[item.type] || noticeboardTypes[NoticeboardType.AUSHANG];
   const locationLabel = noticeboardLocations[item.location] || item.location || '';
   const authorName = (item.author || fallbackAuthor?.name || '').trim();
-  const serverName = (item.authorServer || fallbackAuthor?.server || '').trim();
-  const authorText = authorName ? (serverName ? `${authorName} (${serverName})` : authorName) : '';
-  const noticeboardUrl = `${origin}/noticeboard/${item.id || '…'}`;
-  const body = htmlToDiscordMarkdown(item.content || '');
-  const subtitle = locationLabel ? `${locationLabel} — by ${authorName}` : '';
-
-  const fields: NoticeboardEmbed['fields'] = [
-    { name: 'Typ', value: truncate(typeLabel, EMBED_FIELD_LIMIT), inline: true },
-    { name: 'Ort', value: truncate(locationLabel, EMBED_FIELD_LIMIT), inline: true },
-  ];
+  const authorServer = (item.authorServer || fallbackAuthor?.server || '').trim();
+  const authorLabel = authorServer ? `${authorName} (${authorServer})` : authorName;
+  let author = '';
+  if (authorName) {
+    author = authorServer
+      ? ` · von [${escapeLinkLabel(authorLabel)}](${origin}/${encodeURIComponent(authorServer)}/${encodeURIComponent(authorName.replace(/ /g, '_'))})`
+      : ` · von ${authorLabel}`;
+  }
+  const eyebrow = `-# Anschlagbrett · ${typeLabel} · ${locationLabel}${author}`;
+  const header = `## [${escapeLinkLabel(title)}](${url})`;
 
   const venueName = (item.venueName || '').trim();
+  const venueServer = (item.venueServer || '').trim();
+  const venueLine = venueName ? `**Treffpunkt:** ${venueServer ? `${venueName} (${venueServer})` : venueName}` : '';
+  const created = Math.floor((item.createdAt || Date.now()) / 1000);
+  const footer = `-# Aushang vom <t:${created}:D> · Elpisgarten`;
+  const markdown = htmlToDiscordMarkdown(item.content || '');
+  const mentionLine = extractMentionTokens(`${item.title || ''}
 
-  if (venueName) {
-    const venueServer = (item.venueServer || '').trim();
-    fields.push({
-      name: 'Treffpunkt',
-      value: truncate(venueServer ? `${venueName} (${venueServer})` : venueName, EMBED_FIELD_LIMIT),
-      inline: true,
-    });
+${markdown}`);
+
+  const fixedLength = [eyebrow, header, venueLine, footer, mentionLine].reduce((sum, part) => sum + part.length, 0);
+  const body = truncate(markdown, Math.max(0, V2_TEXT_LIMIT - fixedLength - 50));
+
+  const components: DiscordPreviewComponent[] = [{ type: 'text', content: `${eyebrow}
+${header}` }];
+  if (body) {
+    components.push({ type: 'text', content: body });
   }
+  if (imageUrl) {
+    components.push({ type: 'media', url: imageUrl, alt: title });
+  }
+  if (venueLine) {
+    components.push({ type: 'text', content: venueLine });
+  }
+  components.push({ type: 'text', content: footer });
 
-  const links = [ `Aushang: ${noticeboardUrl}` ];
-
+  const buttons = [{ label: 'Aushang ansehen', url }];
   if (item.venueId) {
-    links.push(`Treffpunkt: ${origin}/venue/${item.venueId}`);
+    buttons.push({ label: 'Treffpunkt', url: `${origin}/venue/${item.venueId}` });
   }
+  components.push({ type: 'buttons', buttons });
 
-  fields.push({ name: links.length === 1 ? 'Link' : 'Links', value: truncate(links.join('\n'), EMBED_FIELD_LIMIT) });
-
-  return {
-    color: NOTICEBOARD_EMBED_COLOR,
-    authorName: truncate(authorText, 256),
-    title: truncate((item.title || '').trim(), 256),
-    description: truncate(body || subtitle.trim(), EMBED_DESCRIPTION_LIMIT),
-    fields,
-    footer: `Anschlagbrett • ${typeLabel}`,
-    timestamp: item.createdAt || null,
-  };
+  return { mentionLine, accentColor: hexColor(NOTICEBOARD_ACCENT), components };
 }

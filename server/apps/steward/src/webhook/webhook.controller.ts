@@ -20,7 +20,8 @@ export class WebhookController {
 
 	@Post('noticeboard')
 	@HttpCode(HttpStatus.NO_CONTENT)
-	async postNoticeboardItem(@Body() data: WebHookNoticeboardDto): Promise<void> {
-		await this.announcementService.postNoticeboardItem(data.noticeboardItemId);
+	async noticeboardItem(@Body() data: WebHookNoticeboardDto): Promise<void> {
+		const action = data.action === 'update' || data.action === 'delete' ? data.action : 'create';
+		await this.announcementService.handleNoticeboard(data.noticeboardItemId, action);
 	}
 }
